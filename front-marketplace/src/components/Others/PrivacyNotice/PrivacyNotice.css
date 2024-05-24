@@ -1,0 +1,29 @@
+.privacy-notice {
+    display: flex;
+    align-items: center;
+    margin-top: 20px;
+    font-size: 14px;
+    color: #ffffff;
+    padding: 20px;
+    margin-bottom: 17px;
+}
+
+.privacy-icon {
+    width: 26px;
+    height: 26px;
+    margin-right: 20px;
+}
+
+.privacy-notice span {
+    font-size: 14px;
+    color: #ffffff;
+}
+
+.privacy-link {
+    color: #7B33E5;
+    text-decoration: none;
+}
+
+.privacy-link:hover {
+    text-decoration: underline;
+}

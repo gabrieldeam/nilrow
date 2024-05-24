@@ -1,0 +1,58 @@
+package marketplace.nilrow.domain.people;
+
+import jakarta.persistence.*;
+import lombok.*;
+import marketplace.nilrow.domain.user.User;
+
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "people")
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@EqualsAndHashCode(of = "id")
+public class People {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false)
+    private String email;
+
+    @Column(nullable = false)
+    private String cpf;
+
+    @Column(nullable = false)
+    private String phone;
+
+    private LocalDate birthDate;
+
+    @Column(nullable = false)
+    private boolean isEmailValidated = false;
+
+    @Column
+    private String validationToken;
+
+    @Column
+    private String resetPasswordCode;
+
+    @OneToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    public People(String name, String email, String phone, String cpf, LocalDate birthDate, User user) {
+        this.name = name;
+        this.email = email;
+        this.phone = phone;
+        this.cpf = cpf;
+        this.birthDate = birthDate;
+        this.user = user;
+    }
+
+}
