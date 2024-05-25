@@ -3,10 +3,9 @@
     top: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 100%;
+    width: calc(100% - 64px); /* Reduz 32px de cada lado */
     max-width: 450px;
     height: 55px;
-    background-color: #DF1414;
     color: white;
     display: flex;
     align-items: center;
@@ -60,5 +59,6 @@
 @media (max-width: 768px) {
     .notification {
         width: calc(100% - 64px); /* 32px de margem em cada lado */
+        margin-top: 20px;
     }
 }

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import './Notification.css';
 import avisoIcon from '../../../assets/aviso.svg';
 
-const Notification = ({ message, onClose }) => {
+const Notification = ({ message, onClose, backgroundColor = '#DF1414' }) => {
     const [visible, setVisible] = useState(true);
 
     useEffect(() => {
@@ -20,7 +20,7 @@ const Notification = ({ message, onClose }) => {
     }
 
     return (
-        <div className="notification">
+        <div className="notification" style={{ backgroundColor }}>
             <div className="notification-content">
                 <div className="notification-icon">
                     <img src={avisoIcon} alt="Aviso" />
@@ -34,7 +34,8 @@ const Notification = ({ message, onClose }) => {
 
 Notification.propTypes = {
     message: PropTypes.string.isRequired,
-    onClose: PropTypes.func.isRequired
+    onClose: PropTypes.func.isRequired,
+    backgroundColor: PropTypes.string, // Adiciona a prop backgroundColor
 };
 
 export default Notification;

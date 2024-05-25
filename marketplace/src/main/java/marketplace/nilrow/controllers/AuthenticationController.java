@@ -1,7 +1,9 @@
 package marketplace.nilrow.controllers;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import marketplace.nilrow.domain.people.People;
 import marketplace.nilrow.domain.user.*;
@@ -54,14 +56,23 @@ public class AuthenticationController {
     private String frontendBaseUrl;
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid AuthenticationDTO data) {
+    public ResponseEntity<Void> login(@RequestBody @Valid AuthenticationDTO data, HttpServletResponse response) {
         try {
             var usernamePassword = new UsernamePasswordAuthenticationToken(data.login(), data.password());
             var auth = this.authenticationManager.authenticate(usernamePassword);
 
             var token = tokenService.generateToken((User) auth.getPrincipal());
 
-            return ResponseEntity.ok(new LoginResponseDTO(token));
+            // Crie um cookie HttpOnly com o token
+            Cookie cookie = new Cookie("auth_token", token);
+            cookie.setHttpOnly(true);
+            cookie.setSecure(true); // Configure isso como true se estiver usando HTTPS
+            cookie.setPath("/");
+            cookie.setMaxAge(60 * 60 * 24); // Expira em 1 dia
+
+            response.addCookie(cookie);
+
+            return ResponseEntity.ok().build();
         } catch (Exception e) {
             logger.error("Login failed", e);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -69,14 +80,23 @@ public class AuthenticationController {
     }
 
     @PostMapping("/login-phone")
-    public ResponseEntity<LoginResponseDTO> loginWithPhone(@RequestBody @Valid PhoneAuthenticationDTO data) {
+    public ResponseEntity<Void> loginWithPhone(@RequestBody @Valid PhoneAuthenticationDTO data, HttpServletResponse response) {
         try {
             var usernamePassword = new UsernamePasswordAuthenticationToken(data.phone(), data.password());
             var auth = this.authenticationManager.authenticate(usernamePassword);
 
             var token = tokenService.generateToken((User) auth.getPrincipal());
 
-            return ResponseEntity.ok(new LoginResponseDTO(token));
+            // Crie um cookie HttpOnly com o token
+            Cookie cookie = new Cookie("auth_token", token);
+            cookie.setHttpOnly(true);
+            cookie.setSecure(true); // Configure isso como true se estiver usando HTTPS
+            cookie.setPath("/");
+            cookie.setMaxAge(60 * 60 * 24); // Expira em 1 dia
+
+            response.addCookie(cookie);
+
+            return ResponseEntity.ok().build();
         } catch (Exception e) {
             logger.error("Login with phone failed", e);
             throw new UsernameNotFoundException("Invalid phone number or password");

@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import CustomInput from '../../../components/UI/CustomInput/CustomInput';
 import Card from '../../../components/UI/Card/Card';
 import ConfirmationButton from '../../../components/UI/Buttons/ConfirmationButton/ConfirmationButton';
 import PrivacyNotice from '../../../components/Others/PrivacyNotice/PrivacyNotice';
 import Notification from '../../../components/UI/Notification/Notification';
 import { login } from '../../../services/api';
+import { NotificationContext } from '../../../context/NotificationContext'; // Certifique-se de que o caminho está correto
 import './Login.css';
 import Header from '../../../components/Auth/Header/Header';
 import Footer from '../../../components/Auth/Footer/Footer';
@@ -14,6 +16,8 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [showNotification, setShowNotification] = useState(false);
+    const { setMessage } = useContext(NotificationContext);
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -22,11 +26,11 @@ const Login = () => {
             setShowNotification(true);
             return;
         }
-
         try {
-            const data = await login(emailOrUsername, password);
-            console.log('Login bem-sucedido:', data);
-            // Redirecionar para outra página ou salvar o token, etc.
+            await login(emailOrUsername, password);
+            console.log('Login bem-sucedido');
+            setMessage('Bem-vindo a nilrow');
+            navigate('/');
         } catch (err) {
             setError(err.message || 'Erro ao fazer login.');
             setShowNotification(true);
