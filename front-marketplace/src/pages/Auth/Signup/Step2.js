@@ -1,15 +1,24 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const Step2 = ({ formData, setFormData, nextStep }) => {
+const Step2 = ({ formData, setFormData, handleStepCompletion }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
     };
 
+    const navigate = useNavigate();
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        handleStepCompletion();
+        navigate('/signup');
+    };
+
     return (
         <div>
             <h2>Etapa 2: Informações Pessoais</h2>
-            <form>
+            <form onSubmit={handleSubmit}>
                 <input
                     type="text"
                     name="name"
@@ -38,7 +47,7 @@ const Step2 = ({ formData, setFormData, nextStep }) => {
                     value={formData.nickname}
                     onChange={handleChange}
                 />
-                <button type="button" onClick={nextStep}>Próxima Etapa</button>
+                <button type="submit">Salvar e Voltar</button>
             </form>
         </div>
     );

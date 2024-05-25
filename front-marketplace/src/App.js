@@ -32,7 +32,7 @@ function App() {
                         <ProtectedRoute isAuthenticated={isAuthenticated}><LoginPhone /></ProtectedRoute>
                         }
                     />
-                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/signup/*" element={<Signup />} />
                     <Route path="/password-reset" element={<PasswordReset />} />
                 </Routes>
             </Router>
