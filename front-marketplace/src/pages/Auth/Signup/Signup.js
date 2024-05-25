@@ -3,10 +3,16 @@ import { Routes, Route, useNavigate } from 'react-router-dom';
 import Step1 from './Step1';
 import Step2 from './Step2';
 import Step3 from './Step3';
+import StepButton from '../../../components/UI/Buttons/StepButton/StepButton';
+import ConfirmationButton from '../../../components/UI/Buttons/ConfirmationButton/ConfirmationButton';
+import PrivacyNotice from '../../../components/Others/PrivacyNotice/PrivacyNotice';
 import './Signup.css';
 import Header from '../../../components/Auth/Header/Header';
 import Footer from '../../../components/Auth/Footer/Footer';
 import { register } from '../../../services/api';
+import iconStep1 from '../../../assets/contato.svg'; // Substitua pelo caminho correto do ícone
+import iconStep2 from '../../../assets/user.svg'; // Substitua pelo caminho correto do ícone
+import iconStep3 from '../../../assets/tranca.svg'; // Substitua pelo caminho correto do ícone
 
 const Signup = () => {
     const [formData, setFormData] = useState({
@@ -41,6 +47,7 @@ const Signup = () => {
         try {
             await register(formData);
             alert('Registro bem-sucedido!');
+            navigate('/login'); // Redireciona para a página de login após o registro bem-sucedido
         } catch (error) {
             alert('Erro ao registrar: ' + error.message);
         }
@@ -55,20 +62,39 @@ const Signup = () => {
                         path="/" 
                         element={
                             <div>
-                                <h2>Registro</h2>
+                                <h1 className="signup-title">Complete os dados para criar sua conta</h1>
                                 <div className="steps-list">
-                                    <button onClick={() => navigate('/signup/step1')}>
-                                        {completedSteps.step1 ? 'Etapa 1 Completa' : 'Preencher Etapa 1'}
-                                    </button>
-                                    <button onClick={() => navigate('/signup/step2')} disabled={!completedSteps.step1}>
-                                        {completedSteps.step2 ? 'Etapa 2 Completa' : 'Preencher Etapa 2'}
-                                    </button>
-                                    <button onClick={() => navigate('/signup/step3')} disabled={!completedSteps.step2}>
-                                        {completedSteps.step3 ? 'Etapa 3 Completa' : 'Preencher Etapa 3'}
-                                    </button>
-                                    <button onClick={completeSignup} disabled={!completedSteps.step1 || !completedSteps.step2 || !completedSteps.step3}>
-                                        Criar Conta
-                                    </button>
+                                    <StepButton
+                                        icon={iconStep1}
+                                        title="Etapa 1"
+                                        paragraph="Cadastro do E-mail e Telefone"
+                                        isVerified={completedSteps.step1}
+                                        onClick={() => navigate('/signup/step1')}
+                                    />
+                                    <StepButton
+                                        icon={iconStep2}
+                                        title="Etapa 2"
+                                        paragraph="Informações Pessoais"
+                                        isVerified={completedSteps.step2}
+                                        onClick={() => navigate('/signup/step2')}
+                                        disabled={!completedSteps.step1}
+                                    />
+                                    <StepButton
+                                        icon={iconStep3}
+                                        title="Etapa 3"
+                                        paragraph="Criar Senha"
+                                        isVerified={completedSteps.step3}
+                                        onClick={() => navigate('/signup/step3')}
+                                        disabled={!completedSteps.step2}
+                                    />
+                                    <PrivacyNotice />
+                                    <ConfirmationButton 
+                                        text="Criar Conta"
+                                        backgroundColor="#7B33E5"
+                                        onClick={completeSignup}
+                                        type="button"
+                                        disabled={!completedSteps.step1 || !completedSteps.step2 || !completedSteps.step3}
+                                    />
                                 </div>
                             </div>
                         } 
