@@ -59,6 +59,6 @@
 @media (max-width: 768px) {
     .notification {
         width: calc(100% - 64px); /* 32px de margem em cada lado */
-        margin-top: 20px;
+        margin-top: 27px;
     }
 }

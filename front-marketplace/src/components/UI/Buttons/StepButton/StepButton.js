@@ -11,7 +11,7 @@ const StepButton = ({ icon, title, paragraph, isVerified, onClick }) => {
                 <div className="step-button-icon-circle">
                     <img src={icon} alt="Step Icon" className="step-button-icon" />
                 </div>
-                <div className="step-button-text">
+                <div className="step-button-text roboto-regular">
                     <h3>{title}</h3>
                     <p>{paragraph}</p>
                 </div>

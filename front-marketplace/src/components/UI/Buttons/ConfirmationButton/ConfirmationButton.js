@@ -7,7 +7,7 @@ import './ConfirmationButton.css';
 const ConfirmationButton = ({ text, backgroundColor, icon, type, onClick, disabled }) => {
     return (
         <button
-            className="confirmation-button"
+            className="confirmation-button roboto-black"
             style={{ backgroundColor: disabled ? '#212121' : backgroundColor }}
             type={type}
             onClick={onClick}

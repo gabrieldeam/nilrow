@@ -10,8 +10,8 @@
     color: #fff;
     cursor: pointer;
     text-align: left;
-    margin-bottom: 10px;
-    border-radius: 10px;
+    margin-bottom: 5px;
+    border-radius: 5px;
 }
 
 .step-button-left {
@@ -20,7 +20,7 @@
 }
 
 .step-button-icon-circle {
-    width: 51px;
+    min-width: 51px;
     height: 51px;
     background-color: #D9D9D9;
     border-radius: 50%;
@@ -38,11 +38,14 @@
 .step-button-text h3 {
     font-size: 20px;
     margin: 0;
+    margin-bottom: 5px;
 }
 
 .step-button-text p {
     font-size: 15px;
     margin: 0;
+    color: #9F9F9F;
+    width: 92%;
 }
 
 .step-button-right {
