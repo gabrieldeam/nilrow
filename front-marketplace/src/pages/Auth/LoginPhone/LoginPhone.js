@@ -1,5 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 import CustomInput from '../../../components/UI/CustomInput/CustomInput';
 import Card from '../../../components/UI/Card/Card';
 import ConfirmationButton from '../../../components/UI/Buttons/ConfirmationButton/ConfirmationButton';
@@ -39,22 +41,34 @@ const LoginPhone = () => {
     };
 
     return (
-        <div className="login-page">
+        <div className="loginPhone-page">
             <Header />
             {showNotification && <Notification message={error} onClose={() => setShowNotification(false)} />}
-            <div className="login-container">
-                <h1 className="login-title">Entrar na nilrow</h1>
+            <div className="loginPhone-container">
+                <h1 className="loginPhone-title">Entrar na nilrow</h1>
                 <form onSubmit={handleSubmit}>
                     <Card 
                         title="Login"
                         rightLink={{ href: "/login", text: "Entrar com nome de usuário ou e-mail" }}
                     >
-                        <CustomInput 
-                            title="Telefone"
-                            onChange={(e) => setPhoneNumber(e.target.value)}
-                            value={phoneNumber}
-                            type="tel"
-                        />
+                        <div className="custom-input-container-loginPhone">
+                            <label className="input-title-loginPhone">Telefone</label>
+                                <PhoneInput
+                                    country={'br'}
+                                    value={phoneNumber}
+                                    onChange={(e) => setPhoneNumber(e.target.value)}
+                                    inputProps={{
+                                        name: 'phone',
+                                        required: true,
+                                        autoFocus: true
+                                    }}
+                                    inputClass="loginPhone-input"
+                                    buttonClass="loginPhone-input-button"
+                                    dropdownClass="loginPhone-input-dropdown"
+                                    containerClass="loginPhone-input-container"
+                                />
+                                <div className='space-loginPhone'></div>
+                        </div>
                         <CustomInput 
                             title="Senha"
                             bottomLeftText="Esqueceu sua senha?"

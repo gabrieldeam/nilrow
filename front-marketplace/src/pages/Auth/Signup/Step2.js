@@ -1,53 +1,99 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import CustomInput from '../../../components/UI/CustomInput/CustomInput';
+import Card from '../../../components/UI/Card/Card';
+import ConfirmationButton from '../../../components/UI/Buttons/ConfirmationButton/ConfirmationButton';
+import Notification from '../../../components/UI/Notification/Notification';
 
 const Step2 = ({ formData, setFormData, handleStepCompletion }) => {
+    const [isFormValid, setIsFormValid] = useState(false);
+    const [error, setError] = useState('');
+    const [showNotification, setShowNotification] = useState(false);
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
     };
 
+    useEffect(() => {
+        const { name, cpf, birthDate, nickname } = formData;
+        setIsFormValid(name !== '' && cpf !== '' && birthDate !== '' && nickname !== '');
+    }, [formData]);
+
     const navigate = useNavigate();
+
+    const validateCPF = (cpf) => {
+        const regex = /^\d{11}$/;
+        return regex.test(cpf);
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        if (!isFormValid) {
+            setError('Por favor, preencha todos os campos.');
+            setShowNotification(true);
+            return;
+        }
+
+        if (!validateCPF(formData.cpf)) {
+            setError('Por favor, insira um CPF válido.');
+            setShowNotification(true);
+            return;
+        }
+
         handleStepCompletion();
         navigate('/signup');
     };
 
     return (
         <div>
-            <h2>Etapa 2: Informações Pessoais</h2>
+            {showNotification && <Notification message={error} onClose={() => setShowNotification(false)} />}
             <form onSubmit={handleSubmit}>
-                <input
-                    type="text"
-                    name="name"
-                    placeholder="Nome"
-                    value={formData.name}
-                    onChange={handleChange}
-                />
-                <input
-                    type="text"
-                    name="cpf"
-                    placeholder="CPF"
-                    value={formData.cpf}
-                    onChange={handleChange}
-                />
-                <input
-                    type="date"
-                    name="birthDate"
-                    placeholder="Data de Nascimento"
-                    value={formData.birthDate}
-                    onChange={handleChange}
-                />
-                <input
-                    type="text"
-                    name="nickname"
-                    placeholder="Nickname"
-                    value={formData.nickname}
-                    onChange={handleChange}
-                />
-                <button type="submit">Salvar e Voltar</button>
+                <Card title="Dados">
+                    <CustomInput 
+                        title="Seu nome completo"
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                    />
+                    <CustomInput 
+                        title="CPF"
+                        type="text"
+                        name="cpf"
+                        value={formData.cpf}
+                        onChange={handleChange}
+                        bottomLeftText="Apenas números, sem pontos ou traços"
+                    />
+                </Card>
+                <Card title="Aniversário">
+                    <CustomInput 
+                        title="Digite sua data de nascimento"
+                        type="date"
+                        name="birthDate"
+                        value={formData.birthDate}
+                        onChange={handleChange}
+                    />
+                </Card>
+                <Card title="Identificação única">
+                    <CustomInput 
+                        title="Nome de usuário"
+                        type="text"
+                        name="nickname"
+                        value={formData.nickname}
+                        onChange={handleChange}
+                    />
+                </Card>
+                <div onClick={handleSubmit} style={{ width: '100%' }} className="confirmatioButton-space">
+                    <ConfirmationButton 
+                        text="Continuar"
+                        backgroundColor={isFormValid ? "#7B33E5" : "#212121"}
+                        type="button"
+                    />
+                </div>
+                <div className="login-link">
+                    <a href="/signup">Voltar sem salvar</a>
+                </div>
             </form>
         </div>
     );

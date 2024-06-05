@@ -4,7 +4,13 @@ import './StepButton.css';
 import verifiedIcon from '../../../../assets/verificacao.svg';
 import arrowIcon from '../../../../assets/setadireito.svg';
 
-const StepButton = ({ icon, title, paragraph, isVerified, onClick }) => {
+const StepButton = ({
+    icon,
+    title,
+    paragraph,
+    isVerified = false,
+    onClick
+}) => {
     return (
         <button className="step-button" onClick={onClick}>
             <div className="step-button-left">
@@ -30,10 +36,6 @@ StepButton.propTypes = {
     paragraph: PropTypes.string.isRequired,
     isVerified: PropTypes.bool,
     onClick: PropTypes.func.isRequired
-};
-
-StepButton.defaultProps = {
-    isVerified: false
 };
 
 export default StepButton;

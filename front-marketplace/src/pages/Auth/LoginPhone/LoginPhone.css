@@ -1,4 +1,4 @@
-.login-page {
+.loginPhone-page {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -8,14 +8,14 @@
     color: #fff;
 }
 
-.login-container {
+.loginPhone-container {
     width: 100%;
     max-width: 419px;
     padding: 6px;
     box-sizing: border-box;
 }
 
-.login-title {
+.loginPhone-title {
     font-size: 43px;
     font-family: 'Roboto', sans-serif;
     font-weight: 900; /* Roboto Black */
@@ -41,4 +41,43 @@
 
 .signup-link a:hover {
     text-decoration: underline;
+}
+
+
+.custom-input-container-loginPhone {
+    width: 100%;
+    margin: 8px 0;
+}
+
+.input-title-loginPhone {
+    display: block;
+    font-size: 15px;
+    color: #ffffff;
+    margin-bottom: 8px;
+}
+
+.loginPhone-input {
+    width: 100% !important;
+    height: 40px !important;
+    padding: 0 45px !important;
+    border: 1px solid #ffffff !important;
+    background-color: transparent !important;
+    color: #ffffff !important;
+    font-size: 15px !important;
+    box-sizing: border-box !important;
+    border-radius: 4px !important;
+}
+
+.loginPhone-input-button {
+    background-color: transparent !important;
+    border: none !important;
+}
+
+.loginPhone-input-dropdown {
+    background-color: #212121 !important;
+    color: #ffffff !important;
+}
+
+.space-loginPhone {
+    margin-bottom: 10px;
 }

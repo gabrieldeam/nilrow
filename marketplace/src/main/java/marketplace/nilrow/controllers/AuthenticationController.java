@@ -12,6 +12,7 @@ import marketplace.nilrow.infra.security.TokenService;
 import marketplace.nilrow.repositories.PeopleRepository;
 import marketplace.nilrow.repositories.UserRepository;
 import marketplace.nilrow.services.EmailService;
+import marketplace.nilrow.util.CookieUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -63,14 +64,7 @@ public class AuthenticationController {
 
             var token = tokenService.generateToken((User) auth.getPrincipal());
 
-            // Crie um cookie HttpOnly com o token
-            Cookie cookie = new Cookie("auth_token", token);
-            cookie.setHttpOnly(true);
-            cookie.setSecure(true); // Configure isso como true se estiver usando HTTPS
-            cookie.setPath("/");
-            cookie.setMaxAge(60 * 60 * 24); // Expira em 1 dia
-
-            response.addCookie(cookie);
+            CookieUtil.addAuthCookie(response, token);
 
             return ResponseEntity.ok().build();
         } catch (Exception e) {
@@ -87,14 +81,7 @@ public class AuthenticationController {
 
             var token = tokenService.generateToken((User) auth.getPrincipal());
 
-            // Crie um cookie HttpOnly com o token
-            Cookie cookie = new Cookie("auth_token", token);
-            cookie.setHttpOnly(true);
-            cookie.setSecure(true); // Configure isso como true se estiver usando HTTPS
-            cookie.setPath("/");
-            cookie.setMaxAge(60 * 60 * 24); // Expira em 1 dia
-
-            response.addCookie(cookie);
+            CookieUtil.addAuthCookie(response, token);
 
             return ResponseEntity.ok().build();
         } catch (Exception e) {

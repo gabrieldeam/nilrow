@@ -36,3 +36,123 @@
 .login-link a:hover {
     text-decoration: underline;
 }
+
+.confirmatioButton-space {
+    margin-top: 30px;
+}
+
+.custom-input-container-phone {
+    width: 100%;
+    margin: 8px 0;
+}
+
+.input-title-phone {
+    display: block;
+    font-size: 15px;
+    color: #ffffff;
+    margin-bottom: 8px;
+}
+
+.phone-input {
+    width: 100% !important;
+    height: 40px !important;
+    padding: 0 45px !important;
+    border: 1px solid #ffffff !important;
+    background-color: transparent !important;
+    color: #ffffff !important;
+    font-size: 15px !important;
+    box-sizing: border-box !important;
+    border-radius: 4px !important;
+}
+
+.phone-input-button {
+    background-color: transparent !important;
+    border: none !important;
+}
+
+.phone-input-dropdown {
+    background-color: #212121 !important;
+    color: #ffffff !important;
+}
+
+.input-bottom-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 15px;
+}
+
+.bottom-left-phone {
+    color: #656565;
+    margin-top: 8px;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+    color: #ffffff;
+    font-size: 16px;
+}
+
+.checkbox-container input[type="checkbox"] {
+    margin-right: 15px;
+    width: 30px;  
+    height: 30px; 
+    accent-color: #7B33E5;
+}
+
+
+
+
+
+.password-strength-bar {
+    height: 8px;
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 1px;
+    margin: 8px 0;
+    position: relative;
+    margin-top: -8px;
+}
+
+.password-strength-bar div {
+    height: 100%;
+    border-radius: 1px;
+    transition: width 0.3s ease-in-out;
+}
+
+.strength-0 {
+    width: 0%;
+    background-color: red;
+}
+
+.strength-1 {
+    width: 20%;
+    background-color: red;
+}
+
+.strength-2 {
+    width: 40%;
+    background-color: orange;
+}
+
+.strength-3 {
+    width: 60%;
+    background-color: yellow;
+}
+
+.strength-4 {
+    width: 80%;
+    background-color: lightgreen;
+}
+
+.strength-5 {
+    width: 100%;
+    background-color: green;
+}
+
+.password-strength-label {
+    text-align: right;
+    font-size: 14px;
+    color: #ffffff;
+}

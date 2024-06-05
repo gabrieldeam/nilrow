@@ -4,7 +4,7 @@ import './CustomInput.css';
 import eyeIcon from '../../../assets/olho.svg';
 import eyeOffIcon from '../../../assets/olhos-cruzado.svg';
 
-const CustomInput = ({ title, placeholder = '', bottomLeftText = '', bottomRightLink = null, onChange, value, type = 'text' }) => {
+const CustomInput = ({ title, placeholder = '', bottomLeftText = '', bottomRightLink = null, onChange, value, type = 'text', name }) => {
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
     const togglePasswordVisibility = () => {
@@ -21,6 +21,7 @@ const CustomInput = ({ title, placeholder = '', bottomLeftText = '', bottomRight
                     placeholder={placeholder} 
                     onChange={onChange} 
                     value={value}
+                    name={name} // Adiciona o name ao input
                 />
                 {type === 'password' && (
                     <img 
@@ -49,7 +50,8 @@ CustomInput.propTypes = {
     }),
     onChange: PropTypes.func.isRequired,
     value: PropTypes.string.isRequired,
-    type: PropTypes.string
+    type: PropTypes.string,
+    name: PropTypes.string.isRequired // Adiciona a prop name como requerida
 };
 
 export default CustomInput;

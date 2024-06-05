@@ -1,10 +1,15 @@
-/* src/components/UI/Buttons/ConfirmationButton/ConfirmationButton.js */
-
 import React from 'react';
 import PropTypes from 'prop-types';
 import './ConfirmationButton.css';
 
-const ConfirmationButton = ({ text, backgroundColor, icon, type, onClick, disabled }) => {
+const ConfirmationButton = ({
+    text,
+    backgroundColor,
+    icon = null,
+    type = 'button',
+    onClick = () => {},
+    disabled = false
+}) => {
     return (
         <button
             className="confirmation-button roboto-black"
@@ -26,12 +31,6 @@ ConfirmationButton.propTypes = {
     type: PropTypes.string,
     onClick: PropTypes.func,
     disabled: PropTypes.bool
-};
-
-ConfirmationButton.defaultProps = {
-    type: 'button',
-    onClick: () => {},
-    disabled: false
 };
 
 export default ConfirmationButton;

@@ -25,7 +25,6 @@ const Signup = () => {
         birthDate: '',
         nickname: '',
         password: '',
-        confirmPassword: ''
     });
 
     const [completedSteps, setCompletedSteps] = useState({

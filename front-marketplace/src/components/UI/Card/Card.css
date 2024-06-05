@@ -6,6 +6,7 @@
     background-color: #212121;
     color: #fff;
     box-sizing: border-box;
+    margin-bottom: 5px;
 }
 
 .card-header {
