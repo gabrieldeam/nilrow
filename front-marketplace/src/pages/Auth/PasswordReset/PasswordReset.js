@@ -1,7 +1,7 @@
 import React from 'react';
 import './PasswordReset.css';
-import Header from '../../../components/Auth/Header/Header';
-import Footer from '../../../components/Auth/Footer/Footer';
+import Header from '../../../components/Auth/AuthHeader/AuthHeader';
+import Footer from '../../../components/Auth/AuthFooter/AuthFooter';
 
 const PasswordReset = () => {
     return (

@@ -1,6 +1,6 @@
 /* src/components/Auth/Header/Header.css */
 
-.header {
+.authheader {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -16,21 +16,21 @@
     z-index: 1000; /* Garante que o header fique sobre outros elementos */
 }
 
-.header-left .logo {
+.authheader-left .logo {
     width: 149px;
     height: 30px;
 }
 
 /* Estilos para tablet */
 @media (max-width: 1024px) {
-    .header {
+    .authheader {
         padding: 32px 50px;
     }
 }
 
 /* Estilos para mobile */
 @media (max-width: 768px) {
-    .header {
+    .authheader {
         padding: 32px 20px;
     }
 }

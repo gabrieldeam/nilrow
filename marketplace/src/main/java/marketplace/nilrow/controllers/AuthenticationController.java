@@ -1,7 +1,6 @@
 package marketplace.nilrow.controllers;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -94,16 +93,16 @@ public class AuthenticationController {
     public ResponseEntity<?> register(@RequestBody @Valid RegisterDTO data) {
         try {
             if (this.repository.findByNickname(data.getNickname()) != null) {
-                throw new DuplicateFieldException("Nickname", "Nickname already exists");
+                throw new DuplicateFieldException("Nickname", "Nome de usuário já em uso");
             }
             if (this.peopleRepository.findByEmail(data.getEmail()) != null) {
-                throw new DuplicateFieldException("Email", "Email already exists");
+                throw new DuplicateFieldException("Email", "Email já em uso");
             }
             if (this.peopleRepository.findByCpf(data.getCpf()) != null) {
-                throw new DuplicateFieldException("CPF", "CPF already exists");
+                throw new DuplicateFieldException("CPF", "CPF já em uso");
             }
             if (this.peopleRepository.findByPhone(data.getPhone()) != null) {
-                throw new DuplicateFieldException("Phone", "Phone already exists");
+                throw new DuplicateFieldException("Phone", "Telefone já em uso");
             }
 
             String encryptedPassword = new BCryptPasswordEncoder().encode(data.getPassword());
@@ -202,5 +201,14 @@ public class AuthenticationController {
             logger.error("Logout failed", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    @GetMapping("/check")
+    public ResponseEntity<Void> checkAuthentication(HttpServletRequest request) {
+        String token = CookieUtil.extractAuthTokenFromRequest(request);
+        if (token == null || tokenService.validateToken(token) == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok().build();
     }
 }

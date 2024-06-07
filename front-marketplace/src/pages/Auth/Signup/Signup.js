@@ -9,8 +9,8 @@ import PrivacyNotice from '../../../components/Others/PrivacyNotice/PrivacyNotic
 import Notification from '../../../components/UI/Notification/Notification';
 import { NotificationContext } from '../../../context/NotificationContext';
 import './Signup.css';
-import Header from '../../../components/Auth/Header/Header';
-import Footer from '../../../components/Auth/Footer/Footer';
+import Header from '../../../components/Auth/AuthHeader/AuthHeader';
+import Footer from '../../../components/Auth/AuthFooter/AuthFooter';
 import { register } from '../../../services/api';
 import iconStep1 from '../../../assets/contato.svg';
 import iconStep2 from '../../../assets/user.svg';
@@ -25,6 +25,7 @@ const Signup = () => {
         birthDate: '',
         nickname: '',
         password: '',
+        confirmPassword: ''
     });
 
     const [completedSteps, setCompletedSteps] = useState({
@@ -38,8 +39,9 @@ const Signup = () => {
     const { setMessage } = useContext(NotificationContext);
     const navigate = useNavigate();
 
-    const handleStepCompletion = (step) => {
+    const handleStepCompletion = (step, data = {}) => {
         setCompletedSteps(prev => ({ ...prev, [step]: true }));
+        setFormData(prev => ({ ...prev, ...data }));
         console.log('Step completed:', step, completedSteps);
         navigate('/signup');
     };
@@ -57,12 +59,26 @@ const Signup = () => {
             return;
         }
 
+        const { confirmPassword, ...dataToSubmit } = formData;
+
         try {
-            await register(formData);
-            setMessage('Registro bem-sucedido!');
+            await register(dataToSubmit);
+            setMessage('Registro bem-sucedido! Agora Entre na nilrow');
             navigate('/login');
         } catch (error) {
-            setError(error.message || 'Erro ao registrar.');
+            const errorMessage = typeof error === 'object' && error !== null ? JSON.stringify(error) : error;
+            let formattedErrorMessage = errorMessage;
+
+            try {
+                const parsedError = JSON.parse(errorMessage);
+                if (typeof parsedError === 'object') {
+                    formattedErrorMessage = Object.values(parsedError).join(' ');
+                }
+            } catch (e) {
+                console.error('Error parsing error message:', e);
+            }
+
+            setError(formattedErrorMessage);
             setShowNotification(true);
         }
     };
@@ -129,7 +145,7 @@ const Signup = () => {
                     />
                     <Route path="contact-forms" element={<Step1 formData={formData} setFormData={setFormData} handleStepCompletion={() => handleStepCompletion('step1')} />} />
                     <Route path="personal-data" element={<Step2 formData={formData} setFormData={setFormData} handleStepCompletion={() => handleStepCompletion('step2')} />} />
-                    <Route path="create-password" element={<Step3 formData={formData} setFormData={setFormData} handleStepCompletion={() => handleStepCompletion('step3')} />} />
+                    <Route path="create-password" element={<Step3 formData={formData} setFormData={setFormData} handleStepCompletion={(step, data) => handleStepCompletion(step, data)} />} />
                 </Routes>
             </div>
             <Footer />

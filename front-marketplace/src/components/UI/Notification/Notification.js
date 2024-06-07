@@ -35,7 +35,7 @@ const Notification = ({ message, onClose, backgroundColor = '#DF1414' }) => {
 Notification.propTypes = {
     message: PropTypes.string.isRequired,
     onClose: PropTypes.func.isRequired,
-    backgroundColor: PropTypes.string, // Adiciona a prop backgroundColor
+    backgroundColor: PropTypes.string,
 };
 
 export default Notification;

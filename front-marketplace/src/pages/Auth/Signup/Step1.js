@@ -59,7 +59,7 @@ const Step1 = ({ formData, setFormData, handleStepCompletion }) => {
             return;
         }
 
-        handleStepCompletion();
+        handleStepCompletion('step1');
         navigate('/signup');
     };
 

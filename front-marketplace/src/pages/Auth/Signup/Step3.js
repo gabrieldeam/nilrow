@@ -83,7 +83,9 @@ const Step3 = ({ formData, setFormData, handleStepCompletion }) => {
             return;
         }
 
-        handleStepCompletion();
+        const { confirmPassword, ...dataToSubmit } = formData;
+
+        handleStepCompletion('step3', dataToSubmit);
         navigate('/signup');
     };
 
@@ -133,7 +135,7 @@ const Step3 = ({ formData, setFormData, handleStepCompletion }) => {
                 </Card>
                 <div onClick={handleSubmit} style={{ width: '100%' }} className="confirmatioButton-space">
                     <ConfirmationButton 
-                        text="Salvar e Voltar"
+                        text="Continuar"
                         backgroundColor={isFormValid ? "#7B33E5" : "#212121"}
                         type="button"
                     />

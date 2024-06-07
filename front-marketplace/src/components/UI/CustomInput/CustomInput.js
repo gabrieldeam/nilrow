@@ -4,7 +4,7 @@ import './CustomInput.css';
 import eyeIcon from '../../../assets/olho.svg';
 import eyeOffIcon from '../../../assets/olhos-cruzado.svg';
 
-const CustomInput = ({ title, placeholder = '', bottomLeftText = '', bottomRightLink = null, onChange, value, type = 'text', name }) => {
+const CustomInput = ({ title, placeholder = '', bottomLeftText = '', bottomRightLink = null, onChange, value = '', type = 'text', name = '', isValid, prefix }) => {
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
     const togglePasswordVisibility = () => {
@@ -15,13 +15,15 @@ const CustomInput = ({ title, placeholder = '', bottomLeftText = '', bottomRight
         <div className="custom-input-container">
             {title && <label className="input-title">{title}</label>}
             <div className="input-wrapper">
+                {prefix && <span className="input-prefix">{prefix}</span>}
                 <input 
                     type={isPasswordVisible && type === 'password' ? 'text' : type}
-                    className="custom-input" 
+                    className={`custom-input ${isValid === true ? 'valid' : isValid === false ? 'invalid' : ''}`} 
                     placeholder={placeholder} 
                     onChange={onChange} 
                     value={value}
-                    name={name} // Adiciona o name ao input
+                    name={name}
+                    style={{ paddingLeft: prefix ? '106px' : '14px' }} // Ajuste condicional do padding
                 />
                 {type === 'password' && (
                     <img 
@@ -49,9 +51,11 @@ CustomInput.propTypes = {
         text: PropTypes.string
     }),
     onChange: PropTypes.func.isRequired,
-    value: PropTypes.string.isRequired,
+    value: PropTypes.string,
     type: PropTypes.string,
-    name: PropTypes.string.isRequired // Adiciona a prop name como requerida
+    name: PropTypes.string,
+    isValid: PropTypes.bool,
+    prefix: PropTypes.string 
 };
 
 export default CustomInput;

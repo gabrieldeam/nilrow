@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import './Footer.css';
+import './AuthFooter.css';
 
 const Footer = ({ initialOpenState = false }) => {
     const [isOpen, setIsOpen] = useState(initialOpenState);
@@ -14,12 +14,12 @@ const Footer = ({ initialOpenState = false }) => {
     };
 
     return (
-        <div className={`footer-container ${isOpen ? 'open' : 'closed'}`}>
+        <div className={`authfooter-container ${isOpen ? 'open' : 'closed'}`}>
             <button className="toggle-button roboto-medium" onClick={toggleFooter}>
                 {isOpen ? 'Menos informações' : 'Mais informações'}
             </button>
             {isOpen && (
-                <div className="footer-content">
+                <div className="authfooter-content">
                     <p>Aqui vão as informações detalhadas do rodapé...</p>
                 </div>
             )}

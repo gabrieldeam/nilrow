@@ -1,30 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CustomInput from '../../../components/UI/CustomInput/CustomInput';
+import DateInput from '../../../components/UI/DateInput/DateInput';
 import Card from '../../../components/UI/Card/Card';
 import ConfirmationButton from '../../../components/UI/Buttons/ConfirmationButton/ConfirmationButton';
 import Notification from '../../../components/UI/Notification/Notification';
 
 const Step2 = ({ formData, setFormData, handleStepCompletion }) => {
     const [isFormValid, setIsFormValid] = useState(false);
+    const [nicknameValid, setNicknameValid] = useState(null);
     const [error, setError] = useState('');
     const [showNotification, setShowNotification] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
+        if (name === 'nickname') {
+            validateNickname(value);
+        }
     };
 
     useEffect(() => {
         const { name, cpf, birthDate, nickname } = formData;
-        setIsFormValid(name !== '' && cpf !== '' && birthDate !== '' && nickname !== '');
-    }, [formData]);
+        setIsFormValid(name !== '' && cpf !== '' && birthDate !== '' && nickname !== '' && nicknameValid);
+    }, [formData, nicknameValid]);
 
     const navigate = useNavigate();
 
     const validateCPF = (cpf) => {
         const regex = /^\d{11}$/;
         return regex.test(cpf);
+    };
+
+    const validateNickname = (nickname) => {
+        const regex = /^[a-z][a-z0-9._]{2,28}[a-z0-9]$/;
+        const hasNoConsecutiveSpecialChars = !/([._])\1/.test(nickname);
+        setNicknameValid(regex.test(nickname) && hasNoConsecutiveSpecialChars);
     };
 
     const handleSubmit = (e) => {
@@ -41,7 +52,7 @@ const Step2 = ({ formData, setFormData, handleStepCompletion }) => {
             return;
         }
 
-        handleStepCompletion();
+        handleStepCompletion('step2');
         navigate('/signup');
     };
 
@@ -67,12 +78,11 @@ const Step2 = ({ formData, setFormData, handleStepCompletion }) => {
                     />
                 </Card>
                 <Card title="Aniversário">
-                    <CustomInput 
-                        title="Digite sua data de nascimento"
-                        type="date"
+                    <DateInput 
                         name="birthDate"
                         value={formData.birthDate}
                         onChange={handleChange}
+                        bottomLeftText="Sua data de nascimento não será divulgada."
                     />
                 </Card>
                 <Card title="Identificação única">
@@ -82,6 +92,8 @@ const Step2 = ({ formData, setFormData, handleStepCompletion }) => {
                         name="nickname"
                         value={formData.nickname}
                         onChange={handleChange}
+                        isValid={nicknameValid}
+                        prefix="nilrow.com/@"
                     />
                 </Card>
                 <div onClick={handleSubmit} style={{ width: '100%' }} className="confirmatioButton-space">

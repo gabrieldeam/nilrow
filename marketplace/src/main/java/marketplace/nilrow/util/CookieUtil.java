@@ -1,6 +1,7 @@
 package marketplace.nilrow.util;
 
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 public class CookieUtil {
@@ -11,7 +12,18 @@ public class CookieUtil {
         cookie.setSecure(true); // Configure isso como true se estiver usando HTTPS
         cookie.setPath("/");
         cookie.setMaxAge(60 * 60 * 24); // Expira em 1 dia
-
         response.addCookie(cookie);
+    }
+
+    public static String extractAuthTokenFromRequest(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("auth_token".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
     }
 }

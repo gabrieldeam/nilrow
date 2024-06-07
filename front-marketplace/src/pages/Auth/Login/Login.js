@@ -4,12 +4,12 @@ import CustomInput from '../../../components/UI/CustomInput/CustomInput';
 import Card from '../../../components/UI/Card/Card';
 import ConfirmationButton from '../../../components/UI/Buttons/ConfirmationButton/ConfirmationButton';
 import PrivacyNotice from '../../../components/Others/PrivacyNotice/PrivacyNotice';
-import Notification from '../../../components/UI/Notification/Notification';
 import { login } from '../../../services/api';
-import { NotificationContext } from '../../../context/NotificationContext'; // Certifique-se de que o caminho está correto
+import Notification from '../../../components/UI/Notification/Notification'; 
+import { NotificationContext } from '../../../context/NotificationContext'; 
 import './Login.css';
-import Header from '../../../components/Auth/Header/Header';
-import Footer from '../../../components/Auth/Footer/Footer';
+import Header from '../../../components/Auth/AuthHeader/AuthHeader';
+import Footer from '../../../components/Auth/AuthFooter/AuthFooter';
 
 const Login = () => {
     const [emailOrUsername, setEmailOrUsername] = useState('');

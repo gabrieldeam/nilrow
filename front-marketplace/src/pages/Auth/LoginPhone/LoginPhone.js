@@ -10,8 +10,8 @@ import Notification from '../../../components/UI/Notification/Notification';
 import { loginWithPhone } from '../../../services/api';
 import { NotificationContext } from '../../../context/NotificationContext';
 import './LoginPhone.css';
-import Header from '../../../components/Auth/Header/Header';
-import Footer from '../../../components/Auth/Footer/Footer';
+import Header from '../../../components/Auth/AuthHeader/AuthHeader';
+import Footer from '../../../components/Auth/AuthFooter/AuthFooter';
 
 const LoginPhone = () => {
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -53,21 +53,21 @@ const LoginPhone = () => {
                     >
                         <div className="custom-input-container-loginPhone">
                             <label className="input-title-loginPhone">Telefone</label>
-                                <PhoneInput
-                                    country={'br'}
-                                    value={phoneNumber}
-                                    onChange={(e) => setPhoneNumber(e.target.value)}
-                                    inputProps={{
-                                        name: 'phone',
-                                        required: true,
-                                        autoFocus: true
-                                    }}
-                                    inputClass="loginPhone-input"
-                                    buttonClass="loginPhone-input-button"
-                                    dropdownClass="loginPhone-input-dropdown"
-                                    containerClass="loginPhone-input-container"
-                                />
-                                <div className='space-loginPhone'></div>
+                            <PhoneInput
+                                country={'br'}
+                                value={phoneNumber}
+                                onChange={setPhoneNumber}
+                                inputProps={{
+                                    name: 'phone',
+                                    required: true,
+                                    autoFocus: true
+                                }}
+                                inputClass="loginPhone-input"
+                                buttonClass="loginPhone-input-button"
+                                dropdownClass="loginPhone-input-dropdown"
+                                containerClass="loginPhone-input-container"
+                            />
+                            <div className='space-loginPhone'></div>
                         </div>
                         <CustomInput 
                             title="Senha"

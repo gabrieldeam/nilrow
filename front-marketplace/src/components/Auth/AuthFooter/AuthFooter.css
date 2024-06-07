@@ -1,6 +1,4 @@
-/* src/components/Auth/Footer/Footer.css */
-
-.footer-container {
+.authfooter-container {
     position: fixed;
     bottom: 0;
     width: 100%;
@@ -9,12 +7,12 @@
     color: #ffffff;
 }
 
-.footer-container.closed {
+.authfooter-container.closed {
     height: 40px; /* Altura do botão fechado */
     overflow: hidden;
 }
 
-.footer-container.open {
+.authfooter-container.open {
     height: 200px; /* Altura do rodapé aberto */
 }
 
@@ -29,6 +27,6 @@
     text-align: center;
 }
 
-.footer-content {
+.authfooter-content {
     padding: 20px;
 }
