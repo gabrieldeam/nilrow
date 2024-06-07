@@ -11,7 +11,6 @@ import marketplace.nilrow.infra.security.TokenService;
 import marketplace.nilrow.repositories.PeopleRepository;
 import marketplace.nilrow.repositories.UserRepository;
 import marketplace.nilrow.services.EmailService;
-import marketplace.nilrow.util.CookieUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -56,16 +55,14 @@ public class AuthenticationController {
     private String frontendBaseUrl;
 
     @PostMapping("/login")
-    public ResponseEntity<Void> login(@RequestBody @Valid AuthenticationDTO data, HttpServletResponse response) {
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid AuthenticationDTO data) {
         try {
             var usernamePassword = new UsernamePasswordAuthenticationToken(data.login(), data.password());
             var auth = this.authenticationManager.authenticate(usernamePassword);
 
             var token = tokenService.generateToken((User) auth.getPrincipal());
 
-            CookieUtil.addAuthCookie(response, token);
-
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok(new LoginResponseDTO(token));
         } catch (Exception e) {
             logger.error("Login failed", e);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -73,16 +70,14 @@ public class AuthenticationController {
     }
 
     @PostMapping("/login-phone")
-    public ResponseEntity<Void> loginWithPhone(@RequestBody @Valid PhoneAuthenticationDTO data, HttpServletResponse response) {
+    public ResponseEntity<LoginResponseDTO> loginWithPhone(@RequestBody @Valid PhoneAuthenticationDTO data) {
         try {
             var usernamePassword = new UsernamePasswordAuthenticationToken(data.phone(), data.password());
             var auth = this.authenticationManager.authenticate(usernamePassword);
 
             var token = tokenService.generateToken((User) auth.getPrincipal());
 
-            CookieUtil.addAuthCookie(response, token);
-
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok(new LoginResponseDTO(token));
         } catch (Exception e) {
             logger.error("Login with phone failed", e);
             throw new UsernameNotFoundException("Invalid phone number or password");
@@ -205,7 +200,7 @@ public class AuthenticationController {
 
     @GetMapping("/check")
     public ResponseEntity<Void> checkAuthentication(HttpServletRequest request) {
-        String token = CookieUtil.extractAuthTokenFromRequest(request);
+        String token = tokenService.extractTokenFromRequest(request);
         if (token == null || tokenService.validateToken(token) == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
