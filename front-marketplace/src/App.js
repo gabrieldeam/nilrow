@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
+import React, { useContext } from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Home from './pages/Home';
 import Login from './pages/Auth/Login/Login';
 import LoginPhone from './pages/Auth/LoginPhone/LoginPhone';
@@ -8,45 +8,12 @@ import PasswordReset from './pages/Auth/PasswordReset/PasswordReset';
 import { NotificationProvider, NotificationContext } from './context/NotificationContext';
 import Notification from './components/UI/Notification/Notification';
 import ProtectedLoginRoute from './components/Others/ProtectedRoute/ProtectedLoginRoute';
-import { checkAuth } from './services/api';
 import './styles/global.css';
+import useAuth from './hooks/useAuth';
 
 const AppContent = () => {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const isAuthenticated = useAuth();
     const { message, setMessage } = useContext(NotificationContext);
-    const navigate = useNavigate();
-
-    useEffect(() => {
-        const authenticate = async () => {
-            try {
-                const response = await checkAuth();
-                if (response) {
-                    setIsAuthenticated(true);
-                } else {
-                    setIsAuthenticated(false);
-                }
-            } catch (error) {
-                console.error('Erro na autenticação: ', error);
-                setIsAuthenticated(false);
-            }
-        };
-        authenticate();
-    }, []);
-
-    useEffect(() => {
-        if (message) {
-            const timer = setTimeout(() => {
-                setMessage('');
-            }, 5000); // Duração da notificação
-            return () => clearTimeout(timer); // Limpar o timer ao desmontar
-        }
-    }, [message, setMessage]);
-
-    useEffect(() => {
-        if (isAuthenticated) {
-            navigate('/');
-        }
-    }, [isAuthenticated, navigate]);
 
     return (
         <>
@@ -61,12 +28,15 @@ const AppContent = () => {
                     <ProtectedLoginRoute isAuthenticated={isAuthenticated}><LoginPhone /></ProtectedLoginRoute>
                     }
                 />
-                <Route path="/signup/*" element={<Signup />} />
+                <Route path="/signup/*" element={
+                    <ProtectedLoginRoute isAuthenticated={isAuthenticated}><Signup /></ProtectedLoginRoute>
+                    }
+                />
                 <Route path="/password-reset" element={<PasswordReset />} />
             </Routes>
         </>
     );
-}
+};
 
 function App() {
     return (
