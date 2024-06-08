@@ -34,7 +34,7 @@ public class SecurityFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
-        var token = this.extractTokenFromRequest(request);
+        var token = tokenService.extractTokenFromRequest(request); // Atualizado para usar o método correto
         if (token != null) {
             if (!tokenService.isBlacklisted(token)) { // Verifica se o token não está na lista negra
                 var login = tokenService.validateToken(token);
@@ -60,13 +60,5 @@ public class SecurityFilter extends OncePerRequestFilter {
             }
         }
         filterChain.doFilter(request, response);
-    }
-
-    private String extractTokenFromRequest(HttpServletRequest request) {
-        var authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.replace("Bearer ", "");
-        }
-        return null;
     }
 }

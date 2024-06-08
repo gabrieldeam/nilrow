@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NotificationContext } from '../context/NotificationContext';
-import { checkAuth } from '../services/api';
+import { checkAuth, logout } from '../services/api';
 
 const useAuth = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -22,13 +22,23 @@ const useAuth = () => {
     }, []);
 
     useEffect(() => {
-        if (isAuthenticated && (window.location.pathname === '/login' || window.location.pathname === '/login-phone')) {
+        if (isAuthenticated && (window.location.pathname === '/login' || window.location.pathname === '/login-phone' || window.location.pathname.startsWith('/signup'))) {
             setMessage('Você já está autenticado.');
             navigate('/');
         }
     }, [isAuthenticated, navigate, setMessage]);
 
-    return isAuthenticated;
+    const handleLogout = async () => {
+        try {
+            await logout();
+            setIsAuthenticated(false);
+            navigate('/login');
+        } catch (error) {
+            console.error('Erro ao fazer logout: ', error);
+        }
+    };
+
+    return { isAuthenticated, handleLogout };
 };
 
 export default useAuth;

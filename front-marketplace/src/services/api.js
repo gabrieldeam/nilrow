@@ -5,10 +5,27 @@ const api = axios.create({
     withCredentials: true,
 });
 
+export const sendResetCode = async (email) => {
+    try {
+        const response = await api.post('/auth/forgot-password', { email });
+        return response.data;
+    } catch (error) {
+        throw error.response.data;
+    }
+};
+
+export const resetPassword = async (data) => {
+    try {
+        const response = await api.post('/auth/reset-password', data);
+        return response.data;
+    } catch (error) {
+        throw error.response.data;
+    }
+};
+
 export const login = async (login, password) => {
     try {
         const response = await api.post('/auth/login', { login, password });
-        localStorage.setItem('auth_token', response.data.token);
         return response.data;
     } catch (error) {
         throw error.response.data;
@@ -18,7 +35,6 @@ export const login = async (login, password) => {
 export const loginWithPhone = async (phone, password) => {
     try {
         const response = await api.post('/auth/login-phone', { phone, password });
-        localStorage.setItem('auth_token', response.data.token);
         return response.data;
     } catch (error) {
         throw error.response.data;
@@ -36,19 +52,20 @@ export const register = async (data) => {
 
 export const checkAuth = async () => {
     try {
-        const token = localStorage.getItem('auth_token');
-        if (!token) {
-            return { isAuthenticated: false };
-        }
-        const response = await api.get('/auth/check', {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
+        const response = await api.get('/auth/check');
         return { isAuthenticated: response.status === 200 };
     } catch (error) {
         console.error('Erro do axios: ', error);
         return { isAuthenticated: false };
+    }
+};
+
+export const logout = async () => {
+    try {
+        const response = await api.post('/auth/logout');
+        return response.data;
+    } catch (error) {
+        throw error.response.data;
     }
 };
 

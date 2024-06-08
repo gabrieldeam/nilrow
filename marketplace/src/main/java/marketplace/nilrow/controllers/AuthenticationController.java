@@ -1,6 +1,7 @@
 package marketplace.nilrow.controllers;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -11,6 +12,7 @@ import marketplace.nilrow.infra.security.TokenService;
 import marketplace.nilrow.repositories.PeopleRepository;
 import marketplace.nilrow.repositories.UserRepository;
 import marketplace.nilrow.services.EmailService;
+import marketplace.nilrow.util.CookieUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -55,14 +57,16 @@ public class AuthenticationController {
     private String frontendBaseUrl;
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid AuthenticationDTO data) {
+    public ResponseEntity<Void> login(@RequestBody @Valid AuthenticationDTO data, HttpServletResponse response) {
         try {
             var usernamePassword = new UsernamePasswordAuthenticationToken(data.login(), data.password());
             var auth = this.authenticationManager.authenticate(usernamePassword);
 
             var token = tokenService.generateToken((User) auth.getPrincipal());
 
-            return ResponseEntity.ok(new LoginResponseDTO(token));
+            CookieUtil.addAuthCookie(response, token);
+
+            return ResponseEntity.ok().build();
         } catch (Exception e) {
             logger.error("Login failed", e);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -70,14 +74,16 @@ public class AuthenticationController {
     }
 
     @PostMapping("/login-phone")
-    public ResponseEntity<LoginResponseDTO> loginWithPhone(@RequestBody @Valid PhoneAuthenticationDTO data) {
+    public ResponseEntity<Void> loginWithPhone(@RequestBody @Valid PhoneAuthenticationDTO data, HttpServletResponse response) {
         try {
             var usernamePassword = new UsernamePasswordAuthenticationToken(data.phone(), data.password());
             var auth = this.authenticationManager.authenticate(usernamePassword);
 
             var token = tokenService.generateToken((User) auth.getPrincipal());
 
-            return ResponseEntity.ok(new LoginResponseDTO(token));
+            CookieUtil.addAuthCookie(response, token);
+
+            return ResponseEntity.ok().build();
         } catch (Exception e) {
             logger.error("Login with phone failed", e);
             throw new UsernameNotFoundException("Invalid phone number or password");
@@ -146,8 +152,8 @@ public class AuthenticationController {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@RequestBody @RequestParam("email") String email) {
-        People people = peopleRepository.findByEmail(email);
+    public ResponseEntity<?> forgotPassword(@RequestBody @Valid ForgotPasswordDTO data) {
+        People people = peopleRepository.findByEmail(data.getEmail());
         if (people == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Email not found");
         }
@@ -159,7 +165,7 @@ public class AuthenticationController {
         String emailBody = "Seu código de redefinição de senha é: " + resetCode;
 
         try {
-            emailService.sendHtmlEmail(email, "Redefinição de Senha", emailBody);
+            emailService.sendHtmlEmail(data.getEmail(), "Redefinição de Senha", emailBody);
             return ResponseEntity.ok("Código de redefinição enviado para o email.");
         } catch (Exception e) {
             logger.error("Error sending reset password email", e);
@@ -187,10 +193,13 @@ public class AuthenticationController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(HttpServletRequest request) {
+    public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
         try {
+            CookieUtil.removeAuthCookie(response);
             String token = tokenService.extractTokenFromRequest(request);
-            tokenService.addToBlacklist(token);
+            if (token != null) {
+                tokenService.addToBlacklist(token);
+            }
             return ResponseEntity.ok("Desconectado com sucesso");
         } catch (Exception e) {
             logger.error("Logout failed", e);

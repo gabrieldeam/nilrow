@@ -1,9 +1,9 @@
 .notification {
     position: fixed;
-    top: 0px; /* Ajuste conforme necessário para ficar abaixo do header */
+    top: 27px;
     left: 50%;
     transform: translateX(-50%);
-    width: calc(100% - 64px); /* Reduz 32px de cada lado */
+    width: calc(100% - 64px);
     max-width: 450px;
     height: 55px;
     color: white;
@@ -12,7 +12,7 @@
     justify-content: space-between;
     border-radius: 100px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    z-index: 1100; /* Garante que a notificação fique sobre o header */
+    z-index: 1100; 
     padding: 0 20px;
     box-sizing: border-box;
 }
@@ -57,7 +57,7 @@
 /* Estilos para mobile */
 @media (max-width: 768px) {
     .notification {
-        width: calc(100% - 64px); /* 32px de margem em cada lado */
-        margin-top: 27px;
+        width: calc(100% - 64px); 
+        top: 27px;
     }
 }

@@ -12,7 +12,7 @@ import './styles/global.css';
 import useAuth from './hooks/useAuth';
 
 const AppContent = () => {
-    const isAuthenticated = useAuth();
+    const { isAuthenticated } = useAuth();
     const { message, setMessage } = useContext(NotificationContext);
 
     return (

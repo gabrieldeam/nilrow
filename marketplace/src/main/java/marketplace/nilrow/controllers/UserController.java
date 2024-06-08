@@ -1,12 +1,14 @@
 package marketplace.nilrow.controllers;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import marketplace.nilrow.domain.user.LoginResponseDTO;
 import marketplace.nilrow.domain.user.UpdateNicknameDTO;
 import marketplace.nilrow.domain.user.User;
 import marketplace.nilrow.infra.exception.DuplicateFieldException;
 import marketplace.nilrow.infra.security.TokenService;
 import marketplace.nilrow.repositories.UserRepository;
+import marketplace.nilrow.util.CookieUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -32,7 +34,7 @@ public class UserController {
     }
 
     @PutMapping("/nickname")
-    public ResponseEntity<LoginResponseDTO> updateNickname(@RequestBody UpdateNicknameDTO updateNicknameDTO) {
+    public ResponseEntity<Void> updateNickname(@RequestBody UpdateNicknameDTO updateNicknameDTO, HttpServletResponse response) {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = (User) userRepository.findByNickname(userDetails.getUsername());
 
@@ -47,7 +49,9 @@ public class UserController {
         // Gerar novo token
         String newToken = tokenService.generateToken(user);
 
-        // Retornar o novo token ao usuário
-        return ResponseEntity.ok(new LoginResponseDTO(newToken));
+        // Adicionar o novo token no cookie
+        CookieUtil.addAuthCookie(response, newToken);
+
+        return ResponseEntity.ok().build();
     }
 }

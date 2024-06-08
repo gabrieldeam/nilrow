@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CustomInput from '../../../components/UI/CustomInput/CustomInput';
-import DateInput from '../../../components/UI/DateInput/DateInput';
+import DateInput from '../../../components/UI/Inputs/DateInput/DateInput';
 import Card from '../../../components/UI/Card/Card';
 import ConfirmationButton from '../../../components/UI/Buttons/ConfirmationButton/ConfirmationButton';
 import Notification from '../../../components/UI/Notification/Notification';
@@ -57,7 +57,7 @@ const Step2 = ({ formData, setFormData, handleStepCompletion }) => {
     };
 
     return (
-        <div>
+        <div className="padding-stpe2">
             {showNotification && <Notification message={error} onClose={() => setShowNotification(false)} />}
             <form onSubmit={handleSubmit}>
                 <Card title="Dados">
