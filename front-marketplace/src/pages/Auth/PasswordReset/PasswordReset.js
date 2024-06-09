@@ -8,6 +8,7 @@ import CodeInput from '../../../components/UI/Inputs/CodeInput/CodeInput'; // Im
 import { sendResetCode, resetPassword } from '../../../services/api';
 import Notification from '../../../components/UI/Notification/Notification'; 
 import { NotificationContext } from '../../../context/NotificationContext'; 
+import LoadingSpinner from '../../../components/UI/LoadingSpinner/LoadingSpinner'; // Importação do componente de carregamento
 import './PasswordReset.css';
 
 const PasswordReset = () => {
@@ -15,6 +16,7 @@ const PasswordReset = () => {
     const [resetCode, setResetCode] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [codeSent, setCodeSent] = useState(false);
+    const [loading, setLoading] = useState(false); // Estado de carregamento
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
     const [showNotification, setShowNotification] = useState(false);
@@ -28,6 +30,7 @@ const PasswordReset = () => {
             setShowNotification(true);
             return;
         }
+        setLoading(true); // Ativar carregamento
         try {
             await sendResetCode(email);
             setCodeSent(true);
@@ -38,6 +41,8 @@ const PasswordReset = () => {
             setSuccessMessage('');
             setError('Erro ao enviar código de redefinição. Verifique o e-mail e tente novamente.');
             setShowNotification(true);
+        } finally {
+            setLoading(false); // Desativar carregamento
         }
     };
 
@@ -48,6 +53,7 @@ const PasswordReset = () => {
             setShowNotification(true);
             return;
         }
+        setLoading(true); // Ativar carregamento
         try {
             await resetPassword({ email, resetCode, newPassword });
             setError('');
@@ -58,10 +64,13 @@ const PasswordReset = () => {
             setSuccessMessage('');
             setError('Erro ao redefinir senha. Verifique o código e tente novamente.');
             setShowNotification(true);
+        } finally {
+            setLoading(false); // Desativar carregamento
         }
     };
 
     const handleResendCode = async () => {
+        setLoading(true); // Ativar carregamento
         try {
             await sendResetCode(email);
             setSuccessMessage('Novo código de redefinição enviado para o seu e-mail.');
@@ -70,11 +79,14 @@ const PasswordReset = () => {
             setSuccessMessage('');
             setError('Erro ao enviar novo código de redefinição. Verifique o e-mail e tente novamente.');
             setShowNotification(true);
+        } finally {
+            setLoading(false); // Desativar carregamento
         }
     };
 
     return (
         <div className="password-reset-page">
+            {loading && <LoadingSpinner />} {/* Componente de carregamento */}
             {showNotification && (error || successMessage) && (
                 <Notification 
                     message={error || successMessage} 

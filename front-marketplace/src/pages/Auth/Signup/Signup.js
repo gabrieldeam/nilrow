@@ -8,6 +8,7 @@ import ConfirmationButton from '../../../components/UI/Buttons/ConfirmationButto
 import PrivacyNotice from '../../../components/Others/PrivacyNotice/PrivacyNotice';
 import Notification from '../../../components/UI/Notification/Notification';
 import { NotificationContext } from '../../../context/NotificationContext';
+import LoadingSpinner from '../../../components/UI/LoadingSpinner/LoadingSpinner'; // Importação do componente de carregamento
 import './Signup.css';
 import { register } from '../../../services/api';
 import iconStep1 from '../../../assets/contato.svg';
@@ -34,6 +35,7 @@ const Signup = () => {
 
     const [error, setError] = useState('');
     const [showNotification, setShowNotification] = useState(false);
+    const [loading, setLoading] = useState(false); // Estado de carregamento
     const { setMessage } = useContext(NotificationContext);
     const navigate = useNavigate();
 
@@ -58,6 +60,7 @@ const Signup = () => {
         }
 
         const { confirmPassword, ...dataToSubmit } = formData;
+        setLoading(true);
 
         try {
             await register(dataToSubmit);
@@ -78,6 +81,8 @@ const Signup = () => {
 
             setError(formattedErrorMessage);
             setShowNotification(true);
+        } finally {
+            setLoading(false); // Desativar carregamento
         }
     };
 
@@ -93,6 +98,7 @@ const Signup = () => {
 
     return (
         <div className="signup-page">
+            {loading && <LoadingSpinner />} {/* Componente de carregamento */}
             {showNotification && <Notification message={error} onClose={() => setShowNotification(false)} />}
             <div className="signup-container">
                 <Routes>

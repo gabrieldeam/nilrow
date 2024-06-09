@@ -1,4 +1,6 @@
 /* src/styles/global.css */
+/* index.css ou App.css */
+@import 'leaflet/dist/leaflet.css';
 
 body, html {
     background-color: #000000;

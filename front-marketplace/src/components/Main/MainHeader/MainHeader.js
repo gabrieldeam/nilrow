@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './MainHeader.css';
 import HeaderButton from '../../UI/Buttons/HeaderButton/HeaderButton';
@@ -12,12 +12,24 @@ import bagIcon from '../../../assets/bag.svg';
 import chatIcon from '../../../assets/chat.svg';
 import profileIcon from '../../../assets/profile.svg';
 import useAuth from '../../../hooks/useAuth';
+import { LocationContext } from '../../../context/LocationContext';
+import ModalInfoAddress from '../../Others/ModalInfoAddres/ModalInfoAddress';
 
 const MainHeader = () => {
     const { isAuthenticated } = useAuth();
+    const { location } = useContext(LocationContext);
     const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
-    const location = useLocation();
+    const currentLocation = useLocation();
+    const addressButtonRef = useRef(null);
+    const [buttonPosition, setButtonPosition] = useState({ top: 0, left: 0 });
+
+    useEffect(() => {
+        if (addressButtonRef.current) {
+            const rect = addressButtonRef.current.getBoundingClientRect();
+            setButtonPosition({ top: rect.bottom + window.scrollY, left: rect.left + window.scrollX });
+        }
+    }, []);
 
     const handleSearchSubmit = (e) => {
         e.preventDefault();
@@ -28,7 +40,7 @@ const MainHeader = () => {
         }
     };
 
-    const getIsActive = (path) => location.pathname === path;
+    const getIsActive = (path) => currentLocation.pathname === path;
 
     return (
         <header className="mainheader">
@@ -42,10 +54,10 @@ const MainHeader = () => {
                     </button>
                     <input 
                         type="text" 
-                        placeholder="Search..." 
+                        placeholder="Pesquisar..." 
                         value={searchTerm} 
                         onChange={(e) => setSearchTerm(e.target.value)} 
-                        className="search-input" 
+                        className="search-input roboto-medium" 
                     />
                 </form>
             </div>
@@ -53,7 +65,14 @@ const MainHeader = () => {
                 <ProtectedLink to="/create">
                     <HeaderButton icon={createIcon} isActive={getIsActive('/create')} />
                 </ProtectedLink>
-                <HeaderButton icon={addressIcon} link="/address" text="Address" isActive={getIsActive('/address')} />
+                <HeaderButton 
+                    id="address-button" 
+                    ref={addressButtonRef} 
+                    icon={addressIcon} 
+                    link="/address" 
+                    text={location.city ? `${location.city} - ${location.zip}` : "Atualizar local"} 
+                    isActive={getIsActive('/address')} 
+                />
                 <ProtectedLink to="/bag">
                     <HeaderButton icon={bagIcon} isActive={getIsActive('/bag')} />
                 </ProtectedLink>
@@ -65,6 +84,7 @@ const MainHeader = () => {
                 )}
                 {!isAuthenticated && <LoginButton text="Login" link="/login" />}
             </div>
+            <ModalInfoAddress buttonPosition={buttonPosition} />
         </header>
     );
 }

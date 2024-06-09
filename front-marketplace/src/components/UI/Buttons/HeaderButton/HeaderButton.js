@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './HeaderButton.css';
 
-const HeaderButton = ({ text, icon, link, newTab = false, isActive = false }) => {
+const HeaderButton = React.forwardRef(({ text, icon, link, newTab = false, isActive = false }, ref) => {
     const handleClick = () => {
         if (link) {
             const isExternal = link.startsWith('http://') || link.startsWith('https://');
@@ -13,7 +13,6 @@ const HeaderButton = ({ text, icon, link, newTab = false, isActive = false }) =>
                     window.location.href = link;
                 }
             } else {
-                // For internal links, use window.location or a router push if using a router library
                 if (newTab) {
                     window.open(link, '_blank');
                 } else {
@@ -27,15 +26,16 @@ const HeaderButton = ({ text, icon, link, newTab = false, isActive = false }) =>
         <button
             className={`custom-button roboto-regular ${isActive ? 'active' : ''}`}
             onClick={handleClick}
+            ref={ref}
         >
             {icon && <img src={icon} alt="icon" className={`button-icon ${text ? 'with-text' : ''}`} />}
             <span>{text}</span>
         </button>
     );
-};
+});
 
 HeaderButton.propTypes = {
-    text: PropTypes.string.isRequired,
+    text: PropTypes.string,
     icon: PropTypes.string,
     link: PropTypes.string,
     newTab: PropTypes.bool,

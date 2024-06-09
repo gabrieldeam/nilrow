@@ -12,9 +12,10 @@ import Bag from './pages/Main/Bag/Bag';
 import Chat from './pages/Main/Chat/Chat';
 import Profile from './pages/Main/Profile/Profile';
 import { NotificationProvider, NotificationContext } from './context/NotificationContext';
+import { LocationProvider } from './context/LocationContext';
 import Notification from './components/UI/Notification/Notification';
 import ProtectedLoginRoute from './components/Others/ProtectedRoute/ProtectedLoginRoute';
-import ProtectedRoute from './components/Others/ProtectedRoute/ProtectedRoute';
+import ProtectedLink from './components/Others/ProtectedRoute/ProtectedLink';
 import MainHeader from './components/Main/MainHeader/MainHeader';
 import AuthHeader from './components/Auth/AuthHeader/AuthHeader';
 import AuthFooter from './components/Auth/AuthFooter/AuthFooter';
@@ -41,12 +42,12 @@ const AppContent = () => {
         const authRoutes = ['/login', '/login-phone', '/signup', '/signup/contact-forms', '/signup/personal-data', '/signup/create-password', '/password-reset'];
         return authRoutes.includes(location.pathname) ? <AuthHeader /> : (!isMobile && <MainHeader />);
     };
-    
+
     const renderFooter = () => {
         const authRoutes = ['/login', '/login-phone', '/signup', '/signup/contact-forms', '/signup/personal-data', '/signup/create-password', '/password-reset'];
         return authRoutes.includes(location.pathname) ? <AuthFooter /> : (isMobile && <MobileFooter />);
     };
-  
+
     return (
         <>
             {renderHeader()}
@@ -55,42 +56,39 @@ const AppContent = () => {
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={
                     <ProtectedLoginRoute isAuthenticated={isAuthenticated}><Login /></ProtectedLoginRoute>
-                    }
-                />
+                } />
                 <Route path="/login-phone" element={
                     <ProtectedLoginRoute isAuthenticated={isAuthenticated}><LoginPhone /></ProtectedLoginRoute>
-                    }
-                />
+                } />
                 <Route path="/signup/*" element={
                     <ProtectedLoginRoute isAuthenticated={isAuthenticated}><Signup /></ProtectedLoginRoute>
-                    }
-                />
+                } />
                 <Route path="/password-reset" element={<PasswordReset />} />
                 <Route path="/search" element={<Search />} />
                 <Route path="/create" element={
-                    <ProtectedRoute>
+                    <ProtectedLink to="/create">
                         <Create />
-                    </ProtectedRoute>
+                    </ProtectedLink>
                 } />
                 <Route path="/address" element={
-                    <ProtectedRoute>
+                    <ProtectedLink to="/address">
                         <Address />
-                    </ProtectedRoute>
+                    </ProtectedLink>
                 } />
                 <Route path="/bag" element={
-                    <ProtectedRoute>
+                    <ProtectedLink to="/bag">
                         <Bag />
-                    </ProtectedRoute>
+                    </ProtectedLink>
                 } />
                 <Route path="/chat" element={
-                    <ProtectedRoute>
+                    <ProtectedLink to="/chat">
                         <Chat />
-                    </ProtectedRoute>
+                    </ProtectedLink>
                 } />
                 <Route path="/profile" element={
-                    <ProtectedRoute>
+                    <ProtectedLink to="/profile">
                         <Profile />
-                    </ProtectedRoute>
+                    </ProtectedLink>
                 } />
             </Routes>
             {renderFooter()}
@@ -101,9 +99,11 @@ const AppContent = () => {
 function App() {
     return (
         <NotificationProvider>
-            <Router>
-                <AppContent />
-            </Router>
+            <LocationProvider>
+                <Router>
+                    <AppContent />
+                </Router>
+            </LocationProvider>
         </NotificationProvider>
     );
 }
