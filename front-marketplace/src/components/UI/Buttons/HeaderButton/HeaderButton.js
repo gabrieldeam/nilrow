@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './HeaderButton.css';
 
-const HeaderButton = ({ text, icon, link, newTab = false }) => {
+const HeaderButton = ({ text, icon, link, newTab = false, isActive = false }) => {
     const handleClick = () => {
         if (link) {
             const isExternal = link.startsWith('http://') || link.startsWith('https://');
@@ -24,7 +24,10 @@ const HeaderButton = ({ text, icon, link, newTab = false }) => {
     };
 
     return (
-        <button className="custom-button roboto-regular" onClick={handleClick}>
+        <button
+            className={`custom-button roboto-regular ${isActive ? 'active' : ''}`}
+            onClick={handleClick}
+        >
             {icon && <img src={icon} alt="icon" className={`button-icon ${text ? 'with-text' : ''}`} />}
             <span>{text}</span>
         </button>
@@ -36,6 +39,7 @@ HeaderButton.propTypes = {
     icon: PropTypes.string,
     link: PropTypes.string,
     newTab: PropTypes.bool,
+    isActive: PropTypes.bool,
 };
 
 export default HeaderButton;

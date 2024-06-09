@@ -9,8 +9,6 @@ import PrivacyNotice from '../../../components/Others/PrivacyNotice/PrivacyNotic
 import Notification from '../../../components/UI/Notification/Notification';
 import { NotificationContext } from '../../../context/NotificationContext';
 import './Signup.css';
-import Header from '../../../components/Auth/AuthHeader/AuthHeader';
-import Footer from '../../../components/Auth/AuthFooter/AuthFooter';
 import { register } from '../../../services/api';
 import iconStep1 from '../../../assets/contato.svg';
 import iconStep2 from '../../../assets/user.svg';
@@ -95,7 +93,6 @@ const Signup = () => {
 
     return (
         <div className="signup-page">
-            <Header />
             {showNotification && <Notification message={error} onClose={() => setShowNotification(false)} />}
             <div className="signup-container">
                 <Routes>
@@ -148,7 +145,6 @@ const Signup = () => {
                     <Route path="create-password" element={<Step3 formData={formData} setFormData={setFormData} handleStepCompletion={(step, data) => handleStepCompletion(step, data)} />} />
                 </Routes>
             </div>
-            <Footer />
         </div>
     );
 };

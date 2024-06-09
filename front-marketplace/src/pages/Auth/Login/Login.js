@@ -8,8 +8,6 @@ import { login } from '../../../services/api';
 import Notification from '../../../components/UI/Notification/Notification'; 
 import { NotificationContext } from '../../../context/NotificationContext'; 
 import './Login.css';
-import Header from '../../../components/Auth/AuthHeader/AuthHeader';
-import Footer from '../../../components/Auth/AuthFooter/AuthFooter';
 
 const Login = () => {
     const [emailOrUsername, setEmailOrUsername] = useState('');
@@ -39,7 +37,6 @@ const Login = () => {
 
     return (
         <div className="login-page">
-            <Header />
             {showNotification && <Notification message={error} onClose={() => setShowNotification(false)} />}
             <div className="login-container">
                 <h1 className="login-title">Entrar na nilrow</h1>
@@ -74,7 +71,6 @@ const Login = () => {
                     </div>
                 </form>
             </div>
-            <Footer />
         </div>
     );
 };

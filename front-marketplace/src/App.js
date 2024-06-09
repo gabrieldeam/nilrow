@@ -1,22 +1,55 @@
-import React, { useContext } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import React, { useContext, useEffect, useState } from 'react';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import Home from './pages/Home';
 import Login from './pages/Auth/Login/Login';
 import LoginPhone from './pages/Auth/LoginPhone/LoginPhone';
 import Signup from './pages/Auth/Signup/Signup';
 import PasswordReset from './pages/Auth/PasswordReset/PasswordReset';
+import Search from './pages/Main/Search/Search';
+import Create from './pages/Main/Create/Create';
+import Address from './pages/Main/Address/Address';
+import Bag from './pages/Main/Bag/Bag';
+import Chat from './pages/Main/Chat/Chat';
+import Profile from './pages/Main/Profile/Profile';
 import { NotificationProvider, NotificationContext } from './context/NotificationContext';
 import Notification from './components/UI/Notification/Notification';
 import ProtectedLoginRoute from './components/Others/ProtectedRoute/ProtectedLoginRoute';
+import ProtectedRoute from './components/Others/ProtectedRoute/ProtectedRoute';
+import MainHeader from './components/Main/MainHeader/MainHeader';
+import AuthHeader from './components/Auth/AuthHeader/AuthHeader';
+import AuthFooter from './components/Auth/AuthFooter/AuthFooter';
+import MobileFooter from './components/Main/MobileFooter/MobileFooter';
 import './styles/global.css';
 import useAuth from './hooks/useAuth';
 
 const AppContent = () => {
     const { isAuthenticated } = useAuth();
     const { message, setMessage } = useContext(NotificationContext);
+    const location = useLocation();
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const renderHeader = () => {
+        const authRoutes = ['/login', '/login-phone', '/signup', '/signup/contact-forms', '/signup/personal-data', '/signup/create-password', '/password-reset'];
+        return authRoutes.includes(location.pathname) ? <AuthHeader /> : (!isMobile && <MainHeader />);
+    };
+    
+    const renderFooter = () => {
+        const authRoutes = ['/login', '/login-phone', '/signup', '/signup/contact-forms', '/signup/personal-data', '/signup/create-password', '/password-reset'];
+        return authRoutes.includes(location.pathname) ? <AuthFooter /> : (isMobile && <MobileFooter />);
+    };
+  
     return (
         <>
+            {renderHeader()}
             {message && <Notification message={message} onClose={() => setMessage('')} backgroundColor="#4FBF0A" />}
             <Routes>
                 <Route path="/" element={<Home />} />
@@ -33,7 +66,34 @@ const AppContent = () => {
                     }
                 />
                 <Route path="/password-reset" element={<PasswordReset />} />
+                <Route path="/search" element={<Search />} />
+                <Route path="/create" element={
+                    <ProtectedRoute>
+                        <Create />
+                    </ProtectedRoute>
+                } />
+                <Route path="/address" element={
+                    <ProtectedRoute>
+                        <Address />
+                    </ProtectedRoute>
+                } />
+                <Route path="/bag" element={
+                    <ProtectedRoute>
+                        <Bag />
+                    </ProtectedRoute>
+                } />
+                <Route path="/chat" element={
+                    <ProtectedRoute>
+                        <Chat />
+                    </ProtectedRoute>
+                } />
+                <Route path="/profile" element={
+                    <ProtectedRoute>
+                        <Profile />
+                    </ProtectedRoute>
+                } />
             </Routes>
+            {renderFooter()}
         </>
     );
 };

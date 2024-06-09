@@ -9,8 +9,6 @@ import { sendResetCode, resetPassword } from '../../../services/api';
 import Notification from '../../../components/UI/Notification/Notification'; 
 import { NotificationContext } from '../../../context/NotificationContext'; 
 import './PasswordReset.css';
-import Header from '../../../components/Auth/AuthHeader/AuthHeader';
-import Footer from '../../../components/Auth/AuthFooter/AuthFooter';
 
 const PasswordReset = () => {
     const [email, setEmail] = useState('');
@@ -77,7 +75,6 @@ const PasswordReset = () => {
 
     return (
         <div className="password-reset-page">
-            <Header />
             {showNotification && (error || successMessage) && (
                 <Notification 
                     message={error || successMessage} 
@@ -130,7 +127,6 @@ const PasswordReset = () => {
                     </div>
                 </form>
             </div>
-            <Footer />
         </div>
     );
 };

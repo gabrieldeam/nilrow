@@ -10,8 +10,6 @@ import Notification from '../../../components/UI/Notification/Notification';
 import { loginWithPhone } from '../../../services/api';
 import { NotificationContext } from '../../../context/NotificationContext';
 import './LoginPhone.css';
-import Header from '../../../components/Auth/AuthHeader/AuthHeader';
-import Footer from '../../../components/Auth/AuthFooter/AuthFooter';
 
 const LoginPhone = () => {
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -42,7 +40,6 @@ const LoginPhone = () => {
 
     return (
         <div className="loginPhone-page">
-            <Header />
             {showNotification && <Notification message={error} onClose={() => setShowNotification(false)} />}
             <div className="loginPhone-container">
                 <h1 className="loginPhone-title">Entrar na nilrow</h1>
@@ -89,7 +86,6 @@ const LoginPhone = () => {
                     </div>
                 </form>
             </div>
-            <Footer />
         </div>
     );
 };
