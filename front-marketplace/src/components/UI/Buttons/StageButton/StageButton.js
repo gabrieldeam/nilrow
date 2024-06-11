@@ -1,13 +1,19 @@
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import './StageButton.css';
 
 const StageButton = ({ text, backgroundColor, onClick, imageSrc }) => {
+    const handleClick = useCallback((e) => {
+        if (onClick) {
+            onClick(e);
+        }
+    }, [onClick]);
+
     return (
         <button 
             className="stage-button"
             style={{ backgroundColor }}
-            onClick={onClick}
+            onClick={handleClick}
         >
             {imageSrc && <img src={imageSrc} alt="" className="stage-button-icon" />}
             {text}
@@ -28,4 +34,4 @@ StageButton.defaultProps = {
     imageSrc: null,
 };
 
-export default StageButton;
+export default memo(StageButton);

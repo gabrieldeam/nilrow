@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import PropTypes from 'prop-types';
 import './AuthFooter.css';
 
@@ -31,4 +31,4 @@ Footer.propTypes = {
     initialOpenState: PropTypes.bool
 };
 
-export default Footer;
+export default memo(Footer);

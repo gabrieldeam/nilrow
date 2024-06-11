@@ -1,9 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CustomInput from '../../../components/UI/CustomInput/CustomInput';
 import Card from '../../../components/UI/Card/Card';
 import ConfirmationButton from '../../../components/UI/Buttons/ConfirmationButton/ConfirmationButton';
 import Notification from '../../../components/UI/Notification/Notification';
+import { Helmet } from 'react-helmet';
+
+const validatePassword = (password) => {
+    const specialCharRegex = /[!@#$%^&*()]/;
+    const uppercaseRegex = /[A-Z]/;
+    const lowercaseRegex = /[a-z]/;
+    const numberRegex = /\d/;
+    const minLength = 8;
+    const maxLength = 20;
+
+    if (!specialCharRegex.test(password)) {
+        return 'A senha deve conter pelo menos um caractere especial (!@#$%^&*()).';
+    }
+    if (!uppercaseRegex.test(password)) {
+        return 'A senha deve conter pelo menos uma letra maiúscula.';
+    }
+    if (!lowercaseRegex.test(password)) {
+        return 'A senha deve conter pelo menos uma letra minúscula.';
+    }
+    if (!numberRegex.test(password)) {
+        return 'A senha deve conter pelo menos um número.';
+    }
+    if (password.length < minLength || password.length > maxLength) {
+        return `A senha deve ter entre ${minLength} e ${maxLength} caracteres.`;
+    }
+    return null;
+};
+
+const calculatePasswordStrength = (password) => {
+    let strength = 0;
+    if (password.length >= 8) strength += 1;
+    if (/[A-Z]/.test(password)) strength += 1;
+    if (/[a-z]/.test(password)) strength += 1;
+    if (/\d/.test(password)) strength += 1;
+    if (/[!@#$%^&*()]/.test(password)) strength += 1;
+    return strength;
+};
 
 const Step3 = ({ formData, setFormData, handleStepCompletion }) => {
     const [isFormValid, setIsFormValid] = useState(false);
@@ -11,13 +48,13 @@ const Step3 = ({ formData, setFormData, handleStepCompletion }) => {
     const [error, setError] = useState('');
     const [showNotification, setShowNotification] = useState(false);
 
-    const handleChange = (e) => {
+    const handleChange = useCallback((e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
         if (name === 'password') {
             setPasswordStrength(calculatePasswordStrength(value));
         }
-    };
+    }, [formData, setFormData]);
 
     useEffect(() => {
         const { password, confirmPassword } = formData;
@@ -26,43 +63,7 @@ const Step3 = ({ formData, setFormData, handleStepCompletion }) => {
 
     const navigate = useNavigate();
 
-    const validatePassword = (password) => {
-        const specialCharRegex = /[!@#$%^&*()]/;
-        const uppercaseRegex = /[A-Z]/;
-        const lowercaseRegex = /[a-z]/;
-        const numberRegex = /\d/;
-        const minLength = 8;
-        const maxLength = 20;
-
-        if (!specialCharRegex.test(password)) {
-            return 'A senha deve conter pelo menos um caractere especial (!@#$%^&*()).';
-        }
-        if (!uppercaseRegex.test(password)) {
-            return 'A senha deve conter pelo menos uma letra maiúscula.';
-        }
-        if (!lowercaseRegex.test(password)) {
-            return 'A senha deve conter pelo menos uma letra minúscula.';
-        }
-        if (!numberRegex.test(password)) {
-            return 'A senha deve conter pelo menos um número.';
-        }
-        if (password.length < minLength || password.length > maxLength) {
-            return `A senha deve ter entre ${minLength} e ${maxLength} caracteres.`;
-        }
-        return null;
-    };
-
-    const calculatePasswordStrength = (password) => {
-        let strength = 0;
-        if (password.length >= 8) strength += 1;
-        if (/[A-Z]/.test(password)) strength += 1;
-        if (/[a-z]/.test(password)) strength += 1;
-        if (/\d/.test(password)) strength += 1;
-        if (/[!@#$%^&*()]/.test(password)) strength += 1;
-        return strength;
-    };
-
-    const handleSubmit = (e) => {
+    const handleSubmit = useCallback((e) => {
         e.preventDefault();
         if (!isFormValid) {
             setError('Por favor, preencha todos os campos.');
@@ -87,9 +88,9 @@ const Step3 = ({ formData, setFormData, handleStepCompletion }) => {
 
         handleStepCompletion('step3', dataToSubmit);
         navigate('/signup');
-    };
+    }, [isFormValid, formData, handleStepCompletion, navigate]);
 
-    const getPasswordStrengthLabel = (strength) => {
+    const getPasswordStrengthLabel = useCallback((strength) => {
         switch (strength) {
             case 0:
             case 1:
@@ -105,10 +106,14 @@ const Step3 = ({ formData, setFormData, handleStepCompletion }) => {
             default:
                 return '';
         }
-    };
+    }, []);
 
     return (
         <div>
+            <Helmet>
+                <title>Criar sua senha - Nilrow</title>
+                <meta name="description" content="Faça login na Nilrow usando seu email ou nome de usuário." />
+            </Helmet>
             {showNotification && <Notification message={error} onClose={() => setShowNotification(false)} />}
             <form onSubmit={handleSubmit}>
                 <Card title="Senha">
@@ -148,4 +153,4 @@ const Step3 = ({ formData, setFormData, handleStepCompletion }) => {
     );
 };
 
-export default Step3;
+export default memo(Step3);

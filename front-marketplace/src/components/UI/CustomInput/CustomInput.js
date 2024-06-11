@@ -1,15 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, memo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import './CustomInput.css';
 import eyeIcon from '../../../assets/olho.svg';
 import eyeOffIcon from '../../../assets/olhos-cruzado.svg';
 
-const CustomInput = ({ title, placeholder = '', bottomLeftText = '', bottomRightLink = null, onChange, value = '', type = 'text', name = '', isValid, prefix }) => {
+const CustomInput = ({
+    title,
+    placeholder = '',
+    bottomLeftText = '',
+    bottomRightLink = null,
+    onChange,
+    value = '',
+    type = 'text',
+    name = '',
+    isValid,
+    prefix
+}) => {
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
-    const togglePasswordVisibility = () => {
-        setIsPasswordVisible(!isPasswordVisible);
-    };
+    const togglePasswordVisibility = useCallback(() => {
+        setIsPasswordVisible((prevState) => !prevState);
+    }, []);
 
     return (
         <div className="custom-input-container">
@@ -58,4 +69,4 @@ CustomInput.propTypes = {
     prefix: PropTypes.string 
 };
 
-export default CustomInput;
+export default memo(CustomInput);

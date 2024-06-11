@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import './StepButton.css';
 import verifiedIcon from '../../../../assets/verificacao.svg';
@@ -11,8 +11,14 @@ const StepButton = ({
     isVerified = false,
     onClick
 }) => {
+    const handleClick = useCallback((e) => {
+        if (onClick) {
+            onClick(e);
+        }
+    }, [onClick]);
+
     return (
-        <button className="step-button" onClick={onClick}>
+        <button className="step-button" onClick={handleClick}>
             <div className="step-button-left">
                 <div className="step-button-icon-circle">
                     <img src={icon} alt="Step Icon" className="step-button-icon" />
@@ -38,4 +44,4 @@ StepButton.propTypes = {
     onClick: PropTypes.func.isRequired
 };
 
-export default StepButton;
+export default memo(StepButton);

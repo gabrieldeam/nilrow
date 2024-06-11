@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, memo } from 'react';
 import PropTypes from 'prop-types';
 import './ConfirmationButton.css';
 
@@ -10,15 +10,19 @@ const ConfirmationButton = ({
     onClick = () => {},
     disabled = false
 }) => {
+    const handleClick = useCallback((event) => {
+        onClick(event);
+    }, [onClick]);
+
     return (
         <button
             className="confirmation-button roboto-black"
             style={{ backgroundColor: disabled ? '#212121' : backgroundColor }}
             type={type}
-            onClick={onClick}
+            onClick={handleClick}
             disabled={disabled}
         >
-            {icon && <img src={icon} alt="icon" className={`confirmation-button-icon ${text ? 'confirmation-with-text' : ''}`} />}
+            {icon && <img src={icon} alt="icon" className={`confirmation-button-icon ${text ? 'confirmation-with-text' : ''}`} loading="lazy" />}
             <span>{text}</span>
         </button>
     );
@@ -33,4 +37,4 @@ ConfirmationButton.propTypes = {
     disabled: PropTypes.bool
 };
 
-export default ConfirmationButton;
+export default memo(ConfirmationButton);

@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useCallback, memo } from 'react';
 import PropTypes from 'prop-types';
 import './HeaderButton.css';
 
 const HeaderButton = React.forwardRef(({ text, icon, link, newTab = false, isActive = false }, ref) => {
-    const handleClick = () => {
+    const handleClick = useCallback(() => {
         if (link) {
             const isExternal = link.startsWith('http://') || link.startsWith('https://');
             if (isExternal) {
@@ -20,7 +20,7 @@ const HeaderButton = React.forwardRef(({ text, icon, link, newTab = false, isAct
                 }
             }
         }
-    };
+    }, [link, newTab]);
 
     return (
         <button
@@ -28,7 +28,7 @@ const HeaderButton = React.forwardRef(({ text, icon, link, newTab = false, isAct
             onClick={handleClick}
             ref={ref}
         >
-            {icon && <img src={icon} alt="icon" className={`button-icon ${text ? 'with-text' : ''}`} />}
+            {icon && <img src={icon} alt="icon" className={`button-icon ${text ? 'with-text' : ''}`} loading="lazy" />}
             <span>{text}</span>
         </button>
     );
@@ -42,4 +42,4 @@ HeaderButton.propTypes = {
     isActive: PropTypes.bool,
 };
 
-export default HeaderButton;
+export default memo(HeaderButton);

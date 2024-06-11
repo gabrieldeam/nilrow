@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useCallback, memo } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import Step1 from './Step1';
 import Step2 from './Step2';
@@ -9,6 +9,7 @@ import PrivacyNotice from '../../../components/Others/PrivacyNotice/PrivacyNotic
 import Notification from '../../../components/UI/Notification/Notification';
 import { NotificationContext } from '../../../context/NotificationContext';
 import LoadingSpinner from '../../../components/UI/LoadingSpinner/LoadingSpinner'; // Importação do componente de carregamento
+import { Helmet } from 'react-helmet';
 import './Signup.css';
 import { register } from '../../../services/api';
 import iconStep1 from '../../../assets/contato.svg';
@@ -39,14 +40,13 @@ const Signup = () => {
     const { setMessage } = useContext(NotificationContext);
     const navigate = useNavigate();
 
-    const handleStepCompletion = (step, data = {}) => {
+    const handleStepCompletion = useCallback((step, data = {}) => {
         setCompletedSteps(prev => ({ ...prev, [step]: true }));
         setFormData(prev => ({ ...prev, ...data }));
-        console.log('Step completed:', step, completedSteps);
         navigate('/signup');
-    };
+    }, [navigate]);
 
-    const completeSignup = async () => {
+    const completeSignup = useCallback(async () => {
         if (formData.password !== formData.confirmPassword) {
             setError('As senhas não coincidem.');
             setShowNotification(true);
@@ -84,9 +84,9 @@ const Signup = () => {
         } finally {
             setLoading(false); // Desativar carregamento
         }
-    };
+    }, [formData, completedSteps, setMessage, navigate]);
 
-    const handleIncompleteSteps = (e) => {
+    const handleIncompleteSteps = useCallback((e) => {
         e.preventDefault();
         if (!completedSteps.step1 || !completedSteps.step2 || !completedSteps.step3) {
             setError('Por favor, complete todas as etapas antes de criar a conta.');
@@ -94,10 +94,14 @@ const Signup = () => {
         } else {
             completeSignup();
         }
-    };
+    }, [completedSteps, completeSignup]);
 
     return (
         <div className="signup-page">
+            <Helmet>
+                <title>Cadastrar - Nilrow</title>
+                <meta name="description" content="Faça login na Nilrow usando seu email ou nome de usuário." />
+            </Helmet>
             {loading && <LoadingSpinner />} {/* Componente de carregamento */}
             {showNotification && <Notification message={error} onClose={() => setShowNotification(false)} />}
             <div className="signup-container">
@@ -155,4 +159,4 @@ const Signup = () => {
     );
 };
 
-export default Signup;
+export default memo(Signup);

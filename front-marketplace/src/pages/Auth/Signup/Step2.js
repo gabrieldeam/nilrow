@@ -1,10 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CustomInput from '../../../components/UI/CustomInput/CustomInput';
 import DateInput from '../../../components/UI/Inputs/DateInput/DateInput';
 import Card from '../../../components/UI/Card/Card';
 import ConfirmationButton from '../../../components/UI/Buttons/ConfirmationButton/ConfirmationButton';
 import Notification from '../../../components/UI/Notification/Notification';
+import { Helmet } from 'react-helmet';
+
+const validateCPF = (cpf) => {
+    const regex = /^\d{11}$/;
+    return regex.test(cpf);
+};
+
+const validateNickname = (nickname) => {
+    const regex = /^[a-z][a-z0-9._]{2,28}[a-z0-9]$/;
+    const hasNoConsecutiveSpecialChars = !/([._])\1/.test(nickname);
+    return regex.test(nickname) && hasNoConsecutiveSpecialChars;
+};
 
 const Step2 = ({ formData, setFormData, handleStepCompletion }) => {
     const [isFormValid, setIsFormValid] = useState(false);
@@ -12,13 +24,13 @@ const Step2 = ({ formData, setFormData, handleStepCompletion }) => {
     const [error, setError] = useState('');
     const [showNotification, setShowNotification] = useState(false);
 
-    const handleChange = (e) => {
+    const handleChange = useCallback((e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
         if (name === 'nickname') {
-            validateNickname(value);
+            setNicknameValid(validateNickname(value));
         }
-    };
+    }, [formData, setFormData]);
 
     useEffect(() => {
         const { name, cpf, birthDate, nickname } = formData;
@@ -27,18 +39,7 @@ const Step2 = ({ formData, setFormData, handleStepCompletion }) => {
 
     const navigate = useNavigate();
 
-    const validateCPF = (cpf) => {
-        const regex = /^\d{11}$/;
-        return regex.test(cpf);
-    };
-
-    const validateNickname = (nickname) => {
-        const regex = /^[a-z][a-z0-9._]{2,28}[a-z0-9]$/;
-        const hasNoConsecutiveSpecialChars = !/([._])\1/.test(nickname);
-        setNicknameValid(regex.test(nickname) && hasNoConsecutiveSpecialChars);
-    };
-
-    const handleSubmit = (e) => {
+    const handleSubmit = useCallback((e) => {
         e.preventDefault();
         if (!isFormValid) {
             setError('Por favor, preencha todos os campos.');
@@ -54,10 +55,14 @@ const Step2 = ({ formData, setFormData, handleStepCompletion }) => {
 
         handleStepCompletion('step2');
         navigate('/signup');
-    };
+    }, [isFormValid, formData, handleStepCompletion, navigate]);
 
     return (
         <div className="padding-stpe2">
+            <Helmet>
+                <title>Dados pessoais - Nilrow</title>
+                <meta name="description" content="Faça login na Nilrow usando seu email ou nome de usuário." />
+            </Helmet>
             {showNotification && <Notification message={error} onClose={() => setShowNotification(false)} />}
             <form onSubmit={handleSubmit}>
                 <Card title="Dados">
@@ -111,4 +116,4 @@ const Step2 = ({ formData, setFormData, handleStepCompletion }) => {
     );
 };
 
-export default Step2;
+export default memo(Step2);

@@ -7,6 +7,7 @@ import PrivacyNotice from '../../../components/Others/PrivacyNotice/PrivacyNotic
 import { login } from '../../../services/api';
 import Notification from '../../../components/UI/Notification/Notification'; 
 import { NotificationContext } from '../../../context/NotificationContext'; 
+import { Helmet } from 'react-helmet';
 import './Login.css';
 
 const Login = () => {
@@ -37,6 +38,10 @@ const Login = () => {
 
     return (
         <div className="login-page">
+            <Helmet>
+                <title>Login - Nilrow</title>
+                <meta name="description" content="Faça login na Nilrow usando seu email ou nome de usuário." />
+            </Helmet>
             {showNotification && <Notification message={error} onClose={() => setShowNotification(false)} />}
             <div className="login-container">
                 <h1 className="login-title">Entrar na nilrow</h1>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
@@ -6,6 +6,7 @@ import CustomInput from '../../../components/UI/CustomInput/CustomInput';
 import Card from '../../../components/UI/Card/Card';
 import ConfirmationButton from '../../../components/UI/Buttons/ConfirmationButton/ConfirmationButton';
 import Notification from '../../../components/UI/Notification/Notification';
+import { Helmet } from 'react-helmet';
 
 const Step1 = ({ formData, setFormData, handleStepCompletion }) => {
     const [isFormValid, setIsFormValid] = useState(false);
@@ -13,14 +14,14 @@ const Step1 = ({ formData, setFormData, handleStepCompletion }) => {
     const [showNotification, setShowNotification] = useState(false);
     const [isCheckboxChecked, setIsCheckboxChecked] = useState(false);
 
-    const handleChange = (e) => {
+    const handleChange = useCallback((e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
-    };
+    }, [formData, setFormData]);
 
-    const handlePhoneChange = (value) => {
+    const handlePhoneChange = useCallback((value) => {
         setFormData({ ...formData, phone: value });
-    };
+    }, [formData, setFormData]);
 
     useEffect(() => {
         const { email, phone } = formData;
@@ -29,17 +30,17 @@ const Step1 = ({ formData, setFormData, handleStepCompletion }) => {
 
     const navigate = useNavigate();
 
-    const validateEmail = (email) => {
+    const validateEmail = useCallback((email) => {
         const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return regex.test(email);
-    };
+    }, []);
 
-    const validatePhone = (phone) => {
+    const validatePhone = useCallback((phone) => {
         const regex = /^\+?\d{10,15}$/;
         return regex.test(phone);
-    };
+    }, []);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = useCallback((e) => {
         e.preventDefault();
         if (!isFormValid) {
             setError('Por favor, preencha todos os campos e aceite os termos.');
@@ -61,10 +62,14 @@ const Step1 = ({ formData, setFormData, handleStepCompletion }) => {
 
         handleStepCompletion('step1');
         navigate('/signup');
-    };
+    }, [isFormValid, validateEmail, validatePhone, formData, handleStepCompletion, navigate]);
 
     return (
         <div>
+            <Helmet>
+                <title>Formas de contato - Nilrow</title>
+                <meta name="description" content="Faça login na Nilrow usando seu email ou nome de usuário." />
+            </Helmet>
             {showNotification && <Notification message={error} onClose={() => setShowNotification(false)} />}
             <form onSubmit={handleSubmit}>
                 <Card title="E-mail">
@@ -123,4 +128,4 @@ const Step1 = ({ formData, setFormData, handleStepCompletion }) => {
     );
 };
 
-export default Step1;
+export default memo(Step1);

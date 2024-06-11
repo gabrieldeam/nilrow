@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import PropTypes from 'prop-types';
 import './Card.css';
 
@@ -9,14 +9,20 @@ const Card = ({ title, children, leftLink, rightLink }) => {
                 <div className="card-header">
                     <h2 className="card-title">{title}</h2>
                     <div className="card-links">
-                        {leftLink && <a href={leftLink.href} className="left-link">{leftLink.text}</a>}
-                        {rightLink && <a href={rightLink.href} className="right-link">{rightLink.text}</a>}
+                        {leftLink && (
+                            <a href={leftLink.href} className="left-link">
+                                {leftLink.text}
+                            </a>
+                        )}
+                        {rightLink && (
+                            <a href={rightLink.href} className="right-link">
+                                {rightLink.text}
+                            </a>
+                        )}
                     </div>
                 </div>
             )}
-            <div className="card-content">
-                {children}
-            </div>
+            <div className="card-content">{children}</div>
         </div>
     );
 };
@@ -34,4 +40,4 @@ Card.propTypes = {
     })
 };
 
-export default Card;
+export default memo(Card);

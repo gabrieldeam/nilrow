@@ -1,14 +1,15 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CustomInput from '../../../components/UI/CustomInput/CustomInput';
 import Card from '../../../components/UI/Card/Card';
 import ConfirmationButton from '../../../components/UI/Buttons/ConfirmationButton/ConfirmationButton';
 import StageButton from '../../../components/UI/Buttons/StageButton/StageButton';
-import CodeInput from '../../../components/UI/Inputs/CodeInput/CodeInput'; // Importação do novo componente
+import CodeInput from '../../../components/UI/Inputs/CodeInput/CodeInput';
 import { sendResetCode, resetPassword } from '../../../services/api';
 import Notification from '../../../components/UI/Notification/Notification'; 
 import { NotificationContext } from '../../../context/NotificationContext'; 
-import LoadingSpinner from '../../../components/UI/LoadingSpinner/LoadingSpinner'; // Importação do componente de carregamento
+import LoadingSpinner from '../../../components/UI/LoadingSpinner/LoadingSpinner'; 
+import { Helmet } from 'react-helmet';
 import './PasswordReset.css';
 
 const PasswordReset = () => {
@@ -16,21 +17,21 @@ const PasswordReset = () => {
     const [resetCode, setResetCode] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [codeSent, setCodeSent] = useState(false);
-    const [loading, setLoading] = useState(false); // Estado de carregamento
+    const [loading, setLoading] = useState(false); 
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
     const [showNotification, setShowNotification] = useState(false);
     const { setMessage } = useContext(NotificationContext);
     const navigate = useNavigate();
 
-    const handleSendCode = async (e) => {
+    const handleSendCode = useCallback(async (e) => {
         e.preventDefault();
         if (!email) {
             setError('Por favor, preencha o campo de e-mail.');
             setShowNotification(true);
             return;
         }
-        setLoading(true); // Ativar carregamento
+        setLoading(true); 
         try {
             await sendResetCode(email);
             setCodeSent(true);
@@ -42,18 +43,18 @@ const PasswordReset = () => {
             setError('Erro ao enviar código de redefinição. Verifique o e-mail e tente novamente.');
             setShowNotification(true);
         } finally {
-            setLoading(false); // Desativar carregamento
+            setLoading(false); 
         }
-    };
+    }, [email]);
 
-    const handleResetPassword = async (e) => {
+    const handleResetPassword = useCallback(async (e) => {
         e.preventDefault();
         if (!resetCode || !newPassword) {
             setError('Por favor, preencha todos os campos.');
             setShowNotification(true);
             return;
         }
-        setLoading(true); // Ativar carregamento
+        setLoading(true); 
         try {
             await resetPassword({ email, resetCode, newPassword });
             setError('');
@@ -65,12 +66,12 @@ const PasswordReset = () => {
             setError('Erro ao redefinir senha. Verifique o código e tente novamente.');
             setShowNotification(true);
         } finally {
-            setLoading(false); // Desativar carregamento
+            setLoading(false); 
         }
-    };
+    }, [email, resetCode, newPassword, setMessage, navigate]);
 
-    const handleResendCode = async () => {
-        setLoading(true); // Ativar carregamento
+    const handleResendCode = useCallback(async () => {
+        setLoading(true); 
         try {
             await sendResetCode(email);
             setSuccessMessage('Novo código de redefinição enviado para o seu e-mail.');
@@ -80,18 +81,22 @@ const PasswordReset = () => {
             setError('Erro ao enviar novo código de redefinição. Verifique o e-mail e tente novamente.');
             setShowNotification(true);
         } finally {
-            setLoading(false); // Desativar carregamento
+            setLoading(false); 
         }
-    };
+    }, [email]);
 
     return (
         <div className="password-reset-page">
-            {loading && <LoadingSpinner />} {/* Componente de carregamento */}
+            <Helmet>
+                <title>Redefinir senha - Nilrow</title>
+                <meta name="description" content="Faça login na Nilrow usando seu email ou nome de usuário." />
+            </Helmet>
+            {loading && <LoadingSpinner />} 
             {showNotification && (error || successMessage) && (
                 <Notification 
                     message={error || successMessage} 
                     onClose={() => setShowNotification(false)} 
-                    backgroundColor={successMessage ? "#4FBF0A" : "#DF1414"} // Verde para sucesso, vermelho para erro
+                    backgroundColor={successMessage ? "#4FBF0A" : "#DF1414"} 
                 />
             )}
             <div className="password-reset-container">
@@ -116,7 +121,7 @@ const PasswordReset = () => {
                                     text="Enviar novo código" 
                                     backgroundColor="#7B33E5" 
                                     onClick={handleResendCode}
-                                    imageSrc="/path/to/icon.png" // Passe o caminho da imagem aqui
+                                    imageSrc="/path/to/icon.png" 
                                 />
                                 <CustomInput 
                                     title="Nova Senha"
@@ -143,4 +148,4 @@ const PasswordReset = () => {
     );
 };
 
-export default PasswordReset;
+export default memo(PasswordReset);

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useRef } from 'react';
+import React, { useEffect, useState, useContext, useRef, useCallback, memo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import './ModalInfoAddress.css';
@@ -6,13 +6,13 @@ import { LocationContext } from '../../../context/LocationContext';
 import markerIcon from '../../../assets/marker.svg';
 import closeIcon from '../../../assets/close.svg';
 
-const CenterMap = ({ location }) => {
+const CenterMap = memo(({ location }) => {
     const map = useMap();
     useEffect(() => {
         map.setView([location.latitude, location.longitude], 12);
     }, [location, map]);
     return null;
-};
+});
 
 const ModalInfoAddress = ({ buttonPosition }) => {
     const [isVisible, setIsVisible] = useState(false);
@@ -39,6 +39,10 @@ const ModalInfoAddress = ({ buttonPosition }) => {
         popupAnchor: [1, -34],
         shadowSize: [41, 41]
     });
+
+    const handleClose = useCallback(() => {
+        setIsVisible(false);
+    }, []);
 
     if (!isVisible) {
         return null;
@@ -74,12 +78,12 @@ const ModalInfoAddress = ({ buttonPosition }) => {
                         <a href="/update-address" className="modal-link">Informe um CEP</a>
                     </div>
                 </div>
-                <button className="modal-close" onClick={() => setIsVisible(false)}>
-                    <img src={closeIcon} alt="Close" className="close-icon" />
+                <button className="modal-close" onClick={handleClose}>
+                    <img src={closeIcon} alt="Close" className="close-icon" loading="lazy" />
                 </button>
             </div>
         </div>
     );
 };
 
-export default ModalInfoAddress;
+export default memo(ModalInfoAddress);

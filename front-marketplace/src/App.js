@@ -1,16 +1,6 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useContext, useState, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
-import Home from './pages/Home';
-import Login from './pages/Auth/Login/Login';
-import LoginPhone from './pages/Auth/LoginPhone/LoginPhone';
-import Signup from './pages/Auth/Signup/Signup';
-import PasswordReset from './pages/Auth/PasswordReset/PasswordReset';
-import Search from './pages/Main/Search/Search';
-import Create from './pages/Main/Create/Create';
-import Address from './pages/Main/Address/Address';
-import Bag from './pages/Main/Bag/Bag';
-import Chat from './pages/Main/Chat/Chat';
-import Profile from './pages/Main/Profile/Profile';
+import ReactGA from 'react-ga';
 import { NotificationProvider, NotificationContext } from './context/NotificationContext';
 import { LocationProvider } from './context/LocationContext';
 import Notification from './components/UI/Notification/Notification';
@@ -22,6 +12,20 @@ import AuthFooter from './components/Auth/AuthFooter/AuthFooter';
 import MobileFooter from './components/Main/MobileFooter/MobileFooter';
 import './styles/global.css';
 import useAuth from './hooks/useAuth';
+import LoadingSpinner from './components/UI/LoadingSpinner/LoadingSpinner';
+
+// Lazy loading pages
+const Home = lazy(() => import('./pages/Home'));
+const Login = lazy(() => import('./pages/Auth/Login/Login'));
+const LoginPhone = lazy(() => import('./pages/Auth/LoginPhone/LoginPhone'));
+const Signup = lazy(() => import('./pages/Auth/Signup/Signup'));
+const PasswordReset = lazy(() => import('./pages/Auth/PasswordReset/PasswordReset'));
+const Search = lazy(() => import('./pages/Main/Search/Search'));
+const Create = lazy(() => import('./pages/Main/Create/Create'));
+const Address = lazy(() => import('./pages/Main/Address/Address'));
+const Bag = lazy(() => import('./pages/Main/Bag/Bag'));
+const Chat = lazy(() => import('./pages/Main/Chat/Chat'));
+const Profile = lazy(() => import('./pages/Main/Profile/Profile'));
 
 const AppContent = () => {
     const { isAuthenticated } = useAuth();
@@ -30,6 +34,9 @@ const AppContent = () => {
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
     useEffect(() => {
+        ReactGA.initialize('UA-000000-01');
+        ReactGA.pageview(window.location.pathname + window.location.search);
+
         const handleResize = () => {
             setIsMobile(window.innerWidth <= 768);
         };
@@ -52,45 +59,47 @@ const AppContent = () => {
         <>
             {renderHeader()}
             {message && <Notification message={message} onClose={() => setMessage('')} backgroundColor="#4FBF0A" />}
-            <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/login" element={
-                    <ProtectedLoginRoute isAuthenticated={isAuthenticated}><Login /></ProtectedLoginRoute>
-                } />
-                <Route path="/login-phone" element={
-                    <ProtectedLoginRoute isAuthenticated={isAuthenticated}><LoginPhone /></ProtectedLoginRoute>
-                } />
-                <Route path="/signup/*" element={
-                    <ProtectedLoginRoute isAuthenticated={isAuthenticated}><Signup /></ProtectedLoginRoute>
-                } />
-                <Route path="/password-reset" element={<PasswordReset />} />
-                <Route path="/search" element={<Search />} />
-                <Route path="/create" element={
-                    <ProtectedLink to="/create">
-                        <Create />
-                    </ProtectedLink>
-                } />
-                <Route path="/address" element={
-                    <ProtectedLink to="/address">
-                        <Address />
-                    </ProtectedLink>
-                } />
-                <Route path="/bag" element={
-                    <ProtectedLink to="/bag">
-                        <Bag />
-                    </ProtectedLink>
-                } />
-                <Route path="/chat" element={
-                    <ProtectedLink to="/chat">
-                        <Chat />
-                    </ProtectedLink>
-                } />
-                <Route path="/profile" element={
-                    <ProtectedLink to="/profile">
-                        <Profile />
-                    </ProtectedLink>
-                } />
-            </Routes>
+            <Suspense fallback={<LoadingSpinner />}>
+                <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/login" element={
+                        <ProtectedLoginRoute isAuthenticated={isAuthenticated}><Login /></ProtectedLoginRoute>
+                    } />
+                    <Route path="/login-phone" element={
+                        <ProtectedLoginRoute isAuthenticated={isAuthenticated}><LoginPhone /></ProtectedLoginRoute>
+                    } />
+                    <Route path="/signup/*" element={
+                        <ProtectedLoginRoute isAuthenticated={isAuthenticated}><Signup /></ProtectedLoginRoute>
+                    } />
+                    <Route path="/password-reset" element={<PasswordReset />} />
+                    <Route path="/search" element={<Search />} />
+                    <Route path="/create" element={
+                        <ProtectedLink to="/create">
+                            <Create />
+                        </ProtectedLink>
+                    } />
+                    <Route path="/address" element={
+                        <ProtectedLink to="/address">
+                            <Address />
+                        </ProtectedLink>
+                    } />
+                    <Route path="/bag" element={
+                        <ProtectedLink to="/bag">
+                            <Bag />
+                        </ProtectedLink>
+                    } />
+                    <Route path="/chat" element={
+                        <ProtectedLink to="/chat">
+                            <Chat />
+                        </ProtectedLink>
+                    } />
+                    <Route path="/profile" element={
+                        <ProtectedLink to="/profile">
+                            <Profile />
+                        </ProtectedLink>
+                    } />
+                </Routes>
+            </Suspense>
             {renderFooter()}
         </>
     );

@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NotificationContext } from '../context/NotificationContext';
 import { checkAuth, logout } from '../services/api';
@@ -28,7 +28,7 @@ const useAuth = () => {
         }
     }, [isAuthenticated, navigate, setMessage]);
 
-    const handleLogout = async () => {
+    const handleLogout = useCallback(async () => {
         try {
             await logout();
             setIsAuthenticated(false);
@@ -36,7 +36,7 @@ const useAuth = () => {
         } catch (error) {
             console.error('Erro ao fazer logout: ', error);
         }
-    };
+    }, [navigate]);
 
     return { isAuthenticated, handleLogout };
 };

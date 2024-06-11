@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Link } from 'react-router-dom';
 import './AuthHeader.css';
 import HeaderButton from '../../UI/Buttons/HeaderButton/HeaderButton';
@@ -10,7 +10,7 @@ const AuthHeader = () => {
         <header className="authheader">
             <div className="authheader-left">
                 <Link to="/">
-                    <img src={logo} alt="Logo" className="authlogo" />
+                    <img src={logo} alt="Logo" className="authlogo" loading="lazy" />
                 </Link>
             </div>
             <div className="authheader-right">
@@ -18,11 +18,11 @@ const AuthHeader = () => {
                     text="Feedback e ajuda"
                     icon={infoIcon}
                     link="http://google.com"
-                    newTab true
+                    newTab={true}
                 />
             </div>
         </header>
     );
 }
 
-export default AuthHeader;
+export default memo(AuthHeader);

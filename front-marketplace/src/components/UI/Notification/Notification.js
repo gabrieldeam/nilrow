@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, memo } from 'react';
 import PropTypes from 'prop-types';
 import './Notification.css';
 import avisoIcon from '../../../assets/aviso.svg';
@@ -15,6 +15,11 @@ const Notification = ({ message, onClose, backgroundColor = '#DF1414' }) => {
         return () => clearTimeout(timer);
     }, [onClose]);
 
+    const handleClose = useCallback(() => {
+        setVisible(false);
+        onClose();
+    }, [onClose]);
+
     if (!visible) {
         return null;
     }
@@ -23,10 +28,10 @@ const Notification = ({ message, onClose, backgroundColor = '#DF1414' }) => {
         <div className="notification" style={{ backgroundColor }}>
             <div className="notification-content">
                 <div className="notification-icon">
-                    <img src={avisoIcon} alt="Aviso" />
+                    <img src={avisoIcon} alt="Aviso" loading="lazy" />
                 </div>
                 <span>{message}</span>
-                <button className="notification-close" onClick={() => { setVisible(false); onClose(); }}>×</button>
+                <button className="notification-close" onClick={handleClose}>×</button>
             </div>
         </div>
     );
@@ -38,4 +43,4 @@ Notification.propTypes = {
     backgroundColor: PropTypes.string,
 };
 
-export default Notification;
+export default memo(Notification);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import PropTypes from 'prop-types';
 import './CodeInput.css';
 
@@ -10,16 +10,16 @@ const CodeInput = ({ length, onChange }) => {
         onChange(values.join(''));
     }, [values, onChange]);
 
-    const handleChange = (e, index) => {
+    const handleChange = useCallback((e, index) => {
         const newValues = [...values];
         newValues[index] = e.target.value.slice(-1);
         setValues(newValues);
         if (e.target.value && index < length - 1) {
             inputsRef.current[index + 1].focus();
         }
-    };
+    }, [values, length]);
 
-    const handlePaste = (e) => {
+    const handlePaste = useCallback((e) => {
         e.preventDefault();
         const paste = e.clipboardData.getData('text').slice(0, length).split('');
         const newValues = [...values];
@@ -29,13 +29,13 @@ const CodeInput = ({ length, onChange }) => {
         setValues(newValues);
         const nextIndex = paste.length < length ? paste.length : length - 1;
         inputsRef.current[nextIndex].focus();
-    };
+    }, [values, length]);
 
-    const handleKeyDown = (e, index) => {
+    const handleKeyDown = useCallback((e, index) => {
         if (e.key === 'Backspace' && !values[index] && index > 0) {
             inputsRef.current[index - 1].focus();
         }
-    };
+    }, [values]);
 
     return (
         <div className="code-input-container">
@@ -61,4 +61,4 @@ CodeInput.propTypes = {
     onChange: PropTypes.func.isRequired,
 };
 
-export default CodeInput;
+export default memo(CodeInput);

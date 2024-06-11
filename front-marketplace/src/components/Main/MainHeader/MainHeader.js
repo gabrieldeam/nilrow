@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect, useRef } from 'react';
+import React, { useState, useContext, useEffect, useRef, useCallback, memo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './MainHeader.css';
 import HeaderButton from '../../UI/Buttons/HeaderButton/HeaderButton';
@@ -31,16 +31,16 @@ const MainHeader = () => {
         }
     }, []);
 
-    const handleSearchSubmit = (e) => {
+    const handleSearchSubmit = useCallback((e) => {
         e.preventDefault();
         if (searchTerm.trim()) {
             navigate(`/search?q=${searchTerm}`);
         } else {
             navigate(`/search`);
         }
-    };
+    }, [navigate, searchTerm]);
 
-    const getIsActive = (path) => currentLocation.pathname === path;
+    const getIsActive = useCallback((path) => currentLocation.pathname === path, [currentLocation.pathname]);
 
     return (
         <header className="mainheader">
@@ -89,4 +89,4 @@ const MainHeader = () => {
     );
 }
 
-export default MainHeader;
+export default memo(MainHeader);
