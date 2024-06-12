@@ -1,6 +1,7 @@
 import React, { useEffect, useContext, useState, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import ReactGA from 'react-ga';
+import { HelmetProvider } from 'react-helmet-async';
 import { NotificationProvider, NotificationContext } from './context/NotificationContext';
 import { LocationProvider } from './context/LocationContext';
 import Notification from './components/UI/Notification/Notification';
@@ -26,6 +27,8 @@ const Address = lazy(() => import('./pages/Main/Address/Address'));
 const Bag = lazy(() => import('./pages/Main/Bag/Bag'));
 const Chat = lazy(() => import('./pages/Main/Chat/Chat'));
 const Profile = lazy(() => import('./pages/Main/Profile/Profile'));
+const EmailValidatedSuccess = lazy(() => import('./pages/Auth/EmailValidatedSuccess/EmailValidatedSuccess'));
+const EmailValidationFailed = lazy(() => import('./pages/Auth/EmailValidationFailed/EmailValidationFailed'));
 
 const AppContent = () => {
     const { isAuthenticated } = useAuth();
@@ -46,12 +49,12 @@ const AppContent = () => {
     }, []);
 
     const renderHeader = () => {
-        const authRoutes = ['/login', '/login-phone', '/signup', '/signup/contact-forms', '/signup/personal-data', '/signup/create-password', '/password-reset'];
+        const authRoutes = ['/login', '/login-phone', '/signup', '/signup/contact-forms', '/signup/personal-data', '/signup/create-password', '/password-reset', '/email-validated-success', '/email-validation-failed'];
         return authRoutes.includes(location.pathname) ? <AuthHeader /> : (!isMobile && <MainHeader />);
     };
 
     const renderFooter = () => {
-        const authRoutes = ['/login', '/login-phone', '/signup', '/signup/contact-forms', '/signup/personal-data', '/signup/create-password', '/password-reset'];
+        const authRoutes = ['/login', '/login-phone', '/signup', '/signup/contact-forms', '/signup/personal-data', '/signup/create-password', '/password-reset', '/email-validated-success', '/email-validation-failed'];
         return authRoutes.includes(location.pathname) ? <AuthFooter /> : (isMobile && <MobileFooter />);
     };
 
@@ -98,6 +101,8 @@ const AppContent = () => {
                             <Profile />
                         </ProtectedLink>
                     } />
+                    <Route path="/email-validated-success" element={<EmailValidatedSuccess />} />
+                    <Route path="/email-validation-failed" element={<EmailValidationFailed />} />
                 </Routes>
             </Suspense>
             {renderFooter()}
@@ -109,9 +114,11 @@ function App() {
     return (
         <NotificationProvider>
             <LocationProvider>
-                <Router>
-                    <AppContent />
-                </Router>
+                <HelmetProvider>
+                    <Router>
+                        <AppContent />
+                    </Router>
+                </HelmetProvider>
             </LocationProvider>
         </NotificationProvider>
     );

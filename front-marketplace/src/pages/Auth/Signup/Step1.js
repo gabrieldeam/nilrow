@@ -6,7 +6,7 @@ import CustomInput from '../../../components/UI/CustomInput/CustomInput';
 import Card from '../../../components/UI/Card/Card';
 import ConfirmationButton from '../../../components/UI/Buttons/ConfirmationButton/ConfirmationButton';
 import Notification from '../../../components/UI/Notification/Notification';
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 
 const Step1 = ({ formData, setFormData, handleStepCompletion }) => {
     const [isFormValid, setIsFormValid] = useState(false);

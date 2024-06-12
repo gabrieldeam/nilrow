@@ -9,7 +9,7 @@ import PrivacyNotice from '../../../components/Others/PrivacyNotice/PrivacyNotic
 import Notification from '../../../components/UI/Notification/Notification';
 import { NotificationContext } from '../../../context/NotificationContext';
 import LoadingSpinner from '../../../components/UI/LoadingSpinner/LoadingSpinner'; // Importação do componente de carregamento
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import './Signup.css';
 import { register } from '../../../services/api';
 import iconStep1 from '../../../assets/contato.svg';

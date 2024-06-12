@@ -9,7 +9,7 @@ import { sendResetCode, resetPassword } from '../../../services/api';
 import Notification from '../../../components/UI/Notification/Notification'; 
 import { NotificationContext } from '../../../context/NotificationContext'; 
 import LoadingSpinner from '../../../components/UI/LoadingSpinner/LoadingSpinner'; 
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import './PasswordReset.css';
 
 const PasswordReset = () => {

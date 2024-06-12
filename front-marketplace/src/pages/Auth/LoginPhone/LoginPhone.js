@@ -9,7 +9,7 @@ import PrivacyNotice from '../../../components/Others/PrivacyNotice/PrivacyNotic
 import Notification from '../../../components/UI/Notification/Notification';
 import { loginWithPhone } from '../../../services/api';
 import { NotificationContext } from '../../../context/NotificationContext';
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import './LoginPhone.css';
 
 const LoginPhone = () => {

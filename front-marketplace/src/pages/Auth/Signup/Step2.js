@@ -5,7 +5,7 @@ import DateInput from '../../../components/UI/Inputs/DateInput/DateInput';
 import Card from '../../../components/UI/Card/Card';
 import ConfirmationButton from '../../../components/UI/Buttons/ConfirmationButton/ConfirmationButton';
 import Notification from '../../../components/UI/Notification/Notification';
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 
 const validateCPF = (cpf) => {
     const regex = /^\d{11}$/;

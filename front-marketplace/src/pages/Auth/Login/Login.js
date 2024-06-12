@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CustomInput from '../../../components/UI/CustomInput/CustomInput';
 import Card from '../../../components/UI/Card/Card';
@@ -7,7 +7,7 @@ import PrivacyNotice from '../../../components/Others/PrivacyNotice/PrivacyNotic
 import { login } from '../../../services/api';
 import Notification from '../../../components/UI/Notification/Notification'; 
 import { NotificationContext } from '../../../context/NotificationContext'; 
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import './Login.css';
 
 const Login = () => {
@@ -80,4 +80,4 @@ const Login = () => {
     );
 };
 
-export default Login;
+export default memo(Login);

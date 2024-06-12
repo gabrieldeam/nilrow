@@ -162,7 +162,7 @@ public class AuthenticationController {
         people.setResetPasswordCode(resetCode);
         this.peopleRepository.save(people);
 
-        String emailBody = "Seu código de redefinição de senha é: " + resetCode;
+        String emailBody = emailService.createResetPasswordBody(resetCode);
 
         try {
             emailService.sendHtmlEmail(data.getEmail(), "Redefinição de Senha", emailBody);
