@@ -26,9 +26,9 @@ const Step2 = ({ formData, setFormData, handleStepCompletion }) => {
 
     const handleChange = useCallback((e) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+        setFormData({ ...formData, [name]: name === 'nickname' ? value.toLowerCase() : value });
         if (name === 'nickname') {
-            setNicknameValid(validateNickname(value));
+            setNicknameValid(validateNickname(value.toLowerCase()));
         }
     }, [formData, setFormData]);
 

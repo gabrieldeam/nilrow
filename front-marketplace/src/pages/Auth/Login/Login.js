@@ -18,6 +18,10 @@ const Login = () => {
     const { setMessage } = useContext(NotificationContext);
     const navigate = useNavigate();
 
+    const handleInputChange = (e) => {
+        setEmailOrUsername(e.target.value.toLowerCase());
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!emailOrUsername || !password) {
@@ -28,7 +32,7 @@ const Login = () => {
         try {
             await login(emailOrUsername, password);
             console.log('Login bem-sucedido');
-            setMessage('Bem-vindo a nilrow');
+            setMessage('Bem-vindo a Nilrow');
             navigate('/');
         } catch (err) {
             setError(err.message || 'Erro ao fazer login.');
@@ -44,7 +48,7 @@ const Login = () => {
             </Helmet>
             {showNotification && <Notification message={error} onClose={() => setShowNotification(false)} />}
             <div className="login-container">
-                <h1 className="login-title">Entrar na nilrow</h1>
+                <h1 className="login-title">Entrar na Nilrow</h1>
                 <form onSubmit={handleSubmit}>
                     <Card 
                         title="Login"
@@ -52,7 +56,7 @@ const Login = () => {
                     >
                         <CustomInput 
                             title="E-mail ou nome de usuário"
-                            onChange={(e) => setEmailOrUsername(e.target.value)}
+                            onChange={handleInputChange}
                             value={emailOrUsername}
                             type="text"
                         />

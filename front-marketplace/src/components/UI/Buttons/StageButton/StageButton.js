@@ -2,7 +2,7 @@ import React, { memo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import './StageButton.css';
 
-const StageButton = ({ text, backgroundColor, onClick, imageSrc }) => {
+const StageButton = ({ text, backgroundColor = '#7B33E5', onClick = () => {}, imageSrc = null }) => {
     const handleClick = useCallback((e) => {
         if (onClick) {
             onClick(e);
@@ -26,12 +26,6 @@ StageButton.propTypes = {
     backgroundColor: PropTypes.string,
     onClick: PropTypes.func,
     imageSrc: PropTypes.string,
-};
-
-StageButton.defaultProps = {
-    backgroundColor: '#7B33E5',
-    onClick: () => {},
-    imageSrc: null,
 };
 
 export default memo(StageButton);

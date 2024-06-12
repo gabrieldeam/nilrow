@@ -6,13 +6,12 @@ import { NotificationProvider, NotificationContext } from './context/Notificatio
 import { LocationProvider } from './context/LocationContext';
 import Notification from './components/UI/Notification/Notification';
 import ProtectedLoginRoute from './components/Others/ProtectedRoute/ProtectedLoginRoute';
-import ProtectedLink from './components/Others/ProtectedRoute/ProtectedLink';
+import ProtectedRoute from './components/Others/ProtectedRoute/ProtectedRoute';
 import MainHeader from './components/Main/MainHeader/MainHeader';
 import AuthHeader from './components/Auth/AuthHeader/AuthHeader';
 import AuthFooter from './components/Auth/AuthFooter/AuthFooter';
 import MobileFooter from './components/Main/MobileFooter/MobileFooter';
 import './styles/global.css';
-import useAuth from './hooks/useAuth';
 import LoadingSpinner from './components/UI/LoadingSpinner/LoadingSpinner';
 
 // Lazy loading pages
@@ -29,9 +28,13 @@ const Chat = lazy(() => import('./pages/Main/Chat/Chat'));
 const Profile = lazy(() => import('./pages/Main/Profile/Profile'));
 const EmailValidatedSuccess = lazy(() => import('./pages/Auth/EmailValidatedSuccess/EmailValidatedSuccess'));
 const EmailValidationFailed = lazy(() => import('./pages/Auth/EmailValidationFailed/EmailValidationFailed'));
+const Orders = lazy(() => import('./pages/Main/Orders/Orders'));
+const Blocked = lazy(() => import('./pages/Main/Blocked/Blocked'));
+const Likes = lazy(() => import('./pages/Main/Likes/Likes'));
+const Notifications = lazy(() => import('./pages/Main/Notifications/Notifications'));
+const Data = lazy(() => import('./pages/Main/Data/Data'));
 
 const AppContent = () => {
-    const { isAuthenticated } = useAuth();
     const { message, setMessage } = useContext(NotificationContext);
     const location = useLocation();
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -66,43 +69,48 @@ const AppContent = () => {
                 <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/login" element={
-                        <ProtectedLoginRoute isAuthenticated={isAuthenticated}><Login /></ProtectedLoginRoute>
+                        <ProtectedLoginRoute><Login /></ProtectedLoginRoute>
                     } />
                     <Route path="/login-phone" element={
-                        <ProtectedLoginRoute isAuthenticated={isAuthenticated}><LoginPhone /></ProtectedLoginRoute>
+                        <ProtectedLoginRoute><LoginPhone /></ProtectedLoginRoute>
                     } />
                     <Route path="/signup/*" element={
-                        <ProtectedLoginRoute isAuthenticated={isAuthenticated}><Signup /></ProtectedLoginRoute>
+                        <ProtectedLoginRoute><Signup /></ProtectedLoginRoute>
                     } />
                     <Route path="/password-reset" element={<PasswordReset />} />
                     <Route path="/search" element={<Search />} />
                     <Route path="/create" element={
-                        <ProtectedLink to="/create">
-                            <Create />
-                        </ProtectedLink>
+                        <ProtectedRoute element={<Create />} />
                     } />
                     <Route path="/address" element={
-                        <ProtectedLink to="/address">
-                            <Address />
-                        </ProtectedLink>
+                        <ProtectedRoute element={<Address />} />
                     } />
                     <Route path="/bag" element={
-                        <ProtectedLink to="/bag">
-                            <Bag />
-                        </ProtectedLink>
+                        <ProtectedRoute element={<Bag />} />
                     } />
                     <Route path="/chat" element={
-                        <ProtectedLink to="/chat">
-                            <Chat />
-                        </ProtectedLink>
+                        <ProtectedRoute element={<Chat />} />
                     } />
                     <Route path="/profile" element={
-                        <ProtectedLink to="/profile">
-                            <Profile />
-                        </ProtectedLink>
+                        <ProtectedRoute element={<Profile />} />
                     } />
                     <Route path="/email-validated-success" element={<EmailValidatedSuccess />} />
                     <Route path="/email-validation-failed" element={<EmailValidationFailed />} />
+                    <Route path="/orders" element={
+                        <ProtectedRoute element={<Orders />} />
+                    } />
+                    <Route path="/blocked" element={
+                        <ProtectedRoute element={<Blocked />} />
+                    } />
+                    <Route path="/likes" element={
+                        <ProtectedRoute element={<Likes />} />
+                    } />
+                    <Route path="/notifications" element={
+                        <ProtectedRoute element={<Notifications />} />
+                    } />
+                    <Route path="/data" element={
+                        <ProtectedRoute element={<Data />} />
+                    } />
                 </Routes>
             </Suspense>
             {renderFooter()}

@@ -26,7 +26,7 @@
 .custom-button:active,
 .custom-button:focus {
     border: 1px solid #FFFFFF;
-    outline: none; /* Remove o outline padrão do foco */
+    outline: none; 
 }
 
 .custom-button.active {

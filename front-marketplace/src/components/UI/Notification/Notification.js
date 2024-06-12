@@ -10,7 +10,7 @@ const Notification = ({ message, onClose, backgroundColor = '#DF1414' }) => {
         const timer = setTimeout(() => {
             setVisible(false);
             onClose();
-        }, 20000); // 20 segundos
+        }, 5000); // 20 segundos
 
         return () => clearTimeout(timer);
     }, [onClose]);

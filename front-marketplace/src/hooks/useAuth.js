@@ -5,6 +5,7 @@ import { checkAuth, logout } from '../services/api';
 
 const useAuth = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [loading, setLoading] = useState(true); // Estado de carregamento adicionado
     const { setMessage } = useContext(NotificationContext);
     const navigate = useNavigate();
 
@@ -16,6 +17,8 @@ const useAuth = () => {
             } catch (error) {
                 console.error('Erro na autenticação: ', error);
                 setIsAuthenticated(false);
+            } finally {
+                setLoading(false); // Carregamento completo
             }
         };
         authenticate();
@@ -38,7 +41,7 @@ const useAuth = () => {
         }
     }, [navigate]);
 
-    return { isAuthenticated, handleLogout };
+    return { isAuthenticated, loading, handleLogout };
 };
 
 export default useAuth;

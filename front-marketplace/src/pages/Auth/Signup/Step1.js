@@ -16,7 +16,7 @@ const Step1 = ({ formData, setFormData, handleStepCompletion }) => {
 
     const handleChange = useCallback((e) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+        setFormData({ ...formData, [name]: name === 'email' ? value.toLowerCase() : value });
     }, [formData, setFormData]);
 
     const handlePhoneChange = useCallback((value) => {
@@ -120,7 +120,7 @@ const Step1 = ({ formData, setFormData, handleStepCompletion }) => {
                         type="button"
                     />
                 </div>
-                <div className="signup-link">
+                <div className="login-link">
                     <a href="/signup">Voltar sem salvar</a>
                 </div>
             </form>
