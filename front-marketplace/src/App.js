@@ -31,6 +31,7 @@ const EmailValidatedSuccess = lazy(() => import('./pages/Auth/EmailValidatedSucc
 const EmailValidationFailed = lazy(() => import('./pages/Auth/EmailValidationFailed/EmailValidationFailed'));
 const Cards = lazy(() => import('./pages/Main/Cards/Cards'));
 const Privacy = lazy(() => import('./pages/Main/Privacy/Privacy'));
+const EditProfile = lazy(() => import('./pages/Main/EditProfile/EditProfile'));
 
 const AppContent = () => {
     const { isAuthenticated } = useAuth();
@@ -102,6 +103,7 @@ const AppContent = () => {
                     <Route path="/email-validation-failed" element={<EmailValidationFailed />} />
                     <Route path="/cards" element={<ProtectedRoute element={<Cards />} />} />
                     <Route path="/privacy" element={<ProtectedRoute element={<Privacy />} />} />
+                    <Route path="/edit-profile" element={<ProtectedRoute element={<EditProfile />} />} />
                 </Routes>
             </Suspense>
             {renderFooter()}

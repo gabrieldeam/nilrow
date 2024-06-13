@@ -1,0 +1,70 @@
+.edit-profile-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #000;
+    color: #fff;
+    padding-top: 90px;
+    padding-bottom: 70px;
+    box-sizing: border-box;
+}
+
+.edit-profile-container {
+    width: 100%;
+    max-width: 419px;
+    padding: 6px;
+    box-sizing: border-box;
+    margin-top: auto; 
+    margin-bottom: auto; 
+}
+
+.custom-input-container-phone {
+    width: 100%;
+    margin: 8px 0;
+}
+
+.input-title-phone {
+    display: block;
+    font-size: 15px;
+    color: #ffffff;
+    margin-bottom: 8px;
+}
+
+.phone-input {
+    width: 100% !important;
+    height: 40px !important;
+    padding: 0 45px !important;
+    border: 1px solid #ffffff !important;
+    background-color: transparent !important;
+    color: #ffffff !important;
+    font-size: 15px !important;
+    box-sizing: border-box !important;
+    border-radius: 4px !important;
+}
+
+.phone-input-button {
+    background-color: transparent !important;
+    border: none !important;
+}
+
+.phone-input-dropdown {
+    background-color: #212121 !important;
+    color: #ffffff !important;
+}
+
+.input-bottom-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 15px;
+}
+
+.bottom-left-phone {
+    color: #656565;
+    margin-top: 8px;
+}
+
+.confirmationButton-space {
+    margin-top: 20px;
+}

@@ -4,6 +4,21 @@ import { useNavigate } from 'react-router-dom';
 import HeaderButton from '../../../components/UI/Buttons/HeaderButton/HeaderButton';
 import './MobileHeader.css';
 
+// Import icons directly
+import addressIcon from '../../../assets/address.svg';
+import closeIcon from '../../../assets/close.svg';
+import chatIcon from '../../../assets/chat.svg';
+import bagIcon from '../../../assets/bag.svg';
+import shareIcon from '../../../assets/share.svg';
+import searchIcon from '../../../assets/search.svg';
+import backIcon from '../../../assets/setadireito.svg';
+import settingsIcon from '../../../assets/settings.svg';
+import qrcodeIcon from '../../../assets/qrcode.svg';
+import publishIcon from '../../../assets/publish.svg';
+import scanIcon from '../../../assets/scan.svg';
+import blockedIcon from '../../../assets/blocked.svg';
+import notificationsIcon from '../../../assets/notifications.svg';
+
 const MobileHeader = ({ title, buttons }) => {
     const navigate = useNavigate();
 
@@ -12,19 +27,19 @@ const MobileHeader = ({ title, buttons }) => {
     };
 
     const icons = {
-        address: '../../../assets/address.svg',
-        close: '../../../assets/close.svg',
-        chat: '../../../assets/chat.svg',
-        bag: '../../../assets/bag.svg',
-        share: '../../../assets/share.svg',
-        search: '../../../assets/search.svg',
-        back: '../../../assets/setadireito.svg',
-        settings: '../../../assets/settings.svg',
-        qrcode: '../../../assets/qrcode.svg',
-        publish: '../../../assets/publish.svg',
-        scan: '../../../assets/scan.svg',
-        blocked: '../../../assets/blocked.svg',
-        notifications: '../../../assets/notifications.svg',
+        address: addressIcon,
+        close: closeIcon,
+        chat: chatIcon,
+        bag: bagIcon,
+        share: shareIcon,
+        search: searchIcon,
+        back: backIcon,
+        settings: settingsIcon,
+        qrcode: qrcodeIcon,
+        publish: publishIcon,
+        scan: scanIcon,
+        blocked: blockedIcon,
+        notifications: notificationsIcon,
     };
 
     return (

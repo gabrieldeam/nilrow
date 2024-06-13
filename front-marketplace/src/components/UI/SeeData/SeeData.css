@@ -1,0 +1,100 @@
+.see-data-wrapper {
+    display: flex;
+    gap: 10px; /* Adiciona um espaçamento de 10px entre os componentes */
+}
+
+.see-data-container {
+    background-color: #000000;
+    border-radius: 5px;
+    height: 60px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+.see-data-title {
+    font-size: 15px;
+    color: #ffffff;
+    margin-right: 20px;
+    white-space: nowrap;
+}
+
+.see-data-content {
+    font-size: 15px;
+    color: #ffffff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+}
+
+
+/* Estilos para mobile */
+@media (max-width: 768px) {
+    .profile-container {
+        max-width: 419px;
+        padding: 0 6px;
+    }
+
+    .profile-title,
+    .logout-link.desktop-only {
+        display: none;
+    }
+
+    .profile-content {
+        flex-direction: column-reverse; /* Inverter a ordem dos filhos no contêiner */
+    }
+
+    .profile-header {
+        justify-content: center;
+    }
+
+    .profile-buttons {
+        justify-content: space-around;
+        width: 100%;
+    }
+
+    .profile-steps {
+        justify-content: center;
+    }
+
+    .step-card-wrapper {
+        flex-direction: column;
+        margin-bottom: 25px;
+    }
+
+    .step-button {
+        max-width: none;
+        margin-bottom: 0px;
+    }
+
+    .card-container {
+        max-width: 100%;
+    }
+
+    .additional-steps {
+        flex-direction: column;
+        margin-top: 25px;
+    }
+
+    .additional-steps .step-button {
+        max-width: 100%;
+    }
+
+    .step-button.data-personal {
+        max-width: 100%;
+    }
+
+    .logout-link.mobile-only {
+        display: block;
+        margin-top: 20px;
+        text-align: center;
+    }
+
+    .see-data-wrapper {
+        flex-direction: column; /* Adiciona uma direção de coluna para dispositivos móveis */
+        gap: 10px;
+    }
+}

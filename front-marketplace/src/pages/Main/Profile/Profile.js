@@ -1,9 +1,11 @@
-import React, { memo } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import HeaderButton from '../../../components/UI/Buttons/HeaderButton/HeaderButton';
 import StepButton from '../../../components/UI/Buttons/StepButton/StepButton';
 import Card from '../../../components/UI/Card/Card';
+import MobileHeader from '../../../components/Main/MobileHeader/MobileHeader';
+import SeeData from '../../../components/UI/SeeData/SeeData';
 import './Profile.css';
 import ordersIcon from '../../../assets/orders.svg';
 import notificationsIcon from '../../../assets/notifications.svg';
@@ -15,18 +17,40 @@ import cardIcon from '../../../assets/card.svg';
 import privacyIcon from '../../../assets/privacy.svg';
 import profileIcon from '../../../assets/profile.svg';
 import { logout } from '../../../services/api';
+import { getUserProfile, getUserNickname } from '../../../services/profileApi';
 
 const Profile = () => {
     const navigate = useNavigate();
+    const isMobile = window.innerWidth <= 768;
+    const [profile, setProfile] = useState({});
+    const [nickname, setNickname] = useState('');
+
+    useEffect(() => {
+        const fetchProfileData = async () => {
+            try {
+                const profileData = await getUserProfile();
+                setProfile(profileData);
+                const userNickname = await getUserNickname();
+                setNickname(userNickname);
+            } catch (error) {
+                console.error('Erro ao buscar dados do perfil:', error);
+            }
+        };
+
+        fetchProfileData();
+    }, []);
 
     const handleLogout = async () => {
         try {
             await logout();
-            navigate('/login');
+            window.location.reload();
         } catch (error) {
             console.error('Erro ao fazer logout:', error);
         }
     };
+
+    const formattedNickname = `@${nickname}`;
+    const formattedPhone = profile.phone?.startsWith('55') ? profile.phone.substring(2) : profile.phone;
 
     return (
         <div className="profile-page">
@@ -34,6 +58,9 @@ const Profile = () => {
                 <title>Meu perfil - Nilrow</title>
                 <meta name="description" content="Veja seu perfil na Nilrow." />
             </Helmet>
+            {isMobile && (
+                <MobileHeader title="Meu perfil" buttons={{ bag: true }} />
+            )}
             <div className="profile-container">
                 <div className="profile-content">
                     <div className="profile-header">
@@ -59,8 +86,14 @@ const Profile = () => {
                                 paragraph="Informações do seu documento de identidade e sua atividade econômica."
                                 onClick={() => navigate('/data')}
                             />
-                            <Card title="Dados da sua conta">
-                                <p>Aqui você pode ver os dados da sua conta.</p>
+                            <Card 
+                                title="Dados da sua conta"
+                                rightLink={{ href: "/edit-profile", text: "Alterar" }}>
+                                <div className="see-data-wrapper">
+                                    <SeeData title="E-mail" content={profile.email} />
+                                    <SeeData title="Telefone" content={formattedPhone} />
+                                    <SeeData title="Nome de usuário" content={formattedNickname} />
+                                </div>
                             </Card>
                         </div>
                     </div>
