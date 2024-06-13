@@ -2,7 +2,7 @@ import React, { useState, useEffect, memo } from 'react';
 import PropTypes from 'prop-types';
 import './AuthFooter.css';
 
-const Footer = ({ initialOpenState = false }) => {
+const AuthFooter = ({ initialOpenState = false }) => {
     const [isOpen, setIsOpen] = useState(initialOpenState);
 
     useEffect(() => {
@@ -27,8 +27,8 @@ const Footer = ({ initialOpenState = false }) => {
     );
 };
 
-Footer.propTypes = {
+AuthFooter.propTypes = {
     initialOpenState: PropTypes.bool
 };
 
-export default memo(Footer);
+export default memo(AuthFooter);

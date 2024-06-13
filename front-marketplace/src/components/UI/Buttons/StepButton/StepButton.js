@@ -9,7 +9,8 @@ const StepButton = ({
     title,
     paragraph,
     isVerified = false,
-    onClick
+    onClick,
+    className
 }) => {
     const handleClick = useCallback((e) => {
         if (onClick) {
@@ -18,7 +19,7 @@ const StepButton = ({
     }, [onClick]);
 
     return (
-        <button className="step-button" onClick={handleClick}>
+        <button className={`step-button ${className}`} onClick={handleClick}>
             <div className="step-button-left">
                 <div className="step-button-icon-circle">
                     <img src={icon} alt="Step Icon" className="step-button-icon" />
@@ -41,7 +42,8 @@ StepButton.propTypes = {
     title: PropTypes.string.isRequired,
     paragraph: PropTypes.string.isRequired,
     isVerified: PropTypes.bool,
-    onClick: PropTypes.func.isRequired
+    onClick: PropTypes.func.isRequired,
+    className: PropTypes.string
 };
 
 export default memo(StepButton);
