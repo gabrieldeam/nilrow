@@ -113,13 +113,12 @@ const EditProfile = () => {
             await updateUserProfile(updatedProfileData);
             await updateUserNickname(updatedNickname);
             setMessage('Dados atualizados com sucesso!');
-            navigate('/profile');
         } catch (error) {
             console.error('Erro ao atualizar dados:', error);
             setError(error.response?.data?.message || 'Erro ao atualizar dados. Tente novamente.');
             setShowNotification(true);
         }
-    }, [formData, isFormValid, validateEmail, validatePhone, originalData, setMessage, navigate]);
+    }, [formData, isFormValid, validateEmail, validatePhone, originalData, setMessage]);
 
     return (
         <div className="edit-profile-page">
@@ -129,10 +128,10 @@ const EditProfile = () => {
             </Helmet>
             {showNotification && <Notification message={error} onClose={() => setShowNotification(false)} />}
             {isMobile && (
-                <MobileHeader title="Dados da sua conta" buttons={{ close: true }} handleBack={handleBack} />
+                <MobileHeader title="Editar dados" buttons={{ close: true }} handleBack={handleBack} />
             )}
             <div className="edit-profile-container">
-                <SubHeader title="Meu perfil" handleBack={handleBack} />
+                <SubHeader title="Editar dados" handleBack={handleBack} />
                 <form onSubmit={handleSubmit}>
                     <Card title="Alterar">
                         <CustomInput 

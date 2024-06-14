@@ -29,9 +29,11 @@ const Chat = lazy(() => import('./pages/Main/Chat/Chat'));
 const Profile = lazy(() => import('./pages/Main/Profile/Profile'));
 const EmailValidatedSuccess = lazy(() => import('./pages/Auth/EmailValidatedSuccess/EmailValidatedSuccess'));
 const EmailValidationFailed = lazy(() => import('./pages/Auth/EmailValidationFailed/EmailValidationFailed'));
+const Data = lazy(() => import('./pages/Main/Data/Data'));
 const Cards = lazy(() => import('./pages/Main/Cards/Cards'));
 const Privacy = lazy(() => import('./pages/Main/Privacy/Privacy'));
 const EditProfile = lazy(() => import('./pages/Main/EditProfile/EditProfile'));
+const EditData = lazy(() => import('./pages/Main/EditData/EditData'));
 
 const AppContent = () => {
     const { isAuthenticated } = useAuth();
@@ -62,7 +64,7 @@ const AppContent = () => {
     };
 
     const renderAuthFooter = () => {
-        const specificRoutes = ['/profile', '/edit-profile'];
+        const specificRoutes = ['/profile', '/edit-profile', '/data', '/edit-data'];
         return specificRoutes.includes(location.pathname) && !isMobile ? <AuthFooter /> : null;
     };
 
@@ -73,37 +75,23 @@ const AppContent = () => {
             <Suspense fallback={<LoadingSpinner />}>
                 <Routes>
                     <Route path="/" element={<Home />} />
-                    <Route path="/login" element={
-                        <ProtectedLoginRoute isAuthenticated={isAuthenticated}><Login /></ProtectedLoginRoute>
-                    } />
-                    <Route path="/login-phone" element={
-                        <ProtectedLoginRoute isAuthenticated={isAuthenticated}><LoginPhone /></ProtectedLoginRoute>
-                    } />
-                    <Route path="/signup/*" element={
-                        <ProtectedLoginRoute isAuthenticated={isAuthenticated}><Signup /></ProtectedLoginRoute>
-                    } />
+                    <Route path="/login" element={<ProtectedLoginRoute isAuthenticated={isAuthenticated}><Login /></ProtectedLoginRoute>} />
+                    <Route path="/login-phone" element={<ProtectedLoginRoute isAuthenticated={isAuthenticated}><LoginPhone /></ProtectedLoginRoute>} />
+                    <Route path="/signup/*" element={<ProtectedLoginRoute isAuthenticated={isAuthenticated}><Signup /></ProtectedLoginRoute>} />
                     <Route path="/password-reset" element={<PasswordReset />} />
                     <Route path="/search" element={<Search />} />
-                    <Route path="/create" element={
-                        <ProtectedRoute element={<Create />} />
-                    } />
-                    <Route path="/address" element={
-                        <ProtectedRoute element={<Address />} />
-                    } />
-                    <Route path="/bag" element={
-                        <ProtectedRoute element={<Bag />} />
-                    } />
-                    <Route path="/chat" element={
-                        <ProtectedRoute element={<Chat />} />
-                    } />
-                    <Route path="/profile" element={
-                        <ProtectedRoute element={<Profile />} />
-                    } />
+                    <Route path="/create" element={<ProtectedRoute element={<Create />} />} />
+                    <Route path="/address" element={<ProtectedRoute element={<Address />} />} />
+                    <Route path="/bag" element={<ProtectedRoute element={<Bag />} />} />
+                    <Route path="/chat" element={<ProtectedRoute element={<Chat />} />} />
+                    <Route path="/profile" element={<ProtectedRoute element={<Profile />} />} />
                     <Route path="/email-validated-success" element={<EmailValidatedSuccess />} />
                     <Route path="/email-validation-failed" element={<EmailValidationFailed />} />
+                    <Route path="/data" element={<ProtectedRoute element={<Data />} />} />
                     <Route path="/cards" element={<ProtectedRoute element={<Cards />} />} />
                     <Route path="/privacy" element={<ProtectedRoute element={<Privacy />} />} />
                     <Route path="/edit-profile" element={<ProtectedRoute element={<EditProfile />} />} />
+                    <Route path="/edit-data" element={<ProtectedRoute element={<EditData />} />} />
                 </Routes>
             </Suspense>
             {renderFooter()}
