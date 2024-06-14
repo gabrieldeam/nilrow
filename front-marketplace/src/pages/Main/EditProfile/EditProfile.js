@@ -7,6 +7,7 @@ import Card from '../../../components/UI/Card/Card';
 import StageButton from '../../../components/UI/Buttons/StageButton/StageButton';
 import Notification from '../../../components/UI/Notification/Notification';
 import MobileHeader from '../../../components/Main/MobileHeader/MobileHeader';
+import SubHeader from '../../../components/Main/SubHeader/SubHeader';
 import { NotificationContext } from '../../../context/NotificationContext';
 import { Helmet } from 'react-helmet-async';
 import { getUserProfile, updateUserProfile, getUserNickname, updateUserNickname } from '../../../services/profileApi';
@@ -18,6 +19,11 @@ const EditProfile = () => {
         phone: '',
         nickname: ''
     });
+    const [originalData, setOriginalData] = useState({
+        email: '',
+        phone: '',
+        nickname: ''
+    });
     const [isFormValid, setIsFormValid] = useState(false);
     const [error, setError] = useState('');
     const [showNotification, setShowNotification] = useState(false);
@@ -25,15 +31,25 @@ const EditProfile = () => {
     const navigate = useNavigate();
     const isMobile = window.innerWidth <= 768;
 
+    const handleBack = useCallback(() => {
+        navigate(-1);
+    }, [navigate]);
+
     useEffect(() => {
         const fetchUserData = async () => {
             try {
                 const userProfile = await getUserProfile();
                 const userNickname = await getUserNickname();
+                const nickname = userNickname.replace('@', '');
                 setFormData({
                     email: userProfile.email,
                     phone: userProfile.phone,
-                    nickname: userNickname.replace('@', '')
+                    nickname: nickname
+                });
+                setOriginalData({
+                    email: userProfile.email,
+                    phone: userProfile.phone,
+                    nickname: nickname
                 });
             } catch (error) {
                 console.error('Erro ao buscar dados do usuário:', error);
@@ -86,20 +102,24 @@ const EditProfile = () => {
             return;
         }
 
+        const updatedProfileData = {
+            email: formData.email !== originalData.email ? formData.email : null,
+            phone: formData.phone !== originalData.phone ? formData.phone : null
+        };
+
+        const updatedNickname = formData.nickname !== originalData.nickname ? formData.nickname : null;
+
         try {
-            await updateUserProfile({
-                email: formData.email,
-                phone: formData.phone
-            });
-            await updateUserNickname(formData.nickname);
+            await updateUserProfile(updatedProfileData);
+            await updateUserNickname(updatedNickname);
             setMessage('Dados atualizados com sucesso!');
             navigate('/profile');
         } catch (error) {
             console.error('Erro ao atualizar dados:', error);
-            setError('Erro ao atualizar dados. Tente novamente.');
+            setError(error.response?.data?.message || 'Erro ao atualizar dados. Tente novamente.');
             setShowNotification(true);
         }
-    }, [formData, isFormValid, validateEmail, validatePhone, setMessage, navigate]);
+    }, [formData, isFormValid, validateEmail, validatePhone, originalData, setMessage, navigate]);
 
     return (
         <div className="edit-profile-page">
@@ -109,9 +129,10 @@ const EditProfile = () => {
             </Helmet>
             {showNotification && <Notification message={error} onClose={() => setShowNotification(false)} />}
             {isMobile && (
-                <MobileHeader title="Dados da sua conta" buttons={{ close: true }} />
+                <MobileHeader title="Dados da sua conta" buttons={{ close: true }} handleBack={handleBack} />
             )}
             <div className="edit-profile-container">
+                <SubHeader title="Meu perfil" handleBack={handleBack} />
                 <form onSubmit={handleSubmit}>
                     <Card title="Alterar">
                         <CustomInput 

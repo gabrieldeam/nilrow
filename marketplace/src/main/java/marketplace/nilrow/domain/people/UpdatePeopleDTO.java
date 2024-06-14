@@ -1,10 +1,12 @@
 package marketplace.nilrow.domain.people;
 
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import marketplace.nilrow.validation.ValidNickname;
 
 import java.time.LocalDate;
 
@@ -12,8 +14,13 @@ import java.time.LocalDate;
 @Setter
 public class UpdatePeopleDTO {
 
-    @Size(min = 4, max = 30, message = "Nickname must be between 4 and 30 characters")
-    @Pattern(regexp = "^[a-z0-9._]+$", message = "Nickname can only contain lowercase letters, numbers, dots, and underscores")
+    @NotBlank(message = "Nome de usuário é obrigatório")
+    @Size(min = 4, max = 30, message = "O nome de usuário deve ter entre 4 e 30 caracteres")
+    @Pattern(regexp = "^[a-z0-9._]+$", message = "O nome de usuário só pode conter letras minúsculas, números, pontos e sublinhados")
+    @ValidNickname(
+            forbiddenMessage = "O nome de usuário contém palavras proibidas",
+            consecutiveCharsMessage = "O nome de usuário não pode conter caracteres consecutivos"
+    )
     private String newNickname;
 
     @Email(message = "Email should be valid")

@@ -100,6 +100,12 @@ const Profile = () => {
                 </div>
                 <div className="additional-steps">
                     <StepButton
+                        icon={profileIcon}
+                        title="Canal"
+                        paragraph="Perfil público da sua conta, onde todos os usuários poderão te achar."
+                        onClick={() => navigate('/data')}
+                    />
+                    <StepButton
                         icon={addressIcon}
                         title="Endereços"
                         paragraph="Endereços de entrega salvos na sua conta"
@@ -116,12 +122,6 @@ const Profile = () => {
                         title="Privacidade"
                         paragraph="Preferências e controle do uso dos seus dados."
                         onClick={() => navigate('/privacy')}
-                    />
-                    <StepButton
-                        icon={profileIcon}
-                        title="Canal"
-                        paragraph="Perfil público da sua conta, onde todos os usuários poderão te achar."
-                        onClick={() => navigate('/data')}
                     />
                 </div>
                 <div className="logout-link mobile-only">

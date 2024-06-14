@@ -62,7 +62,7 @@ const AppContent = () => {
     };
 
     const renderAuthFooter = () => {
-        const specificRoutes = ['/cards', '/privacy', '/profile'];
+        const specificRoutes = ['/profile', '/edit-profile'];
         return specificRoutes.includes(location.pathname) && !isMobile ? <AuthFooter /> : null;
     };
 

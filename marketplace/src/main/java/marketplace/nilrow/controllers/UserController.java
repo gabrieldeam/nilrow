@@ -2,7 +2,6 @@ package marketplace.nilrow.controllers;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
-import marketplace.nilrow.domain.user.LoginResponseDTO;
 import marketplace.nilrow.domain.user.UpdateNicknameDTO;
 import marketplace.nilrow.domain.user.User;
 import marketplace.nilrow.infra.exception.DuplicateFieldException;
@@ -38,19 +37,24 @@ public class UserController {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = (User) userRepository.findByNickname(userDetails.getUsername());
 
-        // Verifica se o novo nickname já existe
-        if (userRepository.findByNickname(updateNicknameDTO.getNewNickname()) != null) {
-            throw new DuplicateFieldException("Nickname", "Nickname already exists");
+        String newNickname = updateNicknameDTO.getNewNickname();
+
+        // Se o novo nickname não for vazio
+        if (newNickname != null && !newNickname.trim().isEmpty()) {
+            // Verifica se o novo nickname já existe
+            if (userRepository.findByNickname(newNickname) != null) {
+                throw new DuplicateFieldException("Nickname", "Nome de usuário já existe");
+            }
+
+            user.setNickname(newNickname);
+            userRepository.save(user);
+
+            // Gerar novo token
+            String newToken = tokenService.generateToken(user);
+
+            // Adicionar o novo token no cookie
+            CookieUtil.addAuthCookie(response, newToken);
         }
-
-        user.setNickname(updateNicknameDTO.getNewNickname());
-        userRepository.save(user);
-
-        // Gerar novo token
-        String newToken = tokenService.generateToken(user);
-
-        // Adicionar o novo token no cookie
-        CookieUtil.addAuthCookie(response, newToken);
 
         return ResponseEntity.ok().build();
     }

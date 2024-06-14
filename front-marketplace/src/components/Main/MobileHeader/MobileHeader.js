@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router-dom';
 import HeaderButton from '../../../components/UI/Buttons/HeaderButton/HeaderButton';
 import './MobileHeader.css';
 
@@ -19,13 +18,7 @@ import scanIcon from '../../../assets/scan.svg';
 import blockedIcon from '../../../assets/blocked.svg';
 import notificationsIcon from '../../../assets/notifications.svg';
 
-const MobileHeader = ({ title, buttons }) => {
-    const navigate = useNavigate();
-
-    const handleBack = () => {
-        navigate(-1);
-    };
-
+const MobileHeader = ({ title, buttons, handleBack }) => {
     const icons = {
         address: addressIcon,
         close: closeIcon,
@@ -85,6 +78,7 @@ MobileHeader.propTypes = {
         blocked: PropTypes.bool,
         notifications: PropTypes.bool,
     }).isRequired,
+    handleBack: PropTypes.func,
 };
 
 export default MobileHeader;

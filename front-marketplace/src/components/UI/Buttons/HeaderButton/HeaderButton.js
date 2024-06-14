@@ -2,9 +2,11 @@ import React, { useCallback, memo } from 'react';
 import PropTypes from 'prop-types';
 import './HeaderButton.css';
 
-const HeaderButton = React.forwardRef(({ text, icon, link, newTab = false, isActive = false }, ref) => {
+const HeaderButton = React.forwardRef(({ text, icon, link, newTab = false, isActive = false, onClick }, ref) => {
     const handleClick = useCallback(() => {
-        if (link) {
+        if (onClick) {
+            onClick();
+        } else if (link) {
             const isExternal = link.startsWith('http://') || link.startsWith('https://');
             if (isExternal) {
                 if (newTab) {
@@ -20,7 +22,7 @@ const HeaderButton = React.forwardRef(({ text, icon, link, newTab = false, isAct
                 }
             }
         }
-    }, [link, newTab]);
+    }, [link, newTab, onClick]);
 
     return (
         <button
@@ -40,6 +42,7 @@ HeaderButton.propTypes = {
     link: PropTypes.string,
     newTab: PropTypes.bool,
     isActive: PropTypes.bool,
+    onClick: PropTypes.func,
 };
 
 export default memo(HeaderButton);

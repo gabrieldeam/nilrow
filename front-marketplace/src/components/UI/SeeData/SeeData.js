@@ -16,8 +16,8 @@ const SeeData = ({ title, content }) => {
 };
 
 SeeData.propTypes = {
-    title: PropTypes.string.isRequired,
-    content: PropTypes.string.isRequired,
+    title: PropTypes.string,
+    content: PropTypes.string,
 };
 
 export default SeeData;
