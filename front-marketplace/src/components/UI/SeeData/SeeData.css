@@ -31,7 +31,6 @@
     flex: 1;
 }
 
-
 /* Estilos para mobile */
 @media (max-width: 768px) {
     .profile-container {
@@ -96,6 +95,14 @@
 
     .see-data-wrapper {
         flex-direction: column; /* Adiciona uma direção de coluna para dispositivos móveis */
+        gap: 10px;
+    }
+}
+
+/* Estilos para tablet */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .see-data-wrapper {
+        flex-direction: column;
         gap: 10px;
     }
 }

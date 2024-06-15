@@ -45,15 +45,20 @@ public class PeopleController {
 
         if (updatePeopleDTO.getEmail() != null && !updatePeopleDTO.getEmail().equals(people.getEmail())) {
             if (peopleRepository.findByEmail(updatePeopleDTO.getEmail()) != null) {
-                throw new DuplicateFieldException("Email", "Email already exists");
+                throw new DuplicateFieldException("Email", "E-mail já existe");
             }
             people.setEmail(updatePeopleDTO.getEmail());
         }
 
-        if (updatePeopleDTO.getPhone() != null && !updatePeopleDTO.getPhone().equals(people.getPhone())) {
-            if (peopleRepository.findByPhone(updatePeopleDTO.getPhone()) != null) {
-                throw new DuplicateFieldException("Phone", "Phone already exists");
-            }
+        // Remover a verificação de telefone duplicado
+        // if (updatePeopleDTO.getPhone() != null && !updatePeopleDTO.getPhone().equals(people.getPhone())) {
+        //     if (peopleRepository.findByPhone(updatePeopleDTO.getPhone()) != null) {
+        //         throw new DuplicateFieldException("Phone", "Phone already exists");
+        //     }
+        //     people.setPhone(updatePeopleDTO.getPhone());
+        // }
+
+        if (updatePeopleDTO.getPhone() != null) {
             people.setPhone(updatePeopleDTO.getPhone());
         }
 
@@ -63,7 +68,7 @@ public class PeopleController {
 
         if (updatePeopleDTO.getCpf() != null && !updatePeopleDTO.getCpf().equals(people.getCpf())) {
             if (peopleRepository.findByCpf(updatePeopleDTO.getCpf()) != null) {
-                throw new DuplicateFieldException("CPF", "CPF already exists");
+                throw new DuplicateFieldException("CPF", "CPF já existe");
             }
             people.setCpf(updatePeopleDTO.getCpf());
         }

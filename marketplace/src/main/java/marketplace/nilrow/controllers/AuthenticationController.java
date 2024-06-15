@@ -102,9 +102,10 @@ public class AuthenticationController {
             if (this.peopleRepository.findByCpf(data.getCpf()) != null) {
                 throw new DuplicateFieldException("CPF", "CPF já em uso");
             }
-            if (this.peopleRepository.findByPhone(data.getPhone()) != null) {
-                throw new DuplicateFieldException("Phone", "Telefone já em uso");
-            }
+            // Remover a verificação de telefone duplicado
+            // if (this.peopleRepository.findByPhone(data.getPhone()) != null) {
+            //     throw new DuplicateFieldException("Phone", "Telefone já em uso");
+            // }
 
             String encryptedPassword = new BCryptPasswordEncoder().encode(data.getPassword());
             UserRole role = data.getRole() != null ? data.getRole() : UserRole.USER;

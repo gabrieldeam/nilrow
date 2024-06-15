@@ -33,12 +33,18 @@ public class NicknameValidator implements ConstraintValidator<ValidNickname, Str
         }
 
         // Verificar caracteres consecutivos
-        if (nickname.contains("....") || nickname.contains("____")) {
+        if (containsConsecutiveChars(nickname, 4, '.')
+                || containsConsecutiveChars(nickname, 4, '_')) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate(consecutiveCharsMessage).addConstraintViolation();
             return false;
         }
 
         return true;
+    }
+
+    private boolean containsConsecutiveChars(String str, int count, char character) {
+        String repeated = new String(new char[count]).replace('\0', character);
+        return str.contains(repeated);
     }
 }

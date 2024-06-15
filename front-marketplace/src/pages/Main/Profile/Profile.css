@@ -121,7 +121,7 @@
     }
 
     .profile-content {
-        flex-direction: column-reverse; /* Inverter a ordem dos filhos no contêiner */
+        flex-direction: column-reverse; 
     }
 
     .profile-header {
@@ -169,4 +169,25 @@
         margin-top: 20px;
         text-align: center;
     }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+
+    .card-container {
+        max-width: 100%;
+    }
+    .additional-steps {
+        flex-direction: column;
+        margin-top: 5px;
+    }
+
+    .additional-steps .step-button {
+        max-width: 100%;
+    }
+
+    .step-button.data-personal {
+        max-width: 100%;
+    }
+
+    
 }

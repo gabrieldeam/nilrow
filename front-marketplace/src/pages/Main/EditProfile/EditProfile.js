@@ -13,6 +13,22 @@ import { Helmet } from 'react-helmet-async';
 import { getUserProfile, updateUserProfile, getUserNickname, updateUserNickname } from '../../../services/profileApi';
 import './EditProfile.css';
 
+const validateNickname = (nickname) => {
+    const regex = /^[a-z][a-z0-9._]{2,28}[a-z0-9]$/;
+    const hasNoConsecutiveSpecialChars = !/([._])\1/.test(nickname);
+    return regex.test(nickname) && hasNoConsecutiveSpecialChars;
+};
+
+const validateEmail = (email) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+};
+
+const validatePhone = (phone) => {
+    const regex = /^\+?\d{10,15}$/;
+    return regex.test(phone);
+};
+
 const EditProfile = () => {
     const [formData, setFormData] = useState({
         email: '',
@@ -25,6 +41,7 @@ const EditProfile = () => {
         nickname: ''
     });
     const [isFormValid, setIsFormValid] = useState(false);
+    const [nicknameValid, setNicknameValid] = useState(null);
     const [error, setError] = useState('');
     const [showNotification, setShowNotification] = useState(false);
     const { setMessage } = useContext(NotificationContext);
@@ -51,6 +68,7 @@ const EditProfile = () => {
                     phone: userProfile.phone,
                     nickname: nickname
                 });
+                setNicknameValid(validateNickname(nickname));
             } catch (error) {
                 console.error('Erro ao buscar dados do usuário:', error);
             }
@@ -61,6 +79,9 @@ const EditProfile = () => {
     const handleChange = useCallback((e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: name === 'email' ? value.toLowerCase() : value });
+        if (name === 'nickname') {
+            setNicknameValid(validateNickname(value.toLowerCase()));
+        }
     }, [formData]);
 
     const handlePhoneChange = useCallback((value) => {
@@ -69,18 +90,8 @@ const EditProfile = () => {
 
     useEffect(() => {
         const { email, phone, nickname } = formData;
-        setIsFormValid(email !== '' && phone !== '' && nickname !== '');
-    }, [formData]);
-
-    const validateEmail = useCallback((email) => {
-        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return regex.test(email);
-    }, []);
-
-    const validatePhone = useCallback((phone) => {
-        const regex = /^\+?\d{10,15}$/;
-        return regex.test(phone);
-    }, []);
+        setIsFormValid(email !== '' && phone !== '' && nickname !== '' && nicknameValid);
+    }, [formData, nicknameValid]);
 
     const handleSubmit = useCallback(async (e) => {
         e.preventDefault();
@@ -102,6 +113,12 @@ const EditProfile = () => {
             return;
         }
 
+        if (!nicknameValid) {
+            setError('Por favor, insira um nome de usuário válido.');
+            setShowNotification(true);
+            return;
+        }
+
         const updatedProfileData = {
             email: formData.email !== originalData.email ? formData.email : null,
             phone: formData.phone !== originalData.phone ? formData.phone : null
@@ -114,11 +131,12 @@ const EditProfile = () => {
             await updateUserNickname(updatedNickname);
             setMessage('Dados atualizados com sucesso!');
         } catch (error) {
-            console.error('Erro ao atualizar dados:', error);
-            setError(error.response?.data?.message || 'Erro ao atualizar dados. Tente novamente.');
+            const errorMessage = error.response?.data?.message || 'Erro ao atualizar dados. Tente novamente.';
+            console.error('Erro ao atualizar dados:', errorMessage);
+            setError(errorMessage);
             setShowNotification(true);
         }
-    }, [formData, isFormValid, validateEmail, validatePhone, originalData, setMessage]);
+    }, [isFormValid, formData, nicknameValid, originalData, setMessage]);
 
     return (
         <div className="edit-profile-page">
@@ -168,6 +186,7 @@ const EditProfile = () => {
                             name="nickname"
                             value={formData.nickname}
                             onChange={handleChange}
+                            isValid={nicknameValid}
                             bottomLeftText="Este será seu identificador único na plataforma"
                         />
                     </Card>

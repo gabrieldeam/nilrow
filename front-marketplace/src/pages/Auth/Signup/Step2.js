@@ -37,6 +37,11 @@ const Step2 = ({ formData, setFormData, handleStepCompletion }) => {
         setIsFormValid(name !== '' && cpf !== '' && birthDate !== '' && nickname !== '' && nicknameValid);
     }, [formData, nicknameValid]);
 
+    // Validar o nickname quando o componente é montado ou o nickname muda
+    useEffect(() => {
+        setNicknameValid(validateNickname(formData.nickname.toLowerCase()));
+    }, [formData.nickname]);
+
     const navigate = useNavigate();
 
     const handleSubmit = useCallback((e) => {
