@@ -32,6 +32,7 @@
     border-radius: 100px;
     overflow: hidden;
     transition: border 0.3s ease;
+    height: 44px;
 }
 
 .search-input {

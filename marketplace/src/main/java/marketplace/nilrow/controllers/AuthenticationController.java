@@ -102,10 +102,6 @@ public class AuthenticationController {
             if (this.peopleRepository.findByCpf(data.getCpf()) != null) {
                 throw new DuplicateFieldException("CPF", "CPF já em uso");
             }
-            // Remover a verificação de telefone duplicado
-            // if (this.peopleRepository.findByPhone(data.getPhone()) != null) {
-            //     throw new DuplicateFieldException("Phone", "Telefone já em uso");
-            // }
 
             String encryptedPassword = new BCryptPasswordEncoder().encode(data.getPassword());
             UserRole role = data.getRole() != null ? data.getRole() : UserRole.USER;
@@ -132,9 +128,10 @@ public class AuthenticationController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         } catch (Exception e) {
             logger.error("Registration failed", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno do servidor");
         }
     }
+
 
     @GetMapping("/validate-email")
     public ResponseEntity<Void> validateEmail(@RequestParam("token") String token) {

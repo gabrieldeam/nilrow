@@ -2,12 +2,10 @@ package marketplace.nilrow.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import java.util.Arrays;
-import java.util.List;
+import marketplace.nilrow.util.ForbiddenWordsUtil;
 
 public class NicknameValidator implements ConstraintValidator<ValidNickname, String> {
 
-    private final List<String> forbiddenWords = Arrays.asList("admin", "root", "superuser"); // Adicione palavras proibidas conforme necessário
     private String forbiddenMessage;
     private String consecutiveCharsMessage;
 
@@ -24,12 +22,10 @@ public class NicknameValidator implements ConstraintValidator<ValidNickname, Str
         }
 
         // Verificar palavras proibidas
-        for (String word : forbiddenWords) {
-            if (nickname.toLowerCase().contains(word)) {
-                context.disableDefaultConstraintViolation();
-                context.buildConstraintViolationWithTemplate(forbiddenMessage).addConstraintViolation();
-                return false;
-            }
+        if (ForbiddenWordsUtil.containsForbiddenWord(nickname)) {
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate(forbiddenMessage).addConstraintViolation();
+            return false;
         }
 
         // Verificar caracteres consecutivos

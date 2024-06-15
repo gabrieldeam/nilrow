@@ -11,7 +11,7 @@ export const getUserProfile = async () => {
         const response = await profileApi.get('/people');
         return response.data;
     } catch (error) {
-        throw error.response.data;
+        throw error; // Lançando o erro completo
     }
 };
 
@@ -21,7 +21,7 @@ export const updateUserProfile = async (profileData) => {
         const response = await profileApi.put('/people', profileData);
         return response.data;
     } catch (error) {
-        throw error.response.data;
+        throw error; // Lançando o erro completo
     }
 };
 
@@ -31,7 +31,7 @@ export const getUserNickname = async () => {
         const response = await profileApi.get('/user/nickname');
         return response.data;
     } catch (error) {
-        throw error.response.data;
+        throw error; // Lançando o erro completo
     }
 };
 
@@ -41,7 +41,7 @@ export const updateUserNickname = async (newNickname) => {
         const response = await profileApi.put('/user/nickname', { newNickname });
         return response.data;
     } catch (error) {
-        throw error.response.data;
+        throw error; // Lançando o erro completo
     }
 };
 

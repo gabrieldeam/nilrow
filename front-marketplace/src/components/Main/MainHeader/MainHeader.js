@@ -14,11 +14,13 @@ import profileIcon from '../../../assets/profile.svg';
 import useAuth from '../../../hooks/useAuth';
 import { LocationContext } from '../../../context/LocationContext';
 import ModalInfoAddress from '../../Others/ModalInfoAddres/ModalInfoAddress';
+import AddressModal from '../../Others/AddressModal/AddressModal';
 
 const MainHeader = () => {
     const { isAuthenticated } = useAuth();
     const { location } = useContext(LocationContext);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
     const navigate = useNavigate();
     const currentLocation = useLocation();
     const addressButtonRef = useRef(null);
@@ -41,6 +43,14 @@ const MainHeader = () => {
     }, [navigate, searchTerm]);
 
     const getIsActive = useCallback((path) => currentLocation.pathname === path, [currentLocation.pathname]);
+
+    const openAddressModal = () => {
+        setIsAddressModalOpen(true);
+    };
+
+    const closeAddressModal = () => {
+        setIsAddressModalOpen(false);
+    };
 
     return (
         <header className="mainheader">
@@ -69,7 +79,7 @@ const MainHeader = () => {
                     id="address-button" 
                     ref={addressButtonRef} 
                     icon={addressIcon} 
-                    link="/address" 
+                    onClick={openAddressModal} 
                     text={location.city ? `${location.city} - ${location.zip}` : "Atualizar local"} 
                     isActive={getIsActive('/address')} 
                 />
@@ -85,6 +95,7 @@ const MainHeader = () => {
                 {!isAuthenticated && <LoginButton text="Login" link="/login" />}
             </div>
             <ModalInfoAddress buttonPosition={buttonPosition} />
+            <AddressModal isOpen={isAddressModalOpen} onClose={closeAddressModal} />
         </header>
     );
 }

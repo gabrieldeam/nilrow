@@ -4,14 +4,14 @@ import PropTypes from 'prop-types';
 export const NotificationContext = createContext();
 
 const NotificationProviderComponent = ({ children }) => {
-    const [message, setMessageState] = useState('');
+    const [notification, setNotification] = useState({ message: '', type: '' });
 
-    const setMessage = useCallback((newMessage) => {
-        setMessageState(newMessage);
+    const setMessage = useCallback((newMessage, type = 'success') => {
+        setNotification({ message: newMessage, type });
     }, []);
 
     return (
-        <NotificationContext.Provider value={{ message, setMessage }}>
+        <NotificationContext.Provider value={{ notification, setMessage }}>
             {children}
         </NotificationContext.Provider>
     );

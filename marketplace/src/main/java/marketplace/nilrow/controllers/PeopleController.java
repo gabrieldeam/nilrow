@@ -1,6 +1,7 @@
 package marketplace.nilrow.controllers;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.mail.MessagingException;
 import marketplace.nilrow.domain.people.People;
 import marketplace.nilrow.domain.people.PeopleDTO;
 import marketplace.nilrow.domain.people.UpdatePeopleDTO;
@@ -9,11 +10,15 @@ import marketplace.nilrow.infra.exception.DuplicateFieldException;
 import marketplace.nilrow.repositories.PeopleRepository;
 import marketplace.nilrow.repositories.UserRepository;
 import marketplace.nilrow.infra.security.TokenService;
+import marketplace.nilrow.services.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/people")
@@ -29,6 +34,12 @@ public class PeopleController {
     @Autowired
     private TokenService tokenService;
 
+    @Autowired
+    private EmailService emailService;
+
+    @Value("${app.base.url}")
+    private String baseUrl;
+
     @GetMapping
     public ResponseEntity<PeopleDTO> getPeople() {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -38,25 +49,21 @@ public class PeopleController {
     }
 
     @PutMapping
-    public ResponseEntity<?> updatePeople(@RequestBody UpdatePeopleDTO updatePeopleDTO) {
+    public ResponseEntity<?> updatePeople(@RequestBody UpdatePeopleDTO updatePeopleDTO) throws MessagingException {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = (User) userRepository.findByNickname(userDetails.getUsername());
         People people = peopleRepository.findByUser(user);
+
+        boolean emailChanged = false;
 
         if (updatePeopleDTO.getEmail() != null && !updatePeopleDTO.getEmail().equals(people.getEmail())) {
             if (peopleRepository.findByEmail(updatePeopleDTO.getEmail()) != null) {
                 throw new DuplicateFieldException("Email", "E-mail já existe");
             }
             people.setEmail(updatePeopleDTO.getEmail());
+            people.setEmailValidated(false);
+            emailChanged = true;
         }
-
-        // Remover a verificação de telefone duplicado
-        // if (updatePeopleDTO.getPhone() != null && !updatePeopleDTO.getPhone().equals(people.getPhone())) {
-        //     if (peopleRepository.findByPhone(updatePeopleDTO.getPhone()) != null) {
-        //         throw new DuplicateFieldException("Phone", "Phone already exists");
-        //     }
-        //     people.setPhone(updatePeopleDTO.getPhone());
-        // }
 
         if (updatePeopleDTO.getPhone() != null) {
             people.setPhone(updatePeopleDTO.getPhone());
@@ -75,6 +82,15 @@ public class PeopleController {
 
         if (updatePeopleDTO.getBirthDate() != null) {
             people.setBirthDate(updatePeopleDTO.getBirthDate());
+        }
+
+        if (emailChanged) {
+            String token = UUID.randomUUID().toString();
+            people.setValidationToken(token);
+            String validationLink = baseUrl + "/auth/validate-email?token=" + token;
+            String emailBody = emailService.createEmailValidationBody(validationLink);
+
+            emailService.sendHtmlEmail(people.getEmail(), "Validação de E-mail", emailBody);
         }
 
         peopleRepository.save(people);

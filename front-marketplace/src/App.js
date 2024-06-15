@@ -37,7 +37,7 @@ const EditData = lazy(() => import('./pages/Main/EditData/EditData'));
 
 const AppContent = () => {
     const { isAuthenticated } = useAuth();
-    const { message, setMessage } = useContext(NotificationContext);
+    const { notification, setMessage } = useContext(NotificationContext);
     const location = useLocation();
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
@@ -71,7 +71,13 @@ const AppContent = () => {
     return (
         <>
             {renderHeader()}
-            {message && <Notification message={message} onClose={() => setMessage('')} backgroundColor="#4FBF0A" />}
+            {notification.message && (
+                <Notification
+                    message={notification.message}
+                    onClose={() => setMessage('')}
+                    backgroundColor={notification.type === 'success' ? '#4FBF0A' : '#DF1414'}
+                />
+            )}
             <Suspense fallback={<LoadingSpinner />}>
                 <Routes>
                     <Route path="/" element={<Home />} />

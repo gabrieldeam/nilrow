@@ -78,7 +78,7 @@ const EditProfile = () => {
 
     const handleChange = useCallback((e) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: name === 'email' ? value.toLowerCase() : value });
+        setFormData({ ...formData, [name]: value.toLowerCase() });
         if (name === 'nickname') {
             setNicknameValid(validateNickname(value.toLowerCase()));
         }
@@ -130,13 +130,14 @@ const EditProfile = () => {
             await updateUserProfile(updatedProfileData);
             await updateUserNickname(updatedNickname);
             setMessage('Dados atualizados com sucesso!');
+            navigate('/profile'); // Redirecionar após sucesso
         } catch (error) {
-            const errorMessage = error.response?.data?.message || 'Erro ao atualizar dados. Tente novamente.';
+            const errorMessage = error.response?.data || 'Erro ao atualizar dados. Tente novamente.';
             console.error('Erro ao atualizar dados:', errorMessage);
             setError(errorMessage);
             setShowNotification(true);
         }
-    }, [isFormValid, formData, nicknameValid, originalData, setMessage]);
+    }, [isFormValid, formData, nicknameValid, originalData, setMessage, navigate]);
 
     return (
         <div className="edit-profile-page">

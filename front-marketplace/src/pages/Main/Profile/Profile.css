@@ -173,6 +173,10 @@
 
 @media (min-width: 768px) and (max-width: 1024px) {
 
+    .profile-page {
+        padding-top: 150px;
+    }
+
     .card-container {
         max-width: 100%;
     }
