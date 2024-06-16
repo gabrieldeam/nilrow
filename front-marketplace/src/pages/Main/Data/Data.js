@@ -37,10 +37,10 @@ const Data = () => {
                 <meta name="description" content="Veja seus dados na Nilrow." />
             </Helmet>
             {isMobile && (
-                <MobileHeader title="Dados da sua conta" buttons={{ close: true }} handleBack={handleBack} />
+                <MobileHeader title="Dados" buttons={{ close: true }} handleBack={handleBack} />
             )}
             <div className="data-container">
-                <SubHeader title="Dados da sua conta" handleBack={handleBack} />
+                <SubHeader title="Dados" handleBack={handleBack} />
                 <Card 
                     title="Dados da sua conta"
                     rightLink={{ href: "/edit-data", text: "Alterar" }}>

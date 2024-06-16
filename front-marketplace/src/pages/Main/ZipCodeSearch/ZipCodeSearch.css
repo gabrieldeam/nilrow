@@ -1,0 +1,115 @@
+.zip-code-search-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    color: #fff;
+    padding-top: 90px;
+    padding-bottom: 70px;
+    box-sizing: border-box;
+}
+
+.zip-code-search-container {
+    width: 100%;
+    padding: 0 58px;
+    box-sizing: border-box;
+}
+
+.zip-code-search-header {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.zip-code-search-submit {
+    margin-bottom: 9px;
+}
+
+.zip-code-search-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    width: 40%;
+}
+
+.zip-code-search-results {
+    margin-top: 25px;
+}
+
+.zip-code-search-error {
+    color: #DF1414;
+    font-weight: bold;
+}
+
+.see-data-container-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.see-data-container {
+    flex: 1 1 calc(33.333% - 10px); /* Ajusta para três colunas */
+    min-width: 250px; /* Ajusta a largura mínima */
+}
+
+.zip-code-search-no-results {
+    background-color: #000000;
+    border-radius: 5px;
+    height: 60px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 20px;
+    box-sizing: border-box;
+    color: #ffffff;
+    text-align: center;
+}
+
+.zip-code-search-title {
+    font-size: 18px;
+    margin-right: 20px;
+    flex: 1; 
+    white-space: nowrap; 
+    margin-bottom: 25px;
+    
+}
+
+/* Estilos para mobile */
+@media (max-width: 768px) {
+    .zip-code-search-page {
+        padding-bottom: 110px;
+        padding-top: 100px;
+    }
+
+    .zip-code-search-container {
+        max-width: 419px;
+        padding: 0 6px;
+    }
+
+    .zip-code-search-header {
+        width: 100%;
+    }
+
+    .zip-code-search-form {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .zip-code-search-form > * {
+        width: calc(33.333% - 10px);
+    }
+
+    .zip-code-search-submit {
+        width: 100%;
+        margin-bottom: -10px;
+        margin-top: -15px;
+    }
+
+    .zip-code-search-title {
+        display: none;
+    }
+}

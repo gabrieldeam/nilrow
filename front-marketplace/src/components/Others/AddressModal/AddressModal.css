@@ -1,4 +1,4 @@
-.modal-overlay {
+.address-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -11,41 +11,94 @@
     z-index: 1000;
 }
 
-.modal-container {
-    background: #fff;
+.address-modal-container {
+    background: #000000;
     padding: 20px;
-    border-radius: 8px;
+    border-radius: 5px;
     position: relative;
-    width: 300px;
-    max-width: 100%;
+    width: 443px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    border: 1px solid #FFFFFF;
 }
 
-.close-button {
+.address-modal-close-button {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: -20px;
+    right: -20px;
     background: none;
     border: none;
-    font-size: 20px;
     cursor: pointer;
+    z-index: 1001;
 }
 
-label {
-    display: block;
-    margin-bottom: 10px;
-}
-
-input {
-    width: 100%;
+.address-modal-title {
+    font-size: 20px;
+    color: #fff;
+    text-align: left;
+    margin-bottom: -20px;
     padding: 8px;
-    margin-bottom: 10px;
 }
 
-button {
+.address-modal-description {
+    font-size: 15px;
+    color: #fff;
+    text-align: left;
+    margin-bottom: 30px;
+    width: 92%;
+    padding: 8px;
+}
+
+.address-modal-save-button {
     padding: 10px 20px;
     background: #7B33E5;
     color: white;
     border: none;
     cursor: pointer;
+    width: 100%;
+    margin-top: 20px;
+    border-radius: 8px;
+    font-size: 16px;
+    margin-bottom: 30px;
+}
+
+.address-modal-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.address-modal-add-link {
+    text-align: center;
+    margin-top: 20px;
+    color: #7B33E5;
+    text-decoration: none;
+}
+
+.address-modal-add-link:hover {
+    text-decoration: underline;
+}
+
+.address-modal-button-no-outline:focus {
+    outline: none;
+}
+
+@media (max-width: 768px) {
+    .address-modal-overlay {
+        background: rgb(0, 0, 0);
+    }
+
+    .address-modal-container {
+        width: 100%;
+        height: 100%;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        margin-top: 190px;
+        padding: 12px;
+    }
+
+    .address-modal-close-button {
+        top: -55px;
+        left: 21px;
+    }
 }

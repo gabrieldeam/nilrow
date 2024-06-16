@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import HeaderButton from '../../../components/UI/Buttons/HeaderButton/HeaderButton';
+import SearchLayout from '../../../components/UI/SearchLayout/SearchLayout'; // Certifique-se de importar o SearchLayout
 import './MobileHeader.css';
 import addressIcon from '../../../assets/address.svg';
 import closeIcon from '../../../assets/close.svg';
@@ -19,7 +20,7 @@ import logo from '../../../assets/nilrow.svg';
 import { LocationContext } from '../../../context/LocationContext';
 import AddressModal from '../../Others/AddressModal/AddressModal';
 
-const MobileHeader = ({ title, buttons, handleBack, showLogo }) => {
+const MobileHeader = ({ title, buttons, handleBack, showLogo, showSearch, searchPlaceholder, searchValue, onSearchChange }) => {
     const { location } = useContext(LocationContext);
     const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
 
@@ -61,10 +62,20 @@ const MobileHeader = ({ title, buttons, handleBack, showLogo }) => {
                     {buttons.close && <HeaderButton icon={icons.close} onClick={handleBack} />}
                     {buttons.chat && <HeaderButton icon={icons.chat} link="/chat" />}
                 </div>
-                <div className="mobile-header-title">
-                    {showLogo ? (
+                <div className={`mobile-header-title ${showSearch ? 'with-search' : ''}`}>
+                    {showLogo && !showSearch && (
                         <img src={logo} alt="Logo" className="mobile-header-logo" />
-                    ) : (
+                    )}
+                    {showSearch && (
+                        <div className="search-layout-wrapper">
+                            <SearchLayout 
+                                placeholder={searchPlaceholder} 
+                                value={searchValue} 
+                                onChange={onSearchChange} 
+                            />
+                        </div>
+                    )}
+                    {!showLogo && !showSearch && (
                         <h1>{title}</h1>
                     )}
                 </div>
@@ -87,7 +98,7 @@ const MobileHeader = ({ title, buttons, handleBack, showLogo }) => {
 };
 
 MobileHeader.propTypes = {
-    title: PropTypes.string.isRequired,
+    title: PropTypes.string,
     buttons: PropTypes.shape({
         address: PropTypes.bool,
         close: PropTypes.bool,
@@ -105,6 +116,10 @@ MobileHeader.propTypes = {
     }).isRequired,
     handleBack: PropTypes.func,
     showLogo: PropTypes.bool,
+    showSearch: PropTypes.bool,
+    searchPlaceholder: PropTypes.string,
+    searchValue: PropTypes.string,
+    onSearchChange: PropTypes.func
 };
 
 export default MobileHeader;

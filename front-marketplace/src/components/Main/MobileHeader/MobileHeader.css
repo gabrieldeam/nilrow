@@ -24,7 +24,11 @@
 .mobile-header-title {
     flex-grow: 1;
     text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
+
 
 .mobile-header-title h1 {
     font-size: 18px;
@@ -34,4 +38,11 @@
 .mobile-header-logo {
     width: 149px;
     height: 30px;
+}
+
+/* Estilo para centralizar o SearchLayout com espaçamento */
+.search-layout-wrapper {
+    display: flex;
+    justify-content: center;
+    width: 100%;
 }

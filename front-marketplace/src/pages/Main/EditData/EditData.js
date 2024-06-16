@@ -216,7 +216,7 @@ const EditData = () => {
     return (
         <div className="edit-data-page">
             <Helmet>
-                <title>Editar Perfil - Nilrow</title>
+                <title>Editar Dados - Nilrow</title>
                 <meta name="description" content="Edite seu perfil na Nilrow." />
             </Helmet>
             {showNotification && (

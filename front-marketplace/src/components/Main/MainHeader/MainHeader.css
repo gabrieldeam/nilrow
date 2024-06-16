@@ -37,10 +37,10 @@
 
 .search-input {
     height: 44px;
-    width: 228px; /* Ajustado para acomodar o botão de busca */
+    width: 228px; 
     background: #212121;
     border: none;
-    color: #ffffff; /* Texto branco ao digitar */
+    color: #ffffff;
     padding: 0 0px;
     font-size: 16px;
 }
@@ -50,7 +50,7 @@
 }
 
 .search-input:focus {
-    outline: none; /* Remove a borda ao focar */
+    outline: none; 
 }
 
 .search-button {

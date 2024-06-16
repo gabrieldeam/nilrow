@@ -1,11 +1,21 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './AddressModal.css';
 import { LocationContext } from '../../../context/LocationContext';
+import CustomInput from '../../UI/CustomInput/CustomInput';
+import Card from '../../UI/Card/Card';
+import { useNavigate } from 'react-router-dom';
+import HeaderButton from '../../UI/Buttons/HeaderButton/HeaderButton';
+import closeIcon from '../../../assets/close.svg';
 
 const AddressModal = ({ isOpen, onClose }) => {
-    const [zip, setZip] = useState('');
-    const { setLocation } = useContext(LocationContext);
+    const { location, setLocation } = useContext(LocationContext);
+    const [zip, setZip] = useState(location.zip || '');
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        setZip(location.zip || '');
+    }, [location.zip]);
 
     const handleChange = (e) => {
         setZip(e.target.value);
@@ -35,18 +45,39 @@ const AddressModal = ({ isOpen, onClose }) => {
         }
     };
 
+    const handleAddCompleteAddress = (e) => {
+        e.preventDefault();
+        onClose();
+        navigate('/address');
+    };
+
     if (!isOpen) return null;
 
     return (
-        <div className="modal-overlay">
-            <div className="modal-container">
-                <button className="close-button" onClick={onClose}>X</button>
-                <form onSubmit={handleSubmit}>
-                    <label>
-                        CEP:
-                        <input type="text" value={zip} onChange={handleChange} />
-                    </label>
-                    <button type="submit">Salvar</button>
+        <div className="address-modal-overlay">
+            <div className="address-modal-container">
+                <div className="address-modal-close-button">
+                    <HeaderButton icon={closeIcon} onClick={onClose} />
+                </div>
+                <h2 className="address-modal-title roboto-medium">Selecione onde quer receber suas compras</h2>
+                <p className="address-modal-description roboto-regular">
+                    Você poderá ver custos e prazos de entrega precisos em tudo que procurar.
+                </p>
+                <form className="address-modal-form" onSubmit={handleSubmit}>
+                    <Card title="CEP">
+                        <CustomInput 
+                            title="Código de Endereço Postal"
+                            type="text"
+                            value={zip}
+                            onChange={handleChange}
+                            bottomLeftText="Informe um CEP"
+                            bottomRightLink={{ href: "/zip-code-search", text: "Não sei o meu CEP" }}
+                        />
+                    </Card>
+                    <a href="/address" className="address-modal-add-link" onClick={handleAddCompleteAddress}>
+                        + Adicionar endereço completo
+                    </a>
+                    <button type="submit" className="address-modal-save-button">Salvar modificações</button>
                 </form>
             </div>
         </div>

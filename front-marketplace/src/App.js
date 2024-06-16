@@ -34,6 +34,7 @@ const Cards = lazy(() => import('./pages/Main/Cards/Cards'));
 const Privacy = lazy(() => import('./pages/Main/Privacy/Privacy'));
 const EditProfile = lazy(() => import('./pages/Main/EditProfile/EditProfile'));
 const EditData = lazy(() => import('./pages/Main/EditData/EditData'));
+const ZipCodeSearch = lazy(() => import('./pages/Main/ZipCodeSearch/ZipCodeSearch'));
 
 const AppContent = () => {
     const { isAuthenticated } = useAuth();
@@ -98,6 +99,7 @@ const AppContent = () => {
                     <Route path="/privacy" element={<ProtectedRoute element={<Privacy />} />} />
                     <Route path="/edit-profile" element={<ProtectedRoute element={<EditProfile />} />} />
                     <Route path="/edit-data" element={<ProtectedRoute element={<EditData />} />} />
+                    <Route path="/zip-code-search" element={<ZipCodeSearch />} />
                 </Routes>
             </Suspense>
             {renderFooter()}

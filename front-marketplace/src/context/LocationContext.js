@@ -1,4 +1,6 @@
-import React, { createContext, useState, useEffect, useCallback, memo } from 'react';
+import React, { createContext, useState, useEffect, useCallback, memo, useContext } from 'react';
+import PropTypes from 'prop-types';
+import { NotificationContext } from './NotificationContext';
 
 export const LocationContext = createContext();
 
@@ -11,10 +13,13 @@ const LocationProviderComponent = ({ children }) => {
         zip: ''
     });
 
+    const { setMessage } = useContext(NotificationContext);
+
     const setLocation = useCallback((newLocation) => {
         setLocationState(newLocation);
         localStorage.setItem('userLocation', JSON.stringify(newLocation));
-    }, []);
+        setMessage('Endereço trocado com sucesso.', 'success');
+    }, [setMessage]);
 
     const fetchLocation = useCallback(async () => {
         try {
@@ -48,6 +53,10 @@ const LocationProviderComponent = ({ children }) => {
             {children}
         </LocationContext.Provider>
     );
+};
+
+LocationProviderComponent.propTypes = {
+    children: PropTypes.node.isRequired,
 };
 
 export const LocationProvider = memo(LocationProviderComponent);
