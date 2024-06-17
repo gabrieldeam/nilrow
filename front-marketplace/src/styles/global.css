@@ -89,6 +89,10 @@ body, html {
   min-height: 100vh;
 }
 
+.body-no-scroll {
+  overflow: hidden;
+}
+
 .App > * {
   flex: 1;
 }

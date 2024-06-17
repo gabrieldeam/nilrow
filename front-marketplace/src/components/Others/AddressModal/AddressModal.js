@@ -17,6 +17,18 @@ const AddressModal = ({ isOpen, onClose }) => {
         setZip(location.zip || '');
     }, [location.zip]);
 
+    useEffect(() => {
+        if (isOpen) {
+            document.body.classList.add('body-no-scroll');
+        } else {
+            document.body.classList.remove('body-no-scroll');
+        }
+
+        return () => {
+            document.body.classList.remove('body-no-scroll');
+        };
+    }, [isOpen]);
+
     const handleChange = (e) => {
         setZip(e.target.value);
     };

@@ -1,9 +1,21 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './ConfirmationModal.css';
 import StageButton from '../../UI/Buttons/StageButton/StageButton';
 
-const ConfirmationModal = ({ isOpen, onConfirm, onCancel, message }) => {
+const ConfirmationModal = ({ isOpen, onConfirm, onCancel, message='Você tem certeza que deseja continuar?' }) => {
+    useEffect(() => {
+        if (isOpen) {
+            document.body.classList.add('body-no-scroll');
+        } else {
+            document.body.classList.remove('body-no-scroll');
+        }
+
+        return () => {
+            document.body.classList.remove('body-no-scroll');
+        };
+    }, [isOpen]);
+
     if (!isOpen) return null;
 
     return (
@@ -37,10 +49,6 @@ ConfirmationModal.propTypes = {
     onConfirm: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired,
     message: PropTypes.string,
-};
-
-ConfirmationModal.defaultProps = {
-    message: 'Você tem certeza que deseja continuar?',
 };
 
 export default ConfirmationModal;

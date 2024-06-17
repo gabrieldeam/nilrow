@@ -2,9 +2,11 @@ package marketplace.nilrow.domain.people;
 
 import jakarta.persistence.*;
 import lombok.*;
+import marketplace.nilrow.domain.address.Address;
 import marketplace.nilrow.domain.user.User;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Table(name = "people")
@@ -48,6 +50,9 @@ public class People {
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @OneToMany(mappedBy = "people", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Address> addresses;
 
     public People(String name, String email, String phone, String cpf, LocalDate birthDate, User user) {
         this.name = name;

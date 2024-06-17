@@ -76,9 +76,9 @@ const Privacy = () => {
                             content="Mantenha a permissão ativa para receber recomendações úteis sobre outros produtos ao usar sua conta." 
                             stackContent={true}
                             showToggleButton={true}
-                            onToggle={handleToggle} // Passando a função de callback
-                            toggled={acceptsSms} // Passando o estado booleano diretamente
-                        />   
+                            onToggle={handleToggle} 
+                            toggled={acceptsSms}
+                        />                    
                         {/* Outros componentes SeeData se necessário */}
                     </div>
                 </Card>

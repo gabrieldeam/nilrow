@@ -15,7 +15,7 @@ const SlideFooter = ({ initialOpenState = false }) => {
 
     return (
         <div className={`slidefooter-container ${isOpen ? 'open' : 'closed'}`}>
-            <button className="toggle-button roboto-medium" onClick={toggleFooter}>
+            <button className="slidefooter-toggle-button roboto-medium" onClick={toggleFooter}>
                 {isOpen ? 'Menos informações' : 'Mais informações'}
             </button>
             {isOpen && (

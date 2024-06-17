@@ -43,6 +43,8 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.PUT, "/user/nickname").authenticated()
                         .requestMatchers(HttpMethod.GET, "/user/nickname").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/user").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/address").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/address").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)

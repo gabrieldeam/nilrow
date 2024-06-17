@@ -55,4 +55,24 @@ export const getEmailValidated = async () => {
     }
 };
 
+// GET /address
+export const getAddresses = async () => {
+    try {
+        const response = await profileApi.get('/address');
+        return response.data;
+    } catch (error) {
+        throw error; // Lançando o erro completo
+    }
+};
+
+// POST /address
+export const addAddress = async (addressData) => {
+    try {
+        const response = await profileApi.post('/address', addressData);
+        return response.data;
+    } catch (error) {
+        throw error; // Lançando o erro completo
+    }
+};
+
 export default profileApi;
