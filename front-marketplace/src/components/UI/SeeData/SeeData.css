@@ -1,143 +1,89 @@
 .see-data-wrapper {
-    display: flex;
-    gap: 10px; /* Adiciona um espaçamento de 10px entre os componentes */
+  display: flex;
+  gap: 10px; /* Adiciona um espaçamento de 10px entre os componentes */
 }
 
 .see-data-container {
-    background-color: #000000;
-    border-radius: 5px;
-    height: 60px;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    padding: 0 20px;
-    box-sizing: border-box;
-    justify-content: space-between; 
+  background-color: #000000;
+  border-radius: 5px;
+  height: auto;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+  justify-content: space-between;
 }
 
 .see-data-main {
-    display: flex;
-    align-items: center;
-    flex: 1;
-    gap: 10px;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
 }
 
-.see-data-container.stack-content .see-data-main {
-    flex-direction: column;
-    align-items: flex-start;
-    height: auto;
-}
-
-.see-data-container.stack-content .see-data-title {
-    margin-bottom: -8px; 
+.see-data-verified-icon {
+  width: 16px; /* Tamanho do ícone */
+  height: 16px;
+  margin-left: 2px; /* Espaçamento entre o título e o ícone */
 }
 
 .see-data-title {
-    font-size: 15px;
-    color: #D9D9D9;
-    white-space: nowrap;
+  font-size: 15px;
+  color: #D9D9D9;
+  white-space: nowrap;
 }
 
 .see-data-content {
-    font-size: 15px;
-    color: #ffffff;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex: 1;
+  font-size: 15px;
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
 }
 
+.see-data-container.stack-content .see-data-main {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.see-data-container.stack-content .see-data-title,
 .see-data-container.stack-content .see-data-content {
-    white-space: normal;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .see-data-link {
-    font-size: 15px;
-    color: #7B33E5;
-    text-decoration: none;
-    margin-left: 20px;
+  font-size: 15px;
+  color: #7B33E5;
+  text-decoration: none;
+  margin-left: 20px;
+  white-space: nowrap; /* Garante que o link não quebre para baixo */
 }
 
 .see-data-link:hover {
-    text-decoration: underline;
+  text-decoration: underline;
+}
+
+.see-data-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 /* Estilos para mobile */
 @media (max-width: 768px) {
-    .profile-container {
-        max-width: 419px;
-        padding: 0 6px;
-    }
-
-    .profile-title,
-    .logout-link.desktop-only {
-        display: none;
-    }
-
-    .profile-content {
-        flex-direction: column-reverse; /* Inverter a ordem dos filhos no contêiner */
-    }
-
-    .profile-header {
-        justify-content: center;
-    }
-
-    .profile-buttons {
-        justify-content: space-around;
-        width: 100%;
-    }
-
-    .profile-steps {
-        justify-content: center;
-    }
-
-    .step-card-wrapper {
-        flex-direction: column;
-        margin-bottom: 25px;
-    }
-
-    .step-button {
-        max-width: none;
-        margin-bottom: 0px;
-    }
-
-    .card-container {
-        max-width: 100%;
-    }
-
-    .additional-steps {
-        flex-direction: column;
-        margin-top: 25px;
-    }
-
-    .additional-steps .step-button {
-        max-width: 100%;
-    }
-
-    .step-button.data-personal {
-        max-width: 100%;
-    }
-
-    .logout-link.mobile-only {
-        display: block;
-        margin-top: 20px;
-        text-align: center;
-    }
-
-    .see-data-wrapper {
-        flex-direction: column; /* Adiciona uma direção de coluna para dispositivos móveis */
-        gap: 10px;
-    }
+  .see-data-wrapper {
+    flex-direction: column; /* Adiciona uma direção de coluna para dispositivos móveis */
+    gap: 10px;
+  }
 }
 
 /* Estilos para tablet */
 @media (min-width: 768px) and (max-width: 1024px) {
-    .see-data-wrapper {
-        flex-direction: column;
-        gap: 10px;
-    }
+  .see-data-wrapper {
+    flex-direction: column;
+    gap: 10px;
+  }
 }

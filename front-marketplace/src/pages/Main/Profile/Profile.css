@@ -67,7 +67,7 @@
     margin-top: 40px;
 }
 
-.step-card-wrapper {
+.profile-step-card-wrapper {
     display: flex;
     gap: 5px;
     width: 100%;
@@ -136,7 +136,7 @@
         justify-content: center;
     }
 
-    .step-card-wrapper {
+    .profile-step-card-wrapper {
         flex-direction: column;
         margin-bottom: 25px;
     }

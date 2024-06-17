@@ -42,6 +42,9 @@ public class People {
     @Column
     private String resetPasswordCode;
 
+    @Column(nullable = false)
+    private boolean acceptsSms = false;
+
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

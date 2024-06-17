@@ -4,6 +4,7 @@ import ReactGA from 'react-ga';
 import { HelmetProvider } from 'react-helmet-async';
 import { NotificationProvider, NotificationContext } from './context/NotificationContext';
 import { LocationProvider } from './context/LocationContext';
+import { SearchProvider } from './context/SearchContext';
 import Notification from './components/UI/Notification/Notification';
 import ProtectedLoginRoute from './components/Others/ProtectedRoute/ProtectedLoginRoute';
 import ProtectedRoute from './components/Others/ProtectedRoute/ProtectedRoute';
@@ -112,11 +113,13 @@ function App() {
     return (
         <NotificationProvider>
             <LocationProvider>
-                <HelmetProvider>
-                    <Router>
-                        <AppContent />
-                    </Router>
-                </HelmetProvider>
+                <SearchProvider>
+                    <HelmetProvider>
+                        <Router>
+                            <AppContent />
+                        </Router>
+                    </HelmetProvider>
+                </SearchProvider>
             </LocationProvider>
         </NotificationProvider>
     );

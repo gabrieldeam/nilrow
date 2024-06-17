@@ -9,16 +9,28 @@ import PrivacyNotice from '../../../components/Others/PrivacyNotice/PrivacyNotic
 import Notification from '../../../components/UI/Notification/Notification';
 import { loginWithPhone } from '../../../services/api';
 import { NotificationContext } from '../../../context/NotificationContext';
+import { LocationContext } from '../../../context/LocationContext'; // Importar o LocationContext
 import { Helmet } from 'react-helmet-async';
+import LoadingSpinner from '../../../components/UI/LoadingSpinner/LoadingSpinner'; // Importar o LoadingSpinner
 import './LoginPhone.css';
 
 const LoginPhone = () => {
     const [phoneNumber, setPhoneNumber] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false); // Estado de carregamento
     const [showNotification, setShowNotification] = useState(false);
     const { setMessage } = useContext(NotificationContext);
+    const { location } = useContext(LocationContext); // Obter a localização do contexto
     const navigate = useNavigate();
+
+    const getDeviceInfo = () => {
+        return navigator.userAgent;
+    };
+
+    const formatLocationString = (location) => {
+        return `${location.city}/${location.state} - ${location.zip}`;
+    };
 
     const handleSubmit = useCallback(async (e) => {
         e.preventDefault();
@@ -27,17 +39,21 @@ const LoginPhone = () => {
             setShowNotification(true);
             return;
         }
-
+        setLoading(true); // Iniciar carregamento
         try {
-            await loginWithPhone(phoneNumber, password);
+            const deviceInfo = getDeviceInfo();
+            const locationString = formatLocationString(location);
+            await loginWithPhone(phoneNumber, password, locationString, deviceInfo);
             console.log('Login bem-sucedido');
             setMessage('Bem-vindo a nilrow');
             navigate('/');
         } catch (err) {
             setError(err.message || 'Erro ao fazer login.');
             setShowNotification(true);
+        } finally {
+            setLoading(false); // Parar carregamento
         }
-    }, [phoneNumber, password, setMessage, navigate]);
+    }, [phoneNumber, password, setMessage, navigate, location]);
 
     return (
         <div className="loginPhone-page">
@@ -45,6 +61,7 @@ const LoginPhone = () => {
                 <title>Login - Nilrow</title>
                 <meta name="description" content="Faça login na Nilrow usando seu email ou nome de usuário." />
             </Helmet>
+            {loading && <LoadingSpinner />} {/* Exibir spinner durante o carregamento */}
             {showNotification && <Notification message={error} onClose={() => setShowNotification(false)} />}
             <div className="loginPhone-container">
                 <h1 className="loginPhone-title">Entrar na nilrow</h1>

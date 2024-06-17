@@ -66,6 +66,14 @@ public class AuthenticationController {
 
             CookieUtil.addAuthCookie(response, token);
 
+            // Enviar email com informações de login se location e device estiverem presentes
+            if (data.location() != null && data.device() != null) {
+                User user = (User) auth.getPrincipal();
+                People people = peopleRepository.findByUser(user);
+                String emailBody = emailService.createLoginNotificationBody(data.location(), data.device());
+                emailService.sendHtmlEmail(people.getEmail(), "Novo Login Detectado", emailBody);
+            }
+
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             logger.error("Login failed", e);
@@ -82,6 +90,14 @@ public class AuthenticationController {
             var token = tokenService.generateToken((User) auth.getPrincipal());
 
             CookieUtil.addAuthCookie(response, token);
+
+            // Enviar email com informações de login se location e device estiverem presentes
+            if (data.location() != null && data.device() != null) {
+                User user = (User) auth.getPrincipal();
+                People people = peopleRepository.findByUser(user);
+                String emailBody = emailService.createLoginNotificationBody(data.location(), data.device());
+                emailService.sendHtmlEmail(people.getEmail(), "Novo Login Detectado", emailBody);
+            }
 
             return ResponseEntity.ok().build();
         } catch (Exception e) {
@@ -113,6 +129,7 @@ public class AuthenticationController {
             People newPeople = new People(data.getName(), data.getEmail(), data.getPhone(),
                     data.getCpf(), data.getBirthDate(), newUser);
             newPeople.setValidationToken(token);
+            newPeople.setAcceptsSms(data.isAcceptsSms()); // Set the acceptsSms field
 
             this.peopleRepository.save(newPeople);
 

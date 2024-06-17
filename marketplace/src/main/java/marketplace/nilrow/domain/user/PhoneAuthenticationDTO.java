@@ -4,5 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 
 public record PhoneAuthenticationDTO(
         @NotBlank String phone,
-        @NotBlank String password
+        @NotBlank String password,
+        String location,
+        String device
 ) {}

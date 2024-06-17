@@ -17,6 +17,15 @@
 .mainheader-left {
     display: flex;
     align-items: center;
+    position: relative;
+}
+
+.scan-button {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1; /* Certifique-se de que o botão esteja acima de outros elementos */
 }
 
 .mainlogo {

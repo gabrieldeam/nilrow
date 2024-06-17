@@ -23,18 +23,18 @@ export const resetPassword = async (data) => {
     }
 };
 
-export const login = async (login, password) => {
+export const login = async (login, password, location, device) => {
     try {
-        const response = await api.post('/auth/login', { login, password });
+        const response = await api.post('/auth/login', { login, password, location, device });
         return response.data;
     } catch (error) {
         throw error.response.data;
     }
 };
 
-export const loginWithPhone = async (phone, password) => {
+export const loginWithPhone = async (phone, password, location, device) => {
     try {
-        const response = await api.post('/auth/login-phone', { phone, password });
+        const response = await api.post('/auth/login-phone', { phone, password, location, device });
         return response.data;
     } catch (error) {
         throw error.response.data;

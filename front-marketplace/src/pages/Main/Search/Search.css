@@ -1,0 +1,130 @@
+.search-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    padding-top: 130px;
+    padding-bottom: 70px;
+    box-sizing: border-box;
+}
+
+.search-container {
+    width: 100%;
+    padding: 0 58px;
+    box-sizing: border-box;
+    position: relative; /* Adicionar para posicionar as setas */
+}
+
+.search-history, .search-results {
+    margin-top: 20px;
+}
+
+.search-history h2, .search-results h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.search-history ul, .search-results ul {
+    list-style: none;
+    padding: 0;
+    display: flex; /* Exibir itens lado a lado */
+    flex-wrap: nowrap; /* Não permitir quebra de linha */
+    gap: 10px; /* Espaçamento entre os itens */
+    overflow-x: auto; /* Permitir rolagem horizontal */
+    -webkit-overflow-scrolling: touch; /* Suavizar a rolagem no iOS */
+    scrollbar-width: none; /* Esconder barra de rolagem no Firefox */
+    font-family: "Roboto", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+}
+
+.search-history ul::-webkit-scrollbar {
+    display: none; /* Esconder barra de rolagem no Chrome, Safari e Opera */
+}
+
+.search-history li, .search-results li {
+    background-color: #212121;
+    padding: 10px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    color: #fff;
+    min-width: fit-content; 
+    white-space: nowrap; /* Evitar quebra de linha dentro dos itens */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Adicionar reticências ao texto longo */
+    cursor: pointer; /* Adicionar cursor pointer */
+}
+
+.search-history li .clock-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+}
+
+.search-results li {
+    background-color: #333;
+}
+
+.scroll-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    padding: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+.scroll-arrow-left {
+    left: 58px; /* Respeitar o padding do contêiner */
+}
+
+.scroll-arrow-right {
+    right: 58px; /* Respeitar o padding do contêiner */
+}
+
+.scroll-arrow-left img {
+    transform: rotate(180deg);
+}
+
+.search-history .clear-history-button {
+    background-color: #7B33E5;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 5px;
+    min-width: fit-content; 
+}
+
+.search-history .clear-history-button:hover {
+    background-color: #6225BC;
+}
+
+/* Estilos para mobile */
+@media (max-width: 768px) {
+    .search-page {
+        padding-bottom: 110px;
+        padding-top: 89px;
+    }
+
+    .search-container {
+        max-width: 419px;
+        padding: 0 6px;
+    }
+
+    .scroll-arrow {
+        display: none; /* Remover setas no mobile */
+    }
+}

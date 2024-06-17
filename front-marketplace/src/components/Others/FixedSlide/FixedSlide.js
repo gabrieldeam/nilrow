@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import './FixedSlide.css';
-import LoginSlide from '../LoginSlide/LoginSlide';
+import LoginSlide from '../../../pages/Auth/LoginSlide/LoginSlide';
 import SlideFooter from '../../Main/SlideFooter/SlideFooter';
 import { checkAuth } from '../../../services/api';
 

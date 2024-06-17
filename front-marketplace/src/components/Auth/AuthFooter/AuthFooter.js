@@ -15,7 +15,7 @@ const AuthFooter = ({ initialOpenState = false }) => {
 
     return (
         <div className={`authfooter-container ${isOpen ? 'open' : 'closed'}`}>
-            <button className="toggle-button roboto-medium" onClick={toggleFooter}>
+            <button className="authfooter-toggle-button roboto-medium" onClick={toggleFooter}>
                 {isOpen ? 'Menos informações' : 'Mais informações'}
             </button>
             {isOpen && (

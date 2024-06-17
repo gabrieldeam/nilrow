@@ -8,12 +8,19 @@ import org.springframework.stereotype.Service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 public class EmailService {
 
     @Autowired
     private JavaMailSender mailSender;
+
+    @Value("${app.base.url}")
+    private String baseUrl;
+
+    @Value("${app.frontend.url}")
+    private String frontendBaseUrl;
 
     public void sendEmail(String to, String subject, String text) {
         SimpleMailMessage message = new SimpleMailMessage();
@@ -34,9 +41,10 @@ public class EmailService {
     }
 
     public String createEmailValidationBody(String validationLink) {
-        String logoUrl = "http://localhost:8080/api/images/nilrow.svg";  // Substitua pelo caminho correto
-        String emailValidationImageUrl = "http://localhost:8080/api/images/EmailValidation.png";  // Substitua pelo caminho correto
-        String infoIconUrl = "http://localhost:8080/api/images/informacoes.svg"; // Supondo que a imagem esteja na mesma pasta
+        String logoUrl = baseUrl + "/images/nilrow.svg";
+        String infoIconUrl = baseUrl + "/images/informacoes.svg";
+        String emailValidationImageUrl = baseUrl + "/images/EmailValidation.png";
+
 
         return "<html>" +
                 "<head>" +
@@ -80,7 +88,7 @@ public class EmailService {
                 "<div class=\"footer\">" +
                 "<div class=\"info-section\">" +
                 "<p>NILROW LTDA<br>CNPJ 30.066.869 / 0001-08</p>" +
-                "<p>Nosso endereço é: AVENIDA NOSSA SENHORA DA PENHA, 2796 EDIF IMPACTO EMPRESARIAL - SANTA LUIZA - VITÓRIA-ES</p>" +
+                "<p>AVENIDA NOSSA SENHORA DA PENHA, 2796 EDIF IMPACTO EMPRESARIAL - SANTA LUIZA - VITÓRIA-ES</p>" +
                 "<p>© Nilrow 2024</p>" +
                 "</div>" +
                 "</div>" +
@@ -91,9 +99,9 @@ public class EmailService {
 
 
     public String createResetPasswordBody(String resetCode) {
-        String logoUrl = "http://localhost:8080/api/images/nilrow.svg";
-        String mascotImageUrl = "http://localhost:8080/api/images/EmailCode.png"; // Supondo que a imagem esteja na mesma pasta
-        String infoIconUrl = "http://localhost:8080/api/images/informacoes.svg"; // Supondo que a imagem esteja na mesma pasta
+        String logoUrl = baseUrl + "/images/nilrow.svg";
+        String infoIconUrl = baseUrl + "/images/informacoes.svg";
+        String mascotImageUrl = baseUrl + "/images/EmailCode.png";
 
         // Gerar HTML para o código de redefinição de senha com estilo
         StringBuilder resetCodeHtml = new StringBuilder();
@@ -148,7 +156,7 @@ public class EmailService {
                 "<div class=\"footer\">" +
                 "<div class=\"info-section\">" +
                 "<p>NILROW LTDA<br>CNPJ 30.066.869 / 0001-08</p>" +
-                "<p>Nosso endereço é: AVENIDA NOSSA SENHORA DA PENHA, 2796 EDIF IMPACTO EMPRESARIAL - SANTA LUIZA - VITÓRIA-ES</p>" +
+                "<p>AVENIDA NOSSA SENHORA DA PENHA, 2796 EDIF IMPACTO EMPRESARIAL - SANTA LUIZA - VITÓRIA-ES</p>" +
                 "<p>© Nilrow 2024</p>" +
                 "</div>" +
                 "</div>" +
@@ -157,5 +165,60 @@ public class EmailService {
                 "</html>";
     }
 
+    public String createLoginNotificationBody(String location, String device) {
+        String logoUrl = baseUrl + "/images/nilrow.svg";
+        String infoIconUrl = baseUrl + "/images/informacoes.svg";
+
+        return "<html>" +
+                "<head>" +
+                "<style>" +
+                "body { font-family: 'Roboto', sans-serif; background-color: #000000; color: #ffffff; margin: 0; padding: 0; }" +
+                ".email-container { max-width: 600px; margin: 0 auto; padding: 20px; background-color: #000000; border-radius: 10px; }" +
+                ".header { display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }" +
+                ".header img { width: 143px; height: 29px; }" +
+                ".email-body { text-align: center; padding: 0 40px; }" +
+                ".email-body h1 { font-size: 28px; font-weight: 900; color: #ffffff; margin-bottom: 10px; line-height: 1.2; text-align: left; }" +
+                ".email-body p { font-size: 16px; font-weight: 400; color: #ffffff; margin-bottom: 20px; text-align: left; }" +
+                ".custom-button { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 13px; border: none; border-radius: 100px; color: #ffffff; cursor: pointer; font-size: 16px; background-color: #212121; transition: border 0.3s ease; text-decoration: none; margin: 20px auto; }" +
+                ".custom-button span { margin-top: 12px; }" +
+                ".button-icon { width: 20px; height: 20px; margin-right: 8px; margin-top: 14px; }" +
+                ".custom-button:hover, .custom-button:active, .custom-button:focus { border: 1px solid #FFFFFF; outline: none; }" +
+                ".custom-button.active { border: 1px solid #FFFFFF; }" +
+                ".footer { background-color: #ffffff; color: #000000; padding: 20px; text-align: center; margin-top: 20px; border-radius: 0 0 10px 10px; }" +
+                ".footer p { margin: 5px 0; font-size: 12px; }" +
+                ".footer .info-section { margin-top: 10px; }" +
+                "@media (max-width: 768px) { .custom-button span { display: none; } .button-icon.with-text { margin-right: 0px; } .email-body { padding: 0 20px; } }" +
+                "</style>" +
+                "</head>" +
+                "<body>" +
+                "<div class=\"email-container\">" +
+                "<div class=\"header\">" +
+                "<img src=\"" + logoUrl + "\" alt=\"Nilrow Logo\">" +
+                "</div>" +
+                "<div class=\"email-body\">" +
+                "<h1>Notificação de novo login</h1>" +
+                "<p>Um novo login foi detectado na sua conta.</p>" +
+                "<p><strong>Localização:</strong> " + location + "</p>" +
+                "<p><strong>Dispositivo:</strong> " + device + "</p>" +
+                "<p><strong>Se foi você -</strong></p>" +
+                "<p>Você pode ignorar esta mensagem. Não é necessário realizar nenhuma ação.</p>" +
+                "<p><strong>Se não foi você -</strong></p>" +
+                "<p>Redefina a sua senha clicando <a href=\"" + frontendBaseUrl + "/password-reset\" style=\"color: #7B33E5; text-decoration: none;\">aqui</a> para recuperar sua conta.</p>" +
+                "<a href=\"https://www.google.com/\" class=\"custom-button\" style=\"color: #ffffff; text-decoration: none;\">" +
+                "<img src=\"" + infoIconUrl + "\" class=\"button-icon\" alt=\"Informações\" style=\"width: 20px; height: 20px;\">" +
+                "<span>Feedback e ajuda</span>" +
+                "</a>" +
+                "</div>" +
+                "<div class=\"footer\">" +
+                "<div class=\"info-section\">" +
+                "<p>NILROW LTDA<br>CNPJ 30.066.869 / 0001-08</p>" +
+                "<p>Nosso endereço é: AVENIDA NOSSA SENHORA DA PENHA, 2796 EDIF IMPACTO EMPRESARIAL - SANTA LUIZA - VITÓRIA-ES</p>" +
+                "<p>© Nilrow 2024</p>" +
+                "</div>" +
+                "</div>" +
+                "</div>" +
+                "</body>" +
+                "</html>";
+    }
 
 }

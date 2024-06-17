@@ -12,7 +12,6 @@ const Step1 = ({ formData, setFormData, handleStepCompletion }) => {
     const [isFormValid, setIsFormValid] = useState(false);
     const [error, setError] = useState('');
     const [showNotification, setShowNotification] = useState(false);
-    const [isCheckboxChecked, setIsCheckboxChecked] = useState(false);
 
     const handleChange = useCallback((e) => {
         const { name, value } = e.target;
@@ -23,10 +22,14 @@ const Step1 = ({ formData, setFormData, handleStepCompletion }) => {
         setFormData({ ...formData, phone: value });
     }, [formData, setFormData]);
 
+    const handleCheckboxChange = useCallback((e) => {
+        setFormData({ ...formData, acceptsSms: e.target.checked });
+    }, [formData, setFormData]);
+
     useEffect(() => {
         const { email, phone } = formData;
-        setIsFormValid(email !== '' && phone !== '' && isCheckboxChecked);
-    }, [formData, isCheckboxChecked]);
+        setIsFormValid(email !== '' && phone !== '');
+    }, [formData]);
 
     const navigate = useNavigate();
 
@@ -43,7 +46,7 @@ const Step1 = ({ formData, setFormData, handleStepCompletion }) => {
     const handleSubmit = useCallback((e) => {
         e.preventDefault();
         if (!isFormValid) {
-            setError('Por favor, preencha todos os campos e aceite os termos.');
+            setError('Por favor, preencha todos os campos.');
             setShowNotification(true);
             return;
         }
@@ -107,8 +110,8 @@ const Step1 = ({ formData, setFormData, handleStepCompletion }) => {
                         <input
                             type="checkbox"
                             id="accept-terms"
-                            checked={isCheckboxChecked}
-                            onChange={(e) => setIsCheckboxChecked(e.target.checked)}
+                            checked={formData.acceptsSms || false}
+                            onChange={handleCheckboxChange}
                         />
                         <label htmlFor="accept-terms">Aceito que entrem em contato comigo via WhatsApp e/ou SMS neste número.</label>
                     </div>

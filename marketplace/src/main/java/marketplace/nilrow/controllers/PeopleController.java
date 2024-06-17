@@ -2,8 +2,10 @@ package marketplace.nilrow.controllers;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.mail.MessagingException;
+import jakarta.validation.Valid;
 import marketplace.nilrow.domain.people.People;
 import marketplace.nilrow.domain.people.PeopleDTO;
+import marketplace.nilrow.domain.people.UpdateAcceptsSmsDTO;
 import marketplace.nilrow.domain.people.UpdatePeopleDTO;
 import marketplace.nilrow.domain.user.User;
 import marketplace.nilrow.infra.exception.DuplicateFieldException;
@@ -97,5 +99,31 @@ public class PeopleController {
 
         // Retornar a entidade atualizada
         return ResponseEntity.ok(new PeopleDTO(people));
+    }
+
+    @GetMapping("/accepts-sms")
+    public ResponseEntity<Boolean> getAcceptsSms() {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = (User) userRepository.findByNickname(userDetails.getUsername());
+        People people = peopleRepository.findByUser(user);
+        return ResponseEntity.ok(people.isAcceptsSms());
+    }
+
+    @PutMapping("/accepts-sms")
+    public ResponseEntity<Void> updateAcceptsSms(@RequestBody @Valid UpdateAcceptsSmsDTO updateAcceptsSmsDTO) {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = (User) userRepository.findByNickname(userDetails.getUsername());
+        People people = peopleRepository.findByUser(user);
+        people.setAcceptsSms(updateAcceptsSmsDTO.getAcceptsSms());
+        peopleRepository.save(people);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/email-validated")
+    public ResponseEntity<Boolean> getEmailValidated() {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = (User) userRepository.findByNickname(userDetails.getUsername());
+        People people = peopleRepository.findByUser(user);
+        return ResponseEntity.ok(people.isEmailValidated());
     }
 }

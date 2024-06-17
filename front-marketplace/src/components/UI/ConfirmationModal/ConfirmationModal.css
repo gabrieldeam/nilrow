@@ -1,0 +1,95 @@
+.confirmation-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.confirmation-modal-container {
+    background: #000000;
+    padding: 20px;
+    border-radius: 5px;
+    position: relative;
+    width: 443px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    border: 1px solid #FFFFFF;
+}
+
+.confirmation-modal-title {
+    font-size: 20px;
+    color: #fff;
+    text-align: left;
+    margin-bottom: -20px;
+    padding: 8px;
+    margin-top: -5px;
+}
+
+.confirmation-modal-description {
+    font-size: 15px;
+    color: #fff;
+    text-align: left;
+    margin-bottom: 20px;
+    width: 92%;
+    padding: 8px;
+}
+
+.confirmation-modal-actions {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+    gap: 10px; /* Adicionando espaçamento entre os botões */
+}
+
+@media (max-width: 768px) {
+    .confirmation-modal-overlay {
+        background: rgba(0, 0, 0, 0.7);
+        align-items: flex-end; /* Alinha o modal ao rodapé */
+        z-index: 1001;
+        width: 100%;
+        max-width: 419px;
+        padding: 6px 6px 0 6px;
+        
+    }
+
+    .confirmation-modal-container {
+        width: 100%;
+        background: #ffffff;
+        border: none;
+        border-radius: 12px 12px 0 0;
+        box-shadow: none;
+        margin: 0;
+        padding: 20px;
+        padding-bottom: 40px;
+    }
+
+    .confirmation-modal-title {
+        color: #000000;
+        text-align: center;
+        margin-bottom: -10px;
+        font-family: "Roboto", sans-serif;
+        font-weight: 700;
+        font-style: normal;
+        margin-top: -5px;
+    }
+
+    .confirmation-modal-description {
+        color: #000000;
+        text-align: center;
+        padding: 0;
+    }
+
+    .confirmation-modal-actions {
+        flex-direction: column;
+        gap: 1px;
+    }
+
+    .confirmation-modal-close-button {
+        display: none;
+    }
+}

@@ -95,4 +95,22 @@ public class UserController {
         }
     }
 
+    @DeleteMapping
+    public ResponseEntity<Void> deleteUser(HttpServletResponse response) {
+        try {
+            UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            User user = (User) userRepository.findByNickname(userDetails.getUsername());
+
+            userRepository.delete(user);
+
+            // Remover o cookie de autenticação
+            CookieUtil.removeAuthCookie(response);
+
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            logger.error("Failed to delete user", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
 }

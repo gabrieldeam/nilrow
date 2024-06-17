@@ -45,4 +45,14 @@ export const updateUserNickname = async (newNickname) => {
     }
 };
 
+// GET /people/email-validated
+export const getEmailValidated = async () => {
+    try {
+        const response = await profileApi.get('/people/email-validated');
+        return response.data;
+    } catch (error) {
+        throw error; // Lançando o erro completo
+    }
+};
+
 export default profileApi;

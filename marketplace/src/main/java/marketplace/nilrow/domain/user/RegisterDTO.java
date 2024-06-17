@@ -50,4 +50,6 @@ public class RegisterDTO {
     private LocalDate birthDate;
 
     private UserRole role;
+
+    private boolean acceptsSms = false;
 }

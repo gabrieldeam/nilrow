@@ -20,7 +20,7 @@ import logo from '../../../assets/nilrow.svg';
 import { LocationContext } from '../../../context/LocationContext';
 import AddressModal from '../../Others/AddressModal/AddressModal';
 
-const MobileHeader = ({ title, buttons, handleBack, showLogo, showSearch, searchPlaceholder, searchValue, onSearchChange }) => {
+const MobileHeader = ({ title, buttons, handleBack, showLogo, showSearch, searchPlaceholder, searchValue, onSearchChange, onSearchSubmit }) => {
     const { location } = useContext(LocationContext);
     const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
 
@@ -71,7 +71,8 @@ const MobileHeader = ({ title, buttons, handleBack, showLogo, showSearch, search
                             <SearchLayout 
                                 placeholder={searchPlaceholder} 
                                 value={searchValue} 
-                                onChange={onSearchChange} 
+                                onChange={onSearchChange}
+                                onSubmit={onSearchSubmit}
                             />
                         </div>
                     )}
@@ -119,7 +120,8 @@ MobileHeader.propTypes = {
     showSearch: PropTypes.bool,
     searchPlaceholder: PropTypes.string,
     searchValue: PropTypes.string,
-    onSearchChange: PropTypes.func
+    onSearchChange: PropTypes.func,
+    onSearchSubmit: PropTypes.func
 };
 
 export default MobileHeader;

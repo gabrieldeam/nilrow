@@ -17,13 +17,14 @@ import cardIcon from '../../../assets/card.svg';
 import privacyIcon from '../../../assets/privacy.svg';
 import profileIcon from '../../../assets/profile.svg';
 import { logout } from '../../../services/api';
-import { getUserProfile, getUserNickname } from '../../../services/profileApi';
+import { getUserProfile, getUserNickname, getEmailValidated } from '../../../services/profileApi';
 
 const Profile = () => {
     const navigate = useNavigate();
     const isMobile = window.innerWidth <= 768;
     const [profile, setProfile] = useState({});
     const [nickname, setNickname] = useState('');
+    const [emailValidated, setEmailValidated] = useState(false);
 
     useEffect(() => {
         const fetchProfileData = async () => {
@@ -32,6 +33,8 @@ const Profile = () => {
                 setProfile(profileData);
                 const userNickname = await getUserNickname();
                 setNickname(userNickname);
+                const emailValid = await getEmailValidated();
+                setEmailValidated(emailValid);
             } catch (error) {
                 console.error('Erro ao buscar dados do perfil:', error);
             }
@@ -78,7 +81,7 @@ const Profile = () => {
                         </div>
                     </div>
                     <div className="profile-steps">
-                        <div className="step-card-wrapper">
+                        <div className="profile-step-card-wrapper">
                             <StepButton
                                 className="data-personal"
                                 icon={dataEditIcon}
@@ -90,7 +93,7 @@ const Profile = () => {
                                 title="Dados da sua conta"
                                 rightLink={{ href: "/edit-profile", text: "Alterar" }}>
                                 <div className="see-data-wrapper">
-                                    <SeeData title="E-mail" content={profile.email} />
+                                    <SeeData title="E-mail" content={profile.email} showIcon={emailValidated} />
                                     <SeeData title="Telefone" content={formattedPhone} />
                                     <SeeData title="Nome de usuário" content={formattedNickname} />
                                 </div>
