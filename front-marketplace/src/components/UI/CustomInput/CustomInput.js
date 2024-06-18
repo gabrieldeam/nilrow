@@ -14,7 +14,9 @@ const CustomInput = ({
     type = 'text',
     name = '',
     isValid,
-    prefix
+    prefix,
+    readOnly = false,
+    checkbox = null // Adicionado checkbox
 }) => {
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
@@ -29,12 +31,13 @@ const CustomInput = ({
                 {prefix && <span className="input-prefix">{prefix}</span>}
                 <input 
                     type={isPasswordVisible && type === 'password' ? 'text' : type}
-                    className={`custom-input ${isValid === true ? 'valid' : isValid === false ? 'invalid' : ''}`} 
+                    className={`custom-input ${isValid === true ? 'valid' : isValid === false ? 'invalid' : ''} ${readOnly ? 'read-only' : ''}`} 
                     placeholder={placeholder} 
                     onChange={onChange} 
                     value={value}
                     name={name}
                     style={{ paddingLeft: prefix ? '106px' : '14px' }} // Ajuste condicional do padding
+                    readOnly={readOnly} // Adicionado readOnly
                 />
                 {type === 'password' && (
                     <img 
@@ -43,6 +46,16 @@ const CustomInput = ({
                         className="visibility-icon" 
                         onClick={togglePasswordVisibility} 
                     />
+                )}
+                {checkbox && (
+                    <div className="custom-input-checkbox-container roboto-light">
+                        <input 
+                            type="checkbox" 
+                            checked={checkbox.checked} 
+                            onChange={checkbox.onChange} 
+                        />
+                        <label>{checkbox.label}</label>
+                    </div>
                 )}
             </div>
             <div className="input-bottom-text">
@@ -66,7 +79,13 @@ CustomInput.propTypes = {
     type: PropTypes.string,
     name: PropTypes.string,
     isValid: PropTypes.bool,
-    prefix: PropTypes.string 
+    prefix: PropTypes.string,
+    readOnly: PropTypes.bool, // Adicionado readOnly 
+    checkbox: PropTypes.shape({ // Adicionado checkbox
+        checked: PropTypes.bool.isRequired,
+        onChange: PropTypes.func.isRequired,
+        label: PropTypes.string.isRequired
+    })
 };
 
 export default memo(CustomInput);

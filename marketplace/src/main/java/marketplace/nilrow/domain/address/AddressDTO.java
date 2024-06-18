@@ -1,13 +1,16 @@
 package marketplace.nilrow.domain.address;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.List;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class AddressDTO {
+    private String id;
     private String recipientName;
     private String recipientPhone;
     private String cep;
@@ -18,16 +21,10 @@ public class AddressDTO {
     private String number;
     private String complement;
     private AddressClassification classification;
-    private AddressType type;
-    private String typeName;
-    private boolean packagesInLodge;
-    private List<String> lodgeDays;
-    private boolean lodgeOpen24h;
-    private boolean lodgeClosed;
-    private String lodgeOpenHour;
-    private String lodgeCloseHour;
+    private String moreInformation;
 
     public AddressDTO(Address address) {
+        this.id = address.getId();
         this.recipientName = address.getRecipientName();
         this.recipientPhone = address.getRecipientPhone();
         this.cep = address.getCep();
@@ -38,13 +35,6 @@ public class AddressDTO {
         this.number = address.getNumber();
         this.complement = address.getComplement();
         this.classification = address.getClassification();
-        this.type = address.getType();
-        this.typeName = address.getTypeName();
-        this.packagesInLodge = address.isPackagesInLodge();
-        this.lodgeDays = address.getLodgeDays();
-        this.lodgeOpen24h = address.isLodgeOpen24h();
-        this.lodgeClosed = address.isLodgeClosed();
-        this.lodgeOpenHour = address.getLodgeOpenHour();
-        this.lodgeCloseHour = address.getLodgeCloseHour();
+        this.moreInformation = address.getMoreInformation();
     }
 }

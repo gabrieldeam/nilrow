@@ -1,0 +1,51 @@
+.classification-select-container {
+    display: flex;
+    flex-direction: column;
+    max-width: 100%;
+    background-color: #000000;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.classification-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #333;
+}
+
+.classification-item:last-child {
+    border-bottom: none;
+}
+
+.classification-item span {
+    color: #ffffff;
+}
+
+.classification-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #7B33E5;
+    background-color: transparent;
+    appearance: none;
+    border: 1px solid #ffffff;
+    border-radius: 4px;
+    position: relative;
+}
+
+.classification-item input[type="checkbox"]:checked {
+    background-color: #7B33E5;
+}
+
+.classification-item input[type="checkbox"]:checked::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    background-color: #7B33E5;
+    transform: translate(-50%, -50%);
+}
+

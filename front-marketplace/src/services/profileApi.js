@@ -75,4 +75,14 @@ export const addAddress = async (addressData) => {
     }
 };
 
+// GET /address/classifications
+export const getAddressClassifications = async () => {
+    try {
+        const response = await profileApi.get('/address/classifications');
+        return response.data;
+    } catch (error) {
+        throw error; // Lançando o erro completo
+    }
+};
+
 export default profileApi;

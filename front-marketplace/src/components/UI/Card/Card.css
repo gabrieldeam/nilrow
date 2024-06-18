@@ -23,13 +23,19 @@
     color: #ffffff;
 }
 
-.card-links a {
+.card-links a,
+.card-links .right-link-button {
     font-size: 15px;
     color: #7B33E5;
     text-decoration: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
 }
 
-.card-links a:hover {
+.card-links a:hover,
+.card-links .right-link-button:hover {
     text-decoration: underline;
 }
 

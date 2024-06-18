@@ -43,44 +43,21 @@ public class Address {
     @Column(nullable = false)
     private String number;
 
+    @Column
     private String complement;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AddressClassification classification;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private AddressType type;
-
-    @Column(nullable = false)
-    private String typeName;
-
-    @Column(nullable = false)
-    private boolean packagesInLodge;
-
-    @ElementCollection
-    @CollectionTable(name = "address_lodge_hours", joinColumns = @JoinColumn(name = "address_id"))
-    @Column(name = "day")
-    private List<String> lodgeDays;
-
-    @Column(nullable = false)
-    private boolean lodgeOpen24h;
-
-    @Column(nullable = false)
-    private boolean lodgeClosed;
-
     @Column
-    private String lodgeOpenHour;
-
-    @Column
-    private String lodgeCloseHour;
+    private String moreInformation;
 
     @ManyToOne
     @JoinColumn(name = "people_id", nullable = false)
     private People people;
 
-    public Address(String recipientName, String recipientPhone, String cep, String state, String city, String neighborhood, String street, String number, String complement, AddressClassification classification, AddressType type, String typeName, boolean packagesInLodge, List<String> lodgeDays, boolean lodgeOpen24h, boolean lodgeClosed, String lodgeOpenHour, String lodgeCloseHour, People people) {
+    public Address(String recipientName, String recipientPhone, String cep, String state, String city, String neighborhood, String street, String number, String complement, AddressClassification classification, String moreInformation, People people) {
         this.recipientName = recipientName;
         this.recipientPhone = recipientPhone;
         this.cep = cep;
@@ -91,14 +68,7 @@ public class Address {
         this.number = number;
         this.complement = complement;
         this.classification = classification;
-        this.type = type;
-        this.typeName = typeName;
-        this.packagesInLodge = packagesInLodge;
-        this.lodgeDays = lodgeDays;
-        this.lodgeOpen24h = lodgeOpen24h;
-        this.lodgeClosed = lodgeClosed;
-        this.lodgeOpenHour = lodgeOpenHour;
-        this.lodgeCloseHour = lodgeCloseHour;
+        this.moreInformation = moreInformation;
         this.people = people;
     }
 }

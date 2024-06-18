@@ -101,8 +101,7 @@ const MainHeader = () => {
                     ref={addressButtonRef} 
                     icon={addressIcon} 
                     onClick={openAddressModal} 
-                    text={location.city ? `${location.city} - ${location.zip}` : "Atualizar local"} 
-                    isActive={getIsActive('/address')} 
+                    text={location.city ? `${location.city} - ${location.zip}` : "Atualizar local"}  
                 />
                 <ProtectedLink to="/bag">
                     <HeaderButton icon={bagIcon} isActive={getIsActive('/bag')} />

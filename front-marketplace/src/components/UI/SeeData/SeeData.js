@@ -4,7 +4,7 @@ import './SeeData.css';
 import ToggleButton from '../../UI/Buttons/ToggleButton/ToggleButton';
 import verifiedIcon from '../../../assets/verificacao.svg'; 
 
-const SeeData = ({ title, content, link, linkText, onClick, stackContent = false, showToggleButton = false, onToggle, toggled, showIcon = false }) => {
+const SeeData = ({ title, content, subContent, link, linkText, onClick, stackContent = false, showToggleButton = false, onToggle, toggled, showIcon = false }) => {
   return (
     <div className={`see-data-container ${stackContent ? 'stack-content' : ''}`}>
       <div className="see-data-main">
@@ -15,6 +15,11 @@ const SeeData = ({ title, content, link, linkText, onClick, stackContent = false
         <div className="see-data-content">
           {content}
         </div>
+        {subContent && (
+          <div className="see-data-sub-content">
+            {subContent}
+          </div>
+        )}
       </div>
       <div className="see-data-actions">
         {link && linkText && (
@@ -31,6 +36,7 @@ const SeeData = ({ title, content, link, linkText, onClick, stackContent = false
 SeeData.propTypes = {
   title: PropTypes.string,
   content: PropTypes.string,
+  subContent: PropTypes.string, // Adicionando propType para subContent
   link: PropTypes.string,
   linkText: PropTypes.string,
   onClick: PropTypes.func,

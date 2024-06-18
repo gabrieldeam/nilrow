@@ -10,4 +10,5 @@ public interface PeopleRepository extends JpaRepository<People, String> {
     People findByPhone(String phone);
     People findByValidationToken(String validationToken);
     People findByUser(User user);
+    People findByUserNickname(String nickname);
 }

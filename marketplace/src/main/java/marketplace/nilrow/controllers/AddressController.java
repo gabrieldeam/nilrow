@@ -2,6 +2,8 @@ package marketplace.nilrow.controllers;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import marketplace.nilrow.domain.address.Address;
+import marketplace.nilrow.domain.address.AddressClassification;
+import marketplace.nilrow.domain.address.AddressClassificationDTO;
 import marketplace.nilrow.domain.address.AddressDTO;
 import marketplace.nilrow.domain.people.People;
 import marketplace.nilrow.domain.user.User;
@@ -13,6 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,10 +41,11 @@ public class AddressController {
     }
 
     @PostMapping
-    public ResponseEntity<AddressDTO> addAddress(@RequestBody AddressDTO addressDTO) {
+    public ResponseEntity<Void> addAddress(@RequestBody AddressDTO addressDTO) {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = (User) userDetails;
         People people = peopleRepository.findByUser(user);
+
         Address address = new Address(
                 addressDTO.getRecipientName(),
                 addressDTO.getRecipientPhone(),
@@ -53,17 +57,61 @@ public class AddressController {
                 addressDTO.getNumber(),
                 addressDTO.getComplement(),
                 addressDTO.getClassification(),
-                addressDTO.getType(),
-                addressDTO.getTypeName(),
-                addressDTO.isPackagesInLodge(),
-                addressDTO.getLodgeDays(),
-                addressDTO.isLodgeOpen24h(),
-                addressDTO.isLodgeClosed(),
-                addressDTO.getLodgeOpenHour(),
-                addressDTO.getLodgeCloseHour(),
+                addressDTO.getMoreInformation(),
                 people
         );
-        address = addressRepository.save(address);
-        return ResponseEntity.ok(new AddressDTO(address));
+
+        addressRepository.save(address);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> updateAddress(@PathVariable String id, @RequestBody AddressDTO addressDTO) {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = (User) userDetails;
+        People people = peopleRepository.findByUser(user);
+
+        Address address = addressRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Address not found"));
+        if (!address.getPeople().equals(people)) {
+            return ResponseEntity.status(403).build();
+        }
+
+        address.setRecipientName(addressDTO.getRecipientName());
+        address.setRecipientPhone(addressDTO.getRecipientPhone());
+        address.setCep(addressDTO.getCep());
+        address.setState(addressDTO.getState());
+        address.setCity(addressDTO.getCity());
+        address.setNeighborhood(addressDTO.getNeighborhood());
+        address.setStreet(addressDTO.getStreet());
+        address.setNumber(addressDTO.getNumber());
+        address.setComplement(addressDTO.getComplement());
+        address.setClassification(addressDTO.getClassification());
+        address.setMoreInformation(addressDTO.getMoreInformation());
+
+        addressRepository.save(address);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteAddress(@PathVariable String id) {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = (User) userDetails;
+        People people = peopleRepository.findByUser(user);
+
+        Address address = addressRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Address not found"));
+        if (!address.getPeople().equals(people)) {
+            return ResponseEntity.status(403).build();
+        }
+
+        addressRepository.delete(address);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/classifications")
+    public ResponseEntity<List<AddressClassificationDTO>> getClassifications() {
+        List<AddressClassificationDTO> classifications = Arrays.stream(AddressClassification.values())
+                .map(classification -> new AddressClassificationDTO(classification.name(), classification.getClassification()))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(classifications);
     }
 }

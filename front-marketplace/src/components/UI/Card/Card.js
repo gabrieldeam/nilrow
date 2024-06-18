@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import PropTypes from 'prop-types';
 import './Card.css';
 
-const Card = ({ title, children, leftLink, rightLink }) => {
+const Card = ({ title, children, leftLink, rightLink, rightButton }) => {
     return (
         <div className="card-container">
             {title && (
@@ -18,6 +18,11 @@ const Card = ({ title, children, leftLink, rightLink }) => {
                             <a href={rightLink.href} className="right-link">
                                 {rightLink.text}
                             </a>
+                        )}
+                        {rightButton && (
+                            <button type="button" onClick={rightButton.onClick} className="right-link-button">
+                                {rightButton.text}
+                            </button>
                         )}
                     </div>
                 </div>
@@ -37,6 +42,10 @@ Card.propTypes = {
     rightLink: PropTypes.shape({
         href: PropTypes.string,
         text: PropTypes.string
+    }),
+    rightButton: PropTypes.shape({
+        onClick: PropTypes.func.isRequired,
+        text: PropTypes.string.isRequired
     })
 };
 

@@ -4,9 +4,8 @@ import lombok.Getter;
 
 @Getter
 public enum AddressClassification {
-
-    HOME("home"),
-    WORK("work");
+    HOME("Casa"),
+    WORK("Trabalho");
 
     private final String classification;
 
