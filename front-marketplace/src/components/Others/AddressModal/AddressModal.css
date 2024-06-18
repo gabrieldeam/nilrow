@@ -8,7 +8,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: 1001;
 }
 
 .address-modal-container {
@@ -23,14 +23,33 @@
     border: 1px solid #FFFFFF;
 }
 
-.address-modal-close-button {
-    position: fixed;
-    top: 50px;
-    right: 700px;
+.address-modal-close-button-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+
+.address-mobile-only {
+    display: none;
+}
+
+.address-desktop-only {
+    display: none;
+}
+
+.address-close-button {
+    color: #fff;
+    font-size: 24px;
     background: none;
     border: none;
     cursor: pointer;
-    z-index: 1001;
+    margin-right: -10px;
+    margin-top: -10px;
+}
+
+.address-close-button img {
+    width: 20px;
+    height: 20px;
 }
 
 .address-modal-title {
@@ -38,6 +57,7 @@
     color: #fff;
     text-align: left;
     margin-bottom: -20px;
+    margin-top: -35px;
     padding: 8px;
 }
 
@@ -60,7 +80,7 @@
     margin-top: 20px;
     border-radius: 5px;
     font-size: 16px;
-    margin-bottom: 30px;
+    margin-bottom: 15px;
 }
 
 .address-modal-form {
@@ -103,6 +123,20 @@
     text-decoration: underline;
 }
 
+.address-modal-no-results {
+    background-color: #000000;
+    border-radius: 5px;
+    height: 60px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 20px;
+    box-sizing: border-box;
+    color: #ffffff;
+    text-align: center;
+}
+
 @media (max-width: 768px) {
     .address-modal-overlay {
         background: rgb(0, 0, 0);
@@ -120,12 +154,34 @@
         padding: 12px;
     }
 
-    .address-modal-close-button {
+    .address-mobile-only {
+        display: block;
+        z-index: 1003;
+        position: fixed;
         top: 32px;
-        left: 21px;
+        right: 363px;
+    }
+
+    .address-desktop-only {
+        display: none;
     }
 
     .address-modal-save-button {
-        margin-bottom: 190px;
+        margin-bottom: 110px;
+    }
+
+    .address-modal-title {
+        margin-top: 20px;
+
+    }
+}
+
+@media (min-width: 769px) {
+    .address-mobile-only {
+        display: none;
+    }
+
+    .address-desktop-only {
+        display: block;
     }
 }

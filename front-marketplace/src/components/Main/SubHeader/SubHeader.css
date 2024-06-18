@@ -24,7 +24,7 @@
 
 .sub-header-buttons {
     display: flex;
-    gap: 40px;
+    gap: 20px; /* Ajuste o espaçamento conforme necessário */
 }
 
 @media (max-width: 768px) {

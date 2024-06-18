@@ -40,6 +40,21 @@ public class AddressController {
         return ResponseEntity.ok(addressDTOs);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<AddressDTO> getAddressById(@PathVariable String id) {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = (User) userDetails;
+        People people = peopleRepository.findByUser(user);
+
+        Address address = addressRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Address not found"));
+        if (!address.getPeople().equals(people)) {
+            return ResponseEntity.status(403).build();
+        }
+
+        return ResponseEntity.ok(new AddressDTO(address));
+    }
+
+
     @PostMapping
     public ResponseEntity<Void> addAddress(@RequestBody AddressDTO addressDTO) {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();

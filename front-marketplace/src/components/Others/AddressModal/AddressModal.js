@@ -10,8 +10,10 @@ import HeaderButton from '../../UI/Buttons/HeaderButton/HeaderButton';
 import closeIcon from '../../../assets/close.svg';
 import { getAddresses } from '../../../services/profileApi';
 import SeeData from '../../UI/SeeData/SeeData';
+import useAuth from '../../../hooks/useAuth';
 
 const AddressModal = ({ isOpen, onClose }) => {
+    const { isAuthenticated } = useAuth();
     const { location, setLocation } = useContext(LocationContext);
     const { setMessage } = useContext(NotificationContext);
     const [zip, setZip] = useState(location.zip || '');
@@ -46,8 +48,10 @@ const AddressModal = ({ isOpen, onClose }) => {
             }
         };
 
-        fetchAddresses();
-    }, [setMessage]);
+        if (isAuthenticated) {
+            fetchAddresses();
+        }
+    }, [isAuthenticated, setMessage]);
 
     const handleChange = (e) => {
         setZip(e.target.value);
@@ -98,43 +102,64 @@ const AddressModal = ({ isOpen, onClose }) => {
         setShowAllAddresses(!showAllAddresses);
     };
 
+    const handleOverlayClick = (e) => {
+        if (e.target.classList.contains('address-modal-overlay')) {
+            onClose();
+        }
+    };
+
     if (!isOpen) return null;
 
     const displayedAddresses = showAllAddresses ? addresses : addresses.slice(0, 4);
 
     return (
-        <div className="address-modal-overlay">
-            <div className="address-modal-close-button">
-                <HeaderButton icon={closeIcon} onClick={onClose} />
-            </div>
+        <div className="address-modal-overlay" onClick={handleOverlayClick}>
             <div className="address-modal-container">
-                <h2 className="address-modal-title roboto-medium">Selecione onde quer receber suas compras</h2>
+                <div className="address-modal-close-button-wrapper">
+                    <div className="address-mobile-only">
+                        <HeaderButton icon={closeIcon} onClick={onClose} />
+                    </div>
+                    <div className="address-desktop-only">
+                        <button className="address-close-button" onClick={onClose}>
+                            <img src={closeIcon} alt="Close" />
+                        </button>
+                    </div>
+                </div>
+                <h2 className="address-modal-title roboto-medium">Selecione onde você está</h2>
                 <p className="address-modal-description roboto-regular">
                     Você poderá ver custos e prazos de entrega precisos em tudo que procurar.
                 </p>
-                <Card 
-                    title="Endereços cadastrados"
-                    rightLink={{ href: "/address", text: "Editar endereços" }}                
-                >
-                    <div className="address-modal-see-data-wrapper">
-                        {displayedAddresses.map(address => (
-                            <SeeData 
-                                key={address.id}
-                                title={address.street}
-                                content={`${address.cep} - ${address.city}/${address.state}`}
-                                stackContent={true}
-                                linkText="Usar esse CEP"
-                                link="#"
-                                onClick={() => handleUseZip(address)}
-                            />
-                        ))}
-                    </div>
-                    {addresses.length > 4 && (
-                        <button onClick={toggleShowAllAddresses} className="address-modal-toggle-button">
-                            {showAllAddresses ? 'Ver menos' : 'Ver todos'}
-                        </button>
-                    )}
-                </Card>
+                {isAuthenticated && (
+                    <Card 
+                        title="Endereços cadastrados"
+                        rightLink={{ href: "/address", text: "Editar endereços" }}                
+                    >
+                        <div className="address-modal-see-data-wrapper">
+                            {addresses.length === 0 ? (
+                                <div className="address-modal-no-results">
+                                    <p>Nenhum endereço cadastrado.</p>
+                                </div>
+                            ) : (
+                                displayedAddresses.map(address => (
+                                    <SeeData 
+                                        key={address.id}
+                                        title={address.street}
+                                        content={`${address.cep} - ${address.city}/${address.state}`}
+                                        stackContent={true}
+                                        linkText="Usar esse CEP"
+                                        link="#"
+                                        onClick={() => handleUseZip(address)}
+                                    />
+                                ))
+                            )}
+                        </div>
+                        {addresses.length > 4 && (
+                            <button onClick={toggleShowAllAddresses} className="address-modal-toggle-button">
+                                {showAllAddresses ? 'Ver menos' : 'Ver todos'}
+                            </button>
+                        )}
+                    </Card>
+                )}
                 <form className="address-modal-form" onSubmit={handleSubmit}>
                     <Card title="CEP">
                         <CustomInput 

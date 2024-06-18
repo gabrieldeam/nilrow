@@ -106,7 +106,7 @@ const Profile = () => {
                         icon={profileIcon}
                         title="Canal"
                         paragraph="Perfil público da sua conta, onde todos os usuários poderão te achar."
-                        onClick={() => navigate('/data')}
+                        onClick={() => navigate('/channel')}
                     />
                     <StepButton
                         icon={addressIcon}

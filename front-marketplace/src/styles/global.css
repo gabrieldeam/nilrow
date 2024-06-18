@@ -96,3 +96,32 @@ body, html {
 .App > * {
   flex: 1;
 }
+
+
+/* Estilo para a barra de rolagem do navegador */
+::-webkit-scrollbar {
+  width: 12px; /* Largura da barra de rolagem vertical */
+  height: 12px; /* Altura da barra de rolagem horizontal */
+}
+
+/* Fundo da barra de rolagem 
+::-webkit-scrollbar-track {
+  /* background: #f1f1f1;  Cor de fundo da barra de rolagem 
+  /* border-radius: 10px; Bordas arredondadas 
+} */
+
+/* Polegar da barra de rolagem */
+::-webkit-scrollbar-thumb {
+  background: #151515; /* Cor do polegar da barra de rolagem */
+  border-radius: 10px; /* Bordas arredondadas */
+}
+
+/* Polegar da barra de rolagem ao passar o mouse */
+::-webkit-scrollbar-thumb:hover {
+  background: #212121; /* Cor do polegar ao passar o mouse */
+}
+
+/* Polegar da barra de rolagem ao ser clicado */
+::-webkit-scrollbar-thumb:active {
+  background: #212121; /* Cor do polegar ao ser clicado */
+}

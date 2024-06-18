@@ -44,6 +44,7 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.GET, "/user/nickname").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/user").authenticated()
                         .requestMatchers(HttpMethod.GET, "/address").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/address/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/address").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/address/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/address/**").authenticated()

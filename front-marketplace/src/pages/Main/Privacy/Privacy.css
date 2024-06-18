@@ -49,11 +49,21 @@
     display: none;
 }
 
+.privacy-see-data-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px; /* Espaço entre os elementos */
+}
+
+.privacy-see-data-wrapper > div {
+    flex: 1 1 calc(50% - 16px); /* 25% de largura menos o espaço do gap */
+}
+
 @media (max-width: 768px) {
 
     .privacy-page {
         padding-bottom: 110px;
-        padding-top: 69px;
+        padding-top: 109px;
     }
 
     .privacy-container {
@@ -69,5 +79,9 @@
 
     .delete-link.desktop-only {
         display: none;
+    }
+
+    .privacy-see-data-wrapper > div {
+        flex: 1 1 100%; /* Full width on mobile */
     }
 }

@@ -24,7 +24,6 @@ const Signup = lazy(() => import('./pages/Auth/Signup/Signup'));
 const PasswordReset = lazy(() => import('./pages/Auth/PasswordReset/PasswordReset'));
 const Search = lazy(() => import('./pages/Main/Search/Search'));
 const Create = lazy(() => import('./pages/Main/Create/Create'));
-const Address = lazy(() => import('./pages/Main/Address/Address'));
 const Bag = lazy(() => import('./pages/Main/Bag/Bag'));
 const Chat = lazy(() => import('./pages/Main/Chat/Chat'));
 const Profile = lazy(() => import('./pages/Main/Profile/Profile'));
@@ -36,7 +35,12 @@ const Privacy = lazy(() => import('./pages/Main/Privacy/Privacy'));
 const EditProfile = lazy(() => import('./pages/Main/EditProfile/EditProfile'));
 const EditData = lazy(() => import('./pages/Main/EditData/EditData'));
 const ZipCodeSearch = lazy(() => import('./pages/Main/ZipCodeSearch/ZipCodeSearch'));
+const Address = lazy(() => import('./pages/Main/Address/Address'));
 const AddAddress = lazy(() => import('./pages/Main/AddAddress/AddAddress'));
+const EditAddress = lazy(() => import('./pages/Main/EditAddress/EditAddress'));
+const Channel = lazy(() => import('./pages/Main/Channel/Channel'));
+const AddChannel = lazy(() => import('./pages/Main/AddChannel/AddChannel'));
+const EditChannel = lazy(() => import('./pages/Main/EditChannel/EditChannel'));
 
 const AppContent = () => {
     const { isAuthenticated } = useAuth();
@@ -67,7 +71,7 @@ const AppContent = () => {
     };
 
     const renderAuthFooter = () => {
-        const specificRoutes = ['/profile', '/edit-profile', '/data', '/edit-data'];
+        const specificRoutes = ['/profile', '/edit-profile', '/data', '/edit-data', '/privacy', '/address', '/add-address'];
         return specificRoutes.includes(location.pathname) && !isMobile ? <AuthFooter /> : null;
     };
 
@@ -103,6 +107,10 @@ const AppContent = () => {
                     <Route path="/edit-data" element={<ProtectedRoute element={<EditData />} />} />
                     <Route path="/zip-code-search" element={<ZipCodeSearch />} />
                     <Route path="/add-address" element={<ProtectedRoute element={<AddAddress />} />} />
+                    <Route path="/edit-address/:id" element={<ProtectedRoute element={<EditAddress />} />} />
+                    <Route path="/channel" element={<ProtectedRoute element={<Channel />} />} />
+                    <Route path="/add-channel" element={<ProtectedRoute element={<AddChannel />} />} />
+                    <Route path="/edit-channel/:id" element={<ProtectedRoute element={<EditChannel />} />} />
                 </Routes>
             </Suspense>
             {renderFooter()}

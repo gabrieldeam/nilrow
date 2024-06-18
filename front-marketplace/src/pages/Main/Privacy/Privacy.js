@@ -70,7 +70,7 @@ const Privacy = () => {
                     </div>
                 </div>
                 <Card title="Gerenciar permissões de privacidade">
-                    <div className="see-data-wrapper">
+                    <div className="privacy-see-data-wrapper">
                         <SeeData 
                             title="Aceito que entrem em contato comigo via WhatsApp e/ou SMS neste número." 
                             content="Mantenha a permissão ativa para receber recomendações úteis sobre outros produtos ao usar sua conta." 
@@ -78,7 +78,7 @@ const Privacy = () => {
                             showToggleButton={true}
                             onToggle={handleToggle} 
                             toggled={acceptsSms}
-                        />                    
+                        /> 
                         {/* Outros componentes SeeData se necessário */}
                     </div>
                 </Card>

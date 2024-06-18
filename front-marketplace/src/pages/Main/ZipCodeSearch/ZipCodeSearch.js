@@ -111,7 +111,7 @@ const ZipCodeSearch = () => {
                         {error && <p className="zip-code-search-error">{error}</p>}
                         {!error && results.length === 0 && (
                             <div className="zip-code-search-no-results">
-                                <h3>Nenhum resultado encontrado.</h3>
+                                <p>Nenhum resultado encontrado.</p>
                             </div>
                         )}
                         <div className="see-data-container-wrapper">

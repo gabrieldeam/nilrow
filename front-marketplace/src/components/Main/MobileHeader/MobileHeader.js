@@ -16,11 +16,12 @@ import publishIcon from '../../../assets/publish.svg';
 import scanIcon from '../../../assets/scan.svg';
 import blockedIcon from '../../../assets/blocked.svg';
 import notificationsIcon from '../../../assets/notifications.svg';
+import trashIcon from '../../../assets/trash.svg'; // Ícone de delete
 import logo from '../../../assets/nilrow.svg';
 import { LocationContext } from '../../../context/LocationContext';
 import AddressModal from '../../Others/AddressModal/AddressModal';
 
-const MobileHeader = ({ title, buttons, handleBack, showLogo, showSearch, searchPlaceholder, searchValue, onSearchChange, onSearchSubmit }) => {
+const MobileHeader = ({ title, buttons, handleBack, showLogo, showSearch, searchPlaceholder, searchValue, onSearchChange, onSearchSubmit, onDelete }) => {
     const { location } = useContext(LocationContext);
     const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
 
@@ -46,6 +47,7 @@ const MobileHeader = ({ title, buttons, handleBack, showLogo, showSearch, search
         scan: scanIcon,
         blocked: blockedIcon,
         notifications: notificationsIcon,
+        trash: trashIcon, // Ícone de delete
     };
 
     return (
@@ -91,6 +93,7 @@ const MobileHeader = ({ title, buttons, handleBack, showLogo, showSearch, search
                     {buttons.scan && <HeaderButton icon={icons.scan} link="/scan" />}
                     {buttons.blocked && <HeaderButton icon={icons.blocked} link="/blocked" />}
                     {buttons.notifications && <HeaderButton icon={icons.notifications} link="/notifications" />}
+                    {buttons.delete && <HeaderButton icon={icons.trash} onClick={onDelete} />} {/* Botão de delete */}
                 </div>
             </div>
             <AddressModal isOpen={isAddressModalOpen} onClose={closeAddressModal} />
@@ -114,6 +117,7 @@ MobileHeader.propTypes = {
         scan: PropTypes.bool,
         blocked: PropTypes.bool,
         notifications: PropTypes.bool,
+        delete: PropTypes.bool, // Prop de delete
     }).isRequired,
     handleBack: PropTypes.func,
     showLogo: PropTypes.bool,
@@ -121,7 +125,8 @@ MobileHeader.propTypes = {
     searchPlaceholder: PropTypes.string,
     searchValue: PropTypes.string,
     onSearchChange: PropTypes.func,
-    onSearchSubmit: PropTypes.func
+    onSearchSubmit: PropTypes.func,
+    onDelete: PropTypes.func, // Prop de função de delete
 };
 
 export default MobileHeader;

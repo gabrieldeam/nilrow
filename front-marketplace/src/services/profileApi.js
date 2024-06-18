@@ -75,6 +75,37 @@ export const addAddress = async (addressData) => {
     }
 };
 
+// GET /address/{id}
+export const getAddressById = async (id) => {
+    try {
+        const response = await profileApi.get(`/address/${id}`);
+        return response.data;
+    } catch (error) {
+        throw error; // Lançando o erro completo
+    }
+};
+
+
+// PUT /address/{id}
+export const updateAddress = async (id, addressData) => {
+    try {
+        const response = await profileApi.put(`/address/${id}`, addressData);
+        return response.data;
+    } catch (error) {
+        throw error; // Lançando o erro completo
+    }
+};
+
+// DELETE /address/{id}
+export const deleteAddress = async (id) => {
+    try {
+        const response = await profileApi.delete(`/address/${id}`);
+        return response.data;
+    } catch (error) {
+        throw error; // Lançando o erro completo
+    }
+};
+
 // GET /address/classifications
 export const getAddressClassifications = async () => {
     try {
