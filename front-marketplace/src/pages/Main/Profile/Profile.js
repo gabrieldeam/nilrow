@@ -56,7 +56,7 @@ const Profile = () => {
     const handleChannelClick = async () => {
         try {
             await getMyChannel();
-            navigate('/channel');
+            navigate(`/@${nickname}`);
         } catch (error) {
             navigate('/add-channel');
         }

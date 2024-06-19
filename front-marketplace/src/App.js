@@ -8,6 +8,7 @@ import { SearchProvider } from './context/SearchContext';
 import Notification from './components/UI/Notification/Notification';
 import ProtectedLoginRoute from './components/Others/ProtectedRoute/ProtectedLoginRoute';
 import ProtectedRoute from './components/Others/ProtectedRoute/ProtectedRoute';
+import NicknameRoute from './components/Others/ProtectedRoute/NicknameRoute';
 import MainHeader from './components/Main/MainHeader/MainHeader';
 import AuthHeader from './components/Auth/AuthHeader/AuthHeader';
 import AuthFooter from './components/Auth/AuthFooter/AuthFooter';
@@ -38,7 +39,6 @@ const ZipCodeSearch = lazy(() => import('./pages/Main/ZipCodeSearch/ZipCodeSearc
 const Address = lazy(() => import('./pages/Main/Address/Address'));
 const AddAddress = lazy(() => import('./pages/Main/AddAddress/AddAddress'));
 const EditAddress = lazy(() => import('./pages/Main/EditAddress/EditAddress'));
-const Channel = lazy(() => import('./pages/Main/Channel/Channel'));
 const AddChannel = lazy(() => import('./pages/Main/AddChannel/AddChannel'));
 const EditChannel = lazy(() => import('./pages/Main/EditChannel/EditChannel'));
 
@@ -61,17 +61,25 @@ const AppContent = () => {
     }, []);
 
     const renderHeader = () => {
-        const authRoutes = ['/login', '/login-phone', '/signup', '/signup/contact-forms', '/signup/personal-data', '/signup/create-password', '/password-reset', '/email-validated-success', '/email-validation-failed'];
+        const authRoutes = [
+            '/login', '/login-phone', '/signup', '/signup/contact-forms', '/signup/personal-data', '/signup/create-password', '/password-reset', 
+            '/email-validated-success', '/email-validation-failed'
+        ];
         return authRoutes.includes(location.pathname) ? <AuthHeader /> : (!isMobile && <MainHeader />);
     };
 
     const renderFooter = () => {
-        const authRoutes = ['/login', '/login-phone', '/signup', '/signup/contact-forms', '/signup/personal-data', '/signup/create-password', '/password-reset', '/email-validated-success', '/email-validation-failed'];
+        const authRoutes = [
+            '/login', '/login-phone', '/signup', '/signup/contact-forms', '/signup/personal-data', '/signup/create-password', '/password-reset', 
+            '/email-validated-success', '/email-validation-failed'
+        ];
         return authRoutes.includes(location.pathname) ? <AuthFooter /> : (isMobile && <MobileFooter />);
     };
 
     const renderAuthFooter = () => {
-        const specificRoutes = ['/profile', '/edit-profile', '/data', '/edit-data', '/privacy', '/address', '/add-address'];
+        const specificRoutes = [
+            '/profile', '/edit-profile', '/data', '/edit-data', '/privacy', '/address', '/add-address'
+        ];
         return specificRoutes.includes(location.pathname) && !isMobile ? <AuthFooter /> : null;
     };
 
@@ -108,9 +116,9 @@ const AppContent = () => {
                     <Route path="/zip-code-search" element={<ZipCodeSearch />} />
                     <Route path="/add-address" element={<ProtectedRoute element={<AddAddress />} />} />
                     <Route path="/edit-address/:id" element={<ProtectedRoute element={<EditAddress />} />} />
-                    <Route path="/channel" element={<ProtectedRoute element={<Channel />} />} />
                     <Route path="/add-channel" element={<ProtectedRoute element={<AddChannel />} />} />
                     <Route path="/edit-channel/:id" element={<ProtectedRoute element={<EditChannel />} />} />
+                    <Route path="/*" element={<NicknameRoute />} />
                 </Routes>
             </Suspense>
             {renderFooter()}

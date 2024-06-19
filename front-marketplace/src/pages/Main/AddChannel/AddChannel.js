@@ -7,6 +7,7 @@ import SubHeader from '../../../components/Main/SubHeader/SubHeader';
 import Card from '../../../components/UI/Card/Card';
 import StageButton from '../../../components/UI/Buttons/StageButton/StageButton';
 import CustomInput from '../../../components/UI/CustomInput/CustomInput';
+import PrivacyNotice from '../../../components/Others/PrivacyNotice/PrivacyNotice';
 import { NotificationContext } from '../../../context/NotificationContext';
 import { getUserNickname } from '../../../services/profileApi';
 import { addChannel, uploadChannelImage, getMyChannel } from '../../../services/channelApi';
@@ -56,10 +57,10 @@ const AddChannel = () => {
             // Envia apenas o campo name ao criar o canal
             await addChannel({ name: formData.name });
             const channelData = await getMyChannel();
-            const fileToUpload = imageFile || defaultImage;
+            const fileToUpload = imageFile || null;
             await uploadChannelImage(channelData.id, fileToUpload);
             setMessage('Canal criado com sucesso!', 'success');
-            navigate('/channel');
+            navigate(`/@${nickname}`);
         } catch (error) {
             console.error('Erro ao criar canal:', error);
             setMessage('Erro ao criar canal.', 'error');
@@ -124,6 +125,7 @@ const AddChannel = () => {
                             readOnly
                         />
                     </Card>
+                    <PrivacyNotice />
                     <div className="confirmationButton-space">
                         <StageButton
                             text="Adicionar Canal"

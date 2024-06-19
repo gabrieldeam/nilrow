@@ -131,25 +131,32 @@ public class ChannelController {
     }
 
     @PostMapping("/{id}/upload-image")
-    public ResponseEntity<String> uploadImage(@PathVariable String id, @RequestParam("image") MultipartFile image) throws IOException {
+    public ResponseEntity<String> uploadImage(@PathVariable String id, @RequestParam(value = "image", required = false) MultipartFile image) throws IOException {
         Channel channel = channelRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Channel not found"));
 
-        // Ensure the uploads directory exists
-        if (!Files.exists(Paths.get(UPLOAD_DIR))) {
-            Files.createDirectories(Paths.get(UPLOAD_DIR));
+        if (image == null || image.isEmpty()) {
+            // Definir a imagem padrão
+            channel.setImageUrl("/uploads/25990a43-5546-4b25-aa4d-67da7de149af_defaultImage.png");
+        } else {
+            // Ensure the uploads directory exists
+            if (!Files.exists(Paths.get(UPLOAD_DIR))) {
+                Files.createDirectories(Paths.get(UPLOAD_DIR));
+            }
+
+            // Generate a unique filename
+            String filename = UUID.randomUUID().toString() + "_" + image.getOriginalFilename();
+            String filepath = Paths.get(UPLOAD_DIR, filename).toString();
+
+            // Save the file locally
+            image.transferTo(new File(filepath));
+
+            // Update the channel's imageUrl
+            channel.setImageUrl("/uploads/" + filepath);
         }
 
-        // Generate a unique filename
-        String filename = UUID.randomUUID().toString() + "_" + image.getOriginalFilename();
-        String filepath = Paths.get(UPLOAD_DIR, filename).toString();
-
-        // Save the file locally
-        image.transferTo(new File(filepath));
-
-        // Update the channel's imageUrl
-        channel.setImageUrl("/" + filename);
         channelRepository.save(channel);
 
-        return ResponseEntity.ok(filename);
+        return ResponseEntity.ok(channel.getImageUrl());
     }
+
 }

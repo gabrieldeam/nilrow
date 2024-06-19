@@ -1,7 +1,10 @@
 import axios from 'axios';
+import getConfig from '../config';
+
+const { apiUrl } = getConfig();
 
 const profileApi = axios.create({
-    baseURL: 'http://localhost:8080/api',
+    baseURL: apiUrl,
     withCredentials: true,
 });
 

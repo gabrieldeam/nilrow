@@ -49,7 +49,7 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.PUT, "/address/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/address/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/address/classifications").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/channels").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/channels").permitAll()
                         .requestMatchers(HttpMethod.POST, "/channels").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/channels/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/channels/**").authenticated()
