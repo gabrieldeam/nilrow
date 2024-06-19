@@ -18,6 +18,7 @@ import privacyIcon from '../../../assets/privacy.svg';
 import profileIcon from '../../../assets/profile.svg';
 import { logout } from '../../../services/api';
 import { getUserProfile, getUserNickname, getEmailValidated } from '../../../services/profileApi';
+import { getMyChannel } from '../../../services/channelApi';
 
 const Profile = () => {
     const navigate = useNavigate();
@@ -49,6 +50,15 @@ const Profile = () => {
             window.location.reload();
         } catch (error) {
             console.error('Erro ao fazer logout:', error);
+        }
+    };
+
+    const handleChannelClick = async () => {
+        try {
+            await getMyChannel();
+            navigate('/channel');
+        } catch (error) {
+            navigate('/add-channel');
         }
     };
 
@@ -106,7 +116,7 @@ const Profile = () => {
                         icon={profileIcon}
                         title="Canal"
                         paragraph="Perfil público da sua conta, onde todos os usuários poderão te achar."
-                        onClick={() => navigate('/channel')}
+                        onClick={handleChannelClick}
                     />
                     <StepButton
                         icon={addressIcon}

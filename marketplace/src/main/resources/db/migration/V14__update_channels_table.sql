@@ -1,0 +1,4 @@
+ALTER TABLE channels
+    ALTER COLUMN biography DROP NOT NULL,
+    ALTER COLUMN external_link DROP NOT NULL,
+    ALTER COLUMN image_url DROP NOT NULL;

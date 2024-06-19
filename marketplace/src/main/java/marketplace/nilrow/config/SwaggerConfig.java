@@ -32,9 +32,9 @@ public class SwaggerConfig {
                         .addSecuritySchemes("bearerAuth",
                                 new SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("bearer").bearerFormat("JWT")))
                 .tags(List.of(
-                        new Tag().name("User").description("Operações de usuário"),
-                        new Tag().name("Admin").description("Operações administrativas"),
-                        new Tag().name("Public").description("Endpoints públicos")
+                        new Tag().name("Channel").description("Operações de usuário"),
+                        new Tag().name("Profile").description("Operações administrativas"),
+                        new Tag().name("Auth").description("Endpoints públicos")
                 ));
     }
 
@@ -42,7 +42,7 @@ public class SwaggerConfig {
     public GroupedOpenApi v1Api() {
         return GroupedOpenApi.builder()
                 .group("v1")
-                .pathsToMatch("/auth/**", "/user/**", "/people/**", "/product/**", "/address/**")
+                .pathsToMatch("/auth/**", "/user/**", "/people/**", "/product/**", "/address/**", "/channels/**")
                 .build();
     }
 

@@ -30,7 +30,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/auth")
-@Tag(name = "Public", description = "Endpoints públicos relacionados à autenticação e registro")
+@Tag(name = "Auth", description = "Endpoints públicos relacionados à autenticação e registro")
 public class AuthenticationController {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationController.class);

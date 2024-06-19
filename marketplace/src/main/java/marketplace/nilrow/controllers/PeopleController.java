@@ -24,7 +24,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/people")
-@Tag(name = "People", description = "Operações relacionadas aos dados pessoais dos usuários")
+@Tag(name = "Profile", description = "Operações relacionadas aos dados pessoais dos usuários")
 public class PeopleController {
 
     @Autowired

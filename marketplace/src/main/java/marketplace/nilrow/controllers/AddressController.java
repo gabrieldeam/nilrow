@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/address")
-@Tag(name = "People", description = "Operações relacionadas aos endereços dos usuários")
+@Tag(name = "Profile", description = "Operações relacionadas aos endereços dos usuários")
 public class AddressController {
 
     @Autowired

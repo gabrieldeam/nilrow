@@ -1,5 +1,6 @@
 package marketplace.nilrow.domain.address;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,16 +12,34 @@ import lombok.Setter;
 @AllArgsConstructor
 public class AddressDTO {
     private String id;
+
+    @NotBlank(message = "É obrigatório")
     private String recipientName;
+
+    @NotBlank(message = "É obrigatório")
     private String recipientPhone;
+
+    @NotBlank(message = "É obrigatório")
     private String cep;
+
+    @NotBlank(message = "É obrigatório")
     private String state;
+
+    @NotBlank(message = "É obrigatório")
     private String city;
+
+    @NotBlank(message = "É obrigatório")
     private String neighborhood;
+
+    @NotBlank(message = "É obrigatório")
     private String street;
+
     private String number;
     private String complement;
+
+    @NotBlank(message = "É obrigatório")
     private AddressClassification classification;
+
     private String moreInformation;
 
     public AddressDTO(Address address) {

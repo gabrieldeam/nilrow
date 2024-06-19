@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/user")
-@Tag(name = "User", description = "Operações relacionadas ao usuário")
+@Tag(name = "Auth", description = "Operações relacionadas ao usuário")
 public class UserController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
