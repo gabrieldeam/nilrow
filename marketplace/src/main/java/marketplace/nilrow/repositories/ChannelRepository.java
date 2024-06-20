@@ -8,4 +8,5 @@ import java.util.Optional;
 
 public interface ChannelRepository extends JpaRepository<Channel, String> {
     Optional<Channel> findByPeople(People people);
+    Optional<Channel> findByPeopleUserNickname(String nickname);
 }

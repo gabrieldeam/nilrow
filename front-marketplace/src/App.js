@@ -41,6 +41,7 @@ const AddAddress = lazy(() => import('./pages/Main/AddAddress/AddAddress'));
 const EditAddress = lazy(() => import('./pages/Main/EditAddress/EditAddress'));
 const AddChannel = lazy(() => import('./pages/Main/AddChannel/AddChannel'));
 const EditChannel = lazy(() => import('./pages/Main/EditChannel/EditChannel'));
+const MyChannel = lazy(() => import('./pages/Main/MyChannel/MyChannel'));
 
 const AppContent = () => {
     const { isAuthenticated } = useAuth();
@@ -119,6 +120,7 @@ const AppContent = () => {
                     <Route path="/add-channel" element={<ProtectedRoute element={<AddChannel />} />} />
                     <Route path="/edit-channel/:id" element={<ProtectedRoute element={<EditChannel />} />} />
                     <Route path="/*" element={<NicknameRoute />} />
+                    <Route path="/my-channel" element={<ProtectedRoute element={<MyChannel />} />} />
                 </Routes>
             </Suspense>
             {renderFooter()}

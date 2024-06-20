@@ -1,8 +1,10 @@
 package marketplace.nilrow.controllers;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import marketplace.nilrow.domain.channel.ChannelDTO;
 import marketplace.nilrow.domain.follow.Follow;
 import marketplace.nilrow.domain.people.People;
+import marketplace.nilrow.domain.people.PeopleFollowDTO;
 import marketplace.nilrow.domain.user.User;
 import marketplace.nilrow.domain.channel.Channel;
 import marketplace.nilrow.services.ChannelService;
@@ -13,6 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/follows")
@@ -66,5 +71,36 @@ public class FollowController {
         Channel channel = channelService.getChannel(channelId).orElseThrow(() -> new IllegalArgumentException("Channel not found"));
         long followersCount = followService.getFollowersCount(channel);
         return ResponseEntity.ok(followersCount);
+    }
+
+    @GetMapping("/followers/{nickname}")
+    public ResponseEntity<List<PeopleFollowDTO>> getFollowers(@PathVariable String nickname) {
+        Channel channel = channelService.getChannelByNickname(nickname).orElseThrow(() -> new IllegalArgumentException("Channel not found"));
+        List<People> followers = followService.getFollowers(channel);
+        List<PeopleFollowDTO> followerDTOs = followers.stream()
+                .map(follower -> new PeopleFollowDTO(follower.getName(), follower.getUser().getNickname()))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(followerDTOs);
+    }
+
+    @GetMapping("/following-channels/{nickname}")
+    public ResponseEntity<List<ChannelDTO>> getFollowingChannels(@PathVariable String nickname) {
+        People people = peopleRepository.findByUserNickname(nickname);
+        if (people == null) {
+            return ResponseEntity.notFound().build();
+        }
+        List<Channel> channels = followService.getFollowingChannels(people);
+        List<ChannelDTO> channelDTOs = channels.stream().map(ChannelDTO::new).collect(Collectors.toList());
+        return ResponseEntity.ok(channelDTOs);
+    }
+
+    @GetMapping("/following-count/{nickname}")
+    public ResponseEntity<Long> getFollowingCount(@PathVariable String nickname) {
+        People people = peopleRepository.findByUserNickname(nickname);
+        if (people == null) {
+            return ResponseEntity.notFound().build();
+        }
+        long followingCount = followService.getFollowingCount(people);
+        return ResponseEntity.ok(followingCount);
     }
 }

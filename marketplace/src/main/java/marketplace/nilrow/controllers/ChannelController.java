@@ -81,6 +81,42 @@ public class ChannelController {
         return ResponseEntity.ok().build();
     }
 
+    @PutMapping("/{id}/upload-image")
+    public ResponseEntity<String> updateImage(@PathVariable String id, @RequestParam(value = "image", required = false) MultipartFile image) throws IOException {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = (User) userDetails;
+        People people = peopleRepository.findByUser(user);
+
+        Channel channel = channelRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Channel not found"));
+        if (!channel.getPeople().equals(people)) {
+            return ResponseEntity.status(403).build();
+        }
+
+        if (image == null || image.isEmpty()) {
+            // Definir a imagem padrão
+            channel.setImageUrl("/uploads/25990a43-5546-4b25-aa4d-67da7de149af_defaultImage.png");
+        } else {
+            // Ensure the uploads directory exists
+            if (!Files.exists(Paths.get(UPLOAD_DIR))) {
+                Files.createDirectories(Paths.get(UPLOAD_DIR));
+            }
+
+            // Generate a unique filename
+            String filename = UUID.randomUUID().toString() + "_" + image.getOriginalFilename();
+            String filepath = Paths.get(UPLOAD_DIR, filename).toString();
+
+            // Save the file locally
+            image.transferTo(new File(filepath));
+
+            // Update the channel's imageUrl
+            channel.setImageUrl("/uploads/" + filename);
+        }
+
+        channelRepository.save(channel);
+
+        return ResponseEntity.ok(channel.getImageUrl());
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteChannel(@PathVariable String id) {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();

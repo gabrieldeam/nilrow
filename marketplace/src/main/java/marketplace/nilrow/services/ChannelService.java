@@ -47,4 +47,9 @@ public class ChannelService {
     public Optional<Channel> getChannelByPeople(People people) {
         return channelRepository.findByPeople(people);
     }
+
+    // Adicionado
+    public Optional<Channel> getChannelByNickname(String nickname) {
+        return channelRepository.findByPeopleUserNickname(nickname);
+    }
 }

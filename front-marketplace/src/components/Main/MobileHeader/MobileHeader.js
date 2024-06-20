@@ -54,14 +54,14 @@ const MobileHeader = ({ title, buttons, handleBack, showLogo, showSearch, search
         <>
             <div className="mobile-header">
                 <div className="mobile-header-left">
+                    {buttons.close && <HeaderButton icon={icons.close} onClick={handleBack} />}
                     {buttons.address && (
                         <HeaderButton 
                             icon={icons.address} 
                             onClick={openAddressModal} 
                             text={location.city ? `${location.city} - ${location.zip}` : "Atualizar local"} 
                         />
-                    )}
-                    {buttons.close && <HeaderButton icon={icons.close} onClick={handleBack} />}
+                    )}                    
                     {buttons.chat && <HeaderButton icon={icons.chat} link="/chat" />}
                 </div>
                 <div className={`mobile-header-title ${showSearch ? 'with-search' : ''}`}>

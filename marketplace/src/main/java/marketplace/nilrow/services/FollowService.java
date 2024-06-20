@@ -7,7 +7,9 @@ import marketplace.nilrow.repositories.FollowRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class FollowService {
@@ -15,12 +17,12 @@ public class FollowService {
     @Autowired
     private FollowRepository followRepository;
 
-    public Optional<Follow> followChannel(People follower, Channel channel) {
+    public void followChannel(People follower, Channel channel) {
         if (followRepository.findByFollowerAndChannel(follower, channel).isPresent()) {
             throw new IllegalArgumentException("Already following this channel");
         }
         Follow follow = new Follow(null, follower, channel);
-        return Optional.of(followRepository.save(follow));
+        followRepository.save(follow);
     }
 
     public void unfollowChannel(People follower, Channel channel) {
@@ -33,5 +35,21 @@ public class FollowService {
 
     public long getFollowersCount(Channel channel) {
         return followRepository.countByChannel(channel);
+    }
+
+    public List<People> getFollowers(Channel channel) {
+        return followRepository.findByChannel(channel).stream()
+                .map(Follow::getFollower)
+                .collect(Collectors.toList());
+    }
+
+    public List<Channel> getFollowingChannels(People people) {
+        return followRepository.findByFollower(people).stream()
+                .map(Follow::getChannel)
+                .collect(Collectors.toList());
+    }
+
+    public long getFollowingCount(People people) {
+        return followRepository.countByFollower(people);
     }
 }

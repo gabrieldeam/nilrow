@@ -15,7 +15,7 @@
     width: 100%;
     padding: 0 58px;
     box-sizing: border-box;
-    align-items: center; /* Certifique-se de que os itens estejam centralizados verticalmente */
+    align-items: center;
 }
 
 .channel-left {
@@ -34,37 +34,62 @@
 .channel-details {
     display: flex;
     flex-direction: column;
-    align-items: center; /* Centraliza horizontalmente */
-    text-align: center;  /* Centraliza o texto */
+    align-items: center;
+    text-align: center;
 }
 
 .channel-name {
     font-size: 28px;
     font-weight: bold;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
 }
 
 .channel-biography {
     font-size: 16px;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
 }
 
 .channel-right {
     display: flex;
     flex-direction: column;
-    align-items: center; 
-    text-align: center;  
+    align-items: center;
+    text-align: center;
 }
 
 .channel-external-link {
     font-size: 16px;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
 }
 
-.stage-buttons {
+.channel-link-button-container {
     display: flex;
     gap: 10px;
-    width: 390px; /* Define uma área específica para os botões no desktop */
+    margin-bottom: 20px;
+}
+
+.channel-link-button {
+    display: flex;
+    align-items: center;
+    background-color: #212121;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    font-size: 14px;
+    border-radius: 100px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.channel-link-button-icon {
+    width: 15px;
+    height: 15px;
+    margin-right: 5px;
+}
+
+.channel-stage-buttons {
+    display: flex;
+    gap: 10px;
+    width: 390px;
 }
 
 /* Estilos para mobile */
@@ -86,7 +111,6 @@
     }
 
     .channel-image {
-        margin-bottom: 20px;
         margin-right: 0px;
     }
 
@@ -94,10 +118,9 @@
         align-items: center;
     }
 
-    .stage-buttons {
+    .channel-stage-buttons {
         width: calc(100vw - 40px);
-        justify-content: center; /* Centraliza os botões horizontalmente */
+        justify-content: center;
         gap: 10px;
     }
-
 }

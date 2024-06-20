@@ -22,4 +22,5 @@ public class PeopleDTO {
         this.phone = people.getPhone();
         this.birthDate = people.getBirthDate();
     }
+
 }
