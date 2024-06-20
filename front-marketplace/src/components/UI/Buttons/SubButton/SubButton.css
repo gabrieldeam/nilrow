@@ -1,0 +1,25 @@
+.sub-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    background-color: #7B33E5;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-family: 'Roboto', sans-serif;
+    margin-bottom: 8px;
+    width: 100%;
+}
+
+.sub-button:hover {
+    background-color: #5a24b5;
+}
+
+.sub-button-icon {
+    margin-right: 8px;
+    width: 16px;
+    height: 16px;
+}

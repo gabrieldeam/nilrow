@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import MobileHeader from '../../../components/Main/MobileHeader/MobileHeader';
 import LoadingSpinner from '../../../components/UI/LoadingSpinner/LoadingSpinner';
 import StageButton from '../../../components/UI/Buttons/StageButton/StageButton';
+import SubButton from '../../../components/UI/Buttons/SubButton/SubButton';
 import getConfig from '../../../config';
 import './Channel.css';
 import chatIcon from '../../../assets/chat.svg';
@@ -13,10 +14,18 @@ import editChannelIcon from '../../../assets/editChannel.svg';
 import shareIcon from '../../../assets/share.svg';
 import infoIcon from '../../../assets/info.svg';
 import globocon from '../../../assets/globo.svg';
+import storeIcon from '../../../assets/store.svg';
+import postIcon from '../../../assets/posts.svg';
+import assessmentIcon from '../../../assets/assessment.svg';
+import purchaseEventChannelIcon from '../../../assets/purchaseEventChannel.svg';
+import ImageModal from '../../../components/UI/ImageModal/ImageModal';
 
 const Channel = ({ nickname }) => {
     const [channelData, setChannelData] = useState(null);
     const [isOwner, setIsOwner] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isFixed, setIsFixed] = useState(false);
+    const [activeSection, setActiveSection] = useState('post'); // Default to 'post' section
     const { apiUrl } = getConfig();
     const navigate = useNavigate();
     const isMobile = window.innerWidth <= 768;
@@ -37,6 +46,28 @@ const Channel = ({ nickname }) => {
         fetchChannelData();
     }, [nickname, apiUrl]);
 
+    const handleScroll = useCallback(() => {
+        const offsetTop = 80; // Altura do cabeçalho
+        const channelButtonsSection = document.querySelector('.channel-buttons-section');
+
+        if (channelButtonsSection) {
+            const rect = channelButtonsSection.getBoundingClientRect();
+            if (rect.top <= offsetTop) {
+                setIsFixed(true);
+            } else if (window.scrollY <= offsetTop) {
+                setIsFixed(false);
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        window.addEventListener('scroll', handleScroll);
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, [handleScroll]);
+
     const handleBack = useCallback(() => {
         navigate(-1);
     }, [navigate]);
@@ -49,9 +80,37 @@ const Channel = ({ nickname }) => {
         navigate(`/about-channel`);
     }, [navigate]);
 
+    const handleImageClick = () => {
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+    };
+
+    const handleButtonClick = (section) => {
+        setActiveSection(section);
+    };
+
+    const getButtonClass = useCallback((section) => {
+        return activeSection === section ? 'fixed-button active' : 'fixed-button';
+    }, [activeSection]);
+
+    const handleSearchClick = () => {
+        navigate('/store-search');
+    };
+
     if (!channelData) {
         return <LoadingSpinner />;
     }
+
+    const stageButtons = isOwner ? [
+        { text: "Editar Canal", backgroundColor: "#212121", imageSrc: editChannelIcon, onClick: handleMyChannel },
+        { text: "Compartilhar", backgroundColor: "#212121", imageSrc: shareIcon }
+    ] : [
+        { text: "Seguir", backgroundColor: "#DF1414", imageSrc: followIcon },
+        { text: "Mensagem", backgroundColor: "#212121", imageSrc: chatIcon }
+    ];
 
     return (
         <div className="channel-page">
@@ -63,51 +122,124 @@ const Channel = ({ nickname }) => {
                 <MobileHeader title={`@${nickname}`} buttons={{ close: true, address: true, bag: true, qrcode: true }} handleBack={handleBack} />
             )}
             <div className="channel-container">
-                <div className="channel-left">
-                    <img
-                        src={`${apiUrl}${channelData.imageUrl}`}
-                        alt={`${channelData.name} - Imagem`}
-                        className="channel-image"
-                        onError={(e) => {
-                            console.error('Erro ao carregar imagem:', e);
-                            e.target.src = 'path/to/placeholder/image.png';
-                        }}
-                    />
-                    <div className="channel-details">
-                        <h1 className="channel-name">{channelData.name}</h1>
-                        {channelData.biography && (
-                            <p className="channel-biography">{channelData.biography}</p>
+                <div className="channel-banner-section">
+                    <div className="channel-left">
+                        <img
+                            src={`${apiUrl}${channelData.imageUrl}`}
+                            alt={`${channelData.name} - Imagem`}
+                            className="channel-image"
+                            onClick={handleImageClick}
+                            onError={(e) => {
+                                console.error('Erro ao carregar imagem:', e);
+                                e.target.src = 'path/to/placeholder/image.png';
+                            }}
+                        />
+                        <div className="channel-details">
+                            <h1 className="channel-name">{channelData.name}</h1>
+                            {channelData.biography && (
+                                <p className="channel-biography">{channelData.biography}</p>
+                            )}
+                        </div>
+                    </div>
+                    <div className="channel-right">
+                        <div className={`channel-link-button-container ${!channelData.externalLink ? 'centered' : ''}`}>
+                            {channelData.externalLink && (
+                                <a href={channelData.externalLink} target="_blank" rel="noopener noreferrer" className="channel-link-button">
+                                    <img src={globocon} alt="External Link" className="channel-link-button-icon" />
+                                    {channelData.externalLink}
+                                </a>
+                            )}
+                            <button className="channel-link-button" onClick={handleAboutChannel}>
+                                <img src={infoIcon} alt="Sobre" className="channel-link-button-icon" />
+                                Sobre
+                            </button>
+                        </div>
+                        <div className="channel-stage-buttons">
+                            {stageButtons.map((button, index) => (
+                                <StageButton
+                                    key={index}
+                                    text={button.text}
+                                    backgroundColor={button.backgroundColor}
+                                    imageSrc={button.imageSrc}
+                                    onClick={button.onClick}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                <div className={`channel-buttons-section ${isFixed ? 'fixed-channel-buttons-section' : ''}`}>
+                    <div className="buttons-container">
+                        <div className="fixed-buttons-container">
+                            <button className={getButtonClass('store')} onClick={() => handleButtonClick('store')}>
+                                <img src={storeIcon} alt="Store" />
+                            </button>
+                            <button className={getButtonClass('post')} onClick={() => handleButtonClick('post')}>
+                                <img src={postIcon} alt="Post" />
+                            </button>
+                            <button className={getButtonClass('assessment')} onClick={() => handleButtonClick('assessment')}>
+                                <img src={assessmentIcon} alt="Assessment" />
+                            </button>
+                            <button className={getButtonClass('purchaseEvent')} onClick={() => handleButtonClick('purchaseEvent')}>
+                                <img src={purchaseEventChannelIcon} alt="Purchase Event Channel" />
+                            </button>
+                        </div>
+                        {!isMobile && activeSection === 'store' && (
+                            <div className="sub-buttons-container">
+                                <SubButton text="Categorias" backgroundColor="#212121" />
+                                <SubButton text="Pesquisa" backgroundColor="#212121" onClick={handleSearchClick} />
+                            </div>
                         )}
                     </div>
                 </div>
-                <div className="channel-right">
-                    <div className="channel-link-button-container">
-                        {channelData.externalLink && (
-                            <a href={channelData.externalLink} target="_blank" rel="noopener noreferrer" className="channel-link-button">
-                                <img src={globocon} alt="External Link" className="channel-link-button-icon" />
-                                {channelData.externalLink}
-                            </a>
+                
+                {activeSection === 'store' && (
+                    <div className="channel-content-section">
+                        {isMobile && (
+                            <div className="sub-buttons-container">
+                                <SubButton text="Categorias" backgroundColor="#212121" />
+                                <SubButton text="Pesquisa" backgroundColor="#212121" onClick={handleSearchClick} />
+                            </div>
                         )}
-                        <button className="channel-link-button" onClick={handleAboutChannel}>
-                            <img src={infoIcon} alt="Sobre" className="channel-link-button-icon" />
-                            Sobre
-                        </button>
+                        <div className="test-scroll-container">
+                            <h2>Store Section</h2>
+                            <img src="https://www.showmetech.com.br/wp-content/uploads//2017/05/e-commerce-no-Brasil.jpg" alt="Test Scroll" className="test-image" />
+                        </div>
                     </div>
-                    <div className="channel-stage-buttons">
-                        {isOwner ? (
-                            <>
-                                <StageButton text="Editar Canal" backgroundColor="#212121" imageSrc={editChannelIcon} onClick={handleMyChannel} />
-                                <StageButton text="Compartilhar" backgroundColor="#212121" imageSrc={shareIcon} />
-                            </>
-                        ) : (
-                            <>
-                                <StageButton text="Seguir" backgroundColor="#DF1414" imageSrc={followIcon} />
-                                <StageButton text="Mensagem" backgroundColor="#212121" imageSrc={chatIcon} />
-                            </>
-                        )}
+                )}
+                
+                {activeSection === 'post' && (
+                    <div className="channel-content-section">
+                        <div className="test-scroll-container">
+                            <h2>Post Section</h2>
+                            <img src="https://www.showmetech.com.br/wp-content/uploads//2017/05/e-commerce-no-Brasil.jpg" alt="Test Scroll" className="test-image" />
+                        </div>
                     </div>
-                </div>
+                )}
+
+                {activeSection === 'assessment' && (
+                    <div className="channel-content-section">
+                        <div className="test-scroll-container">
+                            <h2>Assessment Section</h2>
+                            <img src="https://www.showmetech.com.br/wp-content/uploads//2017/05/e-commerce-no-Brasil.jpg" alt="Test Scroll" className="test-image" />
+                        </div>
+                    </div>
+                )}
+
+                {activeSection === 'purchaseEvent' && (
+                    <div className="channel-content-section">
+                        <div className="test-scroll-container">
+                            <h2>Purchase Event Section</h2>
+                            <img src="https://www.showmetech.com.br/wp-content/uploads//2017/05/e-commerce-no-Brasil.jpg" alt="Test Scroll" className="test-image" />
+                        </div>
+                    </div>
+                )}
+
             </div>
+            
+            {isModalOpen && (
+                <ImageModal imageUrl={`${apiUrl}${channelData.imageUrl}`} onClose={handleCloseModal} />
+            )}
         </div>
     );
 };

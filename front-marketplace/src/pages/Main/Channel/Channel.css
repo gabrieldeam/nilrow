@@ -4,18 +4,42 @@
     align-items: center;
     justify-content: center;
     color: #fff;
-    padding-top: 160px;
-    padding-bottom: 70px;
     box-sizing: border-box;
+    padding-top: 160px;
+    padding-bottom: 700px;
 }
 
 .channel-container {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     width: 100%;
     padding: 0 58px;
     box-sizing: border-box;
+}
+
+.channel-banner-section,
+.channel-buttons-section,
+.channel-content-section {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.channel-buttons-section {
+    margin-bottom: 3px;
+    margin-top: 30px;
+}
+
+.fixed-channel-buttons-section {
+    position: fixed;
+    top: 89px; /* Espaço para o cabeçalho */
+    left: 0;
+    width: 100%;
+    z-index: 100;
+    background-color: #000000; /* Cor de fundo para a seção fixa */
+    padding: 10px 58px;
 }
 
 .channel-left {
@@ -26,7 +50,7 @@
 .channel-image {
     width: 130px;
     height: 130px;
-    border-radius: 43px;
+    border-radius: 100px;
     object-fit: cover;
     margin-right: 58px;
 }
@@ -52,7 +76,7 @@
 .channel-right {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-end;
     text-align: center;
 }
 
@@ -65,6 +89,10 @@
     display: flex;
     gap: 10px;
     margin-bottom: 20px;
+}
+
+.channel-link-button-container.centered {
+    justify-content: center;
 }
 
 .channel-link-button {
@@ -92,17 +120,85 @@
     width: 390px;
 }
 
+.buttons-container {
+    display: flex;
+    gap: 30px;
+    align-items: center;
+}
+
+.fixed-buttons-container {
+    display: flex;
+    gap: 60px;
+    padding: 10px;
+    z-index: 100;
+}
+
+.fixed-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.fixed-button img {
+    width: 24px;
+    height: 24px;
+}
+
+.fixed-button.active img {
+    filter: invert(60%) sepia(85%) saturate(5000%) hue-rotate(247deg) brightness(90%) contrast(110%);
+}
+
+.sub-buttons-container {
+    display: flex;
+    gap: 10px;
+    width: 350px;
+    justify-content: center;
+}
+
+.sub-button {
+    flex: 1;
+    padding: 10px;
+    background-color: #212121;
+    color: #fff;
+    border: none;
+    font-size: 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: center;
+}
+
+.sub-button img {
+    width: 24px;
+    height: 24px;
+}
+
+/* Test scroll container */
+.test-scroll-container {
+    margin-top: 20px;
+}
+
+.test-image {
+    width: 100%;
+    max-width: 600px;
+    height: auto;
+}
+
 /* Estilos para mobile */
 @media (max-width: 768px) {
     .channel-page {
-        padding-bottom: 110px;
+        padding-bottom: 610px;
         padding-top: 120px;
     }
 
     .channel-container {
+        padding: 0 6px;
+    }
+
+    .channel-banner-section,
+    .channel-buttons-section,
+    .channel-content-section {
         flex-direction: column;
         align-items: center;
-        padding: 0 6px;
     }
 
     .channel-left {
@@ -118,9 +214,42 @@
         align-items: center;
     }
 
+    .channel-link-button-container {
+        justify-content: center;
+    }
+
+    .channel-link-button-container.centered {
+        justify-content: center;
+        flex-direction: column;
+    }
+
+    .fixed-channel-buttons-section {
+        top: 73px; /* Espaço para o cabeçalho */
+    }
+
+    .channel-buttons-section {
+        margin-bottom: 3px;
+        margin-top: 15px;
+    }
+
     .channel-stage-buttons {
         width: calc(100vw - 40px);
         justify-content: center;
         gap: 10px;
+    }
+
+    .fixed-buttons-container {
+        justify-content: center; /* Center align on mobile */
+    }
+
+    .sub-buttons-container {
+        flex-direction: row;
+        justify-content: space-between;
+        width: 100%;
+        margin-top: 15px;
+    }
+
+    .sub-button {
+        width: 48%;
     }
 }

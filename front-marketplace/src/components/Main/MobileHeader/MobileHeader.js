@@ -20,10 +20,12 @@ import trashIcon from '../../../assets/trash.svg'; // Ícone de delete
 import logo from '../../../assets/nilrow.svg';
 import { LocationContext } from '../../../context/LocationContext';
 import AddressModal from '../../Others/AddressModal/AddressModal';
+import QRCodeModal from '../../UI/QRCodeModal/QRCodeModal';
 
 const MobileHeader = ({ title, buttons, handleBack, showLogo, showSearch, searchPlaceholder, searchValue, onSearchChange, onSearchSubmit, onDelete }) => {
     const { location } = useContext(LocationContext);
     const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+    const [isQRCodeModalOpen, setIsQRCodeModalOpen] = useState(false);
 
     const openAddressModal = () => {
         setIsAddressModalOpen(true);
@@ -32,6 +34,16 @@ const MobileHeader = ({ title, buttons, handleBack, showLogo, showSearch, search
     const closeAddressModal = () => {
         setIsAddressModalOpen(false);
     };
+
+    const openQRCodeModal = () => {
+        setIsQRCodeModalOpen(true);
+    };
+
+    const closeQRCodeModal = () => {
+        setIsQRCodeModalOpen(false);
+    };
+
+    const currentUrl = window.location.href;
 
     const icons = {
         address: addressIcon,
@@ -88,7 +100,7 @@ const MobileHeader = ({ title, buttons, handleBack, showLogo, showSearch, search
                     {buttons.search && <HeaderButton icon={icons.search} link="/search" />}
                     {buttons.back && <HeaderButton icon={icons.back} onClick={handleBack} />}
                     {buttons.settings && <HeaderButton icon={icons.settings} link="/settings" />}
-                    {buttons.qrcode && <HeaderButton icon={icons.qrcode} link="/qrcode" />}
+                    {buttons.qrcode && <HeaderButton icon={icons.qrcode} onClick={openQRCodeModal} />}
                     {buttons.publish && <HeaderButton icon={icons.publish} link="/publish" />}
                     {buttons.scan && <HeaderButton icon={icons.scan} link="/scan" />}
                     {buttons.blocked && <HeaderButton icon={icons.blocked} link="/blocked" />}
@@ -97,6 +109,12 @@ const MobileHeader = ({ title, buttons, handleBack, showLogo, showSearch, search
                 </div>
             </div>
             <AddressModal isOpen={isAddressModalOpen} onClose={closeAddressModal} />
+            <QRCodeModal 
+                isOpen={isQRCodeModalOpen} 
+                onClose={closeQRCodeModal} 
+                url={currentUrl} 
+                nickname={title} 
+            />
         </>
     );
 };
