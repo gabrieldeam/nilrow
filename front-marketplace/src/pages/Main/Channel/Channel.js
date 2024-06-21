@@ -17,6 +17,8 @@ import globocon from '../../../assets/globo.svg';
 import storeIcon from '../../../assets/store.svg';
 import postIcon from '../../../assets/posts.svg';
 import assessmentIcon from '../../../assets/assessment.svg';
+import categoriesIcon from '../../../assets/categories.svg';
+import searchIcon from '../../../assets/search.svg';
 import purchaseEventChannelIcon from '../../../assets/purchaseEventChannel.svg';
 import ImageModal from '../../../components/UI/ImageModal/ImageModal';
 
@@ -100,6 +102,14 @@ const Channel = ({ nickname }) => {
         navigate('/store-search');
     };
 
+    const handleFollowersClick = () => {
+        navigate('/followers');
+    };
+
+    const handleFollowingClick = () => {
+        navigate('/following');
+    };
+
     if (!channelData) {
         return <LoadingSpinner />;
     }
@@ -119,7 +129,11 @@ const Channel = ({ nickname }) => {
                 <meta name="description" content={channelData.biography} />
             </Helmet>
             {isMobile && (
-                <MobileHeader title={`@${nickname}`} buttons={{ close: true, address: true, bag: true, qrcode: true }} handleBack={handleBack} />
+                <MobileHeader
+                    title={`@${nickname}`}
+                    buttons={{ close: true, address: true, bag: true, qrcode: isOwner ? true : undefined, share: !isOwner ? true : undefined }}
+                    handleBack={handleBack}
+                />
             )}
             <div className="channel-container">
                 <div className="channel-banner-section">
@@ -136,6 +150,14 @@ const Channel = ({ nickname }) => {
                         />
                         <div className="channel-details">
                             <h1 className="channel-name">{channelData.name}</h1>
+                            <div className="channel-follow-info">
+                                <button className="follow-info-button" onClick={handleFollowersClick}>
+                                    <span>0</span> Seguidores
+                                </button>
+                                <button className="follow-info-button" onClick={handleFollowingClick}>
+                                    <span>0</span> Seguindo
+                                </button>
+                            </div>
                             {channelData.biography && (
                                 <p className="channel-biography">{channelData.biography}</p>
                             )}
@@ -186,8 +208,8 @@ const Channel = ({ nickname }) => {
                         </div>
                         {!isMobile && activeSection === 'store' && (
                             <div className="sub-buttons-container">
-                                <SubButton text="Categorias" backgroundColor="#212121" />
-                                <SubButton text="Pesquisa" backgroundColor="#212121" onClick={handleSearchClick} />
+                                <SubButton text="Categorias" backgroundColor="#212121" imageSrc={categoriesIcon} />
+                                <SubButton text="Pesquisar" backgroundColor="#212121" imageSrc={searchIcon} onClick={handleSearchClick} />
                             </div>
                         )}
                     </div>
@@ -197,8 +219,8 @@ const Channel = ({ nickname }) => {
                     <div className="channel-content-section">
                         {isMobile && (
                             <div className="sub-buttons-container">
-                                <SubButton text="Categorias" backgroundColor="#212121" />
-                                <SubButton text="Pesquisa" backgroundColor="#212121" onClick={handleSearchClick} />
+                                <SubButton text="Categorias" backgroundColor="#212121" imageSrc={categoriesIcon} />
+                                <SubButton text="Pesquisar" backgroundColor="#212121" imageSrc={searchIcon} onClick={handleSearchClick} />
                             </div>
                         )}
                         <div className="test-scroll-container">
@@ -210,9 +232,8 @@ const Channel = ({ nickname }) => {
                 
                 {activeSection === 'post' && (
                     <div className="channel-content-section">
-                        <div className="test-scroll-container">
-                            <h2>Post Section</h2>
-                            <img src="https://www.showmetech.com.br/wp-content/uploads//2017/05/e-commerce-no-Brasil.jpg" alt="Test Scroll" className="test-image" />
+                        <div className="empty-post-container">
+                            <p>Este canal ainda não tem publicações</p>
                         </div>
                     </div>
                 )}

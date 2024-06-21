@@ -37,25 +37,6 @@ public class ChannelService {
         return Optional.of(channelRepository.save(existingChannel));
     }
 
-    @Transactional
-    public void deleteChannel(String channelId) {
-        System.out.println("Tentando deletar o canal: " + channelId);
-        Channel channel = channelRepository.findById(channelId)
-                .orElseThrow(() -> new IllegalArgumentException("Channel not found"));
-
-        channelRepository.delete(channel);
-        channelRepository.flush();
-
-        if (channelRepository.existsById(channelId)) {
-            throw new IllegalStateException("Canal não foi deletado");
-        }
-        System.out.println("Canal deletado com sucesso: " + channelId);
-    }
-
-
-    public boolean existsById(String channelId) {
-        return channelRepository.existsById(channelId);
-    }
 
     public Optional<Channel> getChannel(String channelId) {
         return channelRepository.findById(channelId);
@@ -67,5 +48,12 @@ public class ChannelService {
 
     public Optional<Channel> getChannelByNickname(String nickname) {
         return channelRepository.findByPeopleUserNickname(nickname);
+    }
+
+    @Transactional
+    public void toggleChannelVisibility(String channelId, boolean active) {
+        Channel channel = channelRepository.findById(channelId).orElseThrow(() -> new IllegalArgumentException("Channel not found"));
+        channel.setActive(active);
+        channelRepository.save(channel);
     }
 }

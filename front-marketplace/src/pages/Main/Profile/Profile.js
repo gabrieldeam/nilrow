@@ -18,7 +18,7 @@ import privacyIcon from '../../../assets/privacy.svg';
 import profileIcon from '../../../assets/profile.svg';
 import { logout } from '../../../services/api';
 import { getUserProfile, getUserNickname, getEmailValidated } from '../../../services/profileApi';
-import { getMyChannel } from '../../../services/channelApi';
+import { getMyChannel, isChannelActive } from '../../../services/channelApi';
 
 const Profile = () => {
     const navigate = useNavigate();
@@ -55,8 +55,14 @@ const Profile = () => {
 
     const handleChannelClick = async () => {
         try {
-            await getMyChannel();
-            navigate(`/@${nickname}`);
+            const channel = await getMyChannel();
+            const activeStatus = await isChannelActive(channel.id);
+
+            if (activeStatus) {
+                navigate(`/@${nickname}`);
+            } else {
+                navigate('/my-channel');
+            }
         } catch (error) {
             navigate('/add-channel');
         }

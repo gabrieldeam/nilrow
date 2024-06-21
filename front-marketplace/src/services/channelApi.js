@@ -36,10 +36,11 @@ export const updateChannel = async (id, channelDTO) => {
     }
 };
 
-// DELETE /channels/delete-my-channel
-export const deleteMyChannel = async () => {
+// PUT /channels/{id}/toggle-visibility
+export const toggleChannelVisibility = async (id) => {
     try {
-        await channelApi.delete('/channels/delete-my-channel');
+        const response = await channelApi.put(`/channels/${id}/toggle-visibility`);
+        return response.data;
     } catch (error) {
         throw error;
     }
@@ -49,6 +50,16 @@ export const deleteMyChannel = async () => {
 export const getMyChannel = async () => {
     try {
         const response = await channelApi.get('/channels/my');
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+// GET /channels//{id}/is-active
+export const isChannelActive = async (id) => {
+    try {
+        const response = await channelApi.get(`/channels/${id}/is-active`);
         return response.data;
     } catch (error) {
         throw error;

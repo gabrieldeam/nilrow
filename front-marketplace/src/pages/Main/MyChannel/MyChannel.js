@@ -6,7 +6,7 @@ import StepButton from '../../../components/UI/Buttons/StepButton/StepButton';
 import Card from '../../../components/UI/Card/Card';
 import MobileHeader from '../../../components/Main/MobileHeader/MobileHeader';
 import SeeData from '../../../components/UI/SeeData/SeeData';
-import { getMyChannel, updateChannelImage, deleteMyChannel } from '../../../services/channelApi';
+import { getMyChannel, updateChannelImage, toggleChannelVisibility, isChannelActive } from '../../../services/channelApi';
 import ConfirmationModal from '../../../components/UI/ConfirmationModal/ConfirmationModal';
 import defaultImage from '../../../assets/user.png';
 import './MyChannel.css';
@@ -25,6 +25,7 @@ const MyChannel = () => {
     const navigate = useNavigate();
     const isMobile = window.innerWidth <= 768;
     const [channelData, setChannelData] = useState(null);
+    const [isActive, setIsActive] = useState(false);
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(defaultImage);
     const [buttonText, setButtonText] = useState('Escolher arquivo');
@@ -39,6 +40,9 @@ const MyChannel = () => {
                 if (data.imageUrl) {
                     setImagePreview(`${apiUrl}${data.imageUrl}`);
                 }
+
+                const activeStatus = await isChannelActive(data.id);
+                setIsActive(activeStatus);
             } catch (error) {
                 console.error('Erro ao buscar dados do canal:', error);
             }
@@ -71,24 +75,30 @@ const MyChannel = () => {
         }
     };
 
-    const handleDeleteClick = () => {
+    const handleToggleVisibilityClick = () => {
         setIsModalOpen(true);
     };
 
-    const handleDeleteConfirm = async () => {
-        try {
-            await deleteMyChannel();
-            setMessage('Canal deletado com sucesso!', 'success');
-            navigate('/'); // Redireciona para a página inicial após deletar
-        } catch (error) {
-            console.error('Erro ao deletar canal:', error);
-            setMessage('Erro ao deletar canal.', 'error');
-        } finally {
-            setIsModalOpen(false);
+    const handleToggleVisibilityConfirm = async () => {
+        if (channelData) {
+            try {
+                await toggleChannelVisibility(channelData.id);
+                setMessage(`Canal ${isActive ? 'desativado' : 'ativado'} com sucesso!`, 'success');
+                if (isActive) {
+                    navigate('/profile'); // Redireciona para a página de perfil após desativar
+                } else {
+                    navigate(`/@${channelData.nickname}`); // Redireciona para o canal após ativar
+                }
+            } catch (error) {
+                console.error(`Erro ao ${isActive ? 'desativar' : 'ativar'} o canal:`, error);
+                setMessage(`Erro ao ${isActive ? 'desativar' : 'ativar'} o canal.`, 'error');
+            } finally {
+                setIsModalOpen(false);
+            }
         }
     };
 
-    const handleDeleteCancel = () => {
+    const handleToggleVisibilityCancel = () => {
         setIsModalOpen(false);
     };
 
@@ -111,8 +121,10 @@ const MyChannel = () => {
                                 <HeaderButton icon={notificationsIcon} link="/notifications" />
                             </div>
                         </div>
-                        <div className="delete-link delete-desktop-only">
-                            <button className="delete-button" onClick={handleDeleteClick}>Deletar canal</button>
+                        <div className="toggle-visibility-link toggle-visibility-desktop-only">
+                            <button className="toggle-visibility-button" onClick={handleToggleVisibilityClick}>
+                                {isActive ? 'Desativar canal' : 'Ativar canal'}
+                            </button>
                         </div>
                     </div>
                     <div className="my-channel-steps">
@@ -181,15 +193,17 @@ const MyChannel = () => {
                         onClick={() => navigate('/depois-colocar')}
                     />
                 </div>
-                <div className="delete-link delete-mobile-only">
-                    <button className="delete-button" onClick={handleDeleteClick}>Deletar canal</button>
+                <div className="toggle-visibility-link toggle-visibility-mobile-only">
+                    <button className="toggle-visibility-button" onClick={handleToggleVisibilityClick}>
+                        {isActive ? 'Desativar canal' : 'Ativar canal'}
+                    </button>
                 </div>
             </div>
             <ConfirmationModal 
                 isOpen={isModalOpen}
-                onConfirm={handleDeleteConfirm}
-                onCancel={handleDeleteCancel}
-                message="Você tem certeza que deseja deletar o canal?"
+                onConfirm={handleToggleVisibilityConfirm}
+                onCancel={handleToggleVisibilityCancel}
+                message={`Você tem certeza que deseja ${isActive ? 'desativar' : 'ativar'} o canal?`}
             />
         </div>
     );

@@ -29,6 +29,9 @@ public class Channel {
     @Column
     private String imageUrl;
 
+    @Column(nullable = false)
+    private boolean active = true;
+
     @OneToOne
     @JoinColumn(name = "people_id", nullable = false, unique = true)
     private People people;

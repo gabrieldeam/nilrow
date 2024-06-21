@@ -11,11 +11,11 @@ const SubButton = ({ text, backgroundColor = '#7B33E5', onClick = () => {}, imag
 
     return (
         <button 
-            className="sub-button"
+            className="sub-button-bu"
             style={{ backgroundColor }}
             onClick={handleClick}
         >
-            {imageSrc && <img src={imageSrc} alt="" className="sub-button-icon" />}
+            {imageSrc && <img src={imageSrc} alt="icon" className="sub-button-icon-bu" />}
             {text}
         </button>
     );

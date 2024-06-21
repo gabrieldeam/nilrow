@@ -52,7 +52,7 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.GET, "/channels").permitAll()
                         .requestMatchers(HttpMethod.POST, "/channels").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/channels/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/channels/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/channels/{id}/toggle-visibility").authenticated()
                         .requestMatchers(HttpMethod.GET, "/channels/my").authenticated()
                         .requestMatchers(HttpMethod.GET, "/channels/nickname/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/channels/is-owner/**").authenticated()

@@ -6,7 +6,7 @@
     color: #fff;
     box-sizing: border-box;
     padding-top: 160px;
-    padding-bottom: 700px;
+    padding-bottom: 30px;
 }
 
 .channel-container {
@@ -58,19 +58,41 @@
 .channel-details {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    text-align: center;
+    align-items: flex-start; /* Justificar à esquerda na versão desktop */
+    text-align: left; /* Justificar à esquerda na versão desktop */
 }
 
 .channel-name {
     font-size: 28px;
     font-weight: bold;
+}
+
+.channel-follow-info {
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+    color: #fff; /* Cor branca */
     margin-bottom: 20px;
 }
 
+.follow-info-button {
+    background: none;
+    border: none;
+    color: #fff; /* Cor branca */
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.follow-info-button:hover {
+    text-decoration: underline;
+}
+
 .channel-biography {
-    font-size: 16px;
+    font-size: 14px;
     margin-bottom: 20px;
+    color: #656565;
+    margin-top: -5px;
+    max-width: 400px; /* Limitar a largura da biografia na versão desktop */
 }
 
 .channel-right {
@@ -155,23 +177,6 @@
     justify-content: center;
 }
 
-.sub-button {
-    flex: 1;
-    padding: 10px;
-    background-color: #212121;
-    color: #fff;
-    border: none;
-    font-size: 14px;
-    border-radius: 5px;
-    cursor: pointer;
-    text-align: center;
-}
-
-.sub-button img {
-    width: 24px;
-    height: 24px;
-}
-
 /* Test scroll container */
 .test-scroll-container {
     margin-top: 20px;
@@ -183,10 +188,24 @@
     height: auto;
 }
 
+.empty-post-container {
+    width: 100%;
+    background-color: #151515;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px; /* Altura definida para o contêiner vazio */
+    color: #fff;
+    font-size: 18px;
+    text-align: center;
+    margin-top: 15px;
+    border-radius: 5px;
+}
+
 /* Estilos para mobile */
 @media (max-width: 768px) {
     .channel-page {
-        padding-bottom: 610px;
+        padding-bottom: 93px;
         padding-top: 120px;
     }
 
@@ -249,7 +268,17 @@
         margin-top: 15px;
     }
 
-    .sub-button {
-        width: 48%;
+    .channel-details {
+        align-items: center; /* Centralizado na versão mobile */
+        text-align: center; /* Centralizado na versão mobile */
+    }
+
+    .channel-biography {
+        max-width: 100%;
+        padding: 0 15px;
+    }
+
+    .channel-follow-info {
+        justify-content: center; /* Centralizado na versão mobile */
     }
 }

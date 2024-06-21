@@ -1,8 +1,8 @@
-.sub-button {
+.sub-button-bu {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 10px 20px;
+    padding: 10px 0;
     background-color: #7B33E5;
     color: #fff;
     border: none;
@@ -14,12 +14,14 @@
     width: 100%;
 }
 
-.sub-button:hover {
+.sub-button-bu:hover {
     background-color: #5a24b5;
 }
 
-.sub-button-icon {
+.sub-button-icon-bu {
     margin-right: 8px;
     width: 16px;
     height: 16px;
+    display: inline-block; /* Certifique-se de que a imagem é exibida como um elemento inline-block */
 }
+
