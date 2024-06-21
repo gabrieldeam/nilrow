@@ -1,4 +1,4 @@
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback, useState, useEffect, useContext } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import HeaderButton from '../../../components/UI/Buttons/HeaderButton/HeaderButton';
@@ -6,22 +6,91 @@ import StepButton from '../../../components/UI/Buttons/StepButton/StepButton';
 import Card from '../../../components/UI/Card/Card';
 import MobileHeader from '../../../components/Main/MobileHeader/MobileHeader';
 import SeeData from '../../../components/UI/SeeData/SeeData';
+import { getMyChannel, updateChannelImage, deleteMyChannel } from '../../../services/channelApi';
+import ConfirmationModal from '../../../components/UI/ConfirmationModal/ConfirmationModal';
+import defaultImage from '../../../assets/user.png';
 import './MyChannel.css';
 import ordersIcon from '../../../assets/orders.svg';
 import notificationsIcon from '../../../assets/notifications.svg';
-import dataEditIcon from '../../../assets/dataedit.svg';
+import editAboutIcon from '../../../assets/editAbout.svg';
 import promoterIcon from '../../../assets/promoter.svg';
 import catalogIcon from '../../../assets/catalog.svg';
 import purchaseEventIcon from '../../../assets/purchaseEvent.svg';
-import editAboutIcon from '../../../assets/editAbout.svg';
+import { NotificationContext } from '../../../context/NotificationContext';
+import getConfig from '../../../config';
 
 const MyChannel = () => {
+    const { setMessage } = useContext(NotificationContext);
+    const { apiUrl } = getConfig();
     const navigate = useNavigate();
     const isMobile = window.innerWidth <= 768;
+    const [channelData, setChannelData] = useState(null);
+    const [imageFile, setImageFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState(defaultImage);
+    const [buttonText, setButtonText] = useState('Escolher arquivo');
+    const [instructionText, setInstructionText] = useState('Altere sua foto ou tire uma nova para todos verem de quem é o canal.');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    useEffect(() => {
+        const fetchChannelData = async () => {
+            try {
+                const data = await getMyChannel();
+                setChannelData(data);
+                if (data.imageUrl) {
+                    setImagePreview(`${apiUrl}${data.imageUrl}`);
+                }
+            } catch (error) {
+                console.error('Erro ao buscar dados do canal:', error);
+            }
+        };
+
+        fetchChannelData();
+    }, [apiUrl]);
 
     const handleBack = useCallback(() => {
         navigate(-1);
     }, [navigate]);
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        setImageFile(file);
+        setImagePreview(URL.createObjectURL(file));
+        setButtonText('Mudar arquivo');
+        setInstructionText(file.name);
+    };
+
+    const handleImageUpload = async () => {
+        if (imageFile && channelData) {
+            try {
+                await updateChannelImage(channelData.id, imageFile);
+                setMessage('Imagem atualizada com sucesso!', 'success');
+            } catch (error) {
+                console.error('Erro ao atualizar imagem:', error);
+                setMessage('Erro ao atualizar imagem.', 'error');
+            }
+        }
+    };
+
+    const handleDeleteClick = () => {
+        setIsModalOpen(true);
+    };
+
+    const handleDeleteConfirm = async () => {
+        try {
+            await deleteMyChannel();
+            setMessage('Canal deletado com sucesso!', 'success');
+            navigate('/'); // Redireciona para a página inicial após deletar
+        } catch (error) {
+            console.error('Erro ao deletar canal:', error);
+            setMessage('Erro ao deletar canal.', 'error');
+        } finally {
+            setIsModalOpen(false);
+        }
+    };
+
+    const handleDeleteCancel = () => {
+        setIsModalOpen(false);
+    };
 
     return (
         <div className="my-channel-page">
@@ -30,12 +99,12 @@ const MyChannel = () => {
                 <meta name="description" content="Veja seu perfil na Nilrow." />
             </Helmet>
             {isMobile && (
-                <MobileHeader title="Meu Canal" buttons={{ close: true }} handleBack={handleBack}/>
+                <MobileHeader title="Meu Canal" buttons={{ close: true }} handleBack={handleBack} />
             )}
             <div className="my-channel-container">
                 <div className="my-channel-content">
                     <div className="my-channel-header">
-                        <div className="my-channel-info">                            
+                        <div className="my-channel-info">
                             <h1 className="my-channel-title roboto-medium">Meu canal</h1>
                             <div className="my-channel-buttons">
                                 <HeaderButton icon={ordersIcon} link="/orders" />
@@ -43,25 +112,44 @@ const MyChannel = () => {
                             </div>
                         </div>
                         <div className="delete-link delete-desktop-only">
-                            <button className="delete-button" onClick="#">Deletar canal</button>
+                            <button className="delete-button" onClick={handleDeleteClick}>Deletar canal</button>
                         </div>
                     </div>
                     <div className="my-channel-steps">
                         <div className="my-channel-step-card-wrapper">
-                            <StepButton 
-                                className="data-personal"                               
-                                icon={dataEditIcon}
-                                title="Editar foto"
-                                paragraph="Altere sua foto ou tirar uma nova para todos verem de quem é o canal."
-                                onClick={() => navigate('/edit-photo')}
-                            />
+                            <div className="my-channel-image-upload">
+                                {imagePreview && (
+                                    <img src={imagePreview} alt="Preview" className="my-channel-image-preview" />
+                                )}
+                                <div className="my-channel-upload-section">
+                                    <p className="my-channel-upload-instruction">
+                                        {instructionText}
+                                    </p>
+                                    <div className="my-channel-buttons-wrapper">
+                                        <label htmlFor="channel-image" className="my-channel-upload-button">
+                                            {buttonText}
+                                        </label>
+                                        <input
+                                            type="file"
+                                            id="channel-image"
+                                            name="image"
+                                            onChange={handleImageChange}
+                                            accept="image/*"
+                                            style={{ display: 'none' }}
+                                        />
+                                        <button onClick={handleImageUpload} className="my-channel-upload-button">
+                                            Upload
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                             <Card 
                                 title="Dados do canal"
-                                rightLink={{ href: "/edit-channel:id", text: "Alterar" }}>
+                                rightLink={{ href: `/edit-channel/${channelData?.id}`, text: "Alterar" }}>
                                 <div className="see-data-wrapper">
-                                    <SeeData title="Nome" content="Nome do canal" />
-                                    <SeeData title="Bio" content="Biografia do canal" />
-                                    <SeeData title="Link" content="Link do canal" />
+                                    <SeeData title="Nome" content={channelData?.name || "Nome do canal"} />
+                                    <SeeData title="Bio" content={channelData?.biography || "Biografia do canal"} />
+                                    <SeeData title="Link" content={channelData?.externalLink || "Link do canal"} />
                                 </div>
                             </Card>
                         </div>
@@ -94,9 +182,15 @@ const MyChannel = () => {
                     />
                 </div>
                 <div className="delete-link delete-mobile-only">
-                    <button className="delete-button" onClick="#">Deletar canal</button>
+                    <button className="delete-button" onClick={handleDeleteClick}>Deletar canal</button>
                 </div>
             </div>
+            <ConfirmationModal 
+                isOpen={isModalOpen}
+                onConfirm={handleDeleteConfirm}
+                onCancel={handleDeleteCancel}
+                message="Você tem certeza que deseja deletar o canal?"
+            />
         </div>
     );
 };

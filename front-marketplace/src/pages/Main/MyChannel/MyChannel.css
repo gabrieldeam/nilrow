@@ -101,9 +101,64 @@
     display: none;
 }
 
+
+/* Novo CSS adaptado de AddChannel */
+.my-channel-image-upload {
+    background-color: #212121;
+    padding: 20px;
+    border-radius: 5px;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.my-channel-image-preview {
+    width: 70px;
+    height: 70px;
+    border-radius: 100px;
+}
+
+.my-channel-upload-section {
+    display: flex;
+    flex-direction: column;
+    margin-left: 20px;
+    align-items: flex-start;
+}
+
+.my-channel-upload-instruction {
+    color: #9F9F9F;
+    font-size: 15px;
+    margin-bottom: 10px;
+    width: 280px;
+    margin-top: -1px;
+}
+
+.my-channel-buttons-wrapper {
+    display: flex;
+    gap: 10px;
+}
+
+.my-channel-upload-button {
+    color: #7B33E5;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.my-channel-upload-button:hover {
+    text-decoration: underline;
+}
+
+.my-channel-file-name {
+    margin-top: 10px;
+    color: white;
+    font-size: 14px;
+}
+
+
 /* Estilos para mobile */
 @media (max-width: 768px) {
-
     .my-channel-page {
         padding-bottom: 110px;
         padding-top: 69px;
@@ -168,10 +223,23 @@
         margin-top: 20px;
         text-align: center;
     }
+
+    .my-channel-upload-instruction {
+        width: 100%;
+    }
+
+    .my-channel-image-upload {
+        margin-bottom: 0.3px;
+    }
+
+    .my-channel-image-preview {
+        width: 70px;
+        height: 70px;
+    }
+
 }
 
 @media (min-width: 768px) and (max-width: 1024px) {
-
     .my-channel-page {
         padding-top: 150px;
     }
@@ -179,6 +247,7 @@
     .card-container {
         max-width: 100%;
     }
+    
     .my-channel-additional-steps {
         flex-direction: column;
         margin-top: 5px;
@@ -192,5 +261,12 @@
         max-width: 100%;
     }
 
-    
+    .my-channel-upload-instruction {
+        width: 100%;
+    }
+
+    .my-channel-step-card-wrapper {
+        flex-direction: column;
+    }
+
 }

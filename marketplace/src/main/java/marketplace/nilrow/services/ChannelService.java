@@ -6,6 +6,7 @@ import marketplace.nilrow.repositories.ChannelRepository;
 import marketplace.nilrow.repositories.PeopleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -36,8 +37,24 @@ public class ChannelService {
         return Optional.of(channelRepository.save(existingChannel));
     }
 
+    @Transactional
     public void deleteChannel(String channelId) {
-        channelRepository.deleteById(channelId);
+        System.out.println("Tentando deletar o canal: " + channelId);
+        Channel channel = channelRepository.findById(channelId)
+                .orElseThrow(() -> new IllegalArgumentException("Channel not found"));
+
+        channelRepository.delete(channel);
+        channelRepository.flush();
+
+        if (channelRepository.existsById(channelId)) {
+            throw new IllegalStateException("Canal não foi deletado");
+        }
+        System.out.println("Canal deletado com sucesso: " + channelId);
+    }
+
+
+    public boolean existsById(String channelId) {
+        return channelRepository.existsById(channelId);
     }
 
     public Optional<Channel> getChannel(String channelId) {
@@ -48,7 +65,6 @@ public class ChannelService {
         return channelRepository.findByPeople(people);
     }
 
-    // Adicionado
     public Optional<Channel> getChannelByNickname(String nickname) {
         return channelRepository.findByPeopleUserNickname(nickname);
     }

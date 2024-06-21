@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/follows")
-@Tag(name = "Follows", description = "Operações relacionadas aos seguidores de canais")
+@Tag(name = "Channel", description = "Operações relacionadas aos seguidores de canais")
 public class FollowController {
 
     @Autowired

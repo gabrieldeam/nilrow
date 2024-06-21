@@ -36,10 +36,10 @@ export const updateChannel = async (id, channelDTO) => {
     }
 };
 
-// DELETE /channels/{id}
-export const deleteChannel = async (id) => {
+// DELETE /channels/delete-my-channel
+export const deleteMyChannel = async () => {
     try {
-        await channelApi.delete(`/channels/${id}`);
+        await channelApi.delete('/channels/delete-my-channel');
     } catch (error) {
         throw error;
     }
@@ -85,6 +85,23 @@ export const uploadChannelImage = async (id, imageFile) => {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }
+        });
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+// PUT /channels/{id}/upload-image
+export const updateChannelImage = async (channelId, imageFile) => {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+
+    try {
+        const response = await channelApi.put(`/channels/${channelId}/upload-image`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
         });
         return response.data;
     } catch (error) {

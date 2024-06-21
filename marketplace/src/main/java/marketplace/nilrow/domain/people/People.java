@@ -66,5 +66,4 @@ public class People {
         this.birthDate = birthDate;
         this.user = user;
     }
-
 }

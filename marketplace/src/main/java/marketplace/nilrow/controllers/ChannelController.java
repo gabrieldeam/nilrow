@@ -7,11 +7,15 @@ import marketplace.nilrow.domain.people.People;
 import marketplace.nilrow.domain.user.User;
 import marketplace.nilrow.repositories.ChannelRepository;
 import marketplace.nilrow.repositories.PeopleRepository;
+import marketplace.nilrow.services.ChannelService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -33,8 +37,12 @@ public class ChannelController {
     @Autowired
     private PeopleRepository peopleRepository;
 
+    @Autowired
+    private ChannelService channelService;
+
     // Define o diretório de upload com um caminho absoluto
     private static final String UPLOAD_DIR = System.getProperty("user.dir") + "/uploads/";
+    private static final String DEFAULT_IMAGE = "/uploads/25990a43-5546-4b25-aa4d-67da7de149af_defaultImage.png";
 
     @GetMapping
     public ResponseEntity<List<ChannelDTO>> getChannels() {
@@ -92,24 +100,29 @@ public class ChannelController {
             return ResponseEntity.status(403).build();
         }
 
+        String oldImageUrl = channel.getImageUrl();
+
         if (image == null || image.isEmpty()) {
-            // Definir a imagem padrão
-            channel.setImageUrl("/uploads/25990a43-5546-4b25-aa4d-67da7de149af_defaultImage.png");
+            channel.setImageUrl(DEFAULT_IMAGE);
         } else {
-            // Ensure the uploads directory exists
             if (!Files.exists(Paths.get(UPLOAD_DIR))) {
                 Files.createDirectories(Paths.get(UPLOAD_DIR));
             }
 
-            // Generate a unique filename
             String filename = UUID.randomUUID().toString() + "_" + image.getOriginalFilename();
             String filepath = Paths.get(UPLOAD_DIR, filename).toString();
 
-            // Save the file locally
             image.transferTo(new File(filepath));
 
-            // Update the channel's imageUrl
             channel.setImageUrl("/uploads/" + filename);
+
+            // Excluir a imagem antiga se não for a imagem padrão
+            if (oldImageUrl != null && !oldImageUrl.equals(DEFAULT_IMAGE)) {
+                File oldImageFile = new File(System.getProperty("user.dir") + oldImageUrl);
+                if (oldImageFile.exists()) {
+                    oldImageFile.delete();
+                }
+            }
         }
 
         channelRepository.save(channel);
@@ -117,20 +130,46 @@ public class ChannelController {
         return ResponseEntity.ok(channel.getImageUrl());
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteChannel(@PathVariable String id) {
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<String> handleMaxSizeException(MaxUploadSizeExceededException exc) {
+        return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("File too large!");
+    }
+
+    @DeleteMapping("/delete-my-channel")
+    public ResponseEntity<Void> deleteMyChannel() {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = (User) userDetails;
         People people = peopleRepository.findByUser(user);
 
-        Channel channel = channelRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Channel not found"));
-        if (!channel.getPeople().equals(people)) {
-            return ResponseEntity.status(403).build();
+        if (people == null) {
+            return ResponseEntity.status(404).build();
         }
 
-        channelRepository.delete(channel);
+        Channel channel = channelRepository.findByPeople(people).orElseThrow(() -> new IllegalArgumentException("Channel not found"));
+
+        try {
+            System.out.println("Tentando deletar o canal: " + channel.getId());
+            channelRepository.delete(channel);
+            System.out.println("Canal deletado com sucesso: " + channel.getId());
+
+            // Verificar se o canal ainda existe
+            if (channelRepository.existsById(channel.getId())) {
+                System.out.println("Erro ao deletar o canal: " + channel.getId());
+                return ResponseEntity.status(500).build();
+            } else {
+                System.out.println("Canal deletado verificado: " + channel.getId());
+            }
+
+        } catch (Exception e) {
+            System.out.println("Erro ao deletar o canal: " + channel.getId());
+            e.printStackTrace();
+            return ResponseEntity.status(500).build();
+        }
+
         return ResponseEntity.ok().build();
     }
+
+
 
     @GetMapping("/my")
     public ResponseEntity<ChannelDTO> getMyChannel() {
@@ -172,7 +211,7 @@ public class ChannelController {
 
         if (image == null || image.isEmpty()) {
             // Definir a imagem padrão
-            channel.setImageUrl("/uploads/25990a43-5546-4b25-aa4d-67da7de149af_defaultImage.png");
+            channel.setImageUrl(DEFAULT_IMAGE);
         } else {
             // Ensure the uploads directory exists
             if (!Files.exists(Paths.get(UPLOAD_DIR))) {
@@ -187,7 +226,7 @@ public class ChannelController {
             image.transferTo(new File(filepath));
 
             // Update the channel's imageUrl
-            channel.setImageUrl("/uploads/" + filepath);
+            channel.setImageUrl("/uploads/" + filename);
         }
 
         channelRepository.save(channel);
