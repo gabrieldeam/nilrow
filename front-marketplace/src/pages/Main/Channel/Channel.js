@@ -1,6 +1,7 @@
 import React, { memo, useEffect, useState, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { getChannelByNickname, isChannelOwner, isFollowing, followChannel, unfollowChannel, getFollowersCount, getFollowingCount } from '../../../services/channelApi';
+import { checkAuth } from '../../../services/api'; // Adicionada a importação correta
 import { useNavigate } from 'react-router-dom';
 import MobileHeader from '../../../components/Main/MobileHeader/MobileHeader';
 import LoadingSpinner from '../../../components/UI/LoadingSpinner/LoadingSpinner';
@@ -22,7 +23,6 @@ import searchIcon from '../../../assets/search.svg';
 import purchaseEventChannelIcon from '../../../assets/purchaseEventChannel.svg';
 import ImageModal from '../../../components/UI/ImageModal/ImageModal';
 
-// Função para formatar números
 const formatNumber = (num) => {
     if (num >= 1000000) {
         return (num / 1000000).toFixed(1) + 'Milhão';
@@ -33,7 +33,6 @@ const formatNumber = (num) => {
     }
 };
 
-// Função para formatar URLs
 const formatUrl = (url) => {
     try {
         const urlObj = new URL(url.includes('://') ? url : `http://${url}`);
@@ -67,24 +66,29 @@ const Channel = ({ nickname }) => {
                 const data = await getChannelByNickname(nickname);
                 setChannelData(data);
 
-                const ownerCheck = await isChannelOwner(data.id);
-                setIsOwner(ownerCheck);
+                // Independent API calls for follower and following count
+                const [followersCount, followingCount] = await Promise.all([
+                    getFollowersCount(data.id),
+                    getFollowingCount(nickname)
+                ]);
+                setFollowersCount(followersCount);
+                setFollowingCount(followingCount);
 
-                const followingCheck = await isFollowing(data.id);
+                // Calls dependent on authentication
+                const [ownerCheck, followingCheck] = await Promise.all([
+                    isChannelOwner(data.id),
+                    isFollowing(data.id)
+                ]);
+                setIsOwner(ownerCheck);
                 setIsFollowingChannel(followingCheck);
 
-                const followersCount = await getFollowersCount(data.id);
-                setFollowersCount(followersCount);
-
-                const followingCount = await getFollowingCount(nickname);
-                setFollowingCount(followingCount);
             } catch (error) {
                 console.error('Erro ao buscar dados do canal:', error);
             }
         };
 
         fetchChannelData();
-    }, [nickname, apiUrl]);
+    }, [nickname]);
 
     const handleScroll = useCallback(() => {
         const offsetTop = 80; // Altura do cabeçalho
@@ -141,14 +145,20 @@ const Channel = ({ nickname }) => {
     };
 
     const handleFollowersClick = () => {
-        navigate('/followers');
+        navigate(`/channel-follow/${nickname}`);
     };
 
     const handleFollowingClick = () => {
-        navigate('/following');
+        navigate(`/channel-follow/${nickname}`);
     };
 
     const handleFollowClick = async () => {
+        const authResponse = await checkAuth();
+        if (!authResponse.isAuthenticated) {
+            navigate('/login');
+            return;
+        }
+
         try {
             await followChannel(channelData.id);
             setIsFollowingChannel(true);
@@ -160,6 +170,12 @@ const Channel = ({ nickname }) => {
     };
 
     const handleUnfollowClick = async () => {
+        const authResponse = await checkAuth();
+        if (!authResponse.isAuthenticated) {
+            navigate('/login');
+            return;
+        }
+
         try {
             await unfollowChannel(channelData.id);
             setIsFollowingChannel(false);
@@ -240,7 +256,7 @@ const Channel = ({ nickname }) => {
                             )}
                             <button className="channel-link-button" onClick={handleAboutChannel}>
                                 <img src={infoIcon} alt="Sobre" className="channel-link-button-icon" />
-                                Sobre
+                                SOBRE
                             </button>
                         </div>
                         <div className="channel-stage-buttons">

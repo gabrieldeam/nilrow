@@ -44,6 +44,8 @@ const EditChannel = lazy(() => import('./pages/Main/EditChannel/EditChannel'));
 const MyChannel = lazy(() => import('./pages/Main/MyChannel/MyChannel'));
 const AboutChannel = lazy(() => import('./pages/Main/AboutChannel/AboutChannel'));
 const StoreSearch = lazy(() => import('./pages/Main/StoreSearch/StoreSearch'));
+const MyFollowing = lazy(() => import('./pages/Main/MyFollowing/MyFollowing'));
+const ChannelFollow = lazy(() => import('./pages/Main/ChannelFollow/ChannelFollow'));
 
 const AppContent = () => {
     const { isAuthenticated } = useAuth();
@@ -99,6 +101,9 @@ const AppContent = () => {
             <Suspense fallback={<LoadingSpinner />}>
                 <Routes>
                     <Route path="/" element={<Home />} />
+                    <Route path="/following" element={<Home initialSection="following" />} />
+                    <Route path="/ontherise" element={<Home initialSection="ontherise" />} />
+                    <Route path="/curation" element={<Home initialSection="curation" />} />
                     <Route path="/login" element={<ProtectedLoginRoute isAuthenticated={isAuthenticated}><Login /></ProtectedLoginRoute>} />
                     <Route path="/login-phone" element={<ProtectedLoginRoute isAuthenticated={isAuthenticated}><LoginPhone /></ProtectedLoginRoute>} />
                     <Route path="/signup/*" element={<ProtectedLoginRoute isAuthenticated={isAuthenticated}><Signup /></ProtectedLoginRoute>} />
@@ -125,7 +130,8 @@ const AppContent = () => {
                     <Route path="/my-channel" element={<ProtectedRoute element={<MyChannel />} />} />
                     <Route path="/about-channel" element={<ProtectedRoute element={<AboutChannel />} />} />
                     <Route path="/store-search" element={<ProtectedRoute element={<StoreSearch />} />} />
-                
+                    <Route path="/my-following" element={<ProtectedRoute element={<MyFollowing />} />} />
+                    <Route path="/channel-follow/:nickname" element={<ProtectedRoute element={<ChannelFollow />} />} />
                 </Routes>
             </Suspense>
             {renderFooter()}

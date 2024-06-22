@@ -30,6 +30,13 @@
     margin-right: 14px;
 }
 
+.step-button-custom-icon {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
 .step-button-icon {
     width: 24px;
     height: 24px;

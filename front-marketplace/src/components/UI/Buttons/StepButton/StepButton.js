@@ -6,6 +6,7 @@ import arrowIcon from '../../../../assets/setadireito.svg';
 
 const StepButton = ({
     icon,
+    customIcon,
     title,
     paragraph,
     isVerified = false,
@@ -22,7 +23,11 @@ const StepButton = ({
         <button className={`step-button ${className}`} onClick={handleClick}>
             <div className="step-button-left">
                 <div className="step-button-icon-circle">
-                    <img src={icon} alt="Step Icon" className="step-button-icon" />
+                    {customIcon ? (
+                        <img src={customIcon} alt="Custom Icon" className="step-button-custom-icon" />
+                    ) : (
+                        <img src={icon} alt="Step Icon" className="step-button-icon" />
+                    )}
                 </div>
                 <div className="step-button-text roboto-regular">
                     <h3>{title}</h3>
@@ -38,7 +43,8 @@ const StepButton = ({
 };
 
 StepButton.propTypes = {
-    icon: PropTypes.string.isRequired,
+    icon: PropTypes.string,
+    customIcon: PropTypes.string,
     title: PropTypes.string.isRequired,
     paragraph: PropTypes.string.isRequired,
     isVerified: PropTypes.bool,

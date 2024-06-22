@@ -1,5 +1,5 @@
 import React, { useCallback, memo } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import './MobileFooter.css';
 import homeIcon from '../../../assets/home.svg';
 import searchIcon from '../../../assets/search.svg';
@@ -10,16 +10,25 @@ import ProtectedLink from '../../Others/ProtectedRoute/ProtectedLink';
 
 const MobileFooter = () => {
     const location = useLocation();
+    const navigate = useNavigate();
 
     const getIconClass = useCallback((path) => {
         return location.pathname === path ? 'footer-icon active' : 'footer-icon';
     }, [location.pathname]);
 
+    const handleHomeClick = () => {
+        if (location.pathname === '/') {
+            window.location.reload();
+        } else {
+            navigate('/');
+        }
+    };
+
     return (
         <footer className="mobile-footer">
-            <Link to="/" className={getIconClass('/')}>
+            <div onClick={handleHomeClick} className={getIconClass('/')}>
                 <img src={homeIcon} loading="lazy" alt="Home" />
-            </Link>
+            </div>
             <Link to="/search" className={getIconClass('/search')}>
                 <img src={searchIcon} loading="lazy" alt="Search" />
             </Link>

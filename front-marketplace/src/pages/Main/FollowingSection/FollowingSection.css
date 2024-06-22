@@ -1,0 +1,137 @@
+.following-channel-section-content {
+    font-size: 18px;
+    text-align: center;
+    border-radius: 5px;
+    width: 100%;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0);
+}
+
+.following-channel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 45px;
+    margin-right: 25px;
+}
+
+.following-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.right-arrow-icon {
+    width: 24px;
+    height: 24px;
+}
+
+.following-title {
+    font-size: 17px;
+    font-weight: bold;
+}
+
+.following-channel {
+    display: flex;
+    align-items: center;
+    overflow-x: hidden;
+    border-bottom: 11px solid #151515; 
+    justify-content: flex-start; 
+    padding: 10px;
+    position: relative;
+}
+
+.following-channel-content {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    justify-content: flex-start; 
+    margin-left: 35px;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE and Edge */
+}
+
+.following-channel-content::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+}
+
+.following-channel-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: rgb(255, 255, 255);
+}
+
+.channel-image-following {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    text-align: center;
+    margin-bottom: 5px; 
+}
+
+.channel-name-following {
+    font-size: 12px;
+    text-align: center;
+    margin-bottom: 10px;
+    max-width: 50px; /* Adjust the max-width as needed */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.posts-following-channel {
+    margin-top: 100px;
+}
+
+.scroll-arrow-following {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    padding: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.scroll-arrow-left-following {
+    left: 65px;
+    margin-top: -15px;
+}
+
+.scroll-arrow-right-following {
+    right: 49px;
+    margin-top: -15px;
+}
+
+.scroll-arrow-left-following img {
+    transform: rotate(180deg);
+}
+
+@media (max-width: 768px) {
+    .following-channel {
+        justify-content: flex-start; 
+    }
+
+    .following-channel {
+        margin-top: -30px;
+    }
+
+    .following-channel-content {
+        margin-left: -4px;
+    }
+
+    .following-channel-header {
+        padding: 6px;
+        margin-top: -35px;
+        margin-bottom: 25px;
+        margin-right: 0;
+    }
+
+    .scroll-arrow-following {
+        display: none; 
+    }
+}

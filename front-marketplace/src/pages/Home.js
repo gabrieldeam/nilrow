@@ -1,22 +1,36 @@
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo, useState, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useNavigate, useLocation } from 'react-router-dom';
 import FixedSlide from '../components/Others/FixedSlide/FixedSlide';
 import MobileHeader from '../components/Main/MobileHeader/MobileHeader';
 import HomeSubHeader from '../components/Main/HomeSubHeader/HomeSubHeader';
-import { getMyFollowingChannels } from '../services/channelApi'; // Import the API function
+import { getMyFollowingChannels } from '../services/channelApi'; 
+import FollowingSection from './Main/FollowingSection/FollowingSection';
+import { checkAuth } from '../services/api';
 import './Home.css';
 
-const Home = () => {
+const Home = ({ initialSection }) => {
     const isMobile = window.innerWidth <= 768;
-    const [activeSection, setActiveSection] = useState(null);
+    const [activeSection, setActiveSection] = useState(initialSection || null);
     const [followingChannels, setFollowingChannels] = useState([]);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const navigate = useNavigate();
+    const location = useLocation();
 
     useEffect(() => {
-        if (activeSection === 'following') {
+        const verifyAuth = async () => {
+            const authStatus = await checkAuth();
+            setIsAuthenticated(authStatus.isAuthenticated);
+        };
+
+        verifyAuth();
+    }, []);
+
+    useEffect(() => {
+        if (activeSection === 'following' && isAuthenticated) {
             getMyFollowingChannels().then(response => {
-                console.log("API Response:", response); // Log the full response object
                 if (response) {
-                    setFollowingChannels(response); // Directly setting the response as the response is already an array
+                    setFollowingChannels(response);
                 } else {
                     console.error("API response data is undefined");
                     setFollowingChannels([]);
@@ -26,45 +40,57 @@ const Home = () => {
                 setFollowingChannels([]);
             });
         }
-    }, [activeSection]);
+    }, [activeSection, isAuthenticated]);
+
+    useEffect(() => {
+        if (initialSection) {
+            setActiveSection(initialSection);
+        }
+    }, [initialSection]);
+
+    useEffect(() => {
+        if (location.pathname === '/') {
+            setActiveSection(null);
+        }
+    }, [location.pathname]);
 
     const handleButtonClick = (buttonType) => {
-        setActiveSection(prevSection => prevSection === buttonType ? null : buttonType);
+        if (buttonType === 'following' && !isAuthenticated) {
+            navigate('/login'); // Redirect to login if not authenticated
+        } else {
+            setActiveSection(prevSection => prevSection === buttonType ? null : buttonType);
+            navigate(`/${buttonType}`);
+        }
     };
 
-    const renderFollowingChannels = () => {
-        const baseUrl = 'http://localhost:8080/api'; // Replace with your actual base URL
-        return Array.isArray(followingChannels) && followingChannels.length > 0 ? (
-            followingChannels.map(channel => (
-                <a href={`http://localhost:3000/@${channel.nickname}`} key={channel.id} className="following-channel-item">
-                    <img src={`${baseUrl}${channel.imageUrl}`} alt={channel.name} className="channel-image-following" />
-                    <div className="channel-name-following">{channel.name}</div>
-                </a>
-            ))
-        ) : (
-            <div>No channels found</div>
-        );
-    };
+    const handleBack = useCallback(() => {
+        setActiveSection(null);
+        navigate('/');
+    }, [navigate]);
 
     const renderSection = () => {
         switch (activeSection) {
             case 'ontherise':
-                return <div className="section-content">Seção Em Alta</div>;
+                return <div className="section-content">Em Alta</div>;
             case 'following':
-                return (
-                    <div className="section-content">
-                        <div className="following-channel">
-                            {renderFollowingChannels()}
-                        </div>
-                        <div className="posts-following-channel">
-                            Posts dos Canais Seguidos
-                        </div>
-                    </div>
-                );
+                return isAuthenticated ? <FollowingSection channels={followingChannels} /> : <div className="section-content">Please log in to see this section.</div>;
             case 'curation':
-                return <div className="section-content">Seção Curadoria</div>;
+                return <div className="section-content">Curadoria</div>;
             default:
                 return <div className="section-content">Seção Padrão</div>;
+        }
+    };
+
+    const renderMobileHeader = () => {
+        switch (activeSection) {
+            case 'ontherise':
+                return <MobileHeader showLogo={true} buttons={{ address: true, bag: true }} />;
+            case 'following':
+                return <MobileHeader title="Seguindo" buttons={{ close: true, address: true, bag: true, blocked: true }} handleBack={handleBack} />;
+            case 'curation':
+                return <MobileHeader showLogo={true} buttons={{ address: true, bag: true }} />;
+            default:
+                return <MobileHeader showLogo={true} buttons={{ address: true, bag: true }} />;
         }
     };
 
@@ -75,10 +101,8 @@ const Home = () => {
                 <meta name="description" content="Welcome to the Nilrow home page." />
             </Helmet>
             <FixedSlide />
-            {isMobile && (
-                <MobileHeader showLogo={true} buttons={{ address: true, bag: true }} />
-            )}
-            <HomeSubHeader onButtonClick={handleButtonClick} />
+            {isMobile && renderMobileHeader()}
+            <HomeSubHeader activeSection={activeSection} onButtonClick={handleButtonClick} />
             <div className="section-container">
                 {renderSection()}
             </div>

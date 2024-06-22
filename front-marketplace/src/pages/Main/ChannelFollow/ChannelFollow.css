@@ -1,0 +1,142 @@
+.channel-follow-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    padding-top: 160px;
+    padding-bottom: 70px;
+    box-sizing: border-box;
+}
+
+.channel-follow-container {
+    width: 100%;
+    padding: 0 58px;
+    box-sizing: border-box;
+}
+
+.channel-follow-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 40px;
+}
+
+.channel-follow-buttons {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.channel-follow-button {
+    background: none;
+    border: none;
+    font-size: 16px;
+    padding: 10px 20px;
+    cursor: pointer;
+    color: #fff;
+    border-bottom: 2px solid transparent;
+}
+
+.channel-follow-button.active {
+    border-bottom: 2px solid #fff;
+}
+
+.channel-follow-search-container {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.channel-follow-search-input {
+    width: 400px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 100px;
+    font-size: 16px;
+    margin-left: 10px;
+}
+
+.channel-follow-desktop-only {
+    display: none;
+}
+
+@media (min-width: 769px) {
+    .channel-follow-desktop-only {
+        display: block;
+    }
+}
+
+.channel-follow-list-desktop {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 50px;
+}
+
+.channel-follow-list-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.channel-follow-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.channel-follow-info2 {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+}
+
+.channel-follow-image {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.channel-follow-details {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.channel-follow-name {
+    font-size: 16px;
+    font-weight: bold;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+.channel-follow-nickname {
+    font-size: 14px;
+    color: #fff;
+    text-align: left;
+}
+
+/* Styles for mobile */
+@media (max-width: 768px) {
+    .channel-follow-page {
+        padding-bottom: 110px;
+        padding-top: 109px;
+        min-height: 0vh;
+    }
+
+    .channel-follow-container {
+        max-width: 419px;
+        padding: 0 6px;
+    }
+
+}

@@ -15,10 +15,11 @@ import dataEditIcon from '../../../assets/dataedit.svg';
 import addressIcon from '../../../assets/addressProfile.svg';
 import cardIcon from '../../../assets/card.svg';
 import privacyIcon from '../../../assets/privacy.svg';
-import profileIcon from '../../../assets/profile.svg';
+import userIcon from '../../../assets/user.png'; 
 import { logout } from '../../../services/api';
 import { getUserProfile, getUserNickname, getEmailValidated } from '../../../services/profileApi';
 import { getMyChannel, isChannelActive } from '../../../services/channelApi';
+import getConfig from '../../../config';
 
 const Profile = () => {
     const navigate = useNavigate();
@@ -26,6 +27,8 @@ const Profile = () => {
     const [profile, setProfile] = useState({});
     const [nickname, setNickname] = useState('');
     const [emailValidated, setEmailValidated] = useState(false);
+    const [channelImageUrl, setChannelImageUrl] = useState('');
+    const { apiUrl } = getConfig();
 
     useEffect(() => {
         const fetchProfileData = async () => {
@@ -41,7 +44,18 @@ const Profile = () => {
             }
         };
 
+        const fetchChannelData = async () => {
+            try {
+                const channel = await getMyChannel();
+                setChannelImageUrl(channel.imageUrl);
+            } catch (error) {
+                console.error('Erro ao buscar dados do canal:', error);
+                setChannelImageUrl(''); // Garantindo que o estado seja definido mesmo em caso de erro
+            }
+        };
+
         fetchProfileData();
+        fetchChannelData();
     }, []);
 
     const handleLogout = async () => {
@@ -119,7 +133,7 @@ const Profile = () => {
                 </div>
                 <div className="additional-steps">
                     <StepButton
-                        icon={profileIcon}
+                        customIcon={channelImageUrl ? `${apiUrl}${channelImageUrl}` : userIcon}
                         title="Canal"
                         paragraph="Perfil público da sua conta, onde todos os usuários poderão te achar."
                         onClick={handleChannelClick}

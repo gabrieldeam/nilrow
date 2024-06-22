@@ -1,11 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './HomeSubHeader.css';
 import ontheriseIcon from '../../../assets/ontherise.svg';
 import followingIcon from '../../../assets/following.svg';
 import curationIcon from '../../../assets/curation.svg';
+import { checkAuth } from '../../../services/api';
 
-const HomeSubHeader = ({ onButtonClick }) => {
-    const [activeButton, setActiveButton] = useState(null);
+const HomeSubHeader = ({ onButtonClick, activeSection }) => {
+    const [activeButton, setActiveButton] = useState(activeSection);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+    useEffect(() => {
+        setActiveButton(activeSection);
+    }, [activeSection]);
+
+    useEffect(() => {
+        const verifyAuth = async () => {
+            const authStatus = await checkAuth();
+            setIsAuthenticated(authStatus.isAuthenticated);
+        };
+
+        verifyAuth();
+    }, []);
 
     const handleButtonClick = (button) => {
         const newActiveButton = activeButton === button ? null : button;
@@ -24,15 +39,17 @@ const HomeSubHeader = ({ onButtonClick }) => {
                 </div>
                 <span className="home-sub-header-text">Em Alta</span>
             </div>
-            <div 
-                className={`home-sub-header-item ${activeButton === 'following' ? 'active' : ''}`} 
-                onClick={() => handleButtonClick('following')}
-            >
-                <div className="home-sub-header-button">
-                    <img src={followingIcon} alt="Seguidores" className="home-sub-header-icon" />
+            {isAuthenticated && (
+                <div 
+                    className={`home-sub-header-item ${activeButton === 'following' ? 'active' : ''}`} 
+                    onClick={() => handleButtonClick('following')}
+                >
+                    <div className="home-sub-header-button">
+                        <img src={followingIcon} alt="Seguindo" className="home-sub-header-icon" />
+                    </div>
+                    <span className="home-sub-header-text">Seguindo</span>
                 </div>
-                <span className="home-sub-header-text">Seguidores</span>
-            </div>
+            )}
             <div 
                 className={`home-sub-header-item ${activeButton === 'curation' ? 'active' : ''}`} 
                 onClick={() => handleButtonClick('curation')}

@@ -15,14 +15,15 @@ const EditChannel = () => {
     const [formData, setFormData] = useState({
         name: '',
         biography: '',
-        externalLink: ''
+        externalLink: '',
+        nickname: ''
     });
     const [originalData, setOriginalData] = useState({
         name: '',
         biography: '',
-        externalLink: ''
+        externalLink: '',
+        nickname: ''
     });
-    const [isFormValid, setIsFormValid] = useState(false);
     const [error, setError] = useState('');
     const [showNotification, setShowNotification] = useState(false);
     const { setMessage } = useContext(NotificationContext);
@@ -41,12 +42,14 @@ const EditChannel = () => {
                 setFormData({
                     name: channelData.name || '',
                     biography: channelData.biography || '',
-                    externalLink: channelData.externalLink || ''
+                    externalLink: channelData.externalLink || '',
+                    nickname: channelData.nickname || ''
                 });
                 setOriginalData({
                     name: channelData.name || '',
                     biography: channelData.biography || '',
-                    externalLink: channelData.externalLink || ''
+                    externalLink: channelData.externalLink || '',
+                    nickname: channelData.nickname || ''
                 });
                 setChannelId(channelData.id);
             } catch (error) {
@@ -61,18 +64,8 @@ const EditChannel = () => {
         setFormData({ ...formData, [name]: value });
     }, [formData]);
 
-    useEffect(() => {
-        const { name, biography, externalLink } = formData;
-        setIsFormValid(name !== '' && biography.length <= 200 && externalLink !== '');
-    }, [formData]);
-
     const handleSubmit = useCallback(async (e) => {
         e.preventDefault();
-        if (!isFormValid) {
-            setError('Por favor, preencha todos os campos.');
-            setShowNotification(true);
-            return;
-        }
 
         const updatedChannelData = {
             name: formData.name !== originalData.name ? formData.name : null,
@@ -83,14 +76,14 @@ const EditChannel = () => {
         try {
             await updateChannel(channelId, updatedChannelData);
             setMessage('Dados do canal atualizados com sucesso!');
-            navigate('/my-channel'); // Redirecionar após sucesso
+            navigate(`/@${formData.nickname}`);
         } catch (error) {
             const errorMessage = error.response?.data || 'Erro ao atualizar dados do canal. Tente novamente.';
             console.error('Erro ao atualizar dados do canal:', errorMessage);
             setError(errorMessage);
             setShowNotification(true);
         }
-    }, [isFormValid, formData, originalData, setMessage, navigate, channelId]);
+    }, [formData, originalData, setMessage, navigate, channelId]);
 
     return (
         <div className="edit-channel-page">
@@ -112,6 +105,8 @@ const EditChannel = () => {
                             name="name"
                             value={formData.name}
                             onChange={handleChange}
+                            maxLength={30}
+                            bottomLeftText={`Caracteres restantes: ${30 - (formData.name ? formData.name.length : 0)}`}
                         />
                         <CustomInput 
                             title="Biografia"
@@ -130,11 +125,11 @@ const EditChannel = () => {
                             onChange={handleChange}
                         />
                     </Card>
-                    <div onClick={handleSubmit} style={{ width: '100%' }} className="confirmationButton-space">
+                    <div style={{ width: '100%' }} className="confirmationButton-space">
                         <StageButton
                             text="Salvar"
-                            backgroundColor={isFormValid ? "#7B33E5" : "#212121"}
-                            type="button"
+                            backgroundColor="#7B33E5"
+                            type="submit"
                         />
                     </div>
                 </form>
