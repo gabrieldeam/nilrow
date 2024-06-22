@@ -103,4 +103,16 @@ public class FollowController {
         long followingCount = followService.getFollowingCount(people);
         return ResponseEntity.ok(followingCount);
     }
+
+    @GetMapping("/my-following-channels")
+    public ResponseEntity<List<ChannelDTO>> getMyFollowingChannels() {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = (User) userDetails;
+        People people = peopleRepository.findByUser(user);
+
+        List<Channel> channels = followService.getFollowingChannels(people);
+        List<ChannelDTO> channelDTOs = channels.stream().map(ChannelDTO::new).collect(Collectors.toList());
+        return ResponseEntity.ok(channelDTOs);
+    }
+
 }

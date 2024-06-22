@@ -56,7 +56,7 @@ export const getMyChannel = async () => {
     }
 };
 
-// GET /channels//{id}/is-active
+// GET /channels/{id}/is-active
 export const isChannelActive = async (id) => {
     try {
         const response = await channelApi.get(`/channels/${id}/is-active`);
@@ -152,6 +152,46 @@ export const isFollowing = async (channelId) => {
 export const getFollowersCount = async (channelId) => {
     try {
         const response = await channelApi.get(`/follows/followers-count/${channelId}`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+// GET /follows/followers/{nickname}
+export const getFollowers = async (nickname) => {
+    try {
+        const response = await channelApi.get(`/follows/followers/${nickname}`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+// GET /follows/following-channels/{nickname}
+export const getFollowingChannels = async (nickname) => {
+    try {
+        const response = await channelApi.get(`/follows/following-channels/${nickname}`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+// GET /follows/following-count/{nickname}
+export const getFollowingCount = async (nickname) => {
+    try {
+        const response = await channelApi.get(`/follows/following-count/${nickname}`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+// GET /follows/my-following-channels
+export const getMyFollowingChannels = async () => {
+    try {
+        const response = await channelApi.get(`/follows/my-following-channels`);
         return response.data;
     } catch (error) {
         throw error;

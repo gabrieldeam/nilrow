@@ -6,6 +6,7 @@ import marketplace.nilrow.domain.channel.Channel;
 import marketplace.nilrow.repositories.FollowRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,6 +18,7 @@ public class FollowService {
     @Autowired
     private FollowRepository followRepository;
 
+    @Transactional
     public void followChannel(People follower, Channel channel) {
         if (followRepository.findByFollowerAndChannel(follower, channel).isPresent()) {
             throw new IllegalArgumentException("Already following this channel");
@@ -25,6 +27,7 @@ public class FollowService {
         followRepository.save(follow);
     }
 
+    @Transactional
     public void unfollowChannel(People follower, Channel channel) {
         followRepository.deleteByFollowerAndChannel(follower, channel);
     }

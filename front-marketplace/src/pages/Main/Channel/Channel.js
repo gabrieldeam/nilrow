@@ -1,6 +1,6 @@
 import React, { memo, useEffect, useState, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { getChannelByNickname, isChannelOwner } from '../../../services/channelApi';
+import { getChannelByNickname, isChannelOwner, isFollowing, followChannel, unfollowChannel, getFollowersCount, getFollowingCount } from '../../../services/channelApi';
 import { useNavigate } from 'react-router-dom';
 import MobileHeader from '../../../components/Main/MobileHeader/MobileHeader';
 import LoadingSpinner from '../../../components/UI/LoadingSpinner/LoadingSpinner';
@@ -22,9 +22,38 @@ import searchIcon from '../../../assets/search.svg';
 import purchaseEventChannelIcon from '../../../assets/purchaseEventChannel.svg';
 import ImageModal from '../../../components/UI/ImageModal/ImageModal';
 
+// Função para formatar números
+const formatNumber = (num) => {
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + 'Milhão';
+    } else if (num >= 1000) {
+        return (num / 1000).toFixed(1) + 'Mil';
+    } else {
+        return num.toString();
+    }
+};
+
+// Função para formatar URLs
+const formatUrl = (url) => {
+    try {
+        const urlObj = new URL(url.includes('://') ? url : `http://${url}`);
+        let formattedUrl = urlObj.hostname;
+        if (formattedUrl.startsWith('www.')) {
+            formattedUrl = formattedUrl.substring(4);
+        }
+        return formattedUrl;
+    } catch (error) {
+        console.error('Erro ao formatar URL:', error);
+        return url;
+    }
+};
+
 const Channel = ({ nickname }) => {
     const [channelData, setChannelData] = useState(null);
     const [isOwner, setIsOwner] = useState(false);
+    const [isFollowingChannel, setIsFollowingChannel] = useState(false);
+    const [followersCount, setFollowersCount] = useState(0);
+    const [followingCount, setFollowingCount] = useState(0);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isFixed, setIsFixed] = useState(false);
     const [activeSection, setActiveSection] = useState('post'); // Default to 'post' section
@@ -40,6 +69,15 @@ const Channel = ({ nickname }) => {
 
                 const ownerCheck = await isChannelOwner(data.id);
                 setIsOwner(ownerCheck);
+
+                const followingCheck = await isFollowing(data.id);
+                setIsFollowingChannel(followingCheck);
+
+                const followersCount = await getFollowersCount(data.id);
+                setFollowersCount(followersCount);
+
+                const followingCount = await getFollowingCount(nickname);
+                setFollowingCount(followingCount);
             } catch (error) {
                 console.error('Erro ao buscar dados do canal:', error);
             }
@@ -110,17 +148,46 @@ const Channel = ({ nickname }) => {
         navigate('/following');
     };
 
+    const handleFollowClick = async () => {
+        try {
+            await followChannel(channelData.id);
+            setIsFollowingChannel(true);
+            const newFollowersCount = await getFollowersCount(channelData.id);
+            setFollowersCount(newFollowersCount);
+        } catch (error) {
+            console.error('Erro ao seguir o canal:', error);
+        }
+    };
+
+    const handleUnfollowClick = async () => {
+        try {
+            await unfollowChannel(channelData.id);
+            setIsFollowingChannel(false);
+            const newFollowersCount = await getFollowersCount(channelData.id);
+            setFollowersCount(newFollowersCount);
+        } catch (error) {
+            console.error('Erro ao deixar de seguir o canal:', error);
+        }
+    };
+
     if (!channelData) {
         return <LoadingSpinner />;
     }
 
-    const stageButtons = isOwner ? [
-        { text: "Editar Canal", backgroundColor: "#212121", imageSrc: editChannelIcon, onClick: handleMyChannel },
-        { text: "Compartilhar", backgroundColor: "#212121", imageSrc: shareIcon }
-    ] : [
-        { text: "Seguir", backgroundColor: "#DF1414", imageSrc: followIcon },
-        { text: "Mensagem", backgroundColor: "#212121", imageSrc: chatIcon }
-    ];
+    const stageButtons = isOwner
+        ? [
+            { text: "Editar Canal", backgroundColor: "#212121", imageSrc: editChannelIcon, onClick: handleMyChannel },
+            { text: "Compartilhar", backgroundColor: "#212121", imageSrc: shareIcon }
+        ]
+        : isFollowingChannel
+            ? [
+                { text: "Amigos", backgroundColor: "#212121", onClick: handleUnfollowClick },
+                { text: "Mensagem", backgroundColor: "#212121", imageSrc: chatIcon }
+            ]
+            : [
+                { text: "Seguir", backgroundColor: "#DF1414", imageSrc: followIcon, onClick: handleFollowClick },
+                { text: "Mensagem", backgroundColor: "#212121", imageSrc: chatIcon }
+            ];
 
     return (
         <div className="channel-page">
@@ -152,10 +219,10 @@ const Channel = ({ nickname }) => {
                             <h1 className="channel-name">{channelData.name}</h1>
                             <div className="channel-follow-info">
                                 <button className="follow-info-button" onClick={handleFollowersClick}>
-                                    <span>0</span> Seguidores
+                                    <span>{formatNumber(followersCount)}</span> Seguidores
                                 </button>
                                 <button className="follow-info-button" onClick={handleFollowingClick}>
-                                    <span>0</span> Seguindo
+                                    <span>{formatNumber(followingCount)}</span> Seguindo
                                 </button>
                             </div>
                             {channelData.biography && (
@@ -168,7 +235,7 @@ const Channel = ({ nickname }) => {
                             {channelData.externalLink && (
                                 <a href={channelData.externalLink} target="_blank" rel="noopener noreferrer" className="channel-link-button">
                                     <img src={globocon} alt="External Link" className="channel-link-button-icon" />
-                                    {channelData.externalLink}
+                                    {formatUrl(channelData.externalLink)}
                                 </a>
                             )}
                             <button className="channel-link-button" onClick={handleAboutChannel}>
