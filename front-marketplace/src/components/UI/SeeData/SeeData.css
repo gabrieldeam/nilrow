@@ -41,6 +41,11 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   flex: 1;
+  max-width: 200px; /* Adiciona reticências quando exceder 200px */
+}
+
+.ellipsis {
+  max-width: 200px;
 }
 
 .see-data-sub-content { /* Novo estilo para subContent */

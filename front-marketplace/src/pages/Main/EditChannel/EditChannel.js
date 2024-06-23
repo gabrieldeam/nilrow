@@ -61,7 +61,9 @@ const EditChannel = () => {
 
     const handleChange = useCallback((e) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+        if ((name === 'name' && value.length <= 30) || (name === 'biography' && value.length <= 200) || name === 'externalLink') {
+            setFormData({ ...formData, [name]: value });
+        }
     }, [formData]);
 
     const handleSubmit = useCallback(async (e) => {
@@ -72,6 +74,12 @@ const EditChannel = () => {
             biography: formData.biography !== originalData.biography ? formData.biography : null,
             externalLink: formData.externalLink !== originalData.externalLink ? formData.externalLink : null
         };
+
+        if (formData.name.length > 30 || formData.biography.length > 200) {
+            setError('Nome do canal não pode exceder 30 caracteres e biografia não pode exceder 200 caracteres.');
+            setShowNotification(true);
+            return;
+        }
 
         try {
             await updateChannel(channelId, updatedChannelData);

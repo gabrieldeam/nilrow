@@ -12,7 +12,7 @@ const SeeData = ({ title, content, subContent, link, linkText, onClick, stackCon
           {title}
         </div>
         {showIcon && <img src={verifiedIcon} alt="Verified" className="see-data-verified-icon" />} {/* Ícone condicional */}
-        <div className="see-data-content">
+        <div className="see-data-content ellipsis">
           {content}
         </div>
         {subContent && (
@@ -36,7 +36,7 @@ const SeeData = ({ title, content, subContent, link, linkText, onClick, stackCon
 SeeData.propTypes = {
   title: PropTypes.string,
   content: PropTypes.string,
-  subContent: PropTypes.string, // Adicionando propType para subContent
+  subContent: PropTypes.string, 
   link: PropTypes.string,
   linkText: PropTypes.string,
   onClick: PropTypes.func,
