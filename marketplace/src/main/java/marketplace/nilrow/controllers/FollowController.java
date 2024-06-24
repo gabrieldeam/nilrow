@@ -2,7 +2,6 @@ package marketplace.nilrow.controllers;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import marketplace.nilrow.domain.channel.ChannelDTO;
-import marketplace.nilrow.domain.follow.Follow;
 import marketplace.nilrow.domain.people.People;
 import marketplace.nilrow.domain.people.PeopleFollowDTO;
 import marketplace.nilrow.domain.user.User;
@@ -11,6 +10,8 @@ import marketplace.nilrow.services.ChannelService;
 import marketplace.nilrow.services.FollowService;
 import marketplace.nilrow.repositories.PeopleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,7 +22,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/follows")
-@Tag(name = "Channel", description = "Operações relacionadas aos seguidores de canais")
+@Tag(name = "Follow", description = "Operações relacionadas aos seguidores de canais")
 public class FollowController {
 
     @Autowired
@@ -74,9 +75,10 @@ public class FollowController {
     }
 
     @GetMapping("/followers/{nickname}")
-    public ResponseEntity<List<PeopleFollowDTO>> getFollowers(@PathVariable String nickname) {
+    public ResponseEntity<List<PeopleFollowDTO>> getFollowers(@PathVariable String nickname, @RequestParam int page, @RequestParam int size) {
         Channel channel = channelService.getChannelByNickname(nickname).orElseThrow(() -> new IllegalArgumentException("Channel not found"));
-        List<People> followers = followService.getFollowers(channel);
+        Pageable pageable = PageRequest.of(page, size);
+        List<People> followers = followService.getFollowers(channel, pageable);
         List<PeopleFollowDTO> followerDTOs = followers.stream()
                 .map(follower -> new PeopleFollowDTO(follower.getName(), follower.getUser().getNickname()))
                 .collect(Collectors.toList());
@@ -84,12 +86,13 @@ public class FollowController {
     }
 
     @GetMapping("/following-channels/{nickname}")
-    public ResponseEntity<List<ChannelDTO>> getFollowingChannels(@PathVariable String nickname) {
+    public ResponseEntity<List<ChannelDTO>> getFollowingChannels(@PathVariable String nickname, @RequestParam int page, @RequestParam int size) {
         People people = peopleRepository.findByUserNickname(nickname);
         if (people == null) {
             return ResponseEntity.notFound().build();
         }
-        List<Channel> channels = followService.getFollowingChannels(people);
+        Pageable pageable = PageRequest.of(page, size);
+        List<Channel> channels = followService.getFollowingChannels(people, pageable);
         List<ChannelDTO> channelDTOs = channels.stream().map(ChannelDTO::new).collect(Collectors.toList());
         return ResponseEntity.ok(channelDTOs);
     }
@@ -105,14 +108,13 @@ public class FollowController {
     }
 
     @GetMapping("/my-following-channels")
-    public ResponseEntity<List<ChannelDTO>> getMyFollowingChannels() {
+    public ResponseEntity<List<ChannelDTO>> getMyFollowingChannels(@RequestParam int page, @RequestParam int size) {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = (User) userDetails;
         People people = peopleRepository.findByUser(user);
-
-        List<Channel> channels = followService.getFollowingChannels(people);
+        Pageable pageable = PageRequest.of(page, size);
+        List<Channel> channels = followService.getFollowingChannels(people, pageable);
         List<ChannelDTO> channelDTOs = channels.stream().map(ChannelDTO::new).collect(Collectors.toList());
         return ResponseEntity.ok(channelDTOs);
     }
-
 }

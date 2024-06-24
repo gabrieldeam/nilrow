@@ -1,11 +1,11 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './FollowingSection.css';
 import getConfig from '../../../config';
 import rightArrow from '../../../assets/rightarrow.svg';
 import arrowIcon from '../../../assets/setadireito.svg'; 
 
-const Following = ({ channels }) => {
+const Following = ({ channels, onLoadMore }) => {
     const { apiUrl, frontUrl } = getConfig();
     const navigate = useNavigate();
     const followingListRef = useRef(null);
@@ -36,6 +36,13 @@ const Following = ({ channels }) => {
         }
     };
 
+    const handleLoadMore = useCallback(() => {
+        const { scrollLeft, scrollWidth, clientWidth } = followingListRef.current;
+        if (scrollLeft + clientWidth >= scrollWidth) {
+            onLoadMore();
+        }
+    }, [onLoadMore]);
+
     const renderFollowingChannels = () => {
         return Array.isArray(channels) && channels.length > 0 ? (
             channels.map(channel => (
@@ -63,7 +70,7 @@ const Following = ({ channels }) => {
                         <img src={arrowIcon} alt="Scroll Left" />
                     </div>
                 )}
-                <div className="following-channel-content" ref={followingListRef} onScroll={handleScroll}>
+                <div className="following-channel-content" ref={followingListRef} onScroll={handleLoadMore}>
                     {renderFollowingChannels()}
                 </div>
                 {showRightArrow && (

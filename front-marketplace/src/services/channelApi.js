@@ -158,20 +158,30 @@ export const getFollowersCount = async (channelId) => {
     }
 };
 
-// GET /follows/followers/{nickname}
-export const getFollowers = async (nickname) => {
+// GET /follows/following-channels/{nickname}
+export const getFollowingChannels = async (nickname, page = 0, size = 10) => {
     try {
-        const response = await channelApi.get(`/follows/followers/${nickname}`);
+        const response = await channelApi.get(`/follows/following-channels/${nickname}`, {
+            params: {
+                page,
+                size
+            }
+        });
         return response.data;
     } catch (error) {
         throw error;
     }
 };
 
-// GET /follows/following-channels/{nickname}
-export const getFollowingChannels = async (nickname) => {
+// GET /follows/followers/{nickname}
+export const getFollowers = async (nickname, page = 0, size = 10) => {
     try {
-        const response = await channelApi.get(`/follows/following-channels/${nickname}`);
+        const response = await channelApi.get(`/follows/followers/${nickname}`, {
+            params: {
+                page,
+                size
+            }
+        });
         return response.data;
     } catch (error) {
         throw error;
@@ -189,9 +199,14 @@ export const getFollowingCount = async (nickname) => {
 };
 
 // GET /follows/my-following-channels
-export const getMyFollowingChannels = async () => {
+export const getMyFollowingChannels = async (page = 0, size = 10) => {
     try {
-        const response = await channelApi.get(`/follows/my-following-channels`);
+        const response = await channelApi.get(`/follows/my-following-channels`, {
+            params: {
+                page,
+                size
+            }
+        });
         return response.data;
     } catch (error) {
         throw error;

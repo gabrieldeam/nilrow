@@ -21,11 +21,13 @@ import logo from '../../../assets/nilrow.svg';
 import { LocationContext } from '../../../context/LocationContext';
 import AddressModal from '../../Others/AddressModal/AddressModal';
 import QRCodeModal from '../../UI/QRCodeModal/QRCodeModal';
+import ChatModal from '../../Others/ChatModal/ChatModal'; // Certifique-se de importar o ChatModal
 
 const MobileHeader = ({ title, buttons, handleBack, showLogo, showSearch, searchPlaceholder, searchValue, onSearchChange, onSearchSubmit, onDelete }) => {
     const { location } = useContext(LocationContext);
     const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
     const [isQRCodeModalOpen, setIsQRCodeModalOpen] = useState(false);
+    const [isChatModalOpen, setIsChatModalOpen] = useState(false); // Estado para controlar a abertura do ChatModal
 
     const openAddressModal = () => {
         setIsAddressModalOpen(true);
@@ -41,6 +43,14 @@ const MobileHeader = ({ title, buttons, handleBack, showLogo, showSearch, search
 
     const closeQRCodeModal = () => {
         setIsQRCodeModalOpen(false);
+    };
+
+    const openChatModal = () => { // Função para abrir o ChatModal
+        setIsChatModalOpen(true);
+    };
+
+    const closeChatModal = () => { // Função para fechar o ChatModal
+        setIsChatModalOpen(false);
     };
 
     const currentUrl = window.location.href;
@@ -74,7 +84,7 @@ const MobileHeader = ({ title, buttons, handleBack, showLogo, showSearch, search
                             text={location.city ? `${location.city} - ${location.zip}` : "Atualizar local"} 
                         />
                     )}                    
-                    {buttons.chat && <HeaderButton icon={icons.chat} link="/chat" />}
+                    {buttons.chat && <HeaderButton icon={icons.chat} onClick={openChatModal} />} {/* Abre o ChatModal */}
                 </div>
                 <div className={`mobile-header-title ${showSearch ? 'with-search' : ''}`}>
                     {showLogo && !showSearch && (
@@ -115,6 +125,7 @@ const MobileHeader = ({ title, buttons, handleBack, showLogo, showSearch, search
                 url={currentUrl} 
                 nickname={title} 
             />
+            <ChatModal isOpen={isChatModalOpen} onClose={closeChatModal} /> {/* Adiciona o ChatModal */}
         </>
     );
 };

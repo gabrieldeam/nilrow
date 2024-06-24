@@ -14,6 +14,7 @@ const Home = ({ initialSection }) => {
     const [activeSection, setActiveSection] = useState(initialSection || null);
     const [followingChannels, setFollowingChannels] = useState([]);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [page, setPage] = useState(0);
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -26,21 +27,24 @@ const Home = ({ initialSection }) => {
         verifyAuth();
     }, []);
 
+    const fetchFollowingChannels = useCallback(async (page) => {
+        try {
+            const response = await getMyFollowingChannels(page, 10);
+            if (response) {
+                setFollowingChannels(prevChannels => [...prevChannels, ...response]);
+            } else {
+                console.error("API response data is undefined");
+            }
+        } catch (error) {
+            console.error("Error fetching following channels", error);
+        }
+    }, []);
+
     useEffect(() => {
         if (activeSection === 'following' && isAuthenticated) {
-            getMyFollowingChannels().then(response => {
-                if (response) {
-                    setFollowingChannels(response);
-                } else {
-                    console.error("API response data is undefined");
-                    setFollowingChannels([]);
-                }
-            }).catch(error => {
-                console.error("Error fetching following channels", error);
-                setFollowingChannels([]);
-            });
+            fetchFollowingChannels(page);
         }
-    }, [activeSection, isAuthenticated]);
+    }, [activeSection, isAuthenticated, page, fetchFollowingChannels]);
 
     useEffect(() => {
         if (initialSection) {
@@ -73,7 +77,7 @@ const Home = ({ initialSection }) => {
             case 'ontherise':
                 return <div className="section-content">Em Alta</div>;
             case 'following':
-                return isAuthenticated ? <FollowingSection channels={followingChannels} /> : <div className="section-content">Please log in to see this section.</div>;
+                return isAuthenticated ? <FollowingSection channels={followingChannels} onLoadMore={() => setPage(prevPage => prevPage + 1)} /> : <div className="section-content">Please log in to see this section.</div>;
             case 'curation':
                 return <div className="section-content">Curadoria</div>;
             default:

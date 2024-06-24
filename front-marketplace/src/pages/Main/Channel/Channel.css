@@ -282,3 +282,12 @@
         justify-content: center; /* Centralizado na versão mobile */
     }
 }
+
+@media (min-width: 768px) and (max-width: 1024px) {
+
+    .channel-stage-buttons {
+        display: inline;
+        width: 230px;
+    }
+
+}

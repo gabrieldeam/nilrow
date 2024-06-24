@@ -3,8 +3,8 @@ import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import MobileHeader from '../../../components/Main/MobileHeader/MobileHeader';
 import CustomButton from '../../../components/UI/Buttons/CustomButton/CustomButton';
-import HeaderButton from '../../../components/UI/Buttons/HeaderButton/HeaderButton'; // Import HeaderButton
-import closeIcon from '../../../assets/close.svg'; // Import the icon
+import HeaderButton from '../../../components/UI/Buttons/HeaderButton/HeaderButton';
+import closeIcon from '../../../assets/close.svg';
 import { getMyFollowingChannels, unfollowChannel } from '../../../services/channelApi';
 import getConfig from '../../../config';
 import './MyFollowing.css';
@@ -14,21 +14,35 @@ const { apiUrl, frontUrl } = getConfig();
 const MyFollowing = () => {
     const [channels, setChannels] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [page, setPage] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const isMobile = window.innerWidth <= 768;
 
-    useEffect(() => {
-        const fetchChannels = async () => {
-            try {
-                const response = await getMyFollowingChannels();
-                setChannels(response);
-            } catch (error) {
-                console.error("Error fetching channels", error);
+    const fetchChannels = useCallback(async (page) => {
+        setLoading(true);
+        try {
+            const response = await getMyFollowingChannels(page, 10); // Assuming 10 channels per page
+            if (response.length === 0) {
+                setHasMore(false);
+            } else {
+                setChannels(prevChannels => {
+                    // Eliminate potential duplicates by checking existing channel IDs
+                    const newChannels = response.filter(newChannel => !prevChannels.some(channel => channel.id === newChannel.id));
+                    return [...prevChannels, ...newChannels];
+                });
             }
-        };
-
-        fetchChannels();
+        } catch (error) {
+            console.error("Error fetching channels", error);
+        } finally {
+            setLoading(false);
+        }
     }, []);
+
+    useEffect(() => {
+        fetchChannels(page);
+    }, [page, fetchChannels]);
 
     const handleUnfollow = async (channelId) => {
         try {
@@ -52,6 +66,19 @@ const MyFollowing = () => {
         navigate(-1);
     }, [navigate]);
 
+    useEffect(() => {
+        const handleScroll = () => {
+            if (hasMore && !loading && (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 2) {
+                setPage(prevPage => prevPage + 1);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, [hasMore, loading]);
+
     return (
         <div className="my-following-page">
             <Helmet>
@@ -67,7 +94,7 @@ const MyFollowing = () => {
                         <HeaderButton 
                             icon={closeIcon} 
                             onClick={handleBack} 
-                            className="my-following-desktop-only" // Add class to hide on mobile
+                            className="my-following-desktop-only"
                         />
                     )}
                     <input 
@@ -79,8 +106,8 @@ const MyFollowing = () => {
                     />
                 </div>
                 <div className={isMobile ? "channels-list-mobile-my-following" : "channels-list-desktop-my-following"}>
-                    {filteredChannels.map(channel => (
-                        <div key={channel.id} className="channel-item-my-following">
+                    {filteredChannels.map((channel, index) => (
+                        <div key={`${channel.id}-${index}`} className="channel-item-my-following">
                             <button className="channel-info-my-following" onClick={() => navigate(`${frontUrl}${channel.nickname}`)}>
                                 <img src={`${apiUrl}${channel.imageUrl}`} alt={channel.name} className="channel-image-my-following" />
                                 <div className="channel-details-my-following">
@@ -96,6 +123,8 @@ const MyFollowing = () => {
                         </div>
                     ))}
                 </div>
+                {loading && <div>Loading...</div>}
+                {!hasMore && <div>No more channels to load</div>}
             </div>
         </div>
     );

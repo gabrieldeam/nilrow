@@ -5,11 +5,11 @@ import marketplace.nilrow.domain.people.People;
 import marketplace.nilrow.domain.channel.Channel;
 import marketplace.nilrow.repositories.FollowRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,14 +40,14 @@ public class FollowService {
         return followRepository.countByChannel(channel);
     }
 
-    public List<People> getFollowers(Channel channel) {
-        return followRepository.findByChannel(channel).stream()
+    public List<People> getFollowers(Channel channel, Pageable pageable) {
+        return followRepository.findByChannel(channel, pageable).stream()
                 .map(Follow::getFollower)
                 .collect(Collectors.toList());
     }
 
-    public List<Channel> getFollowingChannels(People people) {
-        return followRepository.findByFollower(people).stream()
+    public List<Channel> getFollowingChannels(People people, Pageable pageable) {
+        return followRepository.findByFollower(people, pageable).stream()
                 .map(Follow::getChannel)
                 .collect(Collectors.toList());
     }

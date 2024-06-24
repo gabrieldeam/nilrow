@@ -131,7 +131,7 @@ const AppContent = () => {
                     <Route path="/about-channel" element={<ProtectedRoute element={<AboutChannel />} />} />
                     <Route path="/store-search" element={<ProtectedRoute element={<StoreSearch />} />} />
                     <Route path="/my-following" element={<ProtectedRoute element={<MyFollowing />} />} />
-                    <Route path="/channel-follow/:nickname" element={<ProtectedRoute element={<ChannelFollow />} />} />
+                    <Route path="/channel-follow/:nickname" element={<ChannelFollow />}  />
                 </Routes>
             </Suspense>
             {renderFooter()}
