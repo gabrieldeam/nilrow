@@ -66,7 +66,8 @@ public class ChatController {
 
         ChatMessage message = chatService.sendMessage(conversation, sender, content);
         String senderType = sender instanceof People ? "PEOPLE" : "CHANNEL";
-        ChatMessageDTO messageDTO = new ChatMessageDTO(message, senderType);
+        boolean isSender = sender.equals(people) || (sender instanceof Channel && ((Channel) sender).getPeople().equals(people));
+        ChatMessageDTO messageDTO = new ChatMessageDTO(message, senderType, isSender);
 
         return ResponseEntity.ok(messageDTO);
     }
@@ -175,18 +176,24 @@ public class ChatController {
 
     @GetMapping("/conversation/{conversationId}/messages")
     public ResponseEntity<List<ChatMessageDTO>> getMessagesByConversation(@PathVariable String conversationId) {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = (User) userDetails;
+        People people = peopleRepository.findByUser(user);
+
         ChatConversation conversation = chatService.getConversation(conversationId).orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
         List<ChatMessage> messages = chatService.getMessagesByConversation(conversation);
 
         List<ChatMessageDTO> messageDTOs = messages.stream()
                 .map(message -> {
                     String senderType = message.getSender() instanceof People ? "PEOPLE" : "CHANNEL";
-                    return new ChatMessageDTO(message, senderType);
+                    boolean isSender = message.getSender() != null && (message.getSender().equals(people) || (message.getSender() instanceof Channel && ((Channel) message.getSender()).getPeople().equals(people)));
+                    return new ChatMessageDTO(message, senderType, isSender);
                 })
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(messageDTOs);
     }
+
 
     @PutMapping("/conversation/{conversationId}/messages/read")
     public ResponseEntity<Void> markMessagesAsRead(@PathVariable String conversationId) {

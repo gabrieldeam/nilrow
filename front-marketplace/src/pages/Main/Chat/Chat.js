@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import MobileHeader from '../../../components/Main/MobileHeader/MobileHeader';
 import ChatModal from '../../../components/Others/ChatModal/ChatModal';
+import HeaderButton from '../../../components/UI/Buttons/HeaderButton/HeaderButton'; // Importe o HeaderButton
 import { getConversations, getChannelConversations, getMessagesByConversation, sendMessage } from '../../../services/ChatApi';
+import chatIcon from '../../../assets/chat.svg'; // Importe a imagem chat.svg
+import settingsIcon from '../../../assets/settings.svg'; // Importe a imagem settings.svg
 import './Chat.css';
 
 const Chat = () => {
@@ -77,8 +80,15 @@ const Chat = () => {
             <div className="chat-container">
                 <div className="chat-sidebar">
                     <div className="chat-header">
-                        <h2>Conversas</h2>
-                        <button onClick={openChatModal}>Nova Conversa</button>
+                        <HeaderButton
+                            icon={chatIcon}
+                            onClick={openChatModal}
+                        />
+                        <h2 className="chat-header-title roboto-medium">Conversas</h2>
+                        <HeaderButton
+                            icon={settingsIcon}
+                            link="/chat-settings"
+                        />
                     </div>
                     <div className="chat-list">
                         {conversations.map((conversation) => (
@@ -97,8 +107,13 @@ const Chat = () => {
                         <>
                             <div className="chat-messages">
                                 {messages.map(message => (
-                                    <div key={message.id} className="chat-message">
-                                        <span>{message.senderType}:</span> {message.content}
+                                    <div
+                                        key={message.id}
+                                        className={`chat-message ${message.sender ? 'chat-message-sender' : 'chat-message-receiver'}`}
+                                    >
+                                        <div className="message-content">
+                                            <span>{message.senderType}:</span> {message.content}
+                                        </div>
                                     </div>
                                 ))}
                             </div>

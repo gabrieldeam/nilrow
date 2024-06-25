@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -12,17 +14,17 @@ import lombok.Setter;
 public class ChatMessageDTO {
     private String id;
     private String content;
-    private String sentAt;
+    private String senderType;
     private boolean seen;
-    private String senderType; // "PEOPLE" ou "CHANNEL"
-    private String conversationId;
+    private boolean isSender;
+    private LocalDateTime sentAt;
 
-    public ChatMessageDTO(ChatMessage message, String senderType) {
+    public ChatMessageDTO(ChatMessage message, String senderType, boolean isSender) {
         this.id = message.getId();
         this.content = message.getContent();
-        this.sentAt = message.getSentAt().toString();
-        this.seen = message.isSeen();
         this.senderType = senderType;
-        this.conversationId = message.getConversation().getId();
+        this.seen = message.isSeen();
+        this.sentAt = message.getSentAt();
+        this.isSender = isSender;
     }
 }

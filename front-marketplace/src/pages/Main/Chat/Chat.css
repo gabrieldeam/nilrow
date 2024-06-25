@@ -3,26 +3,24 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
     color: #fff;
-    padding-top: 90px;
-    padding-bottom: 70px;
+    padding-top: 150px;
     box-sizing: border-box;
 }
 
 .chat-container {
     display: flex;
     width: 100%;
-    max-width: 1200px;
     padding: 0 58px;
     box-sizing: border-box;
 }
 
 .chat-sidebar {
-    width: 450px;
-    background: #1a1a1a;
-    padding: 20px;
-    border-right: 1px solid #333;
+    width: 430px;
+    height: calc(100vh - 190px);
+    overflow-y: auto;
+    box-sizing: border-box;
+    margin-right: 20px;
 }
 
 .chat-header {
@@ -30,6 +28,10 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+}
+
+.chat-header-title {
+    font-size: 18px;
 }
 
 .chat-list {
@@ -53,23 +55,57 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 20px;
-    background: #000;
+    padding: 0 20px;
+    background: #151515;
+    border-radius: 5px;
+    height: calc(100vh - 190px); /* Garantindo a altura do chat-content */
+    box-sizing: border-box;
+    position: relative; /* Necessário para posicionamento absoluto do chat-input */
 }
 
 .chat-messages {
     flex: 1;
     overflow-y: auto;
-    margin-bottom: 20px;
+    margin-bottom: 60px; /* Espaço reservado para o chat-input */
+    margin-right: -19px;
 }
 
 .chat-message {
+    display: flex;
     margin-bottom: 10px;
+}
+
+.message-content {
+    padding: 10px;
+    border-radius: 5px;
+    max-width: 60%;
+    word-wrap: break-word;
+}
+
+.chat-message-sender .message-content {
+    background-color: #7B33E5;
+    align-self: flex-end;
+    margin-left: auto;
+    text-align: right;
+    margin-right: 20px;
+}
+
+.chat-message-receiver .message-content {
+    background-color: #333;
+    align-self: flex-start;
+    margin-right: auto;
+    text-align: left;
 }
 
 .chat-input {
     display: flex;
     gap: 10px;
+    padding: 10px 0; /* Adiciona um pouco de espaço ao redor dos elementos de entrada */
+    background: #151515; /* Mantém o fundo consistente */
+    position: absolute;
+    bottom: 0;
+    width: 98%;
+    box-sizing: border-box; /* Inclui padding e borda na largura total */
 }
 
 .chat-input input {
@@ -100,21 +136,38 @@
 
 @media (max-width: 768px) {
     .chat-page {
-        padding-top: 69px;
+        padding-top: 60px;
     }
 
     .chat-container {
         flex-direction: column;
-        padding: 0 20px;
+        padding: 0 6px;
+        height: auto;
     }
 
     .chat-sidebar {
         width: 100%;
         border-right: none;
         border-bottom: 1px solid #333;
+        height: auto;
+    }
+
+    .chat-header {
+        display: none;
     }
 
     .chat-content {
         padding: 20px 0;
+        height: auto; /* Permite que o chat-content cresça conforme o conteúdo em dispositivos móveis */
+    }
+
+    .chat-input {
+        position: static;
+        width: 100%;
+        padding: 10px 0;
+    }
+
+    .chat-messages {
+        margin-bottom: 10px; /* Espaço reservado para o chat-input em dispositivos móveis */
     }
 }
