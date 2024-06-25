@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ChatService {
@@ -26,13 +27,27 @@ public class ChatService {
     @Autowired
     private ChannelRepository channelRepository;
 
-    public ChatConversation createConversation(Channel channel, People people) {
+    public ChatConversation startConversation(Channel channel, People people) {
+        // Verifique se a conversa já existe
+        Optional<ChatConversation> existingConversation = conversationRepository.findByChannelAndPeople(channel, people);
+        if (existingConversation.isPresent()) {
+            return existingConversation.get();
+        }
+
+        // Crie uma nova conversa
         ChatConversation conversation = new ChatConversation(null, channel, people, null, false, false, false);
         return conversationRepository.save(conversation);
     }
 
-    public ChatMessage sendMessage(ChatConversation conversation, People sender, String content) {
-        ChatMessage message = new ChatMessage(null, conversation, sender, content, LocalDateTime.now(), false);
+    public ChatMessage sendMessage(ChatConversation conversation, Object sender, String content) {
+        ChatMessage message;
+        if (sender instanceof People) {
+            message = new ChatMessage(conversation, (People) sender, content, LocalDateTime.now(), false);
+        } else if (sender instanceof Channel) {
+            message = new ChatMessage(conversation, (Channel) sender, content, LocalDateTime.now(), false);
+        } else {
+            throw new IllegalArgumentException("Sender must be either People or Channel");
+        }
         return messageRepository.save(message);
     }
 
@@ -109,5 +124,12 @@ public class ChatService {
 
     public List<ChatMessage> searchMessages(ChatConversation conversation, String query) {
         return messageRepository.findByConversationAndContentContaining(conversation, query);
+    }
+
+    public List<Channel> getChannelsWithConversations(People people) {
+        List<ChatConversation> conversations = conversationRepository.findByPeople(people);
+        return conversations.stream()
+                .map(ChatConversation::getChannel)
+                .collect(Collectors.toList());
     }
 }

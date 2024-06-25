@@ -2,8 +2,8 @@ package marketplace.nilrow.controllers;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import marketplace.nilrow.domain.channel.ChannelDTO;
-import marketplace.nilrow.domain.chat.ChatConversation;
-import marketplace.nilrow.domain.chat.ChatMessage;
+import marketplace.nilrow.domain.channel.SimpleChannelDTO;
+import marketplace.nilrow.domain.chat.*;
 import marketplace.nilrow.domain.channel.Channel;
 import marketplace.nilrow.domain.people.People;
 import marketplace.nilrow.domain.user.User;
@@ -11,6 +11,7 @@ import marketplace.nilrow.services.ChatService;
 import marketplace.nilrow.services.ChannelService;
 import marketplace.nilrow.repositories.PeopleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -34,24 +35,40 @@ public class ChatController {
     private PeopleRepository peopleRepository;
 
     @PostMapping("/start/{channelId}")
-    public ResponseEntity<ChatMessage> startConversation(@PathVariable String channelId, @RequestBody String content) {
+    public ResponseEntity<ChatConversationDTO> startConversation(@PathVariable String channelId) {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = (User) userDetails;
         People people = peopleRepository.findByUser(user);
         Channel channel = channelService.getChannel(channelId).orElseThrow(() -> new IllegalArgumentException("Channel not found"));
-        ChatConversation conversation = chatService.createConversation(channel, people);
-        ChatMessage message = chatService.sendMessage(conversation, people, content);
-        return ResponseEntity.ok(message);
+
+        ChatConversation conversation = chatService.startConversation(channel, people);
+        ChatConversationDTO conversationDTO = new ChatConversationDTO(conversation);
+
+        return ResponseEntity.ok(conversationDTO);
     }
 
     @PostMapping("/send/{conversationId}")
-    public ResponseEntity<ChatMessage> sendMessage(@PathVariable String conversationId, @RequestBody String content) {
+    public ResponseEntity<ChatMessageDTO> sendMessage(@PathVariable String conversationId, @RequestBody String content) {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = (User) userDetails;
         People people = peopleRepository.findByUser(user);
         ChatConversation conversation = chatService.getConversation(conversationId).orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
-        ChatMessage message = chatService.sendMessage(conversation, people, content);
-        return ResponseEntity.ok(message);
+
+        // Identificar se o remetente é uma pessoa ou um canal
+        Object sender;
+        if (conversation.getPeople().equals(people)) {
+            sender = people;
+        } else if (conversation.getChannel().getPeople().equals(people)) {
+            sender = conversation.getChannel();
+        } else {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build(); // Não autorizado
+        }
+
+        ChatMessage message = chatService.sendMessage(conversation, sender, content);
+        String senderType = sender instanceof People ? "PEOPLE" : "CHANNEL";
+        ChatMessageDTO messageDTO = new ChatMessageDTO(message, senderType);
+
+        return ResponseEntity.ok(messageDTO);
     }
 
     @DeleteMapping("/message/{messageId}")
@@ -87,11 +104,22 @@ public class ChatController {
     }
 
     @GetMapping("/channels")
-    public ResponseEntity<List<ChannelDTO>> getAllChannels() {
-        List<Channel> channels = chatService.getAllChannels();
-        List<ChannelDTO> channelDTOs = channels.stream()
-                .map(channel -> new ChannelDTO(channel))
+    public ResponseEntity<List<SimpleChannelDTO>> getChannels() {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = (User) userDetails;
+        People people = peopleRepository.findByUser(user);
+
+        List<Channel> allChannels = chatService.getAllChannels();
+        List<Channel> channelsWithConversations = chatService.getChannelsWithConversations(people);
+
+        List<Channel> availableChannels = allChannels.stream()
+                .filter(channel -> !channelsWithConversations.contains(channel))
                 .collect(Collectors.toList());
+
+        List<SimpleChannelDTO> channelDTOs = availableChannels.stream()
+                .map(SimpleChannelDTO::new)
+                .collect(Collectors.toList());
+
         return ResponseEntity.ok(channelDTOs);
     }
 
@@ -116,19 +144,48 @@ public class ChatController {
     }
 
     @GetMapping("/conversations")
-    public ResponseEntity<List<ChatConversation>> getConversationsByUser() {
+    public ResponseEntity<List<ConversationChannelDTO>> getConversationsByUser() {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = (User) userDetails;
         People people = peopleRepository.findByUser(user);
         List<ChatConversation> conversations = chatService.getConversationsByPeople(people);
-        return ResponseEntity.ok(conversations);
+
+        List<ConversationChannelDTO> conversationDTOs = conversations.stream()
+                .map(conversation -> new ConversationChannelDTO(conversation))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(conversationDTOs);
+    }
+
+    @GetMapping("/conversations/channel")
+    public ResponseEntity<List<ConversationPeopleDTO>> getConversationsByChannel() {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = (User) userDetails;
+        People people = peopleRepository.findByUser(user);
+        Channel userChannel = channelService.getChannelByPeople(people).orElseThrow(() -> new IllegalArgumentException("Channel not found"));
+
+        List<ChatConversation> conversations = chatService.getConversationsByChannel(userChannel);
+
+        List<ConversationPeopleDTO> conversationDTOs = conversations.stream()
+                .map(conversation -> new ConversationPeopleDTO(conversation))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(conversationDTOs);
     }
 
     @GetMapping("/conversation/{conversationId}/messages")
-    public ResponseEntity<List<ChatMessage>> getMessagesByConversation(@PathVariable String conversationId) {
+    public ResponseEntity<List<ChatMessageDTO>> getMessagesByConversation(@PathVariable String conversationId) {
         ChatConversation conversation = chatService.getConversation(conversationId).orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
         List<ChatMessage> messages = chatService.getMessagesByConversation(conversation);
-        return ResponseEntity.ok(messages);
+
+        List<ChatMessageDTO> messageDTOs = messages.stream()
+                .map(message -> {
+                    String senderType = message.getSender() instanceof People ? "PEOPLE" : "CHANNEL";
+                    return new ChatMessageDTO(message, senderType);
+                })
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(messageDTOs);
     }
 
     @PutMapping("/conversation/{conversationId}/messages/read")

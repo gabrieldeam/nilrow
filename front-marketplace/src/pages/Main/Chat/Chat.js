@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import MobileHeader from '../../../components/Main/MobileHeader/MobileHeader';
 import ChatModal from '../../../components/Others/ChatModal/ChatModal';
-import { getConversations, getMessagesByConversation, sendMessage } from '../../../services/ChatApi';
+import { getConversations, getChannelConversations, getMessagesByConversation, sendMessage } from '../../../services/ChatApi';
 import './Chat.css';
 
 const Chat = () => {
@@ -16,8 +16,13 @@ const Chat = () => {
     useEffect(() => {
         const fetchConversations = async () => {
             try {
-                const response = await getConversations();
-                setConversations(response);
+                const userConversations = await getConversations();
+                const channelConversations = await getChannelConversations();
+                const combinedConversations = [
+                    ...userConversations.map(convo => ({ ...convo, key: `user-${convo.conversationId}` })),
+                    ...channelConversations.map(convo => ({ ...convo, key: `channel-${convo.conversationId}` }))
+                ];
+                setConversations(combinedConversations);
             } catch (error) {
                 console.error('Erro ao buscar conversas:', error);
             }
@@ -29,7 +34,7 @@ const Chat = () => {
     const handleConversationSelect = async (conversation) => {
         setSelectedConversation(conversation);
         try {
-            const response = await getMessagesByConversation(conversation.id);
+            const response = await getMessagesByConversation(conversation.conversationId);
             setMessages(response);
         } catch (error) {
             console.error('Erro ao buscar mensagens:', error);
@@ -39,8 +44,8 @@ const Chat = () => {
     const handleSendMessage = async () => {
         if (selectedConversation && messageContent) {
             try {
-                await sendMessage(selectedConversation.id, messageContent);
-                const response = await getMessagesByConversation(selectedConversation.id);
+                await sendMessage(selectedConversation.conversationId, messageContent);
+                const response = await getMessagesByConversation(selectedConversation.conversationId);
                 setMessages(response);
                 setMessageContent('');
             } catch (error) {
@@ -76,10 +81,10 @@ const Chat = () => {
                         <button onClick={openChatModal}>Nova Conversa</button>
                     </div>
                     <div className="chat-list">
-                        {conversations.map(conversation => (
+                        {conversations.map((conversation) => (
                             <div
-                                key={conversation.id}
-                                className={`chat-list-item ${selectedConversation?.id === conversation.id ? 'selected' : ''}`}
+                                key={conversation.key} // Garantindo chave única
+                                className={`chat-list-item ${selectedConversation?.conversationId === conversation.conversationId ? 'selected' : ''}`}
                                 onClick={() => handleConversationSelect(conversation)}
                             >
                                 {conversation.name}
@@ -93,7 +98,7 @@ const Chat = () => {
                             <div className="chat-messages">
                                 {messages.map(message => (
                                     <div key={message.id} className="chat-message">
-                                        <span>{message.senderName}:</span> {message.content}
+                                        <span>{message.senderType}:</span> {message.content}
                                     </div>
                                 ))}
                             </div>

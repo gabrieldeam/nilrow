@@ -1,5 +1,6 @@
 package marketplace.nilrow.domain.chat;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import marketplace.nilrow.domain.channel.Channel;
@@ -14,6 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(of = "id")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "messages"})
 public class ChatConversation {
 
     @Id

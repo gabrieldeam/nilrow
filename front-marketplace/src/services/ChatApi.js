@@ -113,6 +113,16 @@ export const getConversations = async () => {
     }
 };
 
+// GET /chats/conversations/channel
+export const getChannelConversations = async () => {
+    try {
+        const response = await chatApi.get('/chats/conversations/channel');
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
 // GET /chats/conversation/{conversationId}/messages
 export const getMessagesByConversation = async (conversationId) => {
     try {
