@@ -11,7 +11,7 @@ const chatApi = axios.create({
 // POST /chats/start/{channelId}
 export const startConversation = async (channelId, content) => {
     try {
-        const response = await chatApi.post(`/chats/start/${channelId}`, { content });
+        const response = await chatApi.post(`/chats/start/${channelId}`, content );
         return response.data;
     } catch (error) {
         throw error;
@@ -21,7 +21,11 @@ export const startConversation = async (channelId, content) => {
 // POST /chats/send/{conversationId}
 export const sendMessage = async (conversationId, content) => {
     try {
-        const response = await chatApi.post(`/chats/send/${conversationId}`, { content });
+        const response = await chatApi.post(`/chats/send/${conversationId}`, content, {
+            headers: {
+                'Content-Type': 'text/plain'
+            }
+        });
         return response.data;
     } catch (error) {
         throw error;
@@ -40,7 +44,11 @@ export const deleteMessage = async (messageId) => {
 // PUT /chats/message/{messageId}
 export const editMessage = async (messageId, newContent) => {
     try {
-        const response = await chatApi.put(`/chats/message/${messageId}`, { newContent });
+        const response = await chatApi.put(`/chats/message/${messageId}`, newContent, {
+            headers: {
+                'Content-Type': 'text/plain'
+            }
+        });
         return response.data;
     } catch (error) {
         throw error;

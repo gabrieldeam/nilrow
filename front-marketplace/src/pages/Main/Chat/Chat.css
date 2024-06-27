@@ -59,13 +59,17 @@
     display: flex;
     align-items: center;
     padding: 10px;
-    background: #333;
+    background: #151515;
     border-radius: 5px;
     cursor: pointer;
 }
 
 .chat-list-item.selected {
     background: #7B33E5;
+}
+
+.chat-list-item img {
+    cursor: pointer;
 }
 
 .chat-content {
@@ -113,7 +117,6 @@
     align-self: flex-end;
     margin-left: auto;
     text-align: right;
-    margin-right: 20px;
 }
 
 .chat-message-receiver .message-content {
@@ -179,6 +182,23 @@
     flex: 1;
     color: #aaa;
 }
+
+.delete-option {
+    color: #DF1414;
+    margin-top: 20px;
+    margin-bottom: 5px;
+    margin-left: 20px;
+}
+
+.edit-option {
+    margin-left: 20px;
+}
+
+.conversation-name {
+    font-size: 18px;
+    margin-left: 10px;
+}
+
 
 @media (max-width: 768px) {
     .chat-page {
@@ -248,5 +268,26 @@
     .chat-message {
         margin-left: 15px;
         margin-top: 20px;
+    }
+
+    .chat-message-sender .message-content {
+        margin-right: 20px;
+    }
+
+    .delete-option {
+        margin-left: 0px;
+        margin-right: 20px;
+    }
+
+    .edit-option {
+        margin-left: 
+        0px;
+    }
+
+    .conversation-name {
+        max-width: 200px; /* Ajuste conforme necessário */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 }
