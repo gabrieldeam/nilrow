@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import MobileHeader from '../../../components/Main/MobileHeader/MobileHeader';
 import ChatModal from '../../../components/Others/ChatModal/ChatModal';
-import HeaderButton from '../../../components/UI/Buttons/HeaderButton/HeaderButton'; 
-import { getConversations, getChannelConversations, getMessagesByConversation, sendMessage } from '../../../services/ChatApi';
+import HeaderButton from '../../../components/UI/Buttons/HeaderButton/HeaderButton';
+import { getConversations, getChannelConversations, getMessagesByConversation, sendMessage, markMessageAsSeen } from '../../../services/ChatApi';
 import chatIcon from '../../../assets/chat.svg';
 import settingsIcon from '../../../assets/settings.svg';
 import closeIcon from '../../../assets/close.svg';
@@ -54,6 +54,21 @@ const Chat = () => {
 
         fetchConversations();
     }, []);
+
+    useEffect(() => {
+        const markMessagesAsSeen = async () => {
+            try {
+                const receiverMessages = messages.filter(message => !message.sender);
+                await Promise.all(receiverMessages.map(message => markMessageAsSeen(message.id)));
+            } catch (error) {
+                console.error('Erro ao marcar mensagens como vistas:', error);
+            }
+        };
+
+        if (selectedConversation) {
+            markMessagesAsSeen();
+        }
+    }, [messages, selectedConversation]);
 
     const handleConversationSelect = async (conversation) => {
         setSelectedConversation(conversation);
@@ -180,6 +195,9 @@ const Chat = () => {
                                         <div className="message-content">
                                             {message.content}
                                             <div className="message-date">{formatDateTime(message.sentAt)}</div>
+                                            <div className={`message-status ${message.sender ? 'sender-status' : 'receiver-status'}`}>
+                                                {message.seen ? 'Visto' : 'Enviada'}
+                                            </div>
                                         </div>
                                     </div>
                                 ))}

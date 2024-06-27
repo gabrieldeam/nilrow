@@ -77,7 +77,7 @@
     border-radius: 5px;
     height: calc(100vh - 190px);
     box-sizing: border-box;
-    position: relative; 
+    position: relative;
 }
 
 .chat-header-content {
@@ -92,9 +92,8 @@
 .chat-messages {
     flex: 1;
     overflow-y: auto;
-    margin-bottom: 70px;
-    margin-right: -19px;
     margin-top: 20px;
+    padding-bottom: 70px; /* Espaço para a entrada do chat */
 }
 
 .chat-message {
@@ -124,6 +123,20 @@
     text-align: left;
 }
 
+.message-status {
+    font-size: 12px;
+    color: #888;
+    margin-top: 5px;
+}
+
+.sender-status {
+    text-align: right;
+}
+
+.receiver-status {
+    text-align: left;
+}
+
 .message-date {
     font-size: 10px;
     color: #888;
@@ -133,11 +146,11 @@
 .chat-input {
     display: flex;
     gap: 10px;
-    padding: 20px 0; 
-    background: #151515; 
+    padding: 18px 20px;
+    background: #151515;
     position: absolute;
     bottom: 0;
-    box-sizing: border-box; 
+    box-sizing: border-box;
     left: 20px;
     right: 20px;
 }
@@ -195,13 +208,18 @@
 
     .chat-content {
         padding: 20px 0;
-        height: auto; 
+        height: auto;
+        background: #000;
+        position: relative; /* Adicionado para garantir que .chat-input fique dentro de .chat-content */
     }
 
     .chat-header-content {
         margin-left: 0px;
         margin-right: 0px;
-        padding: 32px 20px 0 20px;
+        padding: 32px 20px 20px 20px;
+        position: fixed;
+        left: 0;
+        right: 0;
     }
 
     .chat-content.mobile-active {
@@ -210,19 +228,24 @@
     }
 
     .chat-input {
-        position: static;
-        width: 100%;
-        margin-bottom: -200%;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 20px 20px 35px;
+        background: #000000;
+        z-index: 1001;
     }
 
     .chat-messages {
-        margin-bottom: 0px; 
         margin-right: 0px;
         background-color: #151515;
+        padding-bottom: 105px; 
+        overflow-y: visible;
+        margin-top: 95px;
     }
 
     .chat-message {
-        margin-right: -10px;
         margin-left: 15px;
         margin-top: 20px;
     }
