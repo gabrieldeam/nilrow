@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import MobileHeader from '../../../components/Main/MobileHeader/MobileHeader';
 import ChatModal from '../../../components/Others/ChatModal/ChatModal';
 import HeaderButton from '../../../components/UI/Buttons/HeaderButton/HeaderButton';
-import { getConversations, getChannelConversations, getMessagesByConversation, sendMessage, deleteMessage, editMessage, markMessageAsSeen } from '../../../services/ChatApi';
+import { getConversations, getChannelConversations, getMessagesByConversation, sendMessage, deleteMessage, editMessage, markMessageAsSeen, countNewMessages } from '../../../services/ChatApi';
 import chatIcon from '../../../assets/chat.svg';
 import settingsIcon from '../../../assets/settings.svg';
 import closeIcon from '../../../assets/close.svg';
@@ -33,23 +33,35 @@ const Chat = () => {
                 const userConversations = await getConversations();
                 const channelConversations = await getChannelConversations();
 
-                const fetchLastMessage = async (conversationId) => {
+                const fetchLastMessageAndNewMessages = async (conversationId) => {
                     const messages = await getMessagesByConversation(conversationId);
-                    const lastMessage = messages.length > 0 ? messages[messages.length - 1].content : '';
-                    return lastMessage.length > 50 ? `${lastMessage.slice(0, 50)}...` : lastMessage;
+                    const sortedMessages = messages.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt)); // Ordenar as mensagens
+                    const lastMessage = sortedMessages.length > 0 ? sortedMessages[sortedMessages.length - 1] : null;
+                    const newMessagesCount = await countNewMessages(conversationId);
+                    return { lastMessage, newMessagesCount };
                 };
 
                 const combinedConversations = await Promise.all([
-                    ...userConversations.map(async convo => ({
-                        ...convo,
-                        key: `user-${convo.conversationId}`,
-                        lastMessage: await fetchLastMessage(convo.conversationId),
-                    })),
-                    ...channelConversations.map(async convo => ({
-                        ...convo,
-                        key: `channel-${convo.conversationId}`,
-                        lastMessage: await fetchLastMessage(convo.conversationId),
-                    })),
+                    ...userConversations.map(async convo => {
+                        const { lastMessage, newMessagesCount } = await fetchLastMessageAndNewMessages(convo.conversationId);
+                        return {
+                            ...convo,
+                            key: `user-${convo.conversationId}`,
+                            lastMessage: lastMessage ? lastMessage.content : '',
+                            lastMessageTime: lastMessage ? lastMessage.sentAt : null,
+                            newMessagesCount: newMessagesCount || 0,
+                        };
+                    }),
+                    ...channelConversations.map(async convo => {
+                        const { lastMessage, newMessagesCount } = await fetchLastMessageAndNewMessages(convo.conversationId);
+                        return {
+                            ...convo,
+                            key: `channel-${convo.conversationId}`,
+                            lastMessage: lastMessage ? lastMessage.content : '',
+                            lastMessageTime: lastMessage ? lastMessage.sentAt : null,
+                            newMessagesCount: newMessagesCount || 0,
+                        };
+                    }),
                 ]);
 
                 setConversations(combinedConversations);
@@ -66,9 +78,10 @@ const Chat = () => {
             if (selectedConversation) {
                 try {
                     const response = await getMessagesByConversation(selectedConversation.conversationId);
-                    setMessages(response);
-                    setShouldScroll(response.length > previousMessageCount);
-                    setPreviousMessageCount(response.length);
+                    const sortedMessages = response.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt)); // Ordenar as mensagens
+                    setMessages(sortedMessages);
+                    setShouldScroll(sortedMessages.length > previousMessageCount);
+                    setPreviousMessageCount(sortedMessages.length);
                 } catch (error) {
                     console.error('Erro ao buscar mensagens:', error);
                 }
@@ -104,9 +117,10 @@ const Chat = () => {
         setSelectedConversation(conversation);
         try {
             const response = await getMessagesByConversation(conversation.conversationId);
-            setMessages(response);
+            const sortedMessages = response.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt)); // Ordenar as mensagens
+            setMessages(sortedMessages);
             setShouldScroll(true); // Rolar para o final ao abrir uma nova conversa
-            setPreviousMessageCount(response.length); // Atualiza a contagem de mensagens
+            setPreviousMessageCount(sortedMessages.length); // Atualiza a contagem de mensagens
         } catch (error) {
             console.error('Erro ao buscar mensagens:', error);
         }
@@ -120,10 +134,11 @@ const Chat = () => {
                 try {
                     await sendMessage(selectedConversation.conversationId, messageContent);
                     const response = await getMessagesByConversation(selectedConversation.conversationId);
-                    setMessages(response);
+                    const sortedMessages = response.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt)); // Ordenar as mensagens
+                    setMessages(sortedMessages);
                     setMessageContent('');
                     setShouldScroll(true); // Rolar para o final ao enviar uma mensagem
-                    setPreviousMessageCount(response.length); // Atualiza a contagem de mensagens
+                    setPreviousMessageCount(sortedMessages.length); // Atualiza a contagem de mensagens
 
                     setConversations(prevConversations =>
                         prevConversations.map(convo =>
@@ -143,7 +158,8 @@ const Chat = () => {
         try {
             await deleteMessage(messageId);
             const response = await getMessagesByConversation(selectedConversation.conversationId);
-            setMessages(response);
+            const sortedMessages = response.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt)); // Ordenar as mensagens
+            setMessages(sortedMessages);
         } catch (error) {
             console.error('Erro ao deletar mensagem:', error);
         }
@@ -153,7 +169,8 @@ const Chat = () => {
         try {
             await editMessage(messageId, newContent);
             const response = await getMessagesByConversation(selectedConversation.conversationId);
-            setMessages(response);
+            const sortedMessages = response.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt)); // Ordenar as mensagens
+            setMessages(sortedMessages);
             setMessageContent('');
             setEditMessageId(null); // Resetar estado de edição
         } catch (error) {
@@ -179,6 +196,12 @@ const Chat = () => {
         const date = new Date(sentAt);
         const options = { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' };
         return date.toLocaleDateString('pt-BR', options);
+    };
+
+    const formatTime = (sentAt) => {
+        const date = new Date(sentAt);
+        const options = { hour: '2-digit', minute: '2-digit' };
+        return date.toLocaleTimeString('pt-BR', options);
     };
 
     const handleScroll = () => {
@@ -250,16 +273,36 @@ const Chat = () => {
                                     style={{ width: '45px', height: '45px', borderRadius: '50%', marginRight: '10px', cursor: 'pointer' }}
                                     onClick={() => handleImageClick(conversation.nickname)}
                                 />
-                                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', width: 'calc(100% - 60px)' }}>
                                     <span style={{ fontSize: '18px' }}>{conversation.name}</span>
                                     <span style={{ fontSize: '15px', color: '#aaa' }}>{conversation.lastMessage}</span>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                                    {conversation.newMessagesCount > 0 && (
+                                        <span style={{
+                                            backgroundColor: '#7B33E5',
+                                            color: 'white',
+                                            borderRadius: '50%',
+                                            width: '20px',
+                                            height: '20px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            marginBottom: '5px'
+                                        }}>
+                                            {conversation.newMessagesCount}
+                                        </span>
+                                    )}
+                                    <span style={{ fontSize: '12px', color: '#aaa' }}>
+                                        {conversation.lastMessageTime ? formatTime(conversation.lastMessageTime) : ''}
+                                    </span>
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
                 <div className={`chat-content ${isMobile && selectedConversation ? 'mobile-active' : ''}`}>
-                    {selectedConversation && (
+                    {selectedConversation ? (
                         <>
                             <div className="chat-header-content">
                                 <HeaderButton
@@ -320,6 +363,13 @@ const Chat = () => {
                                 </button>
                             </div>
                         </>
+                    ) : (
+                        !isMobile && (
+                            <div className="chat-placeholder">
+                                <h2>Suas Mensagens</h2>
+                                <p>Selecione uma conversa para enviar mensagens</p>
+                            </div>
+                        )
                     )}
                 </div>
             </div>
