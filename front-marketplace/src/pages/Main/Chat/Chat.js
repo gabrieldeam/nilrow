@@ -4,7 +4,8 @@ import MobileHeader from '../../../components/Main/MobileHeader/MobileHeader';
 import ChatModal from '../../../components/Others/ChatModal/ChatModal';
 import HeaderButton from '../../../components/UI/Buttons/HeaderButton/HeaderButton';
 import Notification from '../../../components/UI/Notification/Notification';
-import { getConversations, getChannelConversations, getMessagesByConversation, sendMessage, deleteMessage, editMessage, markMessageAsSeen, countNewMessages } from '../../../services/ChatApi';
+import StageButton from '../../../components/UI/Buttons/StageButton/StageButton';
+import { getConversations, getChannelConversations, getMessagesByConversation, sendMessage, deleteMessage, editMessage, markMessageAsSeen, countNewMessages, blockChannel } from '../../../services/ChatApi';
 import chatIcon from '../../../assets/chat.svg';
 import settingsIcon from '../../../assets/settings.svg';
 import closeIcon from '../../../assets/close.svg';
@@ -272,6 +273,19 @@ const Chat = () => {
         setShowSettings(false);
     };
 
+    const handleBlockChannel = async () => {
+        if (selectedConversation) {
+            try {
+                await blockChannel(selectedConversation.conversationId);
+                setNotification('Canal bloqueado com sucesso.');
+                setShowSettings(false);
+            } catch (error) {
+                setNotification('Erro ao bloquear canal: ' + error.message);
+                console.error('Erro ao bloquear canal:', error);
+            }
+        }
+    };
+
     return (
         <div className="chat-page">
             <Helmet>
@@ -350,7 +364,23 @@ const Chat = () => {
                                 style={{ position: 'absolute', top: '10px', right: '10px' }}
                             />
                             <div className="settings-content">
-                                {/* Conteúdo da seção de configurações aqui */}
+                                <div className="settings-header">
+                                    <img
+                                        src={selectedConversation.imageUrl ? `${apiUrl}${selectedConversation.imageUrl}` : userIcon}
+                                        alt="User Avatar"
+                                        className="settings-avatar"
+                                    />
+                                    <div className="settings-info">
+                                        <span className="settings-name">{selectedConversation.name}</span>
+                                        <span className="settings-nickname">@{selectedConversation.nickname}</span>
+                                    </div>
+                                </div>
+                                <div className="settings-actions">
+                                    <StageButton
+                                        text="Bloquear"
+                                        onClick={handleBlockChannel}
+                                    />
+                                </div>
                             </div>
                         </div>
                     ) : selectedConversation ? (
