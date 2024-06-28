@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import MobileHeader from '../../../components/Main/MobileHeader/MobileHeader';
 import ChatModal from '../../../components/Others/ChatModal/ChatModal';
 import HeaderButton from '../../../components/UI/Buttons/HeaderButton/HeaderButton';
+import Notification from '../../../components/UI/Notification/Notification';
 import { getConversations, getChannelConversations, getMessagesByConversation, sendMessage, deleteMessage, editMessage, markMessageAsSeen, countNewMessages } from '../../../services/ChatApi';
 import chatIcon from '../../../assets/chat.svg';
 import settingsIcon from '../../../assets/settings.svg';
@@ -21,6 +22,8 @@ const Chat = () => {
     const [isChatModalOpen, setIsChatModalOpen] = useState(false);
     const [showOptionsMessageId, setShowOptionsMessageId] = useState(null); // Armazenar a mensagem que tem a opção de deletar/editar visível
     const [editMessageId, setEditMessageId] = useState(null); // Armazenar a mensagem que está sendo editada
+    const [notification, setNotification] = useState(null); // Armazenar notificações
+    const [showSettings, setShowSettings] = useState(false); // Estado para controlar a visibilidade da seção de configurações
     const isMobile = window.innerWidth <= 768;
     const messagesEndRef = useRef(null);
     const messagesContainerRef = useRef(null);
@@ -106,7 +109,7 @@ const Chat = () => {
         const intervalId = setInterval(() => {
             fetchMessages();
             markMessagesAsSeen();
-        }, 1000); // Atualiza a cada 5 segundos
+        }, 5000); // Atualiza a cada 5 segundos
 
         return () => clearInterval(intervalId); // Limpa o intervalo quando o componente é desmontado ou quando selectedConversation muda
     }, [selectedConversation, messages, previousMessageCount]);
@@ -132,6 +135,16 @@ const Chat = () => {
 
     const handleSendMessage = async () => {
         if (selectedConversation && messageContent) {
+            if (messageContent.trim().length === 0) {
+                setNotification('A mensagem não pode ser vazia ou conter apenas espaços em branco.');
+                return;
+            }
+
+            if (messageContent.length > 500) {
+                setNotification('A mensagem não pode ter mais de 500 caracteres.');
+                return;
+            }
+
             if (editMessageId) {
                 await handleEditMessage(editMessageId, messageContent);
             } else {
@@ -152,6 +165,7 @@ const Chat = () => {
                         )
                     );
                 } catch (error) {
+                    setNotification('Erro ao enviar mensagem: ' + error.message);
                     console.error('Erro ao enviar mensagem:', error);
                 }
             }
@@ -196,6 +210,10 @@ const Chat = () => {
         setIsChatModalOpen(false);
     };
 
+    const closeNotification = useCallback(() => {
+        setNotification(null);
+    }, []);
+
     const formatDateTime = (sentAt) => {
         const date = new Date(sentAt);
         const options = { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' };
@@ -239,6 +257,21 @@ const Chat = () => {
         window.location.href = `${frontUrl}${nickname}`;
     };
 
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleSendMessage();
+        }
+    };
+
+    const handleSettingsClick = () => {
+        setShowSettings(true);
+    };
+
+    const handleCloseSettingsClick = () => {
+        setShowSettings(false);
+    };
+
     return (
         <div className="chat-page">
             <Helmet>
@@ -279,7 +312,9 @@ const Chat = () => {
                                 />
                                 <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', width: 'calc(100% - 60px)' }}>
                                     <span style={{ fontSize: '18px' }}>{conversation.name}</span>
-                                    <span style={{ fontSize: '15px', color: '#aaa' }}>{conversation.lastMessage}</span>
+                                    <span style={{ fontSize: '15px', color: '#aaa', maxWidth: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                        {conversation.lastMessage}
+                                    </span>
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                                     {conversation.newMessagesCount > 0 && (
@@ -307,7 +342,18 @@ const Chat = () => {
                     </div>
                 </div>
                 <div className={`chat-content ${isMobile && selectedConversation ? 'mobile-active' : ''}`}>
-                    {selectedConversation ? (
+                    {showSettings ? (
+                        <div className="settings-section">
+                            <HeaderButton
+                                icon={closeIcon}
+                                onClick={handleCloseSettingsClick}
+                                style={{ position: 'absolute', top: '10px', right: '10px' }}
+                            />
+                            <div className="settings-content">
+                                {/* Conteúdo da seção de configurações aqui */}
+                            </div>
+                        </div>
+                    ) : selectedConversation ? (
                         <>
                             <div className="chat-header-content">
                                 <HeaderButton
@@ -320,11 +366,14 @@ const Chat = () => {
                                     style={{ width: '45px', height: '45px', borderRadius: '50%', marginLeft: '10px' }}
                                     onClick={() => handleImageClick(selectedConversation.nickname)}
                                 />
-                                <span className="conversation-name">{selectedConversation.name}</span>
+                                <div className="conversation-info">
+                                    <span className="conversation-name">{selectedConversation.name}</span>
+                                    <span className="conversation-nickname">@{selectedConversation.nickname}</span>
+                                </div>
                                 <div style={{ marginLeft: 'auto' }}>
                                     <HeaderButton
                                         icon={settingsIcon}
-                                        link="/chat-settings"
+                                        onClick={handleSettingsClick}
                                     />
                                 </div>
                             </div>
@@ -362,6 +411,7 @@ const Chat = () => {
                                     placeholder="Digite uma mensagem..."
                                     value={messageContent}
                                     onChange={(e) => setMessageContent(e.target.value)}
+                                    onKeyDown={handleKeyDown}
                                 />
                                 <button onClick={handleSendMessage}>
                                     {editMessageId ? 'Editar' : 'Enviar'}
@@ -379,6 +429,9 @@ const Chat = () => {
                 </div>
             </div>
             <ChatModal isOpen={isChatModalOpen} onClose={closeChatModal} />
+            {notification && (
+                <Notification message={notification} onClose={closeNotification} />
+            )}
         </div>
     );
 };

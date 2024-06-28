@@ -48,11 +48,15 @@ public class ChatController {
     }
 
     @PostMapping("/send/{conversationId}")
-    public ResponseEntity<ChatMessageDTO> sendMessage(@PathVariable String conversationId, @RequestBody String content) {
+    public ResponseEntity<?> sendMessage(@PathVariable String conversationId, @RequestBody String content) {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = (User) userDetails;
         People people = peopleRepository.findByUser(user);
         ChatConversation conversation = chatService.getConversation(conversationId).orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
+
+        if (conversation.isBlocked()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Esta conversa está bloqueada. Você não pode enviar mensagens.");
+        }
 
         // Identificar se o remetente é uma pessoa ou um canal
         Object sender;
@@ -61,7 +65,7 @@ public class ChatController {
         } else if (conversation.getChannel().getPeople().equals(people)) {
             sender = conversation.getChannel();
         } else {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build(); // Não autorizado
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Você não está autorizado a enviar mensagens nesta conversa.");
         }
 
         ChatMessage message = chatService.sendMessage(conversation, sender, content);
@@ -223,5 +227,16 @@ public class ChatController {
         ChatConversation conversation = chatService.getConversation(conversationId).orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
         List<ChatMessage> messages = chatService.searchMessages(conversation, query);
         return ResponseEntity.ok(messages);
+    }
+
+    @GetMapping("/blocked-conversations")
+    public ResponseEntity<List<BlockedConversationDTO>> getBlockedConversations() {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = (User) userDetails;
+        People people = peopleRepository.findByUser(user);
+
+        List<BlockedConversationDTO> blockedConversations = chatService.getBlockedConversations(people);
+
+        return ResponseEntity.ok(blockedConversations);
     }
 }

@@ -189,7 +189,17 @@
 
 .conversation-name {
     font-size: 18px;
+}
+
+.conversation-info {
+    display: flex;
+    flex-direction: column;
     margin-left: 10px;
+}
+
+.conversation-nickname {
+    font-size: 13px;
+    color: #656565;
 }
 
 .chat-placeholder {
@@ -211,6 +221,23 @@
 .chat-placeholder p {
     font-size: 18px;
     color: #aaa;
+}
+
+.settings-section {
+    position: relative;
+    background: #151515;
+    border-radius: 5px;
+    padding: 10px;
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    left: -20px;
+    margin-right: -40px;
+}
+
+.settings-content {
+    color: #fff;
 }
 
 @media (max-width: 768px) {
@@ -302,5 +329,11 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+
+    .settings-section {
+        left: 0px;
+        margin-right: 0px;
+        padding: 20px 20px 200%;
     }
 }

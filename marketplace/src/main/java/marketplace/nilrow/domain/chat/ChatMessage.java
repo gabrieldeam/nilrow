@@ -34,7 +34,7 @@ public class ChatMessage {
     @JoinColumn(name = "sender_channel_id", nullable = true)
     private Channel senderChannel;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
     @Column(nullable = false)

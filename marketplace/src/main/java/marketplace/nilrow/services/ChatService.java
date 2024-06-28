@@ -1,5 +1,6 @@
 package marketplace.nilrow.services;
 
+import marketplace.nilrow.domain.chat.BlockedConversationDTO;
 import marketplace.nilrow.domain.chat.ChatConversation;
 import marketplace.nilrow.domain.chat.ChatMessage;
 import marketplace.nilrow.domain.channel.Channel;
@@ -137,4 +138,20 @@ public class ChatService {
                 .map(ChatConversation::getChannel)
                 .collect(Collectors.toList());
     }
+
+    public List<BlockedConversationDTO> getBlockedConversations(People people) {
+        List<ChatConversation> blockedConversations = conversationRepository.findByPeopleAndBlockedTrue(people);
+        List<ChatConversation> blockedChannelConversations = conversationRepository.findByChannel_PeopleAndBlockedTrue(people);
+
+        List<BlockedConversationDTO> blockedConversationDTOs = blockedConversations.stream()
+                .map(conversation -> new BlockedConversationDTO(conversation.getId(), conversation.getChannel().getName(), conversation.getChannel().getImageUrl(), conversation.getChannel().getPeople().getUser().getNickname()))
+                .collect(Collectors.toList());
+
+        blockedConversationDTOs.addAll(blockedChannelConversations.stream()
+                .map(conversation -> new BlockedConversationDTO(conversation.getId(), conversation.getPeople().getName(), conversation.getPeople().getUser().getNickname()))
+                .collect(Collectors.toList()));
+
+        return blockedConversationDTOs;
+    }
+
 }
