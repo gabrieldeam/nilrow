@@ -65,8 +65,13 @@ public class ChatService {
         conversationRepository.deleteById(conversationId);
     }
 
-    public long countNewMessages(ChatConversation conversation) {
-        return messageRepository.countByConversationAndSeenFalse(conversation);
+    public long countNewMessagesForUser(ChatConversation conversation, People user) {
+        long countFromPeople = messageRepository.countByConversationAndSeenFalseAndSenderPeopleNot(conversation, user);
+        long countFromChannel = 0;
+        if (user.getChannel() != null) {
+            countFromChannel = messageRepository.countByConversationAndSeenFalseAndSenderChannelNot(conversation, user.getChannel());
+        }
+        return countFromPeople + countFromChannel;
     }
 
     public void markMessageAsSeen(String messageId) {

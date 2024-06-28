@@ -93,8 +93,17 @@ public class ChatController {
 
     @GetMapping("/new-messages/{conversationId}")
     public ResponseEntity<Long> countNewMessages(@PathVariable String conversationId) {
+        // Recuperar o usuário autenticado
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = (User) userDetails;
+        People people = peopleRepository.findByUser(user);
+
+        // Recuperar a conversa
         ChatConversation conversation = chatService.getConversation(conversationId).orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
-        long newMessagesCount = chatService.countNewMessages(conversation);
+
+        // Contar as novas mensagens recebidas pelo usuário
+        long newMessagesCount = chatService.countNewMessagesForUser(conversation, people);
+
         return ResponseEntity.ok(newMessagesCount);
     }
 

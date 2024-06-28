@@ -71,6 +71,10 @@ const Chat = () => {
         };
 
         fetchConversations();
+
+        const intervalId = setInterval(fetchConversations, 5000); // Atualiza a cada 5 segundos
+
+        return () => clearInterval(intervalId); // Limpa o intervalo quando o componente é desmontado
     }, []);
 
     useEffect(() => {
@@ -102,7 +106,7 @@ const Chat = () => {
         const intervalId = setInterval(() => {
             fetchMessages();
             markMessagesAsSeen();
-        }, 5000); // Atualiza a cada 5 segundos
+        }, 1000); // Atualiza a cada 5 segundos
 
         return () => clearInterval(intervalId); // Limpa o intervalo quando o componente é desmontado ou quando selectedConversation muda
     }, [selectedConversation, messages, previousMessageCount]);
@@ -288,7 +292,8 @@ const Chat = () => {
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            marginBottom: '5px'
+                                            marginBottom: '5px',
+                                            fontSize: '10px',
                                         }}>
                                             {conversation.newMessagesCount}
                                         </span>
