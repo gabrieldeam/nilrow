@@ -6,7 +6,7 @@ import ChatModal from '../../../components/Others/ChatModal/ChatModal';
 import HeaderButton from '../../../components/UI/Buttons/HeaderButton/HeaderButton';
 import Notification from '../../../components/UI/Notification/Notification';
 import StageButton from '../../../components/UI/Buttons/StageButton/StageButton';
-import { getConversations, getChannelConversations, getMessagesByConversation, sendMessage, deleteMessage, editMessage, countNewMessages, blockChannel, getBlockStatus, toggleMuteConversation, checkIfMuted, deleteConversation } from '../../../services/ChatApi';
+import { getConversations, getChannelConversations, getMessagesByConversation, sendMessage, deleteMessage, editMessage, countNewMessages, blockChannel, getBlockStatus, toggleMuteConversation, checkIfMuted, deleteConversation, sendImage } from '../../../services/ChatApi';
 import chatIcon from '../../../assets/chat.svg';
 import settingsIcon from '../../../assets/settings.svg';
 import closeIcon from '../../../assets/close.svg';
@@ -14,6 +14,7 @@ import blockIcon from '../../../assets/block.svg';
 import muteIcon from '../../../assets/notifications.svg';
 import deleteIcon from '../../../assets/trash.svg';
 import userIcon from '../../../assets/user.png';
+import globeIcon from '../../../assets/image-chat.svg'; // Adicione o ícone do globo
 import getConfig from '../../../config';
 import './Chat.css';
 
@@ -24,6 +25,7 @@ const Chat = () => {
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [messages, setMessages] = useState([]);
     const [messageContent, setMessageContent] = useState('');
+    const [imageFile, setImageFile] = useState(null);
     const [isChatModalOpen, setIsChatModalOpen] = useState(false);
     const [showOptionsMessageId, setShowOptionsMessageId] = useState(null);
     const [editMessageId, setEditMessageId] = useState(null);
@@ -34,6 +36,7 @@ const Chat = () => {
     const isMobile = window.innerWidth <= 768;
     const messagesEndRef = useRef(null);
     const messagesContainerRef = useRef(null);
+    const [shouldScroll, setShouldScroll] = useState(true);
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -133,9 +136,21 @@ const Chat = () => {
         return () => clearInterval(intervalId);
     }, [fetchConversations]);
 
+    useEffect(() => {
+        if (shouldScroll && messagesContainerRef.current) {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [messages, shouldScroll, showSettings]);
+
+    useEffect(() => {
+        if (!showSettings) {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [showSettings]);
+
     const handleSendMessage = async () => {
-        if (selectedConversation && messageContent) {
-            if (messageContent.trim().length === 0) {
+        if (selectedConversation && (messageContent || imageFile)) {
+            if (messageContent.trim().length === 0 && !imageFile) {
                 setNotification('A mensagem não pode ser vazia ou conter apenas espaços em branco.');
                 return;
             }
@@ -149,16 +164,24 @@ const Chat = () => {
                 await handleEditMessage(editMessageId, messageContent);
             } else {
                 try {
-                    await sendMessage(selectedConversation.conversationId, messageContent);
+                    if (imageFile) {
+                        await sendImage(selectedConversation.conversationId, imageFile);
+                        setImageFile(null);
+                        setMessageContent('');
+                    } else {
+                        await sendMessage(selectedConversation.conversationId, messageContent);
+                        setMessageContent('');
+                    }
+
                     const response = await getMessagesByConversation(selectedConversation.conversationId);
                     const sortedMessages = response.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt));
                     setMessages(sortedMessages);
-                    setMessageContent('');
+                    setShouldScroll(true);
 
                     setConversations(prevConversations =>
                         prevConversations.map(convo =>
                             convo.conversationId === selectedConversation.conversationId
-                                ? { ...convo, lastMessage: messageContent.length > 50 ? `${messageContent.slice(0, 50)}...` : messageContent }
+                                ? { ...convo, lastMessage: imageFile ? 'Imagem enviada' : messageContent.length > 50 ? `${messageContent.slice(0, 50)}...` : messageContent }
                                 : convo
                         )
                     );
@@ -221,10 +244,7 @@ const Chat = () => {
     const handleScroll = () => {
         if (messagesContainerRef.current) {
             const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
-            const shouldScroll = scrollHeight - scrollTop <= clientHeight + 100;
-            if (shouldScroll) {
-                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-            }
+            setShouldScroll(scrollHeight - scrollTop <= clientHeight + 100);
         }
     };
 
@@ -307,6 +327,11 @@ const Chat = () => {
                 console.error('Erro ao excluir conversa:', error);
             }
         }
+    };
+
+    const handleImageFileChange = (e) => {
+        setImageFile(e.target.files[0]);
+        setMessageContent(e.target.files[0].name);
     };
 
     return (
@@ -466,7 +491,11 @@ const Chat = () => {
                                             onClick={() => handleMessageClick(message)}
                                         >
                                             <div className="message-content">
-                                                {message.content}
+                                                {message.contentType === 'image' ? (
+                                                    <img src={`${apiUrl}/${message.content}`} alt="Imagem enviada" style={{ maxWidth: '100%', maxHeight: '200px' }} />
+                                                ) : (
+                                                    <span>{message.content}</span>
+                                                )}
                                                 <div className="message-date">{formatDateTime(message.sentAt)}</div>
                                                 <div className={`message-status ${message.sender ? 'sender-status' : 'receiver-status'}`}>
                                                     {message.seen ? 'Visto' : 'Enviada'}
@@ -490,15 +519,25 @@ const Chat = () => {
                             <div className="chat-input">
                                 <input
                                     type="text"
-                                    placeholder="Digite uma mensagem..."
+                                    placeholder="Digite uma mensagem ou selecione uma imagem..."
                                     value={messageContent}
                                     onChange={(e) => setMessageContent(e.target.value)}
                                     onKeyDown={handleKeyDown}
                                     disabled={isBlocked}
                                 />
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageFileChange}
+                                    style={{ display: 'none' }}
+                                    id="image-upload"
+                                />
+                                <label htmlFor="image-upload" className="image-upload-label">
+                                    <img src={globeIcon} alt="Enviar imagem" style={{ cursor: 'pointer' }} />
+                                </label>
                                 <button 
                                     onClick={handleSendMessage} 
-                                    disabled={isBlocked} 
+                                    disabled={isBlocked}
                                     style={isBlocked ? { backgroundColor: '#DF1414' } : {}}
                                 >
                                     {isBlocked ? 'Chat bloqueado' : editMessageId ? 'Editar' : 'Enviar'}

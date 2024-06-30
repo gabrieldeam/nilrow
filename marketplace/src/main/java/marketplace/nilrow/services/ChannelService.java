@@ -37,7 +37,6 @@ public class ChannelService {
         return Optional.of(channelRepository.save(existingChannel));
     }
 
-
     public Optional<Channel> getChannel(String channelId) {
         return channelRepository.findById(channelId);
     }

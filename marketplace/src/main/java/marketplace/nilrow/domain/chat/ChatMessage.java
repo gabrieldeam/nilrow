@@ -42,20 +42,25 @@ public class ChatMessage {
 
     private boolean seen;
 
-    public ChatMessage(ChatConversation conversation, People senderPeople, String content, LocalDateTime sentAt, boolean seen) {
+    @Column(name = "content_type", nullable = false)
+    private String contentType;
+
+    public ChatMessage(ChatConversation conversation, People senderPeople, String content, LocalDateTime sentAt, boolean seen, String contentType) {
         this.conversation = conversation;
         this.senderPeople = senderPeople;
         this.content = content;
         this.sentAt = sentAt;
         this.seen = seen;
+        this.contentType = contentType;
     }
 
-    public ChatMessage(ChatConversation conversation, Channel senderChannel, String content, LocalDateTime sentAt, boolean seen) {
+    public ChatMessage(ChatConversation conversation, Channel senderChannel, String content, LocalDateTime sentAt, boolean seen, String contentType) {
         this.conversation = conversation;
         this.senderChannel = senderChannel;
         this.content = content;
         this.sentAt = sentAt;
         this.seen = seen;
+        this.contentType = contentType;
     }
 
     @Transient

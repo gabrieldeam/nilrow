@@ -25,9 +25,12 @@ export const startConversation = async (channelId, content) => {
 // POST /chats/send/{conversationId}
 export const sendMessage = async (conversationId, content) => {
     try {
-        const response = await chatApi.post(`/chats/send/${conversationId}`, content, {
+        const response = await chatApi.post(`/chats/send/${conversationId}`, null, {
             headers: {
-                'Content-Type': 'text/plain'
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            params: {
+                content: content
             }
         });
         return response.data;
@@ -39,6 +42,27 @@ export const sendMessage = async (conversationId, content) => {
         }
     }
 };
+
+export const sendImage = async (conversationId, imageFile) => {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+
+    try {
+        const response = await chatApi.post(`/chats/send-image/${conversationId}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return response.data;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw new Error(error.response.data); // Lança a mensagem de erro do corpo da resposta
+        } else {
+            throw new Error('Erro desconhecido ao enviar a imagem.');
+        }
+    }
+};
+
 
 // DELETE /chats/message/{messageId}
 export const deleteMessage = async (messageId) => {

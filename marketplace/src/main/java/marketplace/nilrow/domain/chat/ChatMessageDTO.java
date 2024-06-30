@@ -18,6 +18,7 @@ public class ChatMessageDTO {
     private boolean seen;
     private boolean isSender;
     private LocalDateTime sentAt;
+    private String contentType;
 
     public ChatMessageDTO(ChatMessage message, String senderType, boolean isSender) {
         this.id = message.getId();
@@ -26,5 +27,6 @@ public class ChatMessageDTO {
         this.seen = message.isSeen();
         this.sentAt = message.getSentAt();
         this.isSender = isSender;
+        this.contentType = message.getContentType();
     }
 }

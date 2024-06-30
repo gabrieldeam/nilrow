@@ -15,7 +15,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,26 +38,8 @@ public class ChatController {
     @Autowired
     private PeopleRepository peopleRepository;
 
-    @PostMapping("/start/{channelId}")
-    public ResponseEntity<ChatConversationDTO> startConversation(@PathVariable String channelId, @RequestBody(required = false) String initialMessage) {
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        User user = (User) userDetails;
-        People people = peopleRepository.findByUser(user);
-        Channel channel = channelService.getChannel(channelId).orElseThrow(() -> new IllegalArgumentException("Channel not found"));
-
-        ChatConversation conversation = chatService.startConversation(channel, people);
-
-        if (initialMessage != null && !initialMessage.trim().isEmpty()) {
-            chatService.sendMessage(conversation, people, initialMessage);
-        }
-
-        ChatConversationDTO conversationDTO = new ChatConversationDTO(conversation);
-        return ResponseEntity.ok(conversationDTO);
-    }
-
-
     @PostMapping("/send/{conversationId}")
-    public ResponseEntity<?> sendMessage(@PathVariable String conversationId, @RequestBody String content) {
+    public ResponseEntity<?> sendMessage(@PathVariable String conversationId, @RequestParam String content) {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = (User) userDetails;
         People people = peopleRepository.findByUser(user);
@@ -72,7 +59,10 @@ public class ChatController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Você não está autorizado a enviar mensagens nesta conversa.");
         }
 
-        ChatMessage message = chatService.sendMessage(conversation, sender, content);
+        // Definindo o contentType como "text"
+        String contentType = "text";
+
+        ChatMessage message = chatService.sendMessage(conversation, sender, content, contentType);
         String senderType = sender instanceof People ? "PEOPLE" : "CHANNEL";
         boolean isSender = sender.equals(people) || (sender instanceof Channel && ((Channel) sender).getPeople().equals(people));
         ChatMessageDTO messageDTO = new ChatMessageDTO(message, senderType, isSender);
@@ -80,9 +70,80 @@ public class ChatController {
         return ResponseEntity.ok(messageDTO);
     }
 
+    @PostMapping("/start/{channelId}")
+    public ResponseEntity<ChatConversationDTO> startConversation(@PathVariable String channelId, @RequestBody(required = false) String initialMessage) {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = (User) userDetails;
+        People people = peopleRepository.findByUser(user);
+        Channel channel = channelService.getChannel(channelId).orElseThrow(() -> new IllegalArgumentException("Channel not found"));
+
+        ChatConversation conversation = chatService.startConversation(channel, people);
+
+        if (initialMessage != null && !initialMessage.trim().isEmpty()) {
+            chatService.sendMessage(conversation, people, initialMessage, "text");
+        }
+
+        ChatConversationDTO conversationDTO = new ChatConversationDTO(conversation);
+        return ResponseEntity.ok(conversationDTO);
+    }
+
+
+    @PostMapping("/send-image/{conversationId}")
+    public ResponseEntity<ChatMessageDTO> sendImage(@PathVariable String conversationId, @RequestParam("image") MultipartFile imageFile) {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = (User) userDetails;
+        People people = peopleRepository.findByUser(user);
+
+        ChatConversation conversation = chatService.getConversation(conversationId).orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
+
+        String imageUrl = chatService.saveFile(imageFile);
+
+        ChatMessage message = chatService.sendMessage(conversation, people, imageUrl, "image");
+        String senderType = "PEOPLE";
+        boolean isSender = message.getSenderPeople() != null && message.getSenderPeople().equals(people);
+        ChatMessageDTO messageDTO = new ChatMessageDTO(message, senderType, isSender);
+
+        return ResponseEntity.ok(messageDTO);
+    }
+
+    @PostMapping("/send-file/{conversationId}")
+    public ResponseEntity<ChatMessageDTO> sendFile(@PathVariable String conversationId, @RequestParam("file") MultipartFile file) {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = (User) userDetails;
+        People people = peopleRepository.findByUser(user);
+
+        ChatConversation conversation = chatService.getConversation(conversationId).orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
+
+        String fileUrl = chatService.saveFile(file);
+
+        ChatMessage message = chatService.sendMessage(conversation, people, fileUrl, "file");
+        String senderType = "PEOPLE";
+        boolean isSender = message.getSenderPeople() != null && message.getSenderPeople().equals(people);
+        ChatMessageDTO messageDTO = new ChatMessageDTO(message, senderType, isSender);
+
+        return ResponseEntity.ok(messageDTO);
+    }
+
     @DeleteMapping("/message/{messageId}")
     public ResponseEntity<Void> deleteMessage(@PathVariable String messageId) {
+        // Recupere a mensagem do banco de dados
+        ChatMessage message = chatService.getMessageById(messageId).orElseThrow(() -> new IllegalArgumentException("Message not found"));
+
+        // Verifique se o contentType é "image"
+        if ("image".equals(message.getContentType())) {
+            // Delete o arquivo de imagem do diretório de uploads
+            try {
+                Path imagePath = Paths.get(message.getContent());
+                Files.deleteIfExists(imagePath);
+            } catch (Exception e) {
+                // Log ou trate o erro conforme necessário
+                e.printStackTrace();
+            }
+        }
+
+        // Delete a mensagem do banco de dados
         chatService.deleteMessage(messageId);
+
         return ResponseEntity.ok().build();
     }
 
@@ -98,6 +159,7 @@ public class ChatController {
         chatService.deleteConversation(conversationId);
         return ResponseEntity.ok().build();
     }
+
 
     @GetMapping("/new-messages/{conversationId}")
     public ResponseEntity<Long> countNewMessages(@PathVariable String conversationId) {

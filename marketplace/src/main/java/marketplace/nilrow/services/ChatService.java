@@ -11,7 +11,13 @@ import marketplace.nilrow.repositories.ChannelRepository;
 import marketplace.nilrow.repositories.MutedConversationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +38,8 @@ public class ChatService {
     @Autowired
     private MutedConversationRepository mutedConversationRepository;
 
+    private static final String UPLOAD_DIR = "uploads/";
+
     public ChatConversation startConversation(Channel channel, People people) {
         Optional<ChatConversation> existingConversation = conversationRepository.findByChannelAndPeople(channel, people);
         if (existingConversation.isPresent()) {
@@ -43,17 +51,41 @@ public class ChatService {
     }
 
 
-    public ChatMessage sendMessage(ChatConversation conversation, Object sender, String content) {
+    public ChatMessage sendMessage(ChatConversation conversation, Object sender, String content, String contentType) {
         ChatMessage message;
         if (sender instanceof People) {
-            message = new ChatMessage(conversation, (People) sender, content, LocalDateTime.now(), false);
+            message = new ChatMessage(conversation, (People) sender, content, LocalDateTime.now(), false, contentType);
         } else if (sender instanceof Channel) {
-            message = new ChatMessage(conversation, (Channel) sender, content, LocalDateTime.now(), false);
+            message = new ChatMessage(conversation, (Channel) sender, content, LocalDateTime.now(), false, contentType);
         } else {
             throw new IllegalArgumentException("Sender must be either People or Channel");
         }
         return messageRepository.save(message);
     }
+
+    public Optional<ChatMessage> getMessageById(String messageId) {
+        return messageRepository.findById(messageId);
+    }
+
+    public String saveFile(MultipartFile file) {
+        try {
+            // Certifique-se de que o diretório de upload existe
+            File uploadDir = new File(UPLOAD_DIR);
+            if (!uploadDir.exists()) {
+                uploadDir.mkdirs();
+            }
+
+            // Salve o arquivo
+            Path filePath = Paths.get(UPLOAD_DIR + file.getOriginalFilename());
+            Files.write(filePath, file.getBytes());
+
+            // Retorne o caminho ou URL do arquivo salvo
+            return filePath.toString();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to save file", e);
+        }
+    }
+
 
     public void deleteMessage(String messageId) {
         messageRepository.deleteById(messageId);
@@ -66,7 +98,26 @@ public class ChatService {
     }
 
     public void deleteConversation(String conversationId) {
-        conversationRepository.deleteById(conversationId);
+        ChatConversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
+
+        List<ChatMessage> messages = messageRepository.findByConversation(conversation);
+
+        for (ChatMessage message : messages) {
+            if ("image".equals(message.getContentType())) {
+                Path imagePath = Paths.get(message.getContent());
+                try {
+                    if (Files.exists(imagePath)) {
+                        Files.delete(imagePath);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace(); // Imprime o erro na saída padrão para depuração
+                }
+            }
+            messageRepository.delete(message);
+        }
+
+        conversationRepository.delete(conversation);
     }
 
     public long countNewMessagesForUser(ChatConversation conversation, People user) {
