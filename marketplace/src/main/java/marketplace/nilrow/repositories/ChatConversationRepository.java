@@ -14,5 +14,4 @@ public interface ChatConversationRepository extends JpaRepository<ChatConversati
     List<ChatConversation> findByChannel(Channel channel);
     List<ChatConversation> findByPeopleAndBlockedTrue(People people);
     List<ChatConversation> findByChannel_PeopleAndBlockedTrue(People people);
-
 }

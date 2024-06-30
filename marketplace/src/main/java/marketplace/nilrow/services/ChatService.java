@@ -1,13 +1,14 @@
 package marketplace.nilrow.services;
 
-import marketplace.nilrow.domain.chat.BlockedConversationDTO;
 import marketplace.nilrow.domain.chat.ChatConversation;
 import marketplace.nilrow.domain.chat.ChatMessage;
 import marketplace.nilrow.domain.channel.Channel;
+import marketplace.nilrow.domain.chat.MutedConversation;
 import marketplace.nilrow.domain.people.People;
 import marketplace.nilrow.repositories.ChatConversationRepository;
 import marketplace.nilrow.repositories.ChatMessageRepository;
 import marketplace.nilrow.repositories.ChannelRepository;
+import marketplace.nilrow.repositories.MutedConversationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,17 +29,19 @@ public class ChatService {
     @Autowired
     private ChannelRepository channelRepository;
 
+    @Autowired
+    private MutedConversationRepository mutedConversationRepository;
+
     public ChatConversation startConversation(Channel channel, People people) {
-        // Verifique se a conversa já existe
         Optional<ChatConversation> existingConversation = conversationRepository.findByChannelAndPeople(channel, people);
         if (existingConversation.isPresent()) {
             return existingConversation.get();
         }
 
-        // Crie uma nova conversa
-        ChatConversation conversation = new ChatConversation(null, channel, people, null, false, false, false);
+        ChatConversation conversation = new ChatConversation(null, channel, people, null, false, false, null);
         return conversationRepository.save(conversation);
     }
+
 
     public ChatMessage sendMessage(ChatConversation conversation, Object sender, String content) {
         ChatMessage message;
@@ -81,9 +84,22 @@ public class ChatService {
         messageRepository.save(message);
     }
 
-    public void blockChannel(ChatConversation conversation) {
-        conversation.setBlocked(true);
-        conversationRepository.save(conversation);
+    public boolean toggleBlockChannel(ChatConversation conversation, People requester) {
+        if (conversation.isBlocked()) {
+            if (conversation.getBlockedBy().equals(requester)) {
+                conversation.setBlocked(false);
+                conversation.setBlockedBy(null);
+                conversationRepository.save(conversation);
+                return false;
+            } else {
+                throw new IllegalStateException("Somente a pessoa que bloqueou a conversa pode desbloqueá-la.");
+            }
+        } else {
+            conversation.setBlocked(true);
+            conversation.setBlockedBy(requester);
+            conversationRepository.save(conversation);
+            return true;
+        }
     }
 
     public void disableChat(ChatConversation conversation) {
@@ -123,9 +139,19 @@ public class ChatService {
         messageRepository.saveAll(messages);
     }
 
-    public void muteConversation(ChatConversation conversation) {
-        conversation.setMuted(true);
-        conversationRepository.save(conversation);
+    public void toggleMuteConversation(ChatConversation conversation, People requester) {
+        Optional<MutedConversation> mutedConversationOpt = mutedConversationRepository.findByConversationAndPeople(conversation, requester);
+
+        if (mutedConversationOpt.isPresent()) {
+            mutedConversationRepository.delete(mutedConversationOpt.get());
+        } else {
+            MutedConversation mutedConversation = new MutedConversation(null, conversation, requester);
+            mutedConversationRepository.save(mutedConversation);
+        }
+    }
+
+    public boolean isConversationMutedByUser(ChatConversation conversation, People requester) {
+        return mutedConversationRepository.findByConversationAndPeople(conversation, requester).isPresent();
     }
 
     public List<ChatMessage> searchMessages(ChatConversation conversation, String query) {
@@ -139,19 +165,11 @@ public class ChatService {
                 .collect(Collectors.toList());
     }
 
-    public List<BlockedConversationDTO> getBlockedConversations(People people) {
+    public List<ChatConversation> getBlockedConversations(People people) {
         List<ChatConversation> blockedConversations = conversationRepository.findByPeopleAndBlockedTrue(people);
-        List<ChatConversation> blockedChannelConversations = conversationRepository.findByChannel_PeopleAndBlockedTrue(people);
-
-        List<BlockedConversationDTO> blockedConversationDTOs = blockedConversations.stream()
-                .map(conversation -> new BlockedConversationDTO(conversation.getId(), conversation.getChannel().getName(), conversation.getChannel().getImageUrl(), conversation.getChannel().getPeople().getUser().getNickname()))
-                .collect(Collectors.toList());
-
-        blockedConversationDTOs.addAll(blockedChannelConversations.stream()
-                .map(conversation -> new BlockedConversationDTO(conversation.getId(), conversation.getPeople().getName(), conversation.getPeople().getUser().getNickname()))
-                .collect(Collectors.toList()));
-
-        return blockedConversationDTOs;
+        if (people.getChannel() != null) {
+            blockedConversations.addAll(conversationRepository.findByChannel_PeopleAndBlockedTrue(people));
+        }
+        return blockedConversations;
     }
-
 }

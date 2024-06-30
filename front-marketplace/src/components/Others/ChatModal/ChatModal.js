@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './ChatModal.css';
 import { listChannels, startConversation } from '../../../services/ChatApi';
-import CustomInput from '../../UI/CustomInput/CustomInput';
 import HeaderButton from '../../UI/Buttons/HeaderButton/HeaderButton';
+import StageButton from '../../UI/Buttons/StageButton/StageButton';
 import closeIcon from '../../../assets/close.svg';
-import CustomButton from '../../UI/Buttons/CustomButton/CustomButton';
+import userIcon from '../../../assets/user.png';
+import getConfig from '../../../config';
+
+const { apiUrl } = getConfig();
 
 const ChatModal = ({ isOpen, onClose }) => {
     const [channels, setChannels] = useState([]);
@@ -76,13 +79,24 @@ const ChatModal = ({ isOpen, onClose }) => {
         <div className="chat-modal-overlay" onClick={handleOverlayClick}>
             <div className="chat-modal-container">
                 <div className="chat-modal-close-button-wrapper">
-                    <HeaderButton icon={closeIcon} onClick={onClose} />
+                    {window.innerWidth <= 768 ? (
+                        <HeaderButton icon={closeIcon} onClick={onClose} />
+                    ) : (
+                        <img
+                            src={closeIcon}
+                            alt="Close Icon"
+                            onClick={onClose}
+                            style={{ cursor: 'pointer', width: '24px', height: '24px' }}
+                        />
+                    )}
                 </div>
                 <h2 className="chat-modal-title roboto-medium">Iniciar Conversa</h2>
-                <CustomInput
-                    placeholder="Buscar canais..."
-                    value={searchQuery}
+                <input 
+                    type="text" 
+                    placeholder="Buscar canais..." 
+                    value={searchQuery} 
                     onChange={handleSearchChange}
+                    className="chat-modal-search-input"
                 />
                 <div className="chat-modal-channels">
                     {filteredChannels.map(channel => (
@@ -91,18 +105,34 @@ const ChatModal = ({ isOpen, onClose }) => {
                             className={`chat-modal-channel-item ${selectedChannel?.id === channel.id ? 'selected' : ''}`}
                             onClick={() => handleChannelSelect(channel)}
                         >
-                            {channel.name} (@{channel.nickname})
+                            <img 
+                                src={channel.imageUrl ? `${apiUrl}${channel.imageUrl}` : userIcon} 
+                                alt="Channel Avatar" 
+                                style={{ width: '45px', height: '45px', borderRadius: '50%', marginRight: '10px', cursor: 'pointer' }}
+                            />
+                            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', width: 'calc(100% - 60px)' }}>
+                                <span style={{ fontSize: '18px' }}>{channel.name}</span>
+                                <span style={{ fontSize: '15px', color: '#aaa', maxWidth: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    @{channel.nickname}
+                                </span>
+                            </div>
                         </div>
                     ))}
                 </div>
                 {selectedChannel && (
                     <div className="chat-modal-message">
-                        <CustomInput
+                        <input
+                            type="text"
                             placeholder="Digite sua mensagem..."
                             value={messageContent}
                             onChange={(e) => setMessageContent(e.target.value)}
+                            className="chat-modal-message-input"
                         />
-                        <CustomButton title="Enviar" onClick={handleSendMessage} />
+                        <StageButton
+                            text="Enviar"
+                            backgroundColor="#7B33E5"
+                            onClick={handleSendMessage}
+                        />
                     </div>
                 )}
             </div>

@@ -1,14 +1,18 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useNavigate, useLocation } from 'react-router-dom';
 import MobileHeader from '../../../components/Main/MobileHeader/MobileHeader';
 import ChatModal from '../../../components/Others/ChatModal/ChatModal';
 import HeaderButton from '../../../components/UI/Buttons/HeaderButton/HeaderButton';
 import Notification from '../../../components/UI/Notification/Notification';
 import StageButton from '../../../components/UI/Buttons/StageButton/StageButton';
-import { getConversations, getChannelConversations, getMessagesByConversation, sendMessage, deleteMessage, editMessage, markMessageAsSeen, countNewMessages, blockChannel } from '../../../services/ChatApi';
+import { getConversations, getChannelConversations, getMessagesByConversation, sendMessage, deleteMessage, editMessage, countNewMessages, blockChannel, getBlockStatus, toggleMuteConversation, checkIfMuted, deleteConversation } from '../../../services/ChatApi';
 import chatIcon from '../../../assets/chat.svg';
 import settingsIcon from '../../../assets/settings.svg';
 import closeIcon from '../../../assets/close.svg';
+import blockIcon from '../../../assets/block.svg';
+import muteIcon from '../../../assets/notifications.svg';
+import deleteIcon from '../../../assets/trash.svg';
 import userIcon from '../../../assets/user.png';
 import getConfig from '../../../config';
 import './Chat.css';
@@ -21,118 +25,113 @@ const Chat = () => {
     const [messages, setMessages] = useState([]);
     const [messageContent, setMessageContent] = useState('');
     const [isChatModalOpen, setIsChatModalOpen] = useState(false);
-    const [showOptionsMessageId, setShowOptionsMessageId] = useState(null); // Armazenar a mensagem que tem a opção de deletar/editar visível
-    const [editMessageId, setEditMessageId] = useState(null); // Armazenar a mensagem que está sendo editada
-    const [notification, setNotification] = useState(null); // Armazenar notificações
-    const [showSettings, setShowSettings] = useState(false); // Estado para controlar a visibilidade da seção de configurações
+    const [showOptionsMessageId, setShowOptionsMessageId] = useState(null);
+    const [editMessageId, setEditMessageId] = useState(null);
+    const [notification, setNotification] = useState(null);
+    const [showSettings, setShowSettings] = useState(false);
+    const [isBlocked, setIsBlocked] = useState(false);
+    const [isMuted, setIsMuted] = useState(false);
     const isMobile = window.innerWidth <= 768;
     const messagesEndRef = useRef(null);
     const messagesContainerRef = useRef(null);
-    const [shouldScroll, setShouldScroll] = useState(true);
-    const [previousMessageCount, setPreviousMessageCount] = useState(0);
+    const navigate = useNavigate();
+    const location = useLocation();
 
-    useEffect(() => {
-        const fetchConversations = async () => {
-            try {
-                const userConversations = await getConversations();
-                const channelConversations = await getChannelConversations();
+    const closeConversation = useCallback(() => {
+        setSelectedConversation(null);
+        setMessages([]);
+        navigate('/chat', { replace: true });
+    }, [navigate]);
 
-                const fetchLastMessageAndNewMessages = async (conversationId) => {
-                    const messages = await getMessagesByConversation(conversationId);
-                    const sortedMessages = messages.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt)); // Ordenar as mensagens
-                    const lastMessage = sortedMessages.length > 0 ? sortedMessages[sortedMessages.length - 1] : null;
-                    const newMessagesCount = await countNewMessages(conversationId);
-                    return { lastMessage, newMessagesCount };
-                };
-
-                const combinedConversations = await Promise.all([
-                    ...userConversations.map(async convo => {
-                        const { lastMessage, newMessagesCount } = await fetchLastMessageAndNewMessages(convo.conversationId);
-                        return {
-                            ...convo,
-                            key: `user-${convo.conversationId}`,
-                            lastMessage: lastMessage ? lastMessage.content : '',
-                            lastMessageTime: lastMessage ? lastMessage.sentAt : null,
-                            newMessagesCount: newMessagesCount || 0,
-                        };
-                    }),
-                    ...channelConversations.map(async convo => {
-                        const { lastMessage, newMessagesCount } = await fetchLastMessageAndNewMessages(convo.conversationId);
-                        return {
-                            ...convo,
-                            key: `channel-${convo.conversationId}`,
-                            lastMessage: lastMessage ? lastMessage.content : '',
-                            lastMessageTime: lastMessage ? lastMessage.sentAt : null,
-                            newMessagesCount: newMessagesCount || 0,
-                        };
-                    }),
-                ]);
-
-                setConversations(combinedConversations);
-            } catch (error) {
-                console.error('Erro ao buscar conversas:', error);
-            }
-        };
-
-        fetchConversations();
-
-        const intervalId = setInterval(fetchConversations, 5000); // Atualiza a cada 5 segundos
-
-        return () => clearInterval(intervalId); // Limpa o intervalo quando o componente é desmontado
-    }, []);
-
-    useEffect(() => {
-        const fetchMessages = async () => {
-            if (selectedConversation) {
-                try {
-                    const response = await getMessagesByConversation(selectedConversation.conversationId);
-                    const sortedMessages = response.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt)); // Ordenar as mensagens
-                    setMessages(sortedMessages);
-                    setShouldScroll(sortedMessages.length > previousMessageCount);
-                    setPreviousMessageCount(sortedMessages.length);
-                } catch (error) {
-                    console.error('Erro ao buscar mensagens:', error);
-                }
-            }
-        };
-
-        const markMessagesAsSeen = async () => {
-            if (selectedConversation) {
-                try {
-                    const receiverMessages = messages.filter(message => !message.sender && !message.seen);
-                    await Promise.all(receiverMessages.map(message => markMessageAsSeen(message.id)));
-                } catch (error) {
-                    console.error('Erro ao marcar mensagens como vistas:', error);
-                }
-            }
-        };
-
-        const intervalId = setInterval(() => {
-            fetchMessages();
-            markMessagesAsSeen();
-        }, 5000); // Atualiza a cada 5 segundos
-
-        return () => clearInterval(intervalId); // Limpa o intervalo quando o componente é desmontado ou quando selectedConversation muda
-    }, [selectedConversation, messages, previousMessageCount]);
-
-    useEffect(() => {
-        if (shouldScroll && messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    const handleConversationSelect = useCallback(async (conversation) => {
+        if (selectedConversation && selectedConversation.conversationId === conversation.conversationId) {
+            return;
         }
-    }, [messages, shouldScroll]);
+        closeConversation();
 
-    const handleConversationSelect = async (conversation) => {
         setSelectedConversation(conversation);
+        navigate(`/chat?conversationId=${conversation.conversationId}`, { replace: true });
+
         try {
             const response = await getMessagesByConversation(conversation.conversationId);
-            const sortedMessages = response.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt)); // Ordenar as mensagens
+            const sortedMessages = response.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt));
             setMessages(sortedMessages);
-            setShouldScroll(true); // Rolar para o final ao abrir uma nova conversa
-            setPreviousMessageCount(sortedMessages.length); // Atualiza a contagem de mensagens
+
+            const isBlockedStatus = await getBlockStatus(conversation.conversationId);
+            const isMutedStatus = await checkIfMuted(conversation.conversationId);
+            setIsBlocked(isBlockedStatus);
+            setIsMuted(isMutedStatus);
         } catch (error) {
             console.error('Erro ao buscar mensagens:', error);
         }
-    };
+    }, [selectedConversation, navigate, closeConversation]);
+
+    const fetchConversations = useCallback(async () => {
+        try {
+            const userConversations = await getConversations();
+            const channelConversations = await getChannelConversations();
+
+            const fetchLastMessageAndNewMessages = async (conversationId) => {
+                const messages = await getMessagesByConversation(conversationId);
+                const sortedMessages = messages.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt));
+                const lastMessage = sortedMessages.length > 0 ? sortedMessages[sortedMessages.length - 1] : null;
+                const newMessagesCount = await countNewMessages(conversationId);
+                const isBlocked = await getBlockStatus(conversationId);
+                return { lastMessage, newMessagesCount, isBlocked };
+            };
+
+            const combinedConversations = await Promise.all([
+                ...userConversations.map(async convo => {
+                    const { lastMessage, newMessagesCount, isBlocked } = await fetchLastMessageAndNewMessages(convo.conversationId);
+                    return {
+                        ...convo,
+                        key: `user-${convo.conversationId}`,
+                        lastMessage: lastMessage ? lastMessage.content : '',
+                        lastMessageTime: lastMessage ? lastMessage.sentAt : null,
+                        newMessagesCount: newMessagesCount || 0,
+                        isBlocked: isBlocked,
+                    };
+                }),
+                ...channelConversations.map(async convo => {
+                    const { lastMessage, newMessagesCount, isBlocked } = await fetchLastMessageAndNewMessages(convo.conversationId);
+                    return {
+                        ...convo,
+                        key: `channel-${convo.conversationId}`,
+                        lastMessage: lastMessage ? lastMessage.content : '',
+                        lastMessageTime: lastMessage ? lastMessage.sentAt : null,
+                        newMessagesCount: newMessagesCount || 0,
+                        isBlocked: isBlocked,
+                    };
+                }),
+            ]);
+
+            combinedConversations.sort((a, b) => {
+                if (a.isBlocked === b.isBlocked) {
+                    return b.newMessagesCount - a.newMessagesCount;
+                }
+                return a.isBlocked - b.isBlocked;
+            });
+
+            setConversations(combinedConversations);
+
+            const params = new URLSearchParams(location.search);
+            const conversationId = params.get('conversationId');
+            if (conversationId) {
+                const selectedConvo = combinedConversations.find(convo => convo.conversationId === conversationId);
+                if (selectedConvo) {
+                    handleConversationSelect(selectedConvo);
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao buscar conversas:', error);
+        }
+    }, [location.search, handleConversationSelect]);
+
+    useEffect(() => {
+        fetchConversations();
+        const intervalId = setInterval(fetchConversations, 1000);
+        return () => clearInterval(intervalId);
+    }, [fetchConversations]);
 
     const handleSendMessage = async () => {
         if (selectedConversation && messageContent) {
@@ -152,11 +151,9 @@ const Chat = () => {
                 try {
                     await sendMessage(selectedConversation.conversationId, messageContent);
                     const response = await getMessagesByConversation(selectedConversation.conversationId);
-                    const sortedMessages = response.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt)); // Ordenar as mensagens
+                    const sortedMessages = response.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt));
                     setMessages(sortedMessages);
                     setMessageContent('');
-                    setShouldScroll(true); // Rolar para o final ao enviar uma mensagem
-                    setPreviousMessageCount(sortedMessages.length); // Atualiza a contagem de mensagens
 
                     setConversations(prevConversations =>
                         prevConversations.map(convo =>
@@ -166,7 +163,7 @@ const Chat = () => {
                         )
                     );
                 } catch (error) {
-                    setNotification('Erro ao enviar mensagem: ' + error.message);
+                    setNotification(error.message);
                     console.error('Erro ao enviar mensagem:', error);
                 }
             }
@@ -177,7 +174,7 @@ const Chat = () => {
         try {
             await deleteMessage(messageId);
             const response = await getMessagesByConversation(selectedConversation.conversationId);
-            const sortedMessages = response.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt)); // Ordenar as mensagens
+            const sortedMessages = response.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt));
             setMessages(sortedMessages);
         } catch (error) {
             console.error('Erro ao deletar mensagem:', error);
@@ -188,19 +185,13 @@ const Chat = () => {
         try {
             await editMessage(messageId, newContent);
             const response = await getMessagesByConversation(selectedConversation.conversationId);
-            const sortedMessages = response.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt)); // Ordenar as mensagens
+            const sortedMessages = response.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt));
             setMessages(sortedMessages);
             setMessageContent('');
-            setEditMessageId(null); // Resetar estado de edição
+            setEditMessageId(null);
         } catch (error) {
             console.error('Erro ao editar mensagem:', error);
         }
-    };
-
-    const closeConversation = () => {
-        setSelectedConversation(null);
-        setMessages([]);
-        setPreviousMessageCount(0); // Resetar a contagem de mensagens
     };
 
     const openChatModal = () => {
@@ -230,8 +221,10 @@ const Chat = () => {
     const handleScroll = () => {
         if (messagesContainerRef.current) {
             const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
-            // Habilitar a rolagem automática somente se o usuário estiver perto do final da lista
-            setShouldScroll(scrollHeight - scrollTop <= clientHeight + 100);
+            const shouldScroll = scrollHeight - scrollTop <= clientHeight + 100;
+            if (shouldScroll) {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }
         }
     };
 
@@ -276,12 +269,42 @@ const Chat = () => {
     const handleBlockChannel = async () => {
         if (selectedConversation) {
             try {
-                await blockChannel(selectedConversation.conversationId);
-                setNotification('Canal bloqueado com sucesso.');
+                const responseMessage = await blockChannel(selectedConversation.conversationId);
+                setNotification(responseMessage);
+                const status = await getBlockStatus(selectedConversation.conversationId);
+                setIsBlocked(status);
                 setShowSettings(false);
             } catch (error) {
-                setNotification('Erro ao bloquear canal: ' + error.message);
+                setNotification(error.message);
                 console.error('Erro ao bloquear canal:', error);
+            }
+        }
+    };
+
+    const handleMuteConversation = async () => {
+        if (selectedConversation) {
+            try {
+                const responseMessage = await toggleMuteConversation(selectedConversation.conversationId);
+                setNotification(responseMessage);
+                const status = await checkIfMuted(selectedConversation.conversationId);
+                setIsMuted(status);
+            } catch (error) {
+                setNotification(error.message);
+                console.error('Erro ao silenciar conversa:', error);
+            }
+        }
+    };
+
+    const handleDeleteConversation = async () => {
+        if (selectedConversation) {
+            try {
+                await deleteConversation(selectedConversation.conversationId);
+                setNotification('Conversa excluída com sucesso.');
+                closeConversation();
+                setShowSettings(false);
+            } catch (error) {
+                setNotification(error.message);
+                console.error('Erro ao excluir conversa:', error);
             }
         }
     };
@@ -295,7 +318,7 @@ const Chat = () => {
             {isMobile && (
                 <MobileHeader
                     title="Mensagens"
-                    buttons={{ chat: true, settings: true }}
+                    buttons={{ chat: true }}
                 />
             )}
             <div className={`chat-container ${isMobile && selectedConversation ? 'mobile-chat-active' : ''}`}>
@@ -305,17 +328,13 @@ const Chat = () => {
                             icon={chatIcon}
                             onClick={openChatModal}
                         />
-                        <h2 className="chat-header-title roboto-medium">Conversas</h2>
-                        <HeaderButton
-                            icon={settingsIcon}
-                            link="/chat-settings"
-                        />
+                        <h2 className="chat-header-title roboto-medium">Conversas</h2>                        
                     </div>
                     <div className="chat-list">
                         {conversations.map((conversation) => (
                             <div
                                 key={conversation.key} 
-                                className={`chat-list-item ${selectedConversation?.conversationId === conversation.conversationId ? 'selected' : ''}`}
+                                className={`chat-list-item ${selectedConversation?.conversationId === conversation.conversationId ? (isBlocked ? 'selected-blocked' : 'selected') : ''}`}
                                 onClick={() => handleConversationSelect(conversation)}
                             >
                                 <img 
@@ -331,6 +350,22 @@ const Chat = () => {
                                     </span>
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                                    {conversation.isBlocked && (
+                                        <span style={{
+                                            backgroundColor: '#DF1414',
+                                            color: 'white',
+                                            borderRadius: '50%',
+                                            width: '20px',
+                                            height: '20px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            marginBottom: '5px',
+                                            fontSize: '10px',
+                                        }}>
+                                            !
+                                        </span>
+                                    )}
                                     {conversation.newMessagesCount > 0 && (
                                         <span style={{
                                             backgroundColor: '#7B33E5',
@@ -358,11 +393,12 @@ const Chat = () => {
                 <div className={`chat-content ${isMobile && selectedConversation ? 'mobile-active' : ''}`}>
                     {showSettings ? (
                         <div className="settings-section">
-                            <HeaderButton
-                                icon={closeIcon}
-                                onClick={handleCloseSettingsClick}
-                                style={{ position: 'absolute', top: '10px', right: '10px' }}
-                            />
+                            <div className="close-icon-container">
+                                <HeaderButton
+                                    icon={closeIcon}
+                                    onClick={handleCloseSettingsClick}
+                                />
+                            </div>
                             <div className="settings-content">
                                 <div className="settings-header">
                                     <img
@@ -374,12 +410,26 @@ const Chat = () => {
                                         <span className="settings-name">{selectedConversation.name}</span>
                                         <span className="settings-nickname">@{selectedConversation.nickname}</span>
                                     </div>
-                                </div>
-                                <div className="settings-actions">
-                                    <StageButton
-                                        text="Bloquear"
-                                        onClick={handleBlockChannel}
-                                    />
+                                    <div className="settings-actions">
+                                        <StageButton
+                                            text={isBlocked ? 'Desbloquear' : 'Bloquear'}
+                                            backgroundColor="#DF1414"
+                                            imageSrc={blockIcon}
+                                            onClick={handleBlockChannel}
+                                        />
+                                        <StageButton
+                                            text={isMuted ? 'Silenciado' : 'Silenciar'}
+                                            backgroundColor="#DF1414"
+                                            imageSrc={muteIcon}
+                                            onClick={handleMuteConversation}
+                                        />
+                                        <StageButton
+                                            text="Excluir chat"
+                                            backgroundColor="#DF1414"
+                                            imageSrc={deleteIcon}
+                                            onClick={handleDeleteConversation}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -407,33 +457,35 @@ const Chat = () => {
                                     />
                                 </div>
                             </div>
-                            <div className="chat-messages" ref={messagesContainerRef} onScroll={handleScroll}>
-                                {messages.map(message => (
-                                    <div
-                                        key={message.id}
-                                        className={`chat-message ${message.sender ? 'chat-message-sender' : 'chat-message-receiver'}`}
-                                        onClick={() => handleMessageClick(message)}
-                                    >
-                                        <div className="message-content">
-                                            {message.content}
-                                            <div className="message-date">{formatDateTime(message.sentAt)}</div>
-                                            <div className={`message-status ${message.sender ? 'sender-status' : 'receiver-status'}`}>
-                                                {message.seen ? 'Visto' : 'Enviada'}
+                            <div className="chat-messages-background">
+                                <div className="chat-messages" ref={messagesContainerRef} onScroll={handleScroll}>
+                                    {messages.map(message => (
+                                        <div
+                                            key={message.id}
+                                            className={`chat-message ${message.sender ? 'chat-message-sender' : 'chat-message-receiver'}`}
+                                            onClick={() => handleMessageClick(message)}
+                                        >
+                                            <div className="message-content">
+                                                {message.content}
+                                                <div className="message-date">{formatDateTime(message.sentAt)}</div>
+                                                <div className={`message-status ${message.sender ? 'sender-status' : 'receiver-status'}`}>
+                                                    {message.seen ? 'Visto' : 'Enviada'}
+                                                </div>
                                             </div>
+                                            {showOptionsMessageId === message.id && (
+                                                <div className="message-options">
+                                                    <div className="delete-option" onClick={() => handleDeleteMessage(message.id)}>
+                                                        Deletar
+                                                    </div>
+                                                    <div className="edit-option" onClick={() => handleEditButtonClick(message)}>
+                                                        Editar
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
-                                        {showOptionsMessageId === message.id && (
-                                            <div className="message-options">
-                                                <div className="delete-option" onClick={() => handleDeleteMessage(message.id)}>
-                                                    Deletar
-                                                </div>
-                                                <div className="edit-option" onClick={() => handleEditButtonClick(message)}>
-                                                    Editar
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                                <div ref={messagesEndRef} />
+                                    ))}
+                                    <div ref={messagesEndRef} />
+                                </div>
                             </div>
                             <div className="chat-input">
                                 <input
@@ -442,9 +494,14 @@ const Chat = () => {
                                     value={messageContent}
                                     onChange={(e) => setMessageContent(e.target.value)}
                                     onKeyDown={handleKeyDown}
+                                    disabled={isBlocked}
                                 />
-                                <button onClick={handleSendMessage}>
-                                    {editMessageId ? 'Editar' : 'Enviar'}
+                                <button 
+                                    onClick={handleSendMessage} 
+                                    disabled={isBlocked} 
+                                    style={isBlocked ? { backgroundColor: '#DF1414' } : {}}
+                                >
+                                    {isBlocked ? 'Chat bloqueado' : editMessageId ? 'Editar' : 'Enviar'}
                                 </button>
                             </div>
                         </>

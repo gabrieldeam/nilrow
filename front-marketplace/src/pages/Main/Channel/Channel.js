@@ -1,7 +1,8 @@
 import React, { memo, useEffect, useState, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { getChannelByNickname, isChannelOwner, isFollowing, followChannel, unfollowChannel, getFollowersCount, getFollowingCount } from '../../../services/channelApi';
-import { checkAuth } from '../../../services/api'; // Adicionada a importação correta
+import { checkAuth } from '../../../services/api';
+import { startConversation } from '../../../services/ChatApi'; // Importar a função startConversation
 import { useNavigate } from 'react-router-dom';
 import MobileHeader from '../../../components/Main/MobileHeader/MobileHeader';
 import LoadingSpinner from '../../../components/UI/LoadingSpinner/LoadingSpinner';
@@ -186,6 +187,16 @@ const Channel = ({ nickname }) => {
         }
     };
 
+    const handleMessageClick = async () => {
+        try {
+            const conversation = await startConversation(channelData.id, ""); // Adiciona o parâmetro de mensagem
+            navigate(`/chat?conversationId=${conversation.id}`); // Passa o conversationId na URL
+        } catch (error) {
+            console.error('Erro ao iniciar conversa:', error);
+        }
+    };
+    
+
     if (!channelData) {
         return <LoadingSpinner />;
     }
@@ -198,11 +209,11 @@ const Channel = ({ nickname }) => {
         : isFollowingChannel
             ? [
                 { text: "Amigos", backgroundColor: "#212121", onClick: handleUnfollowClick },
-                { text: "Mensagem", backgroundColor: "#212121", imageSrc: chatIcon }
+                { text: "Mensagem", backgroundColor: "#212121", imageSrc: chatIcon, onClick: handleMessageClick }
             ]
             : [
                 { text: "Seguir", backgroundColor: "#DF1414", imageSrc: followIcon, onClick: handleFollowClick },
-                { text: "Mensagem", backgroundColor: "#212121", imageSrc: chatIcon }
+                { text: "Mensagem", backgroundColor: "#212121", imageSrc: chatIcon, onClick: handleMessageClick }
             ];
 
     return (

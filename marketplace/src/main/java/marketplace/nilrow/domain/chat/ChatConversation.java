@@ -37,5 +37,26 @@ public class ChatConversation {
 
     private boolean chatDisabled;
 
-    private boolean muted;  // Adicionando a propriedade muted
+    private boolean muted;
+
+    @ManyToOne
+    @JoinColumn(name = "blocked_by_id")
+    private People blockedBy;
+
+    @ManyToOne
+    @JoinColumn(name = "muted_by_id")
+    private People mutedBy;
+
+    @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MutedConversation> mutedConversations;
+
+    public ChatConversation(String id, Channel channel, People people, List<ChatMessage> messages, boolean blocked, boolean chatDisabled, List<MutedConversation> mutedConversations) {
+        this.id = id;
+        this.channel = channel;
+        this.people = people;
+        this.messages = messages;
+        this.blocked = blocked;
+        this.chatDisabled = chatDisabled;
+        this.mutedConversations = mutedConversations;
+    }
 }

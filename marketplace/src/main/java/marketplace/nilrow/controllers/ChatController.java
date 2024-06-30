@@ -1,7 +1,6 @@
 package marketplace.nilrow.controllers;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import marketplace.nilrow.domain.channel.ChannelDTO;
 import marketplace.nilrow.domain.channel.SimpleChannelDTO;
 import marketplace.nilrow.domain.chat.*;
 import marketplace.nilrow.domain.channel.Channel;
@@ -35,17 +34,22 @@ public class ChatController {
     private PeopleRepository peopleRepository;
 
     @PostMapping("/start/{channelId}")
-    public ResponseEntity<ChatConversationDTO> startConversation(@PathVariable String channelId) {
+    public ResponseEntity<ChatConversationDTO> startConversation(@PathVariable String channelId, @RequestBody(required = false) String initialMessage) {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = (User) userDetails;
         People people = peopleRepository.findByUser(user);
         Channel channel = channelService.getChannel(channelId).orElseThrow(() -> new IllegalArgumentException("Channel not found"));
 
         ChatConversation conversation = chatService.startConversation(channel, people);
-        ChatConversationDTO conversationDTO = new ChatConversationDTO(conversation);
 
+        if (initialMessage != null && !initialMessage.trim().isEmpty()) {
+            chatService.sendMessage(conversation, people, initialMessage);
+        }
+
+        ChatConversationDTO conversationDTO = new ChatConversationDTO(conversation);
         return ResponseEntity.ok(conversationDTO);
     }
+
 
     @PostMapping("/send/{conversationId}")
     public ResponseEntity<?> sendMessage(@PathVariable String conversationId, @RequestBody String content) {
@@ -138,10 +142,41 @@ public class ChatController {
     }
 
     @PutMapping("/block/{conversationId}")
-    public ResponseEntity<Void> blockChannel(@PathVariable String conversationId) {
-        ChatConversation conversation = chatService.getConversation(conversationId).orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
-        chatService.blockChannel(conversation);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<String> toggleBlockChannel(@PathVariable String conversationId) {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = (User) userDetails;
+        People requester = peopleRepository.findByUser(user);
+
+        ChatConversation conversation = chatService.getConversation(conversationId)
+                .orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
+        try {
+            boolean isBlocked = chatService.toggleBlockChannel(conversation, requester);
+            String message = isBlocked ? "Chat bloqueado com sucesso" : "Chat desbloqueado com sucesso";
+            return ResponseEntity.ok(message);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/block-status/{conversationId}")
+    public ResponseEntity<Boolean> getBlockStatus(@PathVariable String conversationId) {
+        ChatConversation conversation = chatService.getConversation(conversationId)
+                .orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
+        return ResponseEntity.ok(conversation.isBlocked());
+    }
+
+
+    @GetMapping("/conversation/{conversationId}/is-blocked-by-me")
+    public ResponseEntity<Boolean> isConversationBlockedByMe(@PathVariable String conversationId) {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = (User) userDetails;
+        People requester = peopleRepository.findByUser(user);
+
+        ChatConversation conversation = chatService.getConversation(conversationId)
+                .orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
+        boolean isBlockedByMe = conversation.getBlockedBy() != null && conversation.getBlockedBy().equals(requester);
+
+        return ResponseEntity.ok(isBlockedByMe);
     }
 
     @PutMapping("/disable/{conversationId}")
@@ -216,10 +251,32 @@ public class ChatController {
     }
 
     @PutMapping("/conversation/{conversationId}/mute")
-    public ResponseEntity<Void> muteConversation(@PathVariable String conversationId) {
-        ChatConversation conversation = chatService.getConversation(conversationId).orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
-        chatService.muteConversation(conversation);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<String> toggleMuteConversation(@PathVariable String conversationId) {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = (User) userDetails;
+        People requester = peopleRepository.findByUser(user);
+
+        ChatConversation conversation = chatService.getConversation(conversationId)
+                .orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
+
+        chatService.toggleMuteConversation(conversation, requester);
+        boolean isMuted = chatService.isConversationMutedByUser(conversation, requester);
+        String message = isMuted ? "Chat silenciado com sucesso" : "Chat não está mais silenciado";
+
+        return ResponseEntity.ok(message);
+    }
+
+    @GetMapping("/conversation/{conversationId}/is-muted-by-me")
+    public ResponseEntity<Boolean> isConversationMutedByMe(@PathVariable String conversationId) {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = (User) userDetails;
+        People requester = peopleRepository.findByUser(user);
+
+        ChatConversation conversation = chatService.getConversation(conversationId)
+                .orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
+        boolean isMutedByMe = chatService.isConversationMutedByUser(conversation, requester);
+
+        return ResponseEntity.ok(isMutedByMe);
     }
 
     @GetMapping("/conversation/{conversationId}/messages/search")
@@ -229,14 +286,4 @@ public class ChatController {
         return ResponseEntity.ok(messages);
     }
 
-    @GetMapping("/blocked-conversations")
-    public ResponseEntity<List<BlockedConversationDTO>> getBlockedConversations() {
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        User user = (User) userDetails;
-        People people = peopleRepository.findByUser(user);
-
-        List<BlockedConversationDTO> blockedConversations = chatService.getBlockedConversations(people);
-
-        return ResponseEntity.ok(blockedConversations);
-    }
 }

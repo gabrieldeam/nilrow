@@ -11,7 +11,11 @@ const chatApi = axios.create({
 // POST /chats/start/{channelId}
 export const startConversation = async (channelId, content) => {
     try {
-        const response = await chatApi.post(`/chats/start/${channelId}`, content );
+        const response = await chatApi.post(`/chats/start/${channelId}`, content, {
+            headers: {
+                'Content-Type': 'text/plain'
+            }
+        });
         return response.data;
     } catch (error) {
         throw error;
@@ -28,7 +32,11 @@ export const sendMessage = async (conversationId, content) => {
         });
         return response.data;
     } catch (error) {
-        throw error;
+        if (error.response && error.response.data) {
+            throw new Error(error.response.data); // Lança a mensagem de erro do corpo da resposta
+        } else {
+            throw new Error('Erro desconhecido ao enviar a mensagem.');
+        }
     }
 };
 
@@ -93,10 +101,45 @@ export const listChannels = async () => {
     }
 };
 
+// GET /chats/block-status/{conversationId}
+export const getBlockStatus = async (conversationId) => {
+    try {
+        const response = await chatApi.get(`/chats/block-status/${conversationId}`);
+        return response.data; // Supondo que a resposta seja um boolean
+    } catch (error) {
+        throw error;
+    }
+};
+
 // PUT /chats/block/{conversationId}
 export const blockChannel = async (conversationId) => {
     try {
-        await chatApi.put(`/chats/block/${conversationId}`);
+        const response = await chatApi.put(`/chats/block/${conversationId}`);
+        return response.data; // Retorne a resposta do backend
+    } catch (error) {
+        if (error.response && error.response.data) {
+            throw new Error(error.response.data); // Lança a mensagem de erro do corpo da resposta
+        } else {
+            throw new Error('Erro desconhecido ao bloquear o canal.');
+        }
+    }
+};
+
+// Função para chamar o endpoint de alternar o silêncio
+export const toggleMuteConversation = async (conversationId) => {
+    try {
+        const response = await chatApi.put(`/chats/conversation/${conversationId}/mute`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+// Função para verificar se a conversa está silenciada
+export const checkIfMuted = async (conversationId) => {
+    try {
+        const response = await chatApi.get(`/chats/conversation/${conversationId}/is-muted-by-me`);
+        return response.data;
     } catch (error) {
         throw error;
     }
@@ -145,18 +188,6 @@ export const getMessagesByConversation = async (conversationId) => {
 export const markAllMessagesAsRead = async (conversationId) => {
     try {
         await chatApi.put(`/chats/conversation/${conversationId}/messages/read`);
-    } catch (error) {
-        throw error;
-    }
-};
-
-// GET /chats/conversation/{conversationId}/messages/search
-export const searchMessagesInConversation = async (conversationId, query) => {
-    try {
-        const response = await chatApi.get(`/chats/conversation/${conversationId}/messages/search`, {
-            params: { query }
-        });
-        return response.data;
     } catch (error) {
         throw error;
     }
