@@ -6,7 +6,7 @@ import MobileHeader from '../../../components/Main/MobileHeader/MobileHeader';
 import SubHeader from '../../../components/Main/SubHeader/SubHeader';
 import Card from '../../../components/UI/Card/Card';
 import SeeData from '../../../components/UI/SeeData/SeeData';
-import ConfirmationModal from '../../../components/UI/ConfirmationModal/ConfirmationModal'; // Importando o modal de confirmação
+import ConfirmationModal from '../../../components/UI/ConfirmationModal/ConfirmationModal';
 import { getAcceptsSms, updateAcceptsSms, deleteUser } from '../../../services/privacyApi';
 
 const Privacy = () => {

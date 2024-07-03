@@ -17,33 +17,19 @@ public class AboutService {
     @Autowired
     private AboutRepository aboutRepository;
 
-    @Autowired
-    private CategoryRepository categoryRepository;
-
-    @Autowired
-    private FAQRepository faqRepository;
-
     public About createAbout(About about) {
         return aboutRepository.save(about);
     }
 
-    public Optional<About> getAboutByChannel(Channel channel) {
-        return aboutRepository.findByChannel(channel);
+    public Optional<About> getAboutByChannelId(String channelId) {
+        return aboutRepository.findByChannelId(channelId);
     }
 
-    public List<Category> getAllCategories() {
-        return categoryRepository.findAll();
+    public Optional<About> getAboutById(Long id) {
+        return aboutRepository.findById(id);
     }
 
-    public Category createCategory(Category category) {
-        return categoryRepository.save(category);
-    }
-
-    public FAQ addFAQ(FAQ faq) {
-        return faqRepository.save(faq);
-    }
-
-    public void deleteFAQ(Long faqId) {
-        faqRepository.deleteById(faqId);
+    public void deleteAbout(Long id) {
+        aboutRepository.deleteById(id);
     }
 }

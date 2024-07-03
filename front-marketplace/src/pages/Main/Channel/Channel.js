@@ -122,7 +122,7 @@ const Channel = ({ nickname }) => {
     }, [navigate]);
 
     const handleAboutChannel = useCallback(() => {
-        navigate(`/about-channel`);
+        navigate(`/about`);
     }, [navigate]);
 
     const handleImageClick = () => {

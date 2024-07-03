@@ -172,7 +172,7 @@ const MyChannel = () => {
                         icon={editAboutIcon}
                         title="Sobre"
                         paragraph="Informações adicionais sobre o canal."
-                        onClick={() => navigate('/depois-colocar')}
+                        onClick={() => navigate('/about-channel')}
                     />
                     <StepButton
                         icon={promoterIcon}

@@ -66,12 +66,11 @@ public class AuthenticationController {
 
             CookieUtil.addAuthCookie(response, token);
 
-            // Enviar email com informações de login se location e device estiverem presentes
+            // Enviar email com informações de login se location e device estiverem presentes de forma assíncrona
             if (data.location() != null && data.device() != null) {
                 User user = (User) auth.getPrincipal();
                 People people = peopleRepository.findByUser(user);
-                String emailBody = emailService.createLoginNotificationBody(data.location(), data.device());
-                emailService.sendHtmlEmail(people.getEmail(), "Novo Login Detectado", emailBody);
+                emailService.sendLoginNotificationEmail(people.getEmail(), data.location(), data.device());
             }
 
             return ResponseEntity.ok().build();
@@ -91,12 +90,11 @@ public class AuthenticationController {
 
             CookieUtil.addAuthCookie(response, token);
 
-            // Enviar email com informações de login se location e device estiverem presentes
+            // Enviar email com informações de login se location e device estiverem presentes de forma assíncrona
             if (data.location() != null && data.device() != null) {
                 User user = (User) auth.getPrincipal();
                 People people = peopleRepository.findByUser(user);
-                String emailBody = emailService.createLoginNotificationBody(data.location(), data.device());
-                emailService.sendHtmlEmail(people.getEmail(), "Novo Login Detectado", emailBody);
+                emailService.sendLoginNotificationEmail(people.getEmail(), data.location(), data.device());
             }
 
             return ResponseEntity.ok().build();
