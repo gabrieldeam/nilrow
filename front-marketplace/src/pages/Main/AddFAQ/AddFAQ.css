@@ -1,0 +1,33 @@
+.add-faq-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #000;
+    color: #fff;
+    padding-top: 150px;
+    padding-bottom: 80px;
+    box-sizing: border-box;
+}
+
+.add-faq-container {
+    width: 100%;
+    max-width: 419px;
+    padding: 6px;
+    box-sizing: border-box;
+    margin-top: auto; 
+    margin-bottom: auto; 
+}
+
+.add-faq-confirmationButton-space {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+
+@media (max-width: 768px) {
+    .add-faq-page {
+        padding-top: 104px;
+    }
+}

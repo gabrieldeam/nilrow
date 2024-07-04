@@ -22,7 +22,7 @@ const EditAbout = () => {
     }, [navigate]);
 
     return (
-<div className="edit-about-page">
+        <div className="edit-about-page">
             <Helmet>
                 <title>Editar Informações</title>
                 <meta name="description" content="Edite seu perfil na Nilrow." />

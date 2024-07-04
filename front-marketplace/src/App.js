@@ -48,6 +48,8 @@ const StoreSearch = lazy(() => import('./pages/Main/StoreSearch/StoreSearch'));
 const MyFollowing = lazy(() => import('./pages/Main/MyFollowing/MyFollowing'));
 const ChannelFollow = lazy(() => import('./pages/Main/ChannelFollow/ChannelFollow'));
 const EditAbout = lazy(() => import('./pages/Main/EditAbout/EditAbout'));
+const AddFAQ = lazy(() => import('./pages/Main/AddFAQ/AddFAQ'));
+const EditFAQ = lazy(() => import('./pages/Main/EditFAQ/EditFAQ'));
 
 const AppContent = () => {
     const { isAuthenticated } = useAuth();
@@ -130,12 +132,14 @@ const AppContent = () => {
                     <Route path="/edit-channel/:id" element={<ProtectedRoute element={<EditChannel />} />} />
                     <Route path="/*" element={<NicknameRoute />} />
                     <Route path="/my-channel" element={<ProtectedRoute element={<MyChannel />} />} />
-                    <Route path="/about-channel" element={<AboutChannel />} />
+                    <Route path="/about-channel" element={<ProtectedRoute element={<AboutChannel />} />}/>
                     <Route path="/store-search" element={<ProtectedRoute element={<StoreSearch />} />} />
                     <Route path="/my-following" element={<ProtectedRoute element={<MyFollowing />} />} />
                     <Route path="/channel-follow/:nickname" element={<ChannelFollow />}  />
-                    <Route path="/about" element={<ProtectedRoute element={<About />} />} />
+                    <Route path="/about" element={<About />} />
                     <Route path="/edit-about" element={<ProtectedRoute element={<EditAbout/>} />} />
+                    <Route path="/add-faq" element={<ProtectedRoute element={<AddFAQ />} />} />
+                    <Route path="/edit-faq" element={<ProtectedRoute element={<EditFAQ/>} />} />
                 </Routes>
             </Suspense>
             {renderFooter()}

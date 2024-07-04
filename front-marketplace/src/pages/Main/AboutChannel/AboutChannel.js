@@ -27,9 +27,6 @@ const AboutChannel = () => {
             <div className="about-channel-container">
                 <div className="about-channel-header">
                     <SubHeader title="Sobre" handleBack={handleBack} />
-                    <div className="delete-link desktop-only">
-                        <button className="delete-button" >Deletar conta</button>
-                    </div>
                 </div>
                 <Card   title="Informações"
                         rightLink={{ href: "/edit-about", text: "Editar informações" }}>
@@ -58,20 +55,17 @@ const AboutChannel = () => {
                     </div>
                 </Card>
                 <Card   title="FAQ"
-                        rightLink={{ href: "/edit-about", text: "+ Adicionar perguntas e respostas" }}>
+                        rightLink={{ href: "/add-faq", text: "+ Adicionar perguntas e respostas" }}>
                     <div className="about-channel-see-data-wrapper">
                         <SeeData 
                             title="Pergunta aqui" 
                             content="Resposta aqui" 
                             stackContent={true}
                             linkText="Alterar"
-                            link="#"                     
+                            link="/edit-faq"                     
                         />                        
                     </div>
                 </Card>
-                <div className="delete-link mobile-only">
-                    <button className="delete-button">Deletar conta</button>
-                </div>
             </div>
         </div>
     );
