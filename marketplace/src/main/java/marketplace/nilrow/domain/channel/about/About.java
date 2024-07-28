@@ -23,10 +23,6 @@ public class About {
     @JoinColumn(name = "channel_id", nullable = false)
     private Channel channel;
 
-    @ManyToOne
-    @JoinColumn(name = "category_id", nullable = true)
-    private Category category;
-
     @Column(columnDefinition = "TEXT")
     private String aboutText;
 

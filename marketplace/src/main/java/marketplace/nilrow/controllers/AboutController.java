@@ -4,18 +4,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import marketplace.nilrow.domain.channel.*;
 import marketplace.nilrow.domain.channel.about.About;
 import marketplace.nilrow.domain.channel.about.AboutDTO;
-import marketplace.nilrow.domain.channel.about.Category;
-import marketplace.nilrow.domain.channel.about.FAQ;
-import marketplace.nilrow.domain.user.User;
 import marketplace.nilrow.repositories.ChannelRepository;
 import marketplace.nilrow.services.AboutService;
-import marketplace.nilrow.services.ChannelService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Optional;
 
 @RestController
