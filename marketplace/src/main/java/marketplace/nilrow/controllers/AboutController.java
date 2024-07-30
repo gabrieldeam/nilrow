@@ -1,9 +1,9 @@
 package marketplace.nilrow.controllers;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import marketplace.nilrow.domain.channel.*;
+import marketplace.nilrow.domain.channel.Channel;
 import marketplace.nilrow.domain.channel.about.About;
-import marketplace.nilrow.domain.channel.about.AboutDTO;
+import marketplace.nilrow.domain.channel.about.dto.AboutDTO;
 import marketplace.nilrow.repositories.ChannelRepository;
 import marketplace.nilrow.services.AboutService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +14,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/about")
-@Tag(name = "About", description = "Operações relacionadas ao about")
+@Tag(name = "Channel", description = "Operações relacionadas ao canal")
 public class AboutController {
 
     @Autowired
@@ -32,15 +32,25 @@ public class AboutController {
 
         About about = new About();
         about.setChannel(channelOpt.get());
-        about.setAboutText(aboutDTO.getAboutText());
-        about.setStorePolicies(aboutDTO.getStorePolicies());
-        about.setExchangesAndReturns(aboutDTO.getExchangesAndReturns());
-        about.setAdditionalInfo(aboutDTO.getAdditionalInfo());
+
+        // Apenas atualize se o valor não for nulo
+        if (aboutDTO.getAboutText() != null) {
+            about.setAboutText(aboutDTO.getAboutText());
+        }
+        if (aboutDTO.getStorePolicies() != null) {
+            about.setStorePolicies(aboutDTO.getStorePolicies());
+        }
+        if (aboutDTO.getExchangesAndReturns() != null) {
+            about.setExchangesAndReturns(aboutDTO.getExchangesAndReturns());
+        }
+        if (aboutDTO.getAdditionalInfo() != null) {
+            about.setAdditionalInfo(aboutDTO.getAdditionalInfo());
+        }
 
         About savedAbout = aboutService.createAbout(about);
         AboutDTO responseDTO = new AboutDTO(
                 savedAbout.getId(),
-                savedAbout.getChannel().getId(),  // Aqui garantimos que o ID seja tratado como String
+                savedAbout.getChannel().getId(),
                 savedAbout.getAboutText(),
                 savedAbout.getStorePolicies(),
                 savedAbout.getExchangesAndReturns(),
@@ -59,7 +69,7 @@ public class AboutController {
         About about = aboutOpt.get();
         AboutDTO aboutDTO = new AboutDTO(
                 about.getId(),
-                about.getChannel().getId(),  // Aqui garantimos que o ID seja tratado como String
+                about.getChannel().getId(),
                 about.getAboutText(),
                 about.getStorePolicies(),
                 about.getExchangesAndReturns(),
@@ -70,22 +80,32 @@ public class AboutController {
     }
 
     @PutMapping("/edit/{id}")
-    public ResponseEntity<AboutDTO> editAbout(@PathVariable Long id, @RequestBody AboutDTO aboutDTO) {
+    public ResponseEntity<AboutDTO> editAbout(@PathVariable String id, @RequestBody AboutDTO aboutDTO) {
         Optional<About> aboutOpt = aboutService.getAboutById(id);
         if (aboutOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
         About about = aboutOpt.get();
-        about.setAboutText(aboutDTO.getAboutText());
-        about.setStorePolicies(aboutDTO.getStorePolicies());
-        about.setExchangesAndReturns(aboutDTO.getExchangesAndReturns());
-        about.setAdditionalInfo(aboutDTO.getAdditionalInfo());
+
+        // Atualize apenas os campos não nulos do DTO
+        if (aboutDTO.getAboutText() != null) {
+            about.setAboutText(aboutDTO.getAboutText());
+        }
+        if (aboutDTO.getStorePolicies() != null) {
+            about.setStorePolicies(aboutDTO.getStorePolicies());
+        }
+        if (aboutDTO.getExchangesAndReturns() != null) {
+            about.setExchangesAndReturns(aboutDTO.getExchangesAndReturns());
+        }
+        if (aboutDTO.getAdditionalInfo() != null) {
+            about.setAdditionalInfo(aboutDTO.getAdditionalInfo());
+        }
 
         About updatedAbout = aboutService.createAbout(about);
         AboutDTO responseDTO = new AboutDTO(
                 updatedAbout.getId(),
-                updatedAbout.getChannel().getId(),  // Aqui garantimos que o ID seja tratado como String
+                updatedAbout.getChannel().getId(),
                 updatedAbout.getAboutText(),
                 updatedAbout.getStorePolicies(),
                 updatedAbout.getExchangesAndReturns(),
@@ -95,7 +115,7 @@ public class AboutController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Void> deleteAbout(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteAbout(@PathVariable String id) {
         aboutService.deleteAbout(id);
         return ResponseEntity.ok().build();
     }

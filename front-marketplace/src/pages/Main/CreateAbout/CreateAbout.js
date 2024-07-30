@@ -9,10 +9,10 @@ import StageButton from '../../../components/UI/Buttons/StageButton/StageButton'
 import Notification from '../../../components/UI/Notification/Notification';
 import { NotificationContext } from '../../../context/NotificationContext';
 import { getMyChannel } from '../../../services/channelApi';
-import { getAboutByChannelId, editAbout } from '../../../services/ChannelAboutApi';
-import './EditAbout.css';
+import { createAbout } from '../../../services/ChannelAboutApi';
+import './CreateAbout.css';
 
-const EditAbout = () => {
+const CreateAbout = () => {
     const [error, setError] = useState('');
     const [showNotification, setShowNotification] = useState(false);
     const { setMessage } = useContext(NotificationContext);
@@ -22,7 +22,7 @@ const EditAbout = () => {
         exchangesAndReturns: '',
         additionalInfo: ''
     });
-    const [aboutId, setAboutId] = useState('');
+    const [channelId, setChannelId] = useState('');
     const navigate = useNavigate();
     const isMobile = window.innerWidth <= 768;
 
@@ -34,16 +34,7 @@ const EditAbout = () => {
         const fetchChannelData = async () => {
             try {
                 const myChannel = await getMyChannel();
-                const aboutInfo = await getAboutByChannelId(myChannel.id);
-                if (aboutInfo) {
-                    setAboutId(aboutInfo.id); // Definindo o aboutId
-                    setAboutData({
-                        aboutText: aboutInfo.aboutText || '',
-                        storePolicies: aboutInfo.storePolicies || '',
-                        exchangesAndReturns: aboutInfo.exchangesAndReturns || '',
-                        additionalInfo: aboutInfo.additionalInfo || ''
-                    });
-                }
+                setChannelId(myChannel.id); // Definindo o channelId
             } catch (error) {
                 console.error('Erro ao buscar dados do canal:', error);
                 setError('Erro ao buscar dados do canal');
@@ -65,33 +56,28 @@ const EditAbout = () => {
     const handleSave = async (e) => {
         e.preventDefault();
         try {
-            if (aboutId) {
-                await editAbout(aboutId, { ...aboutData });
-                setMessage('Informações editadas com sucesso!');
-            } else {
-                setError('Não foi possível identificar o registro de informações para edição.');
-                setShowNotification(true);
-            }
+            await createAbout({ channelId, ...aboutData });
+            setMessage('Informações criadas com sucesso!');
             navigate(-1);
         } catch (error) {
-            console.error('Erro ao salvar informações:', error);
-            setError('Erro ao salvar informações');
+            console.error('Erro ao criar informações:', error);
+            setError('Erro ao criar informações');
             setShowNotification(true);
         }
     };
 
     return (
-        <div className="edit-about-page">
+        <div className="create-about-page">
             <Helmet>
-                <title>Editar Informações</title>
-                <meta name="description" content="Edite seu perfil na Nilrow." />
+                <title>Criar Informações</title>
+                <meta name="description" content="Criar seu perfil na Nilrow." />
             </Helmet>
             {showNotification && <Notification message={error} onClose={() => setShowNotification(false)} />}
             {isMobile && (
-                <MobileHeader title="Editar Informações" buttons={{ close: true }} handleBack={handleBack} />
+                <MobileHeader title="Criar Informações" buttons={{ close: true }} handleBack={handleBack} />
             )}
-            <div className="edit-about-container">
-                <SubHeader title="Editar Informações" handleBack={handleBack} />
+            <div className="create-about-container">
+                <SubHeader title="Criar Informações" handleBack={handleBack} />
                 <form onSubmit={handleSave}>
                     <Card title="Sobre o seu canal">
                         <CustomInput 
@@ -129,7 +115,7 @@ const EditAbout = () => {
                             isTextarea={true} 
                         />                
                     </Card>
-                    <div style={{ width: '100%' }} className="edit-about-confirmationButton-space">
+                    <div style={{ width: '100%' }} className="create-about-confirmationButton-space">
                         <StageButton
                             text="Salvar"
                             backgroundColor={"#7B33E5"}
@@ -142,4 +128,4 @@ const EditAbout = () => {
     );
 };
 
-export default memo(EditAbout);
+export default memo(CreateAbout);

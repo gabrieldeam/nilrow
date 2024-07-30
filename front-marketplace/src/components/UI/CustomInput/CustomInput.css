@@ -15,6 +15,11 @@
     align-items: center;
 }
 
+.textarea-wrapper {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
 .input-prefix {
     position: absolute;
     left: 14px;
@@ -35,6 +40,11 @@
     border-radius: 4px;
     flex: 1;
     transition: border-color 0.3s;
+}
+
+.custom-textarea {
+    height: 100px; /* Altura maior para textarea */
+    resize: vertical; /* Permite redimensionamento vertical */
 }
 
 .custom-input.valid {

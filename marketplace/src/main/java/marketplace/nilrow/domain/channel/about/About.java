@@ -16,8 +16,8 @@ import java.util.List;
 public class About {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @OneToOne
     @JoinColumn(name = "channel_id", nullable = false)

@@ -1,7 +1,7 @@
 package marketplace.nilrow.services;
 
 import marketplace.nilrow.domain.channel.about.About;
-import marketplace.nilrow.repositories.*;
+import marketplace.nilrow.repositories.AboutRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,11 +21,11 @@ public class AboutService {
         return aboutRepository.findByChannelId(channelId);
     }
 
-    public Optional<About> getAboutById(Long id) {
+    public Optional<About> getAboutById(String id) {
         return aboutRepository.findById(id);
     }
 
-    public void deleteAbout(Long id) {
+    public void deleteAbout(String id) {
         aboutRepository.deleteById(id);
     }
 }

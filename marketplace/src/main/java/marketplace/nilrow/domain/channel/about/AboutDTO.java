@@ -1,4 +1,4 @@
-package marketplace.nilrow.domain.channel.about;
+package marketplace.nilrow.domain.channel.about.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AboutDTO {
-    private Long id;
+    private String id;
     private String channelId;
     private String aboutText;
     private String storePolicies;

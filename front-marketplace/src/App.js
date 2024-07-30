@@ -48,6 +48,7 @@ const StoreSearch = lazy(() => import('./pages/Main/StoreSearch/StoreSearch'));
 const MyFollowing = lazy(() => import('./pages/Main/MyFollowing/MyFollowing'));
 const ChannelFollow = lazy(() => import('./pages/Main/ChannelFollow/ChannelFollow'));
 const EditAbout = lazy(() => import('./pages/Main/EditAbout/EditAbout'));
+const CreateAbout = lazy(() => import('./pages/Main/CreateAbout/CreateAbout'));
 const AddFAQ = lazy(() => import('./pages/Main/AddFAQ/AddFAQ'));
 const EditFAQ = lazy(() => import('./pages/Main/EditFAQ/EditFAQ'));
 
@@ -138,6 +139,7 @@ const AppContent = () => {
                     <Route path="/channel-follow/:nickname" element={<ChannelFollow />}  />
                     <Route path="/about" element={<About />} />
                     <Route path="/edit-about" element={<ProtectedRoute element={<EditAbout/>} />} />
+                    <Route path="/create-about" element={<ProtectedRoute element={<CreateAbout/>} />} />
                     <Route path="/add-faq" element={<ProtectedRoute element={<AddFAQ />} />} />
                     <Route path="/edit-faq" element={<ProtectedRoute element={<EditFAQ/>} />} />
                 </Routes>
