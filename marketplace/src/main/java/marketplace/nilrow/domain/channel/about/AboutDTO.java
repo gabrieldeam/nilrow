@@ -1,4 +1,4 @@
-package marketplace.nilrow.domain.channel.about.dto;
+package marketplace.nilrow.domain.channel.about;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

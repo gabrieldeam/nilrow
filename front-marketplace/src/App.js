@@ -137,11 +137,11 @@ const AppContent = () => {
                     <Route path="/store-search" element={<ProtectedRoute element={<StoreSearch />} />} />
                     <Route path="/my-following" element={<ProtectedRoute element={<MyFollowing />} />} />
                     <Route path="/channel-follow/:nickname" element={<ChannelFollow />}  />
-                    <Route path="/about" element={<About />} />
+                    <Route path="/:nickname/about" element={<About/>} />
                     <Route path="/edit-about" element={<ProtectedRoute element={<EditAbout/>} />} />
                     <Route path="/create-about" element={<ProtectedRoute element={<CreateAbout/>} />} />
                     <Route path="/add-faq" element={<ProtectedRoute element={<AddFAQ />} />} />
-                    <Route path="/edit-faq" element={<ProtectedRoute element={<EditFAQ/>} />} />
+                    <Route path="/edit-faq/:id" element={<ProtectedRoute element={<EditFAQ/>} />} />
                 </Routes>
             </Suspense>
             {renderFooter()}

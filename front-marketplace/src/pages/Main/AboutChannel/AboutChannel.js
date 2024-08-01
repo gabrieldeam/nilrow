@@ -6,11 +6,12 @@ import SubHeader from '../../../components/Main/SubHeader/SubHeader';
 import Card from '../../../components/UI/Card/Card';
 import SeeData from '../../../components/UI/SeeData/SeeData';
 import { getMyChannel } from '../../../services/channelApi';
-import { getAboutByChannelId } from '../../../services/ChannelAboutApi';
+import { getAboutByChannelId, getFAQsByAboutId } from '../../../services/ChannelAboutApi';
 import './AboutChannel.css';
 
 const AboutChannel = () => {
     const [aboutInfo, setAboutInfo] = useState(null);
+    const [faqs, setFaqs] = useState([]);
     const [loading, setLoading] = useState(true);
     const isMobile = window.innerWidth <= 768;
     const navigate = useNavigate();
@@ -25,6 +26,11 @@ const AboutChannel = () => {
                 const myChannel = await getMyChannel();
                 const aboutData = await getAboutByChannelId(myChannel.id);
                 setAboutInfo(aboutData || null);
+
+                if (aboutData && aboutData.id) {
+                    const faqsData = await getFAQsByAboutId(aboutData.id);
+                    setFaqs(faqsData);
+                }
             } catch (error) {
                 console.error('Erro ao buscar dados do canal:', error);
             } finally {
@@ -88,13 +94,20 @@ const AboutChannel = () => {
                     rightLink={{ href: "/add-faq", text: "+ Adicionar perguntas e respostas" }}
                 >
                     <div className="about-channel-see-data-wrapper">
-                        <SeeData 
-                            title="Pergunta aqui" 
-                            content="Resposta aqui" 
-                            stackContent={true}
-                            linkText="Alterar"
-                            link="/edit-faq"                     
-                        />                        
+                        {faqs.length > 0 ? (
+                            faqs.map(faq => (
+                                <SeeData 
+                                    key={faq.id}
+                                    title={faq.question} 
+                                    content={faq.answer} 
+                                    stackContent={true}
+                                    linkText="Alterar"
+                                    link={`/edit-faq/${faq.id}`}                     
+                                />
+                            ))
+                        ) : (
+                            <div>Nenhuma FAQ disponível.</div>
+                        )}
                     </div>
                 </Card>
             </div>

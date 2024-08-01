@@ -3,11 +3,14 @@ package marketplace.nilrow.controllers;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import marketplace.nilrow.domain.channel.Channel;
 import marketplace.nilrow.domain.channel.about.About;
-import marketplace.nilrow.domain.channel.about.dto.AboutDTO;
+import marketplace.nilrow.domain.channel.about.AboutDTO;
 import marketplace.nilrow.repositories.ChannelRepository;
 import marketplace.nilrow.services.AboutService;
+import marketplace.nilrow.services.ChannelService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
@@ -22,6 +25,9 @@ public class AboutController {
 
     @Autowired
     private ChannelRepository channelRepository;
+
+    @Autowired
+    private ChannelService channelService;
 
     @PostMapping("/create")
     public ResponseEntity<AboutDTO> createAbout(@RequestBody AboutDTO aboutDTO) {
@@ -57,6 +63,24 @@ public class AboutController {
                 savedAbout.getAdditionalInfo()
         );
         return ResponseEntity.ok(responseDTO);
+    }
+
+    @GetMapping("/my-channel")
+    public ResponseEntity<String> getMyChannelAboutId() {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String username = userDetails.getUsername();
+
+        Optional<Channel> channelOpt = channelService.getChannelByPeopleUsername(username);
+        if (channelOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Optional<About> aboutOpt = aboutService.getAboutByChannel(channelOpt.get());
+        if (aboutOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(aboutOpt.get().getId());
     }
 
     @GetMapping("/{channelId}")

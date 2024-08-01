@@ -1,5 +1,6 @@
 package marketplace.nilrow.services;
 
+import marketplace.nilrow.domain.channel.Channel;
 import marketplace.nilrow.domain.channel.about.About;
 import marketplace.nilrow.repositories.AboutRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,5 +28,9 @@ public class AboutService {
 
     public void deleteAbout(String id) {
         aboutRepository.deleteById(id);
+    }
+
+    public Optional<About> getAboutByChannel(Channel channel) {
+        return aboutRepository.findByChannel(channel);
     }
 }

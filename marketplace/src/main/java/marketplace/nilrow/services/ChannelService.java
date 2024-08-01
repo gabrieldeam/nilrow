@@ -55,4 +55,8 @@ public class ChannelService {
         channel.setActive(active);
         channelRepository.save(channel);
     }
+
+    public Optional<Channel> getChannelByPeopleUsername(String username) {
+        return channelRepository.findByPeopleUserNickname(username);
+    }
 }

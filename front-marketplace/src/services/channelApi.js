@@ -213,4 +213,25 @@ export const getMyFollowingChannels = async (page = 0, size = 10) => {
     }
 };
 
+// GET /channels/nickname/{nickname}/about
+export const getAboutByNickname = async (nickname) => {
+    try {
+        const response = await channelApi.get(`/channels/nickname/${nickname}/about`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+// GET /channels/nickname/{nickname}/faqs
+export const getFAQsByNickname = async (nickname) => {
+    try {
+        const response = await channelApi.get(`/channels/nickname/${nickname}/faqs`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+
 export default channelApi;

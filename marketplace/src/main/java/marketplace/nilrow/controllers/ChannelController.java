@@ -3,17 +3,21 @@ package marketplace.nilrow.controllers;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import marketplace.nilrow.domain.channel.Channel;
 import marketplace.nilrow.domain.channel.ChannelDTO;
+import marketplace.nilrow.domain.channel.about.About;
+import marketplace.nilrow.domain.channel.about.FAQDTO;
+import marketplace.nilrow.domain.channel.about.AboutDTO;
 import marketplace.nilrow.domain.people.People;
 import marketplace.nilrow.domain.user.User;
 import marketplace.nilrow.repositories.ChannelRepository;
 import marketplace.nilrow.repositories.PeopleRepository;
 import marketplace.nilrow.services.ChannelService;
+import marketplace.nilrow.services.AboutService;
+import marketplace.nilrow.services.FAQService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,6 +27,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -40,8 +45,61 @@ public class ChannelController {
     @Autowired
     private ChannelService channelService;
 
+    @Autowired
+    private AboutService aboutService;
+
+    @Autowired
+    private FAQService faqService;
+
     private static final String UPLOAD_DIR = System.getProperty("user.dir") + "/uploads/";
     private static final String DEFAULT_IMAGE = "/uploads/25990a43-5546-4b25-aa4d-67da7de149af_defaultImage.png";
+
+    @GetMapping("/nickname/{nickname}/about")
+    public ResponseEntity<AboutDTO> getAboutByNickname(@PathVariable String nickname) {
+        Optional<Channel> channelOpt = channelService.getChannelByNickname(nickname);
+        if (channelOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Channel channel = channelOpt.get();
+        Optional<About> aboutOpt = aboutService.getAboutByChannel(channel);
+        if (aboutOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        About about = aboutOpt.get();
+        AboutDTO aboutDTO = new AboutDTO(
+                about.getId(),
+                about.getChannel().getId(),
+                about.getAboutText(),
+                about.getStorePolicies(),
+                about.getExchangesAndReturns(),
+                about.getAdditionalInfo()
+        );
+
+        return ResponseEntity.ok(aboutDTO);
+    }
+
+    @GetMapping("/nickname/{nickname}/faqs")
+    public ResponseEntity<List<FAQDTO>> getFAQsByNickname(@PathVariable String nickname) {
+        Optional<Channel> channelOpt = channelService.getChannelByNickname(nickname);
+        if (channelOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Channel channel = channelOpt.get();
+        Optional<About> aboutOpt = aboutService.getAboutByChannelId(channel.getId());
+        if (aboutOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        About about = aboutOpt.get();
+        List<FAQDTO> faqDTOs = about.getFaqs().stream()
+                .map(faq -> new FAQDTO(faq.getId(), faq.getQuestion(), faq.getAnswer(), about.getId()))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(faqDTOs);
+    }
 
     @GetMapping
     public ResponseEntity<List<ChannelDTO>> getChannels() {

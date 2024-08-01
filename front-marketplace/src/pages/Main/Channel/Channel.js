@@ -2,7 +2,7 @@ import React, { memo, useEffect, useState, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { getChannelByNickname, isChannelOwner, isFollowing, followChannel, unfollowChannel, getFollowersCount, getFollowingCount } from '../../../services/channelApi';
 import { checkAuth } from '../../../services/api';
-import { startConversation } from '../../../services/ChatApi'; // Importar a função startConversation
+import { startConversation } from '../../../services/ChatApi';
 import { useNavigate } from 'react-router-dom';
 import MobileHeader from '../../../components/Main/MobileHeader/MobileHeader';
 import LoadingSpinner from '../../../components/UI/LoadingSpinner/LoadingSpinner';
@@ -56,7 +56,7 @@ const Channel = ({ nickname }) => {
     const [followingCount, setFollowingCount] = useState(0);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isFixed, setIsFixed] = useState(false);
-    const [activeSection, setActiveSection] = useState('post'); // Default to 'post' section
+    const [activeSection, setActiveSection] = useState('post');
     const { apiUrl } = getConfig();
     const navigate = useNavigate();
     const isMobile = window.innerWidth <= 768;
@@ -67,7 +67,6 @@ const Channel = ({ nickname }) => {
                 const data = await getChannelByNickname(nickname);
                 setChannelData(data);
 
-                // Independent API calls for follower and following count
                 const [followersCount, followingCount] = await Promise.all([
                     getFollowersCount(data.id),
                     getFollowingCount(nickname)
@@ -75,7 +74,6 @@ const Channel = ({ nickname }) => {
                 setFollowersCount(followersCount);
                 setFollowingCount(followingCount);
 
-                // Calls dependent on authentication
                 const [ownerCheck, followingCheck] = await Promise.all([
                     isChannelOwner(data.id),
                     isFollowing(data.id)
@@ -92,7 +90,7 @@ const Channel = ({ nickname }) => {
     }, [nickname]);
 
     const handleScroll = useCallback(() => {
-        const offsetTop = 80; // Altura do cabeçalho
+        const offsetTop = 80;
         const channelButtonsSection = document.querySelector('.channel-buttons-section');
 
         if (channelButtonsSection) {
@@ -122,8 +120,8 @@ const Channel = ({ nickname }) => {
     }, [navigate]);
 
     const handleAboutChannel = useCallback(() => {
-        navigate(`/about`);
-    }, [navigate]);
+        navigate(`/@${nickname}/about`);
+    }, [navigate, nickname]);
 
     const handleImageClick = () => {
         setIsModalOpen(true);
@@ -189,13 +187,12 @@ const Channel = ({ nickname }) => {
 
     const handleMessageClick = async () => {
         try {
-            const conversation = await startConversation(channelData.id, ""); // Adiciona o parâmetro de mensagem
-            navigate(`/chat?conversationId=${conversation.id}`); // Passa o conversationId na URL
+            const conversation = await startConversation(channelData.id, "");
+            navigate(`/chat?conversationId=${conversation.id}`);
         } catch (error) {
             console.error('Erro ao iniciar conversa:', error);
         }
     };
-    
 
     if (!channelData) {
         return <LoadingSpinner />;
