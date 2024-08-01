@@ -1,0 +1,40 @@
+.expandable-card-container {
+    width: 100%;
+    max-width: 100%;
+    padding: 14px;
+    border-radius: 5px;
+    background-color: #212121;
+    color: #fff;
+    box-sizing: border-box;
+    margin-bottom: 5px;
+}
+
+.expandable-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
+.expandable-card-title {
+    font-size: 17px;
+    font-weight: 600; /* semibold */
+    margin: 0;
+    color: #ffffff;
+}
+
+.expand-icon {
+    width: 15px;
+    height: 15px;
+    transition: transform 0.3s ease;
+}
+
+.expand-icon.expanded {
+    transform: rotate(90deg); /* Rota a seta para indicar expansão */
+}
+
+.expandable-card-content {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+}

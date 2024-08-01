@@ -1,0 +1,120 @@
+.about-channel-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    box-sizing: border-box;
+    padding-top: 160px;
+    padding-bottom: 30px;
+}
+
+.about-channel-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 0 58px;
+    box-sizing: border-box;
+    align-items: center;
+}
+
+.about-channel-header {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    justify-content: space-between;
+    margin-bottom: 30px;
+}
+
+.about-channel-left {
+    display: flex;
+    align-items: center;
+}
+
+.about-channel-image {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    margin-right: 15px;
+}
+
+.about-channel-info {
+    flex-direction: column;
+}
+
+.about-channel-follow {
+    margin-left: 150px;
+}
+
+.about-channel-right {
+    display: flex;
+    gap: 10px;
+}
+
+.about-channel-name {
+    font-size: 16px;
+    margin: 0;
+    font-weight: 600;
+}
+
+.about-channel-nickname {
+    font-size: 14px;
+    margin: 0;
+    color: #aaa;
+}
+
+.about-channel-outro {
+    width: 100%;
+}
+
+/* Estilos para mobile */
+@media (max-width: 768px) {
+    .about-channel-page {
+        padding-bottom: 93px;
+        padding-top: 120px;
+    }
+
+    .about-channel-container {
+        max-width: 419px;
+        padding: 0 20px;
+    }
+
+    .about-channel-header {
+        flex-direction: column;
+    }
+    
+    .about-channel-right {
+        flex-direction: column;
+        align-items: center;
+        margin-top: 30px;
+        gap: 0px;
+        width: 50%;
+    }
+
+    .about-channel-left {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .about-channel-info {
+        flex-grow: 1;
+    }
+
+    .about-channel-follow {
+        margin-left: 0;
+        align-self: flex-end;
+        margin-right: 0; 
+    }
+
+    .about-channel-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        width: 70%;
+    }
+    
+    .about-channel-outro {
+        width: 106%;
+    }
+}
