@@ -28,6 +28,9 @@ const AddFAQ = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+        if (name === 'question' && value.length > 100) return;
+        if (name === 'answer' && value.length > 500) return;
+
         setFaqData((prevData) => ({
             ...prevData,
             [name]: value
@@ -67,12 +70,17 @@ const AddFAQ = () => {
                             name="question"
                             value={faqData.question}
                             onChange={handleChange}
+                            maxLength={100}
+                            bottomLeftText={`Caracteres restantes: ${100 - (faqData.question ? faqData.question.length : 0)}`}
                         /> 
                         <CustomInput 
                             title="Resposta"
                             name="answer"
                             value={faqData.answer}
                             onChange={handleChange}
+                            isTextarea={true} 
+                            maxLength={500}
+                            bottomLeftText={`Caracteres restantes: ${500 - (faqData.answer ? faqData.answer.length : 0)}`}
                         />              
                     </Card>
                     <div style={{ width: '100%' }} className="add-faq-confirmationButton-space">

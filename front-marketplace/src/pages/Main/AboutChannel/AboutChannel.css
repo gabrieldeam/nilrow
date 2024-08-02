@@ -1,4 +1,4 @@
-.about-channel-page {
+.about-mychannel-page {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -11,13 +11,13 @@
     box-sizing: border-box;
 }
 
-.about-channel-container {
+.about-mychannel-container {
     width: 100%;
     padding: 0 58px;
     box-sizing: border-box;
 }
 
-.about-channel-header {
+.about-mychannel-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -49,24 +49,24 @@
     display: none;
 }
 
-.about-channel-see-data-wrapper {
+.about-mychannel-see-data-wrapper {
     display: flex;
     flex-wrap: wrap;
     gap: 10px; /* Espaço entre os elementos */
 }
 
-.about-channel-see-data-wrapper > div {
+.about-mychannel-see-data-wrapper > div {
     flex: 1 1 calc(25% - 16px); /* 25% de largura menos o espaço do gap */
 }
 
 @media (max-width: 768px) {
 
-    .about-channel-page {
+    .about-mychannel-page {
         padding-bottom: 110px;
         padding-top: 109px;
     }
 
-    .about-channel-container {
+    .about-mychannel-container {
         max-width: 419px;
         padding: 0 6px;
     }
@@ -81,7 +81,7 @@
         display: none;
     }
 
-    .about-channel-see-data-wrapper > div {
+    .about-mychannel-see-data-wrapper > div {
         flex: 1 1 100%; /* Full width on mobile */
     }
 }

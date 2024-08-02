@@ -1,4 +1,4 @@
-import React, { memo, useState, useEffect, useContext, useCallback } from 'react';
+import React, { memo, useState, useContext, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import CustomInput from '../../../components/UI/CustomInput/CustomInput';
@@ -47,10 +47,12 @@ const CreateAbout = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setAboutData((prevData) => ({
-            ...prevData,
-            [name]: value
-        }));
+        if (value.length <= 1000) {
+            setAboutData((prevData) => ({
+                ...prevData,
+                [name]: value
+            }));
+        }
     };
 
     const handleSave = async (e) => {
@@ -85,7 +87,9 @@ const CreateAbout = () => {
                             name="aboutText"
                             value={aboutData.aboutText}
                             onChange={handleChange} 
-                            isTextarea={true}                           
+                            isTextarea={true} 
+                            maxLength={1000}
+                            bottomLeftText={`Caracteres restantes: ${1000 - (aboutData.aboutText.length || 0)}`}
                         />                
                     </Card>
                     <Card title="Políticas">
@@ -95,6 +99,8 @@ const CreateAbout = () => {
                             value={aboutData.storePolicies}
                             onChange={handleChange} 
                             isTextarea={true} 
+                            maxLength={1000}
+                            bottomLeftText={`Caracteres restantes: ${1000 - (aboutData.storePolicies.length || 0)}`}
                         />                
                     </Card>
                     <Card title="Trocas e devoluções">
@@ -104,6 +110,8 @@ const CreateAbout = () => {
                             value={aboutData.exchangesAndReturns}
                             onChange={handleChange} 
                             isTextarea={true} 
+                            maxLength={1000}
+                            bottomLeftText={`Caracteres restantes: ${1000 - (aboutData.exchangesAndReturns.length || 0)}`}
                         />                
                     </Card>
                     <Card title="Mais informações">
@@ -113,6 +121,8 @@ const CreateAbout = () => {
                             value={aboutData.additionalInfo}
                             onChange={handleChange} 
                             isTextarea={true} 
+                            maxLength={1000}
+                            bottomLeftText={`Caracteres restantes: ${1000 - (aboutData.additionalInfo.length || 0)}`}
                         />                
                     </Card>
                     <div style={{ width: '100%' }} className="create-about-confirmationButton-space">

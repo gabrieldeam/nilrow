@@ -1,6 +1,7 @@
 import React, { memo, useEffect, useState, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { getChannelByNickname, isChannelOwner, isFollowing, followChannel, unfollowChannel, getFollowersCount, getFollowingCount } from '../../../services/channelApi';
+import { getAboutByNickname, getFAQsByNickname } from '../../../services/channelApi';
 import { checkAuth } from '../../../services/api';
 import { startConversation } from '../../../services/ChatApi';
 import { useNavigate } from 'react-router-dom';
@@ -57,6 +58,7 @@ const Channel = ({ nickname }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isFixed, setIsFixed] = useState(false);
     const [activeSection, setActiveSection] = useState('post');
+    const [showAboutButton, setShowAboutButton] = useState(false);
     const { apiUrl } = getConfig();
     const navigate = useNavigate();
     const isMobile = window.innerWidth <= 768;
@@ -66,28 +68,36 @@ const Channel = ({ nickname }) => {
             try {
                 const data = await getChannelByNickname(nickname);
                 setChannelData(data);
-
+    
                 const [followersCount, followingCount] = await Promise.all([
                     getFollowersCount(data.id),
                     getFollowingCount(nickname)
                 ]);
                 setFollowersCount(followersCount);
                 setFollowingCount(followingCount);
-
-                const [ownerCheck, followingCheck] = await Promise.all([
+    
+                const [ownerCheck, followingCheck, aboutData, faqsData] = await Promise.all([
                     isChannelOwner(data.id),
-                    isFollowing(data.id)
+                    isFollowing(data.id),
+                    getAboutByNickname(nickname),
+                    getFAQsByNickname(nickname)
                 ]);
                 setIsOwner(ownerCheck);
                 setIsFollowingChannel(followingCheck);
-
+    
+                // Verificar se há dados em about ou faqs
+                if ((aboutData && (aboutData.aboutText || aboutData.storePolicies || aboutData.exchangesAndReturns || aboutData.additionalInfo)) || (faqsData && faqsData.length > 0)) {
+                    setShowAboutButton(true);
+                }
+    
             } catch (error) {
                 console.error('Erro ao buscar dados do canal:', error);
             }
         };
-
+    
         fetchChannelData();
     }, [nickname]);
+    
 
     const handleScroll = useCallback(() => {
         const offsetTop = 80;
@@ -262,10 +272,12 @@ const Channel = ({ nickname }) => {
                                     {formatUrl(channelData.externalLink)}
                                 </a>
                             )}
+                            {showAboutButton && (
                             <button className="channel-link-button" onClick={handleAboutChannel}>
                                 <img src={infoIcon} alt="Sobre" className="channel-link-button-icon" />
                                 SOBRE
                             </button>
+                        )}
                         </div>
                         <div className="channel-stage-buttons">
                             {stageButtons.map((button, index) => (

@@ -56,10 +56,12 @@ const EditAbout = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setAboutData((prevData) => ({
-            ...prevData,
-            [name]: value
-        }));
+        if (value.length <= 1000) {
+            setAboutData((prevData) => ({
+                ...prevData,
+                [name]: value
+            }));
+        }
     };
 
     const handleSave = async (e) => {
@@ -99,7 +101,9 @@ const EditAbout = () => {
                             name="aboutText"
                             value={aboutData.aboutText}
                             onChange={handleChange} 
-                            isTextarea={true}                           
+                            isTextarea={true} 
+                            maxLength={1000}
+                            bottomLeftText={`Caracteres restantes: ${1000 - (aboutData.aboutText.length || 0)}`}
                         />                
                     </Card>
                     <Card title="Políticas">
@@ -109,6 +113,8 @@ const EditAbout = () => {
                             value={aboutData.storePolicies}
                             onChange={handleChange} 
                             isTextarea={true} 
+                            maxLength={1000}
+                            bottomLeftText={`Caracteres restantes: ${1000 - (aboutData.storePolicies.length || 0)}`}
                         />                
                     </Card>
                     <Card title="Trocas e devoluções">
@@ -118,6 +124,8 @@ const EditAbout = () => {
                             value={aboutData.exchangesAndReturns}
                             onChange={handleChange} 
                             isTextarea={true} 
+                            maxLength={1000}
+                            bottomLeftText={`Caracteres restantes: ${1000 - (aboutData.exchangesAndReturns.length || 0)}`}
                         />                
                     </Card>
                     <Card title="Mais informações">
@@ -127,6 +135,8 @@ const EditAbout = () => {
                             value={aboutData.additionalInfo}
                             onChange={handleChange} 
                             isTextarea={true} 
+                            maxLength={1000}
+                            bottomLeftText={`Caracteres restantes: ${1000 - (aboutData.additionalInfo.length || 0)}`}
                         />                
                     </Card>
                     <div style={{ width: '100%' }} className="edit-about-confirmationButton-space">

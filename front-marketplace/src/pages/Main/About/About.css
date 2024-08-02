@@ -67,6 +67,10 @@
     width: 100%;
 }
 
+.about-channel-text {
+    font-size: 15px;
+}
+
 /* Estilos para mobile */
 @media (max-width: 768px) {
     .about-channel-page {

@@ -50,7 +50,7 @@ const AboutChannel = () => {
         : { href: "/create-about", text: "Criar informações" };
 
     return (
-        <div className="about-channel-page">
+        <div className="about-mychannel-page">
             <Helmet>
                 <title>Sobre</title>
                 <meta name="description" content="Gerencie suas preferências de privacidade na Nilrow." />
@@ -58,15 +58,15 @@ const AboutChannel = () => {
             {isMobile && (
                 <MobileHeader title="Sobre" buttons={{ close: true }} handleBack={handleBack} />
             )}
-            <div className="about-channel-container">
-                <div className="about-channel-header">
+            <div className="about-mychannel-container">
+                <div className="about-mychannel-header">
                     <SubHeader title="Sobre" handleBack={handleBack} />
                 </div>
                 <Card 
                     title="Informações"
                     rightLink={rightLink}
                 >
-                    <div className="about-channel-see-data-wrapper">
+                    <div className="about-mychannel-see-data-wrapper">
                         <SeeData 
                             title="Sobre" 
                             content={aboutInfo?.aboutText || "Mantenha a permissão ativa para receber recomendações úteis sobre outros produtos ao usar sua conta. Mantenha a permissão ativa para receber recomendações úteis sobre outros..."} 
@@ -93,7 +93,7 @@ const AboutChannel = () => {
                     title="FAQ"
                     rightLink={{ href: "/add-faq", text: "+ Adicionar perguntas e respostas" }}
                 >
-                    <div className="about-channel-see-data-wrapper">
+                    <div className="about-mychannel-see-data-wrapper">
                         {faqs.length > 0 ? (
                             faqs.map(faq => (
                                 <SeeData 

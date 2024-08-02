@@ -34,7 +34,6 @@
 }
 
 .expandable-card-content {
-    margin-top: 15px;
     display: flex;
     flex-direction: column;
 }

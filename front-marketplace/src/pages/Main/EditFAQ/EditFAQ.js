@@ -47,10 +47,12 @@ const EditFAQ = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFaqData((prevData) => ({
-            ...prevData,
-            [name]: value
-        }));
+        if ((name === 'question' && value.length <= 100) || (name === 'answer' && value.length <= 500)) {
+            setFaqData((prevData) => ({
+                ...prevData,
+                [name]: value
+            }));
+        }
     };
 
     const handleSave = async (e) => {
@@ -70,7 +72,7 @@ const EditFAQ = () => {
         try {
             await deleteFAQ(id);
             setMessage('FAQ deletado com sucesso!');
-            navigate(-1); // Voltar para a página anterior
+            navigate(-1);
         } catch (error) {
             console.error('Erro ao deletar FAQ:', error);
             setError('Erro ao deletar FAQ. Por favor, tente novamente.');
@@ -100,12 +102,17 @@ const EditFAQ = () => {
                             name="question"
                             value={faqData.question}
                             onChange={handleChange}
+                            maxLength={100}
+                            bottomLeftText={`Caracteres restantes: ${100 - (faqData.question ? faqData.question.length : 0)}`}
                         /> 
                         <CustomInput 
                             title="Resposta"
                             name="answer"
                             value={faqData.answer}
                             onChange={handleChange}
+                            isTextarea={true} 
+                            maxLength={500}
+                            bottomLeftText={`Caracteres restantes: ${500 - (faqData.answer ? faqData.answer.length : 0)}`}
                         />              
                     </Card>
                     <div style={{ width: '100%' }} className="edit-faq-confirmationButton-space">

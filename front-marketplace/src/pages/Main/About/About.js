@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import MobileHeader from '../../../components/Main/MobileHeader/MobileHeader';
 import StageButton from '../../../components/UI/Buttons/StageButton/StageButton';
 import ExpandableCard from '../../../components/UI/ExpandableCard/ExpandableCard';
+import FAQExpandableCard from '../../../components/UI/FAQExpandableCard/FAQExpandableCard';
 import './About.css';
 import getConfig from '../../../config';
 import { getChannelByNickname, getAboutByNickname, getFAQsByNickname, followChannel, unfollowChannel, isFollowing, isChannelOwner } from '../../../services/channelApi';
@@ -27,8 +28,7 @@ const About = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const formattedNickname = nickname.startsWith('@') ? nickname.slice(1) : nickname;
-                console.log('formattedNickname:', formattedNickname); // Log para verificar o nickname formatado
+                const formattedNickname = nickname.startsWith('@') ? nickname.slice(1) : nickname;                
                 const channel = await getChannelByNickname(formattedNickname);
                 const about = await getAboutByNickname(formattedNickname);
                 const faqs = await getFAQsByNickname(formattedNickname);
@@ -161,26 +161,37 @@ const About = () => {
                     </div>
                 </div>
                 <div className="about-channel-outro">
-                    <ExpandableCard title="Sobre">
-                        <p>{aboutData.aboutText}</p>
-                    </ExpandableCard>
-                    <ExpandableCard title="FAQ">
-                        {faqData.map((faq, index) => (
-                            <div key={index}>
-                                <h3>{faq.question}</h3>
-                                <p>{faq.answer}</p>
-                            </div>
-                        ))}
-                    </ExpandableCard>
-                    <ExpandableCard title="Políticas">
-                        <p>{aboutData.storePolicies}</p>
-                    </ExpandableCard>
-                    <ExpandableCard title="Trocas e devoluções">
-                        <p>{aboutData.exchangesAndReturns}</p>
-                    </ExpandableCard>
-                    <ExpandableCard title="Mais informações">
-                        <p>{aboutData.additionalInfo}</p>
-                    </ExpandableCard>
+                    {aboutData.aboutText && (
+                        <ExpandableCard title="Sobre" defaultExpanded={true}>
+                            <p className="about-channel-text roboto-regular">{aboutData.aboutText}</p>
+                        </ExpandableCard>
+                    )}
+                    {faqData.length > 0 && (
+                        <ExpandableCard title="FAQ">
+                            {faqData.map((faq, index) => (
+                                <FAQExpandableCard 
+                                    key={index}
+                                    question={faq.question}
+                                    answer={faq.answer}
+                                />
+                            ))}
+                        </ExpandableCard>
+                    )}
+                    {aboutData.storePolicies && (
+                        <ExpandableCard title="Políticas">
+                            <p className="about-channel-text roboto-regular">{aboutData.storePolicies}</p>
+                        </ExpandableCard>
+                    )}
+                    {aboutData.exchangesAndReturns && (
+                        <ExpandableCard title="Trocas e devoluções">
+                            <p className="about-channel-text roboto-regular">{aboutData.exchangesAndReturns}</p>
+                        </ExpandableCard>
+                    )}
+                    {aboutData.additionalInfo && (
+                        <ExpandableCard title="Mais informações">
+                            <p className="about-channel-text roboto-regular">{aboutData.additionalInfo}</p>
+                        </ExpandableCard>
+                    )}
                 </div>
             </div>            
         </div>
