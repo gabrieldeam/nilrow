@@ -184,7 +184,7 @@ const MyChannel = () => {
                         icon={catalogIcon}
                         title="Catálogo"
                         paragraph="Crie um catálogo e começe a divulgar seus produtos ou serviços."
-                        onClick={() => navigate('/depois-colocar')}
+                        onClick={() => navigate('/catalog')}
                     />
                     <StepButton
                         icon={purchaseEventIcon}

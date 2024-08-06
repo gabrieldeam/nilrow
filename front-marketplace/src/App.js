@@ -51,6 +51,8 @@ const EditAbout = lazy(() => import('./pages/Main/EditAbout/EditAbout'));
 const CreateAbout = lazy(() => import('./pages/Main/CreateAbout/CreateAbout'));
 const AddFAQ = lazy(() => import('./pages/Main/AddFAQ/AddFAQ'));
 const EditFAQ = lazy(() => import('./pages/Main/EditFAQ/EditFAQ'));
+const Catalog = lazy(() => import('./pages/Main/Catalog/Catalog'));
+const AddCatalog = lazy(() => import('./pages/Main/AddCatalog/AddCatalog'));
 
 const AppContent = () => {
     const { isAuthenticated } = useAuth();
@@ -142,6 +144,8 @@ const AppContent = () => {
                     <Route path="/create-about" element={<ProtectedRoute element={<CreateAbout/>} />} />
                     <Route path="/add-faq" element={<ProtectedRoute element={<AddFAQ />} />} />
                     <Route path="/edit-faq/:id" element={<ProtectedRoute element={<EditFAQ/>} />} />
+                    <Route path="/catalog" element={<ProtectedRoute element={<Catalog/>} />} />
+                    <Route path="/add-catalog" element={<ProtectedRoute element={<AddCatalog/>} />} />
                 </Routes>
             </Suspense>
             {renderFooter()}

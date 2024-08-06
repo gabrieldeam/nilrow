@@ -1,0 +1,126 @@
+.add-catalog-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #000;
+    color: #fff;
+    padding-top: 150px;
+    padding-bottom: 85px;
+    box-sizing: border-box;
+}
+
+.add-catalog-container {
+    width: 100%;
+    max-width: 419px;
+    padding: 6px;
+    box-sizing: border-box;
+    margin-top: auto; 
+    margin-bottom: auto; 
+}
+
+.confirmationButton-space {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.hour-see-data-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.hour-see-data-wrapper > div {
+    flex: 1 1 100%; 
+}
+
+.selection-see-data-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.selection-see-data-wrapper > div {
+    flex: 1 1 100%; 
+}
+
+.open-close-see-data-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: -10px;
+}
+
+.open-close-see-data-wrapper > div {
+    flex: 1 1 calc(50% - 16px);
+}
+
+.remove-time-button {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.add-time-button {
+    background: none;
+    color: #7B33E5;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 0 auto;
+    display: block;
+    margin-bottom: -15px;
+    margin-top: 15px;
+}
+
+.add-time-button:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .add-catalog-page {
+        padding-top: 105px;
+        padding-bottom: 85px;
+    }
+}
+
+.days-selection-label {
+    font-size: 15px;
+    color: #fff;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.days-selection {
+    display: flex;
+    justify-content: space-around;
+    gap: 10px;
+}
+
+.day-box {
+    width: 100%;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-size: 20px;
+}
+
+.day-box.selected {
+    background-color: #7B33E5;
+}
+
+.day-details {
+    margin-bottom: 20px;
+}
+
+.day-details h4 {
+    margin-bottom: 10px;
+}
