@@ -38,8 +38,8 @@ const Catalog = () => {
                             content="CEP - Cidade, Estado" 
                             subContent="CNPJ" 
                             stackContent={true}
-                            linkText="Editar"                        
-                            link={`/edit-catalog/`}
+                            linkText="Gerenciar"                        
+                            link={`/my-catalog/`}
                         />                        
                     </div>
                 </Card>
@@ -52,8 +52,8 @@ const Catalog = () => {
                             content="CEP - Cidade, Estado" 
                             subContent="cnpj" 
                             stackContent={true}
-                            linkText="Alterar"                        
-                            link={`/address`}
+                            linkText="Gerenciar"                        
+                            link={`/my-catalog/`}
                         />                        
                     </div>
                 </Card>

@@ -1,7 +1,7 @@
 import React, { useCallback, useState, useEffect, useContext } from 'react';
 import './Address.css';
 import { Helmet } from 'react-helmet-async';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import MobileHeader from '../../../components/Main/MobileHeader/MobileHeader';
 import SubHeader from '../../../components/Main/SubHeader/SubHeader';
 import Card from '../../../components/UI/Card/Card';
@@ -14,10 +14,16 @@ const Address = () => {
     const [addresses, setAddresses] = useState([]);
     const isMobile = window.innerWidth <= 768;
     const navigate = useNavigate();
+    const location = useLocation();
+    const selectMode = location.state?.selectMode || false;
 
     const handleBack = useCallback(() => {
         navigate(-1);
     }, [navigate]);
+
+    const handleSelect = (addressId) => {
+        navigate(-1, { state: { selectedAddressId: addressId } });
+    };
 
     useEffect(() => {
         const fetchAddresses = async () => {
@@ -56,8 +62,8 @@ const Address = () => {
                                 content={`CEP: ${address.cep} - ${address.city}/${address.state}`}
                                 stackContent={true}
                                 subContent={`${address.recipientName} - ${address.recipientPhone}`}
-                                linkText="Editar"
-                                link={`/edit-address/${address.id}`} // Link para a página de edição de endereço
+                                linkText={selectMode ? "Selecionar" : "Editar"}
+                                link={selectMode ? () => handleSelect(address.id) : `/edit-address/${address.id}`}
                             />
                         ))}
                     </div>

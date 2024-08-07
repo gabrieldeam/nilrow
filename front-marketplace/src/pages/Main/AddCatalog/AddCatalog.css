@@ -90,7 +90,6 @@
 .days-selection-label {
     font-size: 15px;
     color: #fff;
-    margin-bottom: 10px;
     display: block;
 }
 
@@ -98,6 +97,7 @@
     display: flex;
     justify-content: space-around;
     gap: 10px;
+    margin-bottom: 10px;
 }
 
 .day-box {
@@ -123,4 +123,50 @@
 
 .day-details h4 {
     margin-bottom: 10px;
+    margin-top: -10px;
+}
+
+.custom-input-container-phone {
+    width: 100%;
+    margin: 8px 0;
+}
+
+.input-title-phone {
+    display: block;
+    font-size: 15px;
+    color: #ffffff;
+    margin-bottom: 8px;
+}
+
+.phone-input {
+    width: 100% !important;
+    height: 40px !important;
+    padding: 0 45px !important;
+    border: 1px solid #ffffff !important;
+    background-color: transparent !important;
+    color: #ffffff !important;
+    font-size: 15px !important;
+    box-sizing: border-box !important;
+    border-radius: 4px !important;
+}
+
+.phone-input-button {
+    background-color: transparent !important;
+    border: none !important;
+}
+
+.phone-input-dropdown {
+    background-color: #212121 !important;
+    color: #ffffff !important;
+}
+
+.input-bottom-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 15px;
+}
+
+.bottom-left-phone {
+    color: #656565;
+    margin-top: 8px;
 }

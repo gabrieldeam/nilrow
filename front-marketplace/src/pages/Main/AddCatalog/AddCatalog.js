@@ -1,5 +1,6 @@
-import React, { useCallback, useState, memo, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useCallback, useState, memo, useContext, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import CustomSelect from '../../../components/UI/CustomSelect/CustomSelect';
 import CustomInput from '../../../components/UI/CustomInput/CustomInput';
 import Card from '../../../components/UI/Card/Card';
 import StageButton from '../../../components/UI/Buttons/StageButton/StageButton';
@@ -9,33 +10,55 @@ import SeeData from '../../../components/UI/SeeData/SeeData';
 import { Helmet } from 'react-helmet-async';
 import './AddCatalog.css';
 import { NotificationContext } from '../../../context/NotificationContext';
-import closeIcon from '../../../assets/close.svg'; // Certifique-se de que o caminho para a imagem está correto
+import closeIcon from '../../../assets/close.svg';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 
 const AddCatalog = () => {
     const { setMessage } = useContext(NotificationContext);
     const navigate = useNavigate();
+    const location = useLocation();
     const isMobile = window.innerWidth <= 768;
 
     const handleBack = useCallback(() => {
         navigate(-1);
     }, [navigate]);
 
-    const daysOfWeek = ['S', 'T', 'Q', 'Q', 'Q', 'S', 'S'];
-    const fullDaysOfWeek = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+    const daysOfWeek = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+    const fullDaysOfWeek = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
     const [selectedDay, setSelectedDay] = useState(null);
     const [dayData, setDayData] = useState(
-        Array(7).fill({ openCloseTimes: [{ open: '', close: '' }], is24Hours: false, isClosed: false })
+        fullDaysOfWeek.map(() => ({ openCloseTimes: [{ open: '', close: '' }], is24Hours: false, isClosed: false }))
     );
 
     const [selectedOption, setSelectedOption] = useState('');
+    const [formData, setFormData] = useState({
+        name: '',
+        nameBoss: '',
+        cnpj: '',
+        email: '',
+        phone: '',
+        addressId: null,
+        addressDetails: ''
+    });
+    const [isFormValid, setIsFormValid] = useState(false);
+
+    const selectedAddressId = location.state?.selectedAddressId;
+    const selectedAddressDetails = location.state?.selectedAddressDetails;
+
+    useEffect(() => {
+        if (selectedAddressId) {
+            setFormData((prevFormData) => ({
+                ...prevFormData,
+                addressId: selectedAddressId,
+                addressDetails: selectedAddressDetails
+            }));
+        }
+    }, [selectedAddressId, selectedAddressDetails]);
 
     const handleDayClick = (dayIndex) => {
-        if (selectedDay === dayIndex) {
-            setSelectedDay(null);
-        } else {
-            setSelectedDay(dayIndex);
-        }
+        setSelectedDay(dayIndex === selectedDay ? null : dayIndex);
     };
 
     const handleInputChange = (dayIndex, timeIndex, name, value) => {
@@ -47,12 +70,21 @@ const AddCatalog = () => {
     const handleToggle = (dayIndex, field) => {
         const newDayData = [...dayData];
         newDayData[dayIndex][field] = !newDayData[dayIndex][field];
+        if (field === 'is24Hours' && newDayData[dayIndex][field]) {
+            newDayData[dayIndex].isClosed = false;
+            newDayData[dayIndex].openCloseTimes = [{ open: '', close: '' }];
+        } else if (field === 'isClosed' && newDayData[dayIndex][field]) {
+            newDayData[dayIndex].is24Hours = false;
+            newDayData[dayIndex].openCloseTimes = [{ open: '', close: '' }];
+        }
         setDayData(newDayData);
     };
 
     const addOpenCloseTime = (dayIndex) => {
         const newDayData = [...dayData];
         newDayData[dayIndex].openCloseTimes.push({ open: '', close: '' });
+        newDayData[dayIndex].is24Hours = false;
+        newDayData[dayIndex].isClosed = false;
         setDayData(newDayData);
     };
 
@@ -66,6 +98,75 @@ const AddCatalog = () => {
         setSelectedOption(option);
     };
 
+    const handleFormChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({
+            ...formData,
+            [name]: value
+        });
+    };
+
+    useEffect(() => {
+        const { name, nameBoss, cnpj, email, phone } = formData;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const cnpjRegex = /^\d{14}$/;
+        const isNameValid = name !== '' && name.length <= 65;
+        const isNameBossValid = nameBoss !== '' && nameBoss.length <= 65;
+        const isEmailValid = email !== '' && emailRegex.test(email);
+        const isCnpjValid = cnpj !== '' && cnpjRegex.test(cnpj.replace(/[^\d]/g, ''));
+        const isPhoneValid = phone !== '';
+
+        setIsFormValid(isNameValid && isNameBossValid && isEmailValid && isCnpjValid && isPhoneValid);
+    }, [formData]);
+
+    const validateForm = useCallback(() => {
+        const errors = [];
+        const { name, nameBoss, cnpj, email, phone } = formData;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const cnpjRegex = /^\d{14}$/;
+
+        if (!name || name.length > 65) {
+            errors.push('Nome do catálogo é obrigatório e deve ter no máximo 65 caracteres.');
+        }
+
+        if (!nameBoss || nameBoss.length > 65) {
+            errors.push('Nome empresarial é obrigatório e deve ter no máximo 65 caracteres.');
+        }
+
+        if (!email || !emailRegex.test(email)) {
+            errors.push('Email é obrigatório e deve ser válido.');
+        }
+
+        if (!cnpj || !cnpjRegex.test(cnpj.replace(/[^\d]/g, ''))) {
+            errors.push('CNPJ é obrigatório e deve ser válido.');
+        }
+
+        if (!phone) {
+            errors.push('Telefone é obrigatório.');
+        }
+
+        if (errors.length > 0) {
+            setMessage(errors.join(' '));
+            return false;
+        }
+
+        return true;
+    }, [formData, setMessage]);
+
+    const handleSubmit = useCallback((e) => {
+        e.preventDefault();
+        if (validateForm()) {
+            setMessage('Formulário enviado com sucesso!', 'success');
+            console.log('Form submitted:', formData);
+        } else {
+            setMessage('Por favor, preencha todos os campos obrigatórios.', 'error');
+        }
+    }, [formData, setMessage, validateForm]);
+
+    const handleSelectAddress = () => {
+        navigate('/address', { state: { selectMode: true } });
+    };
+
     return (
         <div className="add-catalog-page">
             <Helmet>
@@ -77,16 +178,66 @@ const AddCatalog = () => {
             )}
             <div className="add-catalog-container">
                 <SubHeader title="Adicionar Catálogo" handleBack={handleBack} />
-                <form onSubmit={(e) => e.preventDefault()}>
+                <form onSubmit={handleSubmit}>
                     <Card title="Dados">
-                        <CustomInput title="Nome do catálogo" type="text" name="name" value="" onChange={() => {}} />
-                        <CustomInput title="Nome empresarial" type="text" name="nameBoss" value="" onChange={() => {}} />
-                        <CustomInput title="CNPJ" type="text" name="cnpj" value="" onChange={() => {}} />
-                        <CustomInput title="E-mail" type="text" name="email" value="" onChange={() => {}} />
-                        <CustomInput title="Telefone" type="text" name="phone" value="" onChange={() => {}} />
+                        <CustomInput
+                            title="Nome do catálogo"
+                            type="text"
+                            name="name"
+                            value={formData.name}
+                            onChange={handleFormChange}
+                        />
+                        <CustomInput
+                            title="Nome empresarial"
+                            type="text"
+                            bottomLeftText="Final LTDA, MEI, LLM"
+                            name="nameBoss"
+                            value={formData.nameBoss}
+                            onChange={handleFormChange}
+                        />
+                        <CustomInput
+                            title="CNPJ"
+                            type="text"
+                            name="cnpj"
+                            value={formData.cnpj}
+                            onChange={handleFormChange}
+                        />
+                        <CustomInput
+                            title="E-mail"
+                            type="text"
+                            name="email"
+                            bottomLeftText="Certifique-se de que você tenha acesso a ele"
+                            value={formData.email}
+                            onChange={handleFormChange}
+                        />
+                        <div className="custom-input-container-phone">
+                            <label className="input-title-phone">Telefone</label>
+                            <PhoneInput
+                                country={'br'}
+                                value={formData.phone}
+                                onChange={(phone) => setFormData({ ...formData, phone })}
+                                inputProps={{
+                                    name: 'phone',
+                                    required: true,
+                                    autoFocus: true
+                                }}
+                                inputClass="phone-input"
+                                buttonClass="phone-input-button"
+                                dropdownClass="phone-input-dropdown"
+                                containerClass="phone-input-container"
+                            />
+                            <div className="input-bottom-text">
+                                <span className="bottom-left-phone">Vamos te enviar informações por WhatsApp</span>
+                            </div>
+                        </div>
                     </Card>
                     <Card title="Endereço de origem">
-                        <SeeData title="Rua Numero" content="CEP - Cidade, Estado" subContent="recipientName + recipientPhone" stackContent={true} linkText="Editar" link={`/edit-catalog/`} />
+                        <SeeData 
+                            title="Selecionar Endereço" 
+                            content={formData.addressDetails || "Nenhum endereço selecionado"} 
+                            linkText="Selecionar" 
+                            onClick={handleSelectAddress} 
+                        />
                     </Card>
                     <Card title="Funcionamento">
                         <div className="selection-see-data-wrapper">
@@ -95,83 +246,83 @@ const AddCatalog = () => {
                                 content="Mostrar quando sua empresa está aberta"
                                 stackContent={true}
                                 showToggleButton={true}
-                                isActive={selectedOption === 'normal'}
+                                toggled={selectedOption === 'normal'}
                                 onToggle={() => handleOptionChange('normal')}
                             />
                             {selectedOption === 'normal' && (
-                            <>
-                                <label className="days-selection-label">Selecionar dias</label>
-                                <div className="days-selection">
-                                    {daysOfWeek.map((day, index) => (
-                                        <div
-                                            key={index}
-                                            className={`day-box ${selectedDay === index ? 'selected' : ''}`}
-                                            onClick={() => handleDayClick(index)}
-                                        >
-                                            {day}
-                                        </div>
-                                    ))}
-                                </div>
-                                {selectedDay !== null && (
-                                    <div key={selectedDay} className="day-details">
-                                        <h4>{fullDaysOfWeek[selectedDay]}</h4>
-                                        <div className="hour-see-data-wrapper">
-                                            <SeeData
-                                                content="Aberto 24 horas"
-                                                stackContent={true}
-                                                showToggleButton={true}
-                                                isActive={dayData[selectedDay].is24Hours}
-                                                onToggle={() => handleToggle(selectedDay, 'is24Hours')}
-                                            />
-                                            <SeeData
-                                                content="Fechado"
-                                                stackContent={true}
-                                                showToggleButton={true}
-                                                isActive={dayData[selectedDay].isClosed}
-                                                onToggle={() => handleToggle(selectedDay, 'isClosed')}
-                                            />
-                                        </div>
-                                        {dayData[selectedDay].openCloseTimes.map((time, timeIndex) => (
-                                            <div key={timeIndex} className="open-close-see-data-wrapper">
-                                                <CustomInput
-                                                    title="Abre"
-                                                    type="text"
-                                                    name={`open-${selectedDay}-${timeIndex}`}
-                                                    value={time.open}
-                                                    onChange={(e) => handleInputChange(selectedDay, timeIndex, 'open', e.target.value)}
-                                                />
-                                                <CustomInput
-                                                    title="Fecha"
-                                                    type="text"
-                                                    name={`close-${selectedDay}-${timeIndex}`}
-                                                    value={time.close}
-                                                    onChange={(e) => handleInputChange(selectedDay, timeIndex, 'close', e.target.value)}
-                                                />
-                                                <img
-                                                    src={closeIcon}
-                                                    alt="Remover"
-                                                    className="remove-time-button"
-                                                    onClick={() => removeOpenCloseTime(selectedDay, timeIndex)}
-                                                />
+                                <>
+                                    <label className="days-selection-label">Selecionar dias</label>
+                                    <div className="days-selection">
+                                        {daysOfWeek.map((day, index) => (
+                                            <div
+                                                key={index}
+                                                className={`day-box ${selectedDay === index ? 'selected' : ''}`}
+                                                onClick={() => handleDayClick(index)}
+                                            >
+                                                {day}
                                             </div>
                                         ))}
-                                        <button
-                                            type="button"
-                                            className="add-time-button"
-                                            onClick={() => addOpenCloseTime(selectedDay)}
-                                        >
-                                            + Adicionar horário
-                                        </button>
                                     </div>
-                                )}
-                            </>
-                        )}
+                                    {selectedDay !== null && (
+                                        <div key={selectedDay} className="day-details">
+                                            <h4>{fullDaysOfWeek[selectedDay]}</h4>
+                                            <div className="hour-see-data-wrapper">
+                                                <SeeData
+                                                    content="Aberto 24 horas"
+                                                    stackContent={true}
+                                                    showToggleButton={true}
+                                                    toggled={dayData[selectedDay].is24Hours}
+                                                    onToggle={() => handleToggle(selectedDay, 'is24Hours')}
+                                                />
+                                                <SeeData
+                                                    content="Fechado"
+                                                    stackContent={true}
+                                                    showToggleButton={true}
+                                                    toggled={dayData[selectedDay].isClosed}
+                                                    onToggle={() => handleToggle(selectedDay, 'isClosed')}
+                                                />
+                                            </div>
+                                            {!dayData[selectedDay].is24Hours && !dayData[selectedDay].isClosed && Array.isArray(dayData[selectedDay].openCloseTimes) && dayData[selectedDay].openCloseTimes.map((time, timeIndex) => (
+                                                <div key={timeIndex} className="open-close-see-data-wrapper">
+                                                    <CustomSelect
+                                                        title="Abre"
+                                                        name={`open-${selectedDay}-${timeIndex}`}
+                                                        value={time.open}
+                                                        onChange={(e) => handleInputChange(selectedDay, timeIndex, 'open', e.target.value)}
+                                                    />
+                                                    <CustomSelect
+                                                        title="Fecha"
+                                                        name={`close-${selectedDay}-${timeIndex}`}
+                                                        value={time.close}
+                                                        onChange={(e) => handleInputChange(selectedDay, timeIndex, 'close', e.target.value)}
+                                                    />
+                                                    <img
+                                                        src={closeIcon}
+                                                        alt="Remover"
+                                                        className="remove-time-button"
+                                                        onClick={() => removeOpenCloseTime(selectedDay, timeIndex)}
+                                                    />
+                                                </div>
+                                            ))}
+                                            {!dayData[selectedDay].is24Hours && !dayData[selectedDay].isClosed && (
+                                                <button
+                                                    type="button"
+                                                    className="add-time-button"
+                                                    onClick={() => addOpenCloseTime(selectedDay)}
+                                                >
+                                                    + Adicionar horário
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                </>
+                            )}
                             <SeeData
                                 title="Aberto sem horário normal"
                                 content="Não mostrar o horário de funcionemento"
                                 stackContent={true}
                                 showToggleButton={true}
-                                isActive={selectedOption === 'noHours'}
+                                toggled={selectedOption === 'noHours'}
                                 onToggle={() => handleOptionChange('noHours')}
                             />
                             <SeeData
@@ -179,7 +330,7 @@ const AddCatalog = () => {
                                 content="Mostrar que sua empresa será reaberta no futuro"
                                 stackContent={true}
                                 showToggleButton={true}
-                                isActive={selectedOption === 'temporaryClosed'}
+                                toggled={selectedOption === 'temporaryClosed'}
                                 onToggle={() => handleOptionChange('temporaryClosed')}
                             />
                             <SeeData
@@ -187,13 +338,13 @@ const AddCatalog = () => {
                                 content="Mostrar que sua empresa não existe mais"
                                 stackContent={true}
                                 showToggleButton={true}
-                                isActive={selectedOption === 'permanentClosed'}
+                                toggled={selectedOption === 'permanentClosed'}
                                 onToggle={() => handleOptionChange('permanentClosed')}
                             />
-                        </div>                
+                        </div>
                     </Card>
                     <div className="confirmationButton-space">
-                        <StageButton text="Salvar" backgroundColor={"#7B33E5"} type="submit" />
+                        <StageButton text="Salvar" backgroundColor={isFormValid ? "#7B33E5" : "#212121"} type="submit" />
                     </div>
                 </form>
             </div>
