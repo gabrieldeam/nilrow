@@ -21,7 +21,7 @@ const AddCatalog = () => {
     const isMobile = window.innerWidth <= 768;
 
     const handleBack = useCallback(() => {
-        navigate(-1);
+        navigate('/catalog');
     }, [navigate]);
 
     const daysOfWeek = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
@@ -40,22 +40,58 @@ const AddCatalog = () => {
         email: '',
         phone: '',
         addressId: null,
-        addressDetails: ''
+        addressStreet: '',
+        addressCep: '',
+        addressCity: '',
+        addressState: '',
+        addressRecipientName: '',
+        addressRecipientPhone: ''
     });
     const [isFormValid, setIsFormValid] = useState(false);
 
-    const selectedAddressId = location.state?.selectedAddressId;
-    const selectedAddressDetails = location.state?.selectedAddressDetails;
-
     useEffect(() => {
+        // Restore form data from localStorage if available
+        const savedFormData = localStorage.getItem('addCatalogFormData');
+        if (savedFormData) {
+            setFormData(JSON.parse(savedFormData));
+        }
+
+        const {
+            selectedAddressId,
+            selectedAddressStreet,
+            selectedAddressCep,
+            selectedAddressCity,
+            selectedAddressState,
+            selectedAddressRecipientName,
+            selectedAddressRecipientPhone
+        } = location.state || {};
+
         if (selectedAddressId) {
             setFormData((prevFormData) => ({
                 ...prevFormData,
                 addressId: selectedAddressId,
-                addressDetails: selectedAddressDetails
+                addressStreet: selectedAddressStreet,
+                addressCep: selectedAddressCep,
+                addressCity: selectedAddressCity,
+                addressState: selectedAddressState,
+                addressRecipientName: selectedAddressRecipientName,
+                addressRecipientPhone: selectedAddressRecipientPhone
             }));
         }
-    }, [selectedAddressId, selectedAddressDetails]);
+    }, [location.state]);
+
+    useEffect(() => {
+        const { name, nameBoss, cnpj, email, phone } = formData;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const cnpjRegex = /^\d{14}$/;
+        const isNameValid = name !== '' && name.length <= 65;
+        const isNameBossValid = nameBoss !== '' && nameBoss.length <= 65;
+        const isEmailValid = email !== '' && emailRegex.test(email);
+        const isCnpjValid = cnpj !== '' && cnpjRegex.test(cnpj.replace(/[^\d]/g, ''));
+        const isPhoneValid = phone !== '';
+
+        setIsFormValid(isNameValid && isNameBossValid && isEmailValid && isCnpjValid && isPhoneValid);
+    }, [formData]);
 
     const handleDayClick = (dayIndex) => {
         setSelectedDay(dayIndex === selectedDay ? null : dayIndex);
@@ -106,47 +142,38 @@ const AddCatalog = () => {
         });
     };
 
-    useEffect(() => {
-        const { name, nameBoss, cnpj, email, phone } = formData;
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const cnpjRegex = /^\d{14}$/;
-        const isNameValid = name !== '' && name.length <= 65;
-        const isNameBossValid = nameBoss !== '' && nameBoss.length <= 65;
-        const isEmailValid = email !== '' && emailRegex.test(email);
-        const isCnpjValid = cnpj !== '' && cnpjRegex.test(cnpj.replace(/[^\d]/g, ''));
-        const isPhoneValid = phone !== '';
-
-        setIsFormValid(isNameValid && isNameBossValid && isEmailValid && isCnpjValid && isPhoneValid);
-    }, [formData]);
-
     const validateForm = useCallback(() => {
-        const errors = [];
-        const { name, nameBoss, cnpj, email, phone } = formData;
+        const { name, nameBoss, cnpj, email, phone, addressId } = formData;
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const cnpjRegex = /^\d{14}$/;
 
         if (!name || name.length > 65) {
-            errors.push('Nome do catálogo é obrigatório e deve ter no máximo 65 caracteres.');
+            setMessage('Nome do catálogo é obrigatório e deve ter no máximo 65 caracteres.', 'error');
+            return false;
         }
 
         if (!nameBoss || nameBoss.length > 65) {
-            errors.push('Nome empresarial é obrigatório e deve ter no máximo 65 caracteres.');
+            setMessage('Nome empresarial é obrigatório e deve ter no máximo 65 caracteres.', 'error');
+            return false;
         }
 
         if (!email || !emailRegex.test(email)) {
-            errors.push('Email é obrigatório e deve ser válido.');
+            setMessage('Email é obrigatório e deve ser válido.', 'error');
+            return false;
         }
 
         if (!cnpj || !cnpjRegex.test(cnpj.replace(/[^\d]/g, ''))) {
-            errors.push('CNPJ é obrigatório e deve ser válido.');
+            setMessage('CNPJ é obrigatório e deve ser válido.', 'error');
+            return false;
         }
 
         if (!phone) {
-            errors.push('Telefone é obrigatório.');
+            setMessage('Telefone é obrigatório.', 'error');
+            return false;
         }
 
-        if (errors.length > 0) {
-            setMessage(errors.join(' '));
+        if (!addressId) {
+            setMessage('Endereço é obrigatório.', 'error');
             return false;
         }
 
@@ -158,12 +185,13 @@ const AddCatalog = () => {
         if (validateForm()) {
             setMessage('Formulário enviado com sucesso!', 'success');
             console.log('Form submitted:', formData);
-        } else {
-            setMessage('Por favor, preencha todos os campos obrigatórios.', 'error');
         }
     }, [formData, setMessage, validateForm]);
 
-    const handleSelectAddress = () => {
+    const handleSelectAddress = (e) => {
+        e.preventDefault();
+        // Save form data to localStorage before navigating to address selection
+        localStorage.setItem('addCatalogFormData', JSON.stringify(formData));
         navigate('/address', { state: { selectMode: true } });
     };
 
@@ -171,7 +199,7 @@ const AddCatalog = () => {
         <div className="add-catalog-page">
             <Helmet>
                 <title>Adicionar Catálogo</title>
-                <meta name="description" content="Adicione um novo." />
+                <meta name="description" content="Adicione um novo catálogo." />
             </Helmet>
             {isMobile && (
                 <MobileHeader title="Adicionar Catálogo" buttons={{ close: true }} handleBack={handleBack} />
@@ -233,9 +261,11 @@ const AddCatalog = () => {
                     </Card>
                     <Card title="Endereço de origem">
                         <SeeData 
-                            title="Selecionar Endereço" 
-                            content={formData.addressDetails || "Nenhum endereço selecionado"} 
-                            linkText="Selecionar" 
+                            title={formData.addressStreet || "Selecionar Endereço"} 
+                            content={formData.addressCep ? `CEP: ${formData.addressCep} - ${formData.addressCity}/${formData.addressState}` : "Nenhum endereço selecionado"} 
+                            subContent={formData.addressRecipientName ? `${formData.addressRecipientName} - ${formData.addressRecipientPhone}` : ""}
+                            stackContent={true}
+                            linkText="Selecionar"                         
                             onClick={handleSelectAddress} 
                         />
                     </Card>

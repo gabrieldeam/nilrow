@@ -21,10 +21,6 @@ const Address = () => {
         navigate(-1);
     }, [navigate]);
 
-    const handleSelect = (addressId) => {
-        navigate(-1, { state: { selectedAddressId: addressId } });
-    };
-
     useEffect(() => {
         const fetchAddresses = async () => {
             try {
@@ -39,6 +35,22 @@ const Address = () => {
         fetchAddresses();
     }, [setMessage]);
 
+    const handleSelect = (address) => {
+        if (selectMode) {
+            navigate('/add-catalog', { 
+                state: { 
+                    selectedAddressId: address.id, 
+                    selectedAddressStreet: address.street,
+                    selectedAddressCep: address.cep,
+                    selectedAddressCity: address.city,
+                    selectedAddressState: address.state,
+                    selectedAddressRecipientName: address.recipientName,
+                    selectedAddressRecipientPhone: address.recipientPhone
+                }
+            });
+        }
+    };
+
     return (
         <div className="address-page">
             <Helmet>
@@ -52,7 +64,7 @@ const Address = () => {
                 <SubHeader title="Endereço" handleBack={handleBack} />
                 <Card 
                     title="Cadastrados"
-                    rightLink={{ href: "/add-address", text: "+ Adicionar endereço" }}
+                    rightLink={!selectMode ? { href: "/add-address", text: "+ Adicionar endereço" } : undefined}
                 >
                     <div className="address-see-data-wrapper">
                         {addresses.map(address => (
@@ -63,7 +75,8 @@ const Address = () => {
                                 stackContent={true}
                                 subContent={`${address.recipientName} - ${address.recipientPhone}`}
                                 linkText={selectMode ? "Selecionar" : "Editar"}
-                                link={selectMode ? () => handleSelect(address.id) : `/edit-address/${address.id}`}
+                                onClick={selectMode ? () => handleSelect(address) : undefined}
+                                link={selectMode ? undefined : `/edit-address/${address.id}`}
                             />
                         ))}
                     </div>

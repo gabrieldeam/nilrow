@@ -23,9 +23,14 @@ const SeeData = ({ title, content, subContent, link, linkText, onClick, stackCon
       </div>
       <div className="see-data-actions">
         {link && linkText && (
-          <a href={link} className="see-data-link" onClick={onClick}>
+          <a href={link} className="see-data-link">
             {linkText}
           </a>
+        )}
+        {onClick && linkText && !link && (
+          <button className="see-data-button" onClick={onClick}>
+            {linkText}
+          </button>
         )}
         {showToggleButton && <ToggleButton onToggle={onToggle} initial={toggled} />}
       </div>
