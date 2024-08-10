@@ -52,12 +52,27 @@
 .catalog-see-data-wrapper {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px; /* Espaço entre os elementos */
+    gap: 10px; 
 }
 
 .catalog-see-data-wrapper > div {
-    flex: 1 1 calc(25% - 16px); /* 25% de largura menos o espaço do gap */
+    flex: 1 1 calc(25% - 16px); 
 }
+
+.empty-catalog-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #000000;
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+    border-radius: 5px;
+    width: 100%;
+    min-height: 100px;
+    box-sizing: border-box;
+}
+
 
 @media (max-width: 768px) {
 
@@ -82,6 +97,6 @@
     }
 
     .catalog-see-data-wrapper > div {
-        flex: 1 1 100%; /* Full width on mobile */
+        flex: 1 1 100%; 
     }
 }

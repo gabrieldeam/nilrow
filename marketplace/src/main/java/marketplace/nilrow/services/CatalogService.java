@@ -24,11 +24,18 @@ public class CatalogService {
     private AddressRepository addressRepository;
 
     public Catalog createCatalog(CatalogDTO catalogDTO, String channelId) {
+        // Verifica se o canal existe
         Optional<Channel> channelOpt = channelRepository.findById(channelId);
         if (channelOpt.isEmpty()) {
             throw new RuntimeException("Canal não encontrado");
         }
 
+        Optional<Catalog> existingCatalog = catalogRepository.findByCnpj(catalogDTO.getCnpj());
+        if (existingCatalog.isPresent()) {
+            throw new RuntimeException("CNPJ já está cadastrado");
+        }
+
+        // Cria uma nova instância de Catalog
         Catalog catalog = new Catalog();
         catalog.setChannel(channelOpt.get());
         catalog.setName(catalogDTO.getName());
@@ -37,12 +44,21 @@ public class CatalogService {
         catalog.setEmail(catalogDTO.getEmail());
         catalog.setPhone(catalogDTO.getPhone());
 
+        // Verifica se o endereço existe
         Optional<Address> addressOpt = addressRepository.findById(catalogDTO.getAddressId());
         if (addressOpt.isEmpty()) {
             throw new RuntimeException("Endereço não encontrado");
         }
         catalog.setAddress(addressOpt.get());
 
+        // Define o tipo de horário de funcionamento usando o enum
+        if (catalogDTO.getOperatingHoursType() != null) {
+            catalog.setOperatingHoursType(catalogDTO.getOperatingHoursType());
+        } else {
+            throw new RuntimeException("Tipo de horário de funcionamento não pode ser nulo");
+        }
+
+        // Configura a lista de horários de funcionamento
         List<OperatingHours> operatingHoursList = new ArrayList<>();
         if (catalogDTO.getOperatingHours() != null) {
             for (OperatingHoursDTO ohDTO : catalogDTO.getOperatingHours()) {
@@ -68,8 +84,10 @@ public class CatalogService {
         }
         catalog.setOperatingHours(operatingHoursList);
 
+        // Salva e retorna o catalog criado
         return catalogRepository.save(catalog);
     }
+
 
     public Optional<Catalog> getCatalogByChannelId(String channelId) {
         return catalogRepository.findByChannelId(channelId);
@@ -148,5 +166,9 @@ public class CatalogService {
             return Optional.of(catalog);
         }
         return Optional.empty();
+    }
+
+    public List<Catalog> getCatalogsByVisibility(String channelId, boolean isVisible) {
+        return catalogRepository.findByChannelIdAndIsVisible(channelId, isVisible);
     }
 }

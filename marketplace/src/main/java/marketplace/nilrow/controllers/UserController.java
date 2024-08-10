@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import marketplace.nilrow.domain.user.UpdateNicknameDTO;
 import marketplace.nilrow.domain.user.User;
+import marketplace.nilrow.domain.user.UserDTO;
 import marketplace.nilrow.infra.exception.DuplicateFieldException;
 import marketplace.nilrow.infra.security.TokenService;
 import marketplace.nilrow.repositories.UserRepository;
@@ -13,6 +14,10 @@ import marketplace.nilrow.util.ForbiddenWordsUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -111,6 +116,19 @@ public class UserController {
             logger.error("Failed to delete user", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<Page<UserDTO>> getAllUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "nickname") String sortBy) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+        Page<User> userPage = userRepository.findAll(pageable);
+        Page<UserDTO> userDTOPage = userPage.map(UserDTO::new);
+
+        return ResponseEntity.ok(userDTOPage);
     }
 
 }

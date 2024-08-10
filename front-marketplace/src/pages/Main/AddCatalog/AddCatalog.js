@@ -1,4 +1,4 @@
-import React, { useCallback, useState, memo, useContext, useEffect } from 'react';
+import React, { useCallback, useState, memo, useContext, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import CustomSelect from '../../../components/UI/CustomSelect/CustomSelect';
 import CustomInput from '../../../components/UI/CustomInput/CustomInput';
@@ -10,6 +10,7 @@ import SeeData from '../../../components/UI/SeeData/SeeData';
 import { Helmet } from 'react-helmet-async';
 import './AddCatalog.css';
 import { NotificationContext } from '../../../context/NotificationContext';
+import { createCatalog } from '../../../services/catalogApi';
 import closeIcon from '../../../assets/close.svg';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
@@ -24,8 +25,8 @@ const AddCatalog = () => {
         navigate('/catalog');
     }, [navigate]);
 
-    const daysOfWeek = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
-    const fullDaysOfWeek = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    const daysOfWeek = useMemo(() => ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'], []);
+    const fullDaysOfWeek = useMemo(() => ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'], []);
 
     const [selectedDay, setSelectedDay] = useState(null);
     const [dayData, setDayData] = useState(
@@ -126,8 +127,6 @@ const AddCatalog = () => {
     const addOpenCloseTime = (dayIndex) => {
         const newDayData = [...dayData];
         newDayData[dayIndex].openCloseTimes.push({ open: '', close: '' });
-        newDayData[dayIndex].is24Hours = false;
-        newDayData[dayIndex].isClosed = false;
         setDayData(newDayData);
     };
 
@@ -205,16 +204,68 @@ const AddCatalog = () => {
         return true;
     }, [formData, selectedOption, dayData, setMessage]);
 
-    const handleSubmit = useCallback((e) => {
+    const handleSubmit = useCallback(async (e) => {
         e.preventDefault();
         if (validateForm()) {
-            localStorage.removeItem('addCatalogFormData'); 
-            setMessage('Formulário enviado com sucesso!', 'success');
-            console.log('Form submitted:', formData);
-            navigate('/catalog');
+            const operatingHours = selectedOption === 'normal' ? dayData.map((day, index) => ({
+                dayOfWeek: fullDaysOfWeek[index],
+                timeIntervals: day.is24Hours || day.isClosed ? [] : day.openCloseTimes.map(time => ({
+                    openTime: time.open,
+                    closeTime: time.close
+                })),
+                is24Hours: day.is24Hours,
+                closed: day.isClosed
+            })) : [];
+    
+            let operatingHoursType = '';
+            switch (selectedOption) {
+                case 'normal':
+                    operatingHoursType = 'NORMAL_HOURS';
+                    break;
+                case 'noHours':
+                    operatingHoursType = 'NO_NORMAL_HOURS';
+                    break;
+                case 'temporaryClosed':
+                    operatingHoursType = 'TEMPORARILY_CLOSED';
+                    break;
+                case 'permanentClosed':
+                    operatingHoursType = 'PERMANENTLY_CLOSED';
+                    break;
+                default:
+                    setMessage('Tipo de horário de funcionamento inválido.', 'error');
+                    return;
+            }
+    
+            const catalogData = {
+                name: formData.name,
+                nameBoss: formData.nameBoss,
+                cnpj: formData.cnpj,
+                email: formData.email,
+                phone: formData.phone,
+                addressId: formData.addressId,
+                operatingHoursType: operatingHoursType,
+                operatingHours: operatingHours
+            };
+    
+            try {
+                await createCatalog(catalogData);
+                setMessage('Catálogo criado com sucesso!', 'success');
+                navigate('/catalog');
+            } catch (error) {
+                // Verifica se há uma resposta do servidor
+                if (error.response && error.response.data) {
+                    // Exibe a mensagem de erro vinda do backend
+                    const errorMessage = error.response.data.message || 'Erro ao criar o catálogo. Tente novamente.';
+                    setMessage(errorMessage, 'error');
+                } else {
+                    // Caso não haja resposta, exibe uma mensagem genérica
+                    setMessage('Erro ao criar o catálogo. Tente novamente.', 'error');
+                }
+                console.error('Erro ao criar o catálogo:', error);
+            }
         }
-    }, [formData, setMessage, validateForm, navigate]);
-
+    }, [formData, selectedOption, dayData, fullDaysOfWeek, setMessage, navigate, validateForm]);
+    
     const handleSelectAddress = (e) => {
         e.preventDefault();
         const formDataWithTimestamp = {

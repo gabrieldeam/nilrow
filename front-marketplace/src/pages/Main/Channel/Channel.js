@@ -76,13 +76,17 @@ const Channel = ({ nickname }) => {
                 setFollowersCount(followersCount);
                 setFollowingCount(followingCount);
     
-                const [ownerCheck, followingCheck, aboutData, faqsData] = await Promise.all([
-                    isChannelOwner(data.id),
+                // Chamar isChannelOwner primeiro
+                const ownerCheck = await isChannelOwner(data.id);
+                setIsOwner(ownerCheck);
+                
+                // Chamar as outras APIs
+                const [followingCheck, aboutData, faqsData] = await Promise.all([
                     isFollowing(data.id),
                     getAboutByNickname(nickname),
                     getFAQsByNickname(nickname)
                 ]);
-                setIsOwner(ownerCheck);
+                
                 setIsFollowingChannel(followingCheck);
     
                 // Verificar se há dados em about ou faqs

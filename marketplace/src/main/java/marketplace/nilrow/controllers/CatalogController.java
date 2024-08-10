@@ -66,6 +66,64 @@ public class CatalogController {
         return ResponseEntity.ok(responseDTO);
     }
 
+    @GetMapping("/visible")
+    public ResponseEntity<List<CatalogDTO>> getVisibleCatalogs() {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String username = userDetails.getUsername();
+
+        Optional<Channel> channelOpt = channelService.getChannelByPeopleUsername(username);
+        if (channelOpt.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        List<Catalog> visibleCatalogs = catalogService.getCatalogsByVisibility(channelOpt.get().getId(), true);
+        List<CatalogDTO> catalogDTOs = visibleCatalogs.stream().map(this::convertToDTO).collect(Collectors.toList());
+
+        return ResponseEntity.ok(catalogDTOs);
+    }
+
+    @GetMapping("/hidden")
+    public ResponseEntity<List<CatalogDTO>> getHiddenCatalogs() {
+        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String username = userDetails.getUsername();
+
+        Optional<Channel> channelOpt = channelService.getChannelByPeopleUsername(username);
+        if (channelOpt.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        List<Catalog> hiddenCatalogs = catalogService.getCatalogsByVisibility(channelOpt.get().getId(), false);
+        List<CatalogDTO> catalogDTOs = hiddenCatalogs.stream().map(this::convertToDTO).collect(Collectors.toList());
+
+        return ResponseEntity.ok(catalogDTOs);
+    }
+
+    // Método auxiliar para converter Catalog em CatalogDTO
+    private CatalogDTO convertToDTO(Catalog catalog) {
+        List<OperatingHoursDTO> operatingHoursDTOs = catalog.getOperatingHours().stream()
+                .map(oh -> new OperatingHoursDTO(
+                        oh.getDayOfWeek(),
+                        oh.is24Hours(),
+                        oh.isClosed(),
+                        oh.getTimeIntervals().stream()
+                                .map(ti -> new TimeIntervalDTO(ti.getOpenTime(), ti.getCloseTime()))
+                                .collect(Collectors.toList())
+                ))
+                .collect(Collectors.toList());
+
+        return new CatalogDTO(
+                catalog.getId(),
+                catalog.getName(),
+                catalog.getNameBoss(),
+                catalog.getCnpj(),
+                catalog.getEmail(),
+                catalog.getPhone(),
+                catalog.getAddress().getId(),
+                catalog.getOperatingHoursType(),
+                operatingHoursDTOs
+        );
+    }
+
     @GetMapping("/{channelId}")
     public ResponseEntity<CatalogDTO> getCatalogByChannelId(@PathVariable String channelId) {
         Optional<Catalog> catalogOpt = catalogService.getCatalogByChannelId(channelId);

@@ -1,19 +1,68 @@
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import MobileHeader from '../../../components/Main/MobileHeader/MobileHeader';
 import SubHeader from '../../../components/Main/SubHeader/SubHeader';
 import Card from '../../../components/UI/Card/Card';
 import SeeData from '../../../components/UI/SeeData/SeeData';
+import { getVisibleCatalogs, getHiddenCatalogs } from '../../../services/catalogApi';
+import { getAddressById } from '../../../services/profileApi'; // Importe o getAddressById
 import './Catalog.css';
 
 const Catalog = () => {
     const isMobile = window.innerWidth <= 768;
     const navigate = useNavigate();
+    const [visibleCatalogs, setVisibleCatalogs] = useState([]);
+    const [hiddenCatalogs, setHiddenCatalogs] = useState([]);
 
     const handleBack = useCallback(() => {
-        navigate(-1);
+        navigate('/my-channel');
     }, [navigate]);
+
+    useEffect(() => {
+        const fetchCatalogs = async () => {
+            try {
+                const visible = await getVisibleCatalogs();
+                const hidden = await getHiddenCatalogs();
+
+                // Para cada catálogo, busque o endereço e adicione ao objeto
+                const visibleWithAddresses = await Promise.all(visible.map(async catalog => {
+                    const address = await getAddressById(catalog.addressId);
+                    return { ...catalog, address };
+                }));
+
+                const hiddenWithAddresses = await Promise.all(hidden.map(async catalog => {
+                    const address = await getAddressById(catalog.addressId);
+                    return { ...catalog, address };
+                }));
+
+                setVisibleCatalogs(visibleWithAddresses);
+                setHiddenCatalogs(hiddenWithAddresses);
+            } catch (error) {
+                console.error('Erro ao buscar catálogos:', error);
+            }
+        };
+
+        fetchCatalogs();
+    }, []);
+
+    const renderCatalog = (catalog) => (
+        <SeeData 
+            key={catalog.id}
+            title={catalog.name}
+            content={catalog.address ? `CEP: ${catalog.address.cep} - ${catalog.address.city}, ${catalog.address.state}` : 'Endereço não disponível'}
+            subContent={`CNPJ: ${catalog.cnpj}`} 
+            stackContent={true}
+            linkText="Gerenciar"                        
+            link={`/my-catalog/${catalog.id}`}
+        />
+    );
+
+    const renderEmptyMessage = (message) => (
+        <div className="empty-catalog-message">
+            {message}
+        </div>
+    );
 
     return (
         <div className="catalog-page">
@@ -33,28 +82,18 @@ const Catalog = () => {
                     rightLink={{ href: "/add-catalog", text: "+ Adicionar catálogo" }}
                 >
                     <div className="catalog-see-data-wrapper">
-                        <SeeData 
-                            title="Nome do Catálago" 
-                            content="CEP - Cidade, Estado" 
-                            subContent="CNPJ" 
-                            stackContent={true}
-                            linkText="Gerenciar"                        
-                            link={`/my-catalog/`}
-                        />                        
+                        {hiddenCatalogs.length > 0 
+                            ? hiddenCatalogs.map(renderCatalog) 
+                            : renderEmptyMessage("Nenhum catálogo cadastrado.")}
                     </div>
                 </Card>
                 <Card 
-                    title="Ativos no canal"                   
+                    title="Visíveis no canal"                   
                 >
                     <div className="catalog-see-data-wrapper">
-                        <SeeData 
-                            title="Nome do Catálago" 
-                            content="CEP - Cidade, Estado" 
-                            subContent="cnpj" 
-                            stackContent={true}
-                            linkText="Gerenciar"                        
-                            link={`/my-catalog/`}
-                        />                        
+                        {visibleCatalogs.length > 0 
+                            ? visibleCatalogs.map(renderCatalog) 
+                            : renderEmptyMessage("Nenhum catálogo visível no canal.")}
                     </div>
                 </Card>
             </div>

@@ -8,6 +8,7 @@ import { SearchProvider } from './context/SearchContext';
 import Notification from './components/UI/Notification/Notification';
 import ProtectedLoginRoute from './components/Others/ProtectedRoute/ProtectedLoginRoute';
 import ProtectedRoute from './components/Others/ProtectedRoute/ProtectedRoute';
+import AdminProtectedRoute from './components/Others/ProtectedRoute/AdminProtectedRoute'; // Importe o novo AdminProtectedRoute
 import NicknameRoute from './components/Others/ProtectedRoute/NicknameRoute';
 import MainHeader from './components/Main/MainHeader/MainHeader';
 import AuthHeader from './components/Auth/AuthHeader/AuthHeader';
@@ -53,6 +54,7 @@ const AddFAQ = lazy(() => import('./pages/Main/AddFAQ/AddFAQ'));
 const EditFAQ = lazy(() => import('./pages/Main/EditFAQ/EditFAQ'));
 const Catalog = lazy(() => import('./pages/Main/Catalog/Catalog'));
 const AddCatalog = lazy(() => import('./pages/Main/AddCatalog/AddCatalog'));
+const Administration = lazy(() => import('./pages/Admin/Administration/Administration'));
 
 const AppContent = () => {
     const { isAuthenticated } = useAuth();
@@ -146,6 +148,7 @@ const AppContent = () => {
                     <Route path="/edit-faq/:id" element={<ProtectedRoute element={<EditFAQ/>} />} />
                     <Route path="/catalog" element={<ProtectedRoute element={<Catalog/>} />} />
                     <Route path="/add-catalog" element={<ProtectedRoute element={<AddCatalog/>} />} />
+                    <Route path="/admin" element={<AdminProtectedRoute element={<Administration/>} />} /> {/* Use o AdminProtectedRoute aqui */}
                 </Routes>
             </Suspense>
             {renderFooter()}

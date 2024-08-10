@@ -69,4 +69,14 @@ export const logout = async () => {
     }
 };
 
+export const isAdmin = async () => {
+    try {
+        const response = await api.get('/auth/is-admin');
+        return response.data;  
+    } catch (error) {
+        console.error('Erro ao verificar se é admin:', error);
+        throw error.response ? error.response.data : new Error('Erro desconhecido');
+    }
+};
+
 export default api;
