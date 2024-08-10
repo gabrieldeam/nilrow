@@ -50,10 +50,17 @@ const AddCatalog = () => {
     const [isFormValid, setIsFormValid] = useState(false);
 
     useEffect(() => {
-        // Restore form data from localStorage if available
-        const savedFormData = localStorage.getItem('addCatalogFormData');
-        if (savedFormData) {
-            setFormData(JSON.parse(savedFormData));
+        const savedData = localStorage.getItem('addCatalogFormData');
+        if (savedData) {
+            const parsedData = JSON.parse(savedData);
+            const currentTime = new Date().getTime();
+            const tenMinutes = 2 * 60 * 1000;
+
+            if (currentTime - parsedData.timestamp < tenMinutes) {
+                setFormData(parsedData.data);
+            } else {
+                localStorage.removeItem('addCatalogFormData');
+            }
         }
 
         const {
@@ -177,21 +184,44 @@ const AddCatalog = () => {
             return false;
         }
 
+        if (!selectedOption) {
+            setMessage('Você deve selecionar um tipo de horário de funcionamento.', 'error');
+            return false;
+        }
+
+        if (selectedOption === 'normal') {
+            const isAllDaysConfigured = dayData.every(day =>
+                day.is24Hours ||
+                day.isClosed ||
+                day.openCloseTimes.every(time => time.open && time.close)
+            );
+
+            if (!isAllDaysConfigured) {
+                setMessage('Você deve configurar todos os dias quando escolher "Aberto com horário normal".', 'error');
+                return false;
+            }
+        }
+
         return true;
-    }, [formData, setMessage]);
+    }, [formData, selectedOption, dayData, setMessage]);
 
     const handleSubmit = useCallback((e) => {
         e.preventDefault();
         if (validateForm()) {
+            localStorage.removeItem('addCatalogFormData'); 
             setMessage('Formulário enviado com sucesso!', 'success');
             console.log('Form submitted:', formData);
+            navigate('/catalog');
         }
-    }, [formData, setMessage, validateForm]);
+    }, [formData, setMessage, validateForm, navigate]);
 
     const handleSelectAddress = (e) => {
         e.preventDefault();
-        // Save form data to localStorage before navigating to address selection
-        localStorage.setItem('addCatalogFormData', JSON.stringify(formData));
+        const formDataWithTimestamp = {
+            data: formData,
+            timestamp: new Date().getTime(),
+        };
+        localStorage.setItem('addCatalogFormData', JSON.stringify(formDataWithTimestamp));
         navigate('/address', { state: { selectMode: true } });
     };
 

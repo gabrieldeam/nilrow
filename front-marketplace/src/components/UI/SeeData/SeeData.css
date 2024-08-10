@@ -71,7 +71,21 @@
   color: #7B33E5;
   text-decoration: none;
   margin-left: 20px;
-  white-space: nowrap; /* Garante que o link não quebre para baixo */
+  white-space: nowrap;
+}
+
+.see-data-button {
+  font-size: 15px;
+  color: #7B33E5;
+  text-decoration: none;
+  margin-left: 20px;
+  white-space: nowrap;
+  background: transparent;
+  border: none;
+}
+
+.see-data-button:hover {
+  text-decoration: underline;
 }
 
 .see-data-link:hover {
