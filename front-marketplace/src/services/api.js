@@ -79,4 +79,16 @@ export const isAdmin = async () => {
     }
 };
 
+export const getAllUsers = async (page = 0, size = 10, sortBy = 'nickname') => {
+    try {
+        const response = await api.get('/user/all', {
+            params: { page, size, sortBy }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Erro ao buscar usuários:', error);
+        throw error.response ? error.response.data : new Error('Erro desconhecido');
+    }
+};
+
 export default api;

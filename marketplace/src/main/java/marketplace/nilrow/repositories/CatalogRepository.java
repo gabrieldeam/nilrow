@@ -10,4 +10,5 @@ public interface CatalogRepository extends JpaRepository<Catalog, String> {
     Optional<Catalog> findByChannelId(String channelId);
     List<Catalog> findByChannelIdAndIsVisible(String channelId, boolean isVisible);
     Optional<Catalog> findByCnpj(String cnpj);
+    List<Catalog> findAllByChannelId(String channelId);
 }

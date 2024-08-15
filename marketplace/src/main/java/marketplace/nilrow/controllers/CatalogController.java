@@ -207,7 +207,18 @@ public class CatalogController {
         return ResponseEntity.ok().build();
     }
 
-    // Endpoint para atualizar o campo 'isVisible'
+    @GetMapping("/{id}/is-released")
+    public ResponseEntity<Boolean> isCatalogReleased(@PathVariable String id) {
+        Optional<Catalog> catalogOpt = catalogService.getCatalogById(id);
+        if (catalogOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        boolean isReleased = catalogOpt.get().isReleased();
+        return ResponseEntity.ok(isReleased);
+    }
+
+
+
     @PatchMapping("/visibility/{id}")
     public ResponseEntity<Void> updateCatalogVisibility(@PathVariable String id, @RequestParam boolean visible) {
         Optional<Catalog> catalogOpt = catalogService.updateCatalogVisibility(id, visible);
@@ -216,4 +227,20 @@ public class CatalogController {
         }
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/channel/{channelId}/catalogs")
+    public ResponseEntity<List<CatalogDTO>> getCatalogsByChannelId(@PathVariable String channelId) {
+        List<Catalog> catalogs = catalogService.getCatalogsByChannelId(channelId);
+
+        if (catalogs.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        List<CatalogDTO> catalogDTOs = catalogs.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(catalogDTOs);
+    }
+
 }

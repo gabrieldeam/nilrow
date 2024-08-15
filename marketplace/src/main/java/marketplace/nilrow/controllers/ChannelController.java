@@ -280,4 +280,18 @@ public class ChannelController {
         return ResponseEntity.ok(channel.isActive());
     }
 
+    @GetMapping("/person/{personId}/channel")
+    public ResponseEntity<ChannelDTO> getChannelByPersonId(@PathVariable String personId) {
+        People people = peopleRepository.findById(personId)
+                .orElseThrow(() -> new IllegalArgumentException("Pessoa não encontrada"));
+
+        Channel channel = people.getChannel();
+        if (channel == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        ChannelDTO channelDTO = new ChannelDTO(channel);
+        return ResponseEntity.ok(channelDTO);
+    }
+
 }

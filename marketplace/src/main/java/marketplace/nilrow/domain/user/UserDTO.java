@@ -10,6 +10,7 @@ import java.time.LocalDate;
 public class UserDTO {
     private String id;
     private String nickname;
+    private String peopleId;
     private String name;
     private String email;
     private String phone;
@@ -20,6 +21,7 @@ public class UserDTO {
     public UserDTO(User user) {
         this.id = user.getId();
         this.nickname = user.getNickname();
+        this.peopleId = user.getPeople().getId();
         this.name = user.getPeople().getName();
         this.email = user.getPeople().getEmail();
         this.phone = user.getPeople().getPhone();

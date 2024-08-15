@@ -171,4 +171,12 @@ public class CatalogService {
     public List<Catalog> getCatalogsByVisibility(String channelId, boolean isVisible) {
         return catalogRepository.findByChannelIdAndIsVisible(channelId, isVisible);
     }
+
+    public List<Catalog> getCatalogsByChannelId(String channelId) {
+        return catalogRepository.findAllByChannelId(channelId);
+    }
+
+    public Optional<Catalog> getCatalogById(String id) {
+        return catalogRepository.findById(id);
+    }
 }
