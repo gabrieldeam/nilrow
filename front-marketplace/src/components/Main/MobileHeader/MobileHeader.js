@@ -16,12 +16,13 @@ import publishIcon from '../../../assets/publish.svg';
 import scanIcon from '../../../assets/scan.svg';
 import blockedIcon from '../../../assets/blocked.svg';
 import notificationsIcon from '../../../assets/notifications.svg';
-import trashIcon from '../../../assets/trash.svg'; // Ícone de delete
+import trashIcon from '../../../assets/trash.svg';
+import ordersIcon from '../../../assets/orders.svg';  
 import logo from '../../../assets/nilrow.svg';
 import { LocationContext } from '../../../context/LocationContext';
 import AddressModal from '../../Others/AddressModal/AddressModal';
 import QRCodeModal from '../../UI/QRCodeModal/QRCodeModal';
-import ChatModal from '../../Others/ChatModal/ChatModal'; // Certifique-se de importar o ChatModal
+import ChatModal from '../../Others/ChatModal/ChatModal'; 
 
 const MobileHeader = ({ title, buttons, handleBack, showLogo, showSearch, searchPlaceholder, searchValue, onSearchChange, onSearchSubmit, onDelete }) => {
     const { location } = useContext(LocationContext);
@@ -69,7 +70,8 @@ const MobileHeader = ({ title, buttons, handleBack, showLogo, showSearch, search
         scan: scanIcon,
         blocked: blockedIcon,
         notifications: notificationsIcon,
-        trash: trashIcon, // Ícone de delete
+        trash: trashIcon,
+        orders: ordersIcon,
     };
 
     return (
@@ -115,7 +117,8 @@ const MobileHeader = ({ title, buttons, handleBack, showLogo, showSearch, search
                     {buttons.scan && <HeaderButton icon={icons.scan} link="/scan" />}
                     {buttons.blocked && <HeaderButton icon={icons.blocked} link="/blocked" />}
                     {buttons.notifications && <HeaderButton icon={icons.notifications} link="/notifications" />}
-                    {buttons.delete && <HeaderButton icon={icons.trash} onClick={onDelete} />} {/* Botão de delete */}
+                    {buttons.delete && <HeaderButton icon={icons.trash} onClick={onDelete} />}
+                    {buttons.orders && <HeaderButton icon={icons.orders} link="/orders" />}
                 </div>
             </div>
             <AddressModal isOpen={isAddressModalOpen} onClose={closeAddressModal} />

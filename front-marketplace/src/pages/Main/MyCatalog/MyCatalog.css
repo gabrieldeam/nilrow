@@ -1,0 +1,143 @@
+.my-catalog-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #000;
+    color: #fff;
+    padding-top: 90px;
+    padding-bottom: 70px;
+    box-sizing: border-box;
+}
+
+.my-catalog-container {
+    width: 100%;
+    padding: 0 58px;
+    box-sizing: border-box;
+}
+
+.my-catalog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.my-catalog-additional-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.my-catalog-additional-steps .step-button {
+    flex: 1 1 calc(25% - 20px); 
+}
+
+.my-catalog-additional {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: -5px;
+    margin-bottom: -5px;
+}
+
+.my-catalog-additional .step-button {
+    flex: 1 1 calc(25% - 20px); 
+}
+
+.my-catalog-element-info {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    max-width: 450px;
+    height: auto;
+    border: 1px solid #fff;
+    flex-shrink: 0;
+    border-radius: 5px; 
+}
+
+.my-catalog-info-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 15px;
+}
+
+.my-catalog-element-info-text {
+    flex: 1;
+    color: #fff;
+}
+
+.my-catalog-element-info-text p {
+    font-size: 14px;
+    margin: 0;
+}
+
+.my-catalog-learn-more-link {
+    font-size: 15px;
+    color: #6225BC;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 5px;
+}
+
+.my-catalog-learn-more-link:hover {
+    text-decoration: underline;
+}
+
+
+@media (max-width: 768px) {
+    .my-catalog-page {
+        padding-bottom: 100px;
+        padding-top: 80px;
+    }
+
+    .my-catalog-container {
+        max-width: 419px;
+        padding: 0 6px;
+    }
+
+    .my-catalog-additional-steps {
+        flex-direction: column;
+        margin-top: 30px;
+        gap: 0px;
+    }
+
+    .my-catalog-additional-steps .step-button {
+        max-width: 100%;
+    }
+
+    .my-catalog-additional {
+        flex-direction: column;
+        margin-top: 0px;
+        gap: 0px;
+        margin-bottom: 0px;
+    }
+
+    .my-catalog-additional.step-button {
+        max-width: 100%;
+    }
+
+    .my-catalog-element-info {
+        max-width: 100%;
+    }
+
+    .my-catalog-element-info-text {
+        display: block;
+        text-align: left;
+    }
+
+    .my-catalog-element-info-text p {
+        font-size: 14px;
+        margin: 0;
+        white-space: normal;
+    }
+
+    .my-catalog-learn-more-link {
+        font-size: 15px;
+        color: #6225BC;
+        text-decoration: none;
+        display: inline-block;
+        margin-top: 5px;
+    }
+}

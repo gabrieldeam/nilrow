@@ -6,7 +6,7 @@ import SubHeader from '../../../components/Main/SubHeader/SubHeader';
 import Card from '../../../components/UI/Card/Card';
 import SeeData from '../../../components/UI/SeeData/SeeData';
 import { getVisibleCatalogs, getHiddenCatalogs } from '../../../services/catalogApi';
-import { getAddressById } from '../../../services/profileApi'; // Importe o getAddressById
+import { getAddressById } from '../../../services/profileApi';
 import './Catalog.css';
 
 const Catalog = () => {
@@ -25,7 +25,6 @@ const Catalog = () => {
                 const visible = await getVisibleCatalogs();
                 const hidden = await getHiddenCatalogs();
 
-                // Para cada catálogo, busque o endereço e adicione ao objeto
                 const visibleWithAddresses = await Promise.all(visible.map(async catalog => {
                     const address = await getAddressById(catalog.addressId);
                     return { ...catalog, address };
@@ -46,6 +45,13 @@ const Catalog = () => {
         fetchCatalogs();
     }, []);
 
+    const handleManageClick = (catalogId) => {
+        // Armazena o catalogId no localStorage
+        localStorage.setItem('selectedCatalogId', catalogId);
+        // Redireciona para a página /my-catalog
+        navigate('/my-catalog');
+    };
+
     const renderCatalog = (catalog) => (
         <SeeData 
             key={catalog.id}
@@ -54,7 +60,8 @@ const Catalog = () => {
             subContent={`CNPJ: ${catalog.cnpj}`} 
             stackContent={true}
             linkText="Gerenciar"                        
-            link={`/my-catalog/${catalog.id}`}
+            link="#"
+            onClick={() => handleManageClick(catalog.id)} // Chama a função handleManageClick
         />
     );
 

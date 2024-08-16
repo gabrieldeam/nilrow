@@ -98,10 +98,18 @@
   gap: 10px;
 }
 
+.see-data-badge {
+  padding: 5px 10px;
+  border-radius: 100px;
+  color: #fff; 
+  font-size: 15px;
+  white-space: nowrap;
+}
+
 /* Estilos para mobile */
 @media (max-width: 768px) {
   .see-data-wrapper {
-    flex-direction: column; /* Adiciona uma direção de coluna para dispositivos móveis */
+    flex-direction: column; 
     gap: 10px;
   }
 }
