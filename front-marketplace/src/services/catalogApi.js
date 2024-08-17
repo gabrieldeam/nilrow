@@ -89,4 +89,14 @@ export const updateCatalogVisibility = async (id, visible) => {
     }
 };
 
+export const isCatalogReleased = async (id) => {
+    try {
+        const response = await catalogApi.get(`/catalog/${id}/is-released`);
+        return response.data;
+    } catch (error) {
+        console.error('Erro ao verificar se o catálogo está liberado:', error);
+        throw error.response ? error.response.data : new Error('Erro desconhecido');
+    }
+};
+
 export default catalogApi;

@@ -16,9 +16,12 @@ import productsIcon from '../../../assets/products.svg';
 import ordersCatalogIcon from '../../../assets/ordersCatalog.svg';
 import invoiceIcon from '../../../assets/invoice.svg';
 import eventsIcon from '../../../assets/events.svg';
+import { isCatalogReleased } from '../../../services/catalogApi';
 
 const MyCatalog = () => {
     const [catalogId, setCatalogId] = useState(null);
+    const [badgeText, setBadgeText] = useState('Em analise');
+    const [badgeBackgroundColor, setBadgeBackgroundColor] = useState('#DF1414');
     const isMobile = window.innerWidth <= 768;
     const navigate = useNavigate();
 
@@ -39,6 +42,25 @@ const MyCatalog = () => {
         }
     }, [navigate]);
 
+    useEffect(() => {
+        if (catalogId) {
+            // Chama a API para verificar se o catálogo está liberado
+            isCatalogReleased(catalogId)
+                .then((released) => {
+                    if (released) {
+                        setBadgeText('Liberado');
+                        setBadgeBackgroundColor('#4FBF0A');
+                    } else {
+                        setBadgeText('Em analise');
+                        setBadgeBackgroundColor('#DF1414');
+                    }
+                })
+                .catch((error) => {
+                    console.error('Erro ao verificar liberação do catálogo:', error);
+                });
+        }
+    }, [catalogId]);
+
     return (
         <div className="my-catalog-page">
             <Helmet>
@@ -52,7 +74,6 @@ const MyCatalog = () => {
                 <div className="my-catalog-header">
                     <SubHeader title="Catálogo" handleBack={handleBack} showOrdersButton={true} handleOrders={handleOrders} />
                 </div>
-                {/* <h1>Catálogo ID: {catalogId}</h1> */}
                 <div className="my-catalog-additional-steps">
                     <StepButton
                         icon={dataeditIcon}
@@ -79,42 +100,42 @@ const MyCatalog = () => {
                         onClick={() => navigate('/depois-colocar')}
                     />
                     <div className="my-catalog-additional">
-                    <StepButton
-                        icon={addressProfileIcon}
-                        title="Entrega"
-                        paragraph="Escolha onde seus produtos poderão ser vistos e vendidos."
-                        onClick={() => navigate('/depois-colocar')}
-                    />                    
-                    <StepButton
-                        icon={promoterIcon}
-                        title="Pagamento"
-                        paragraph="Escolha onde seus produtos poderão ser vistos e vendidos."
-                        onClick={() => navigate('/catalog')}
-                    />
-                    <StepButton
-                        icon={invoiceIcon}
-                        title="Notal fiscal"
-                        paragraph="Escolha onde seus produtos poderão ser vistos e vendidos."
-                        onClick={() => navigate('/depois-colocar')}
-                    />
-                    <StepButton
-                        icon={eventsIcon}
-                        title="Eventos"
-                        paragraph="Escolha onde seus produtos poderão ser vistos e vendidos."
-                        onClick={() => navigate('/depois-colocar')}
-                    />
+                        <StepButton
+                            icon={addressProfileIcon}
+                            title="Entrega"
+                            paragraph="Escolha onde seus produtos poderão ser vistos e vendidos."
+                            onClick={() => navigate('/depois-colocar')}
+                        />                    
+                        <StepButton
+                            icon={promoterIcon}
+                            title="Pagamento"
+                            paragraph="Escolha onde seus produtos poderão ser vistos e vendidos."
+                            onClick={() => navigate('/catalog')}
+                        />
+                        <StepButton
+                            icon={invoiceIcon}
+                            title="Notal fiscal"
+                            paragraph="Escolha onde seus produtos poderão ser vistos e vendidos."
+                            onClick={() => navigate('/depois-colocar')}
+                        />
+                        <StepButton
+                            icon={eventsIcon}
+                            title="Eventos"
+                            paragraph="Escolha onde seus produtos poderão ser vistos e vendidos."
+                            onClick={() => navigate('/depois-colocar')}
+                        />
                     </div>
                     <Card title="Status">
                         <div className="see-data-wrapper">
-                        <div className="my-catalog-element-info">
-                            <img src={infoIcon} alt="info" className="my-catalog-info-icon" />
-                            <div className="my-catalog-element-info-text">
-                                <p>Isso irá mostrar seus produtos na plataforma quanto ativo e liberado e irá retirar de tudo se não tiver ativo.</p>
-                                <a href="/" className="my-catalog-learn-more-link">Saiba mais sobre</a>
+                            <div className="my-catalog-element-info">
+                                <img src={infoIcon} alt="info" className="my-catalog-info-icon" />
+                                <div className="my-catalog-element-info-text">
+                                    <p>Isso irá mostrar seus produtos na plataforma quanto ativo e liberado e irá retirar de tudo se não tiver ativo.</p>
+                                    <a href="/" className="my-catalog-learn-more-link">Saiba mais sobre</a>
+                                </div>
                             </div>
-                        </div>
                             <SeeData title="Mostrar no canal" content="Mostrar o catálogo e todos os produtos associados a ele no seu canal." stackContent={true} showToggleButton={true} onToggle='' toggled=''/>
-                            <SeeData title="Liberação da nilrow" content="Liberação da comecialização pela nilrow." stackContent={true} badgeText="Em analise" badgeBackgroundColor="#DF1414" />
+                            <SeeData title="Liberação da nilrow" content="Liberação da comercialização pela nilrow." stackContent={true} badgeText={badgeText} badgeBackgroundColor={badgeBackgroundColor} />
                         </div>
                     </Card>
                 </div>
