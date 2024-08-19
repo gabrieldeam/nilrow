@@ -10,6 +10,7 @@
     color: #fff;
     cursor: pointer;
     text-align: left;
+    margin-bottom: 5px;
     border-radius: 5px;
 }
 
@@ -68,4 +69,10 @@
 .step-button-arrow {
     width: 20px;
     height: 20px;
+}
+
+@media (max-width: 768px) {
+    .step-button {        
+        margin-bottom: 0px;
+    }
 }

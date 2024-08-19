@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, Navigate } from 'react-router-dom';
 import { getChannels } from '../../../services/channelApi'; 
-import Channel from '../../../pages/Main/Channel/Channel'; 
+import Channel from '../../../pages/Main/Channel-Pages/Channel/Channel'; 
 import LoadingSpinner from '../../../components/UI/LoadingSpinner/LoadingSpinner';
 
 const NicknameRoute = () => {

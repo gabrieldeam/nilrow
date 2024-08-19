@@ -28,35 +28,36 @@ const Search = lazy(() => import('./pages/Main/Search/Search'));
 const Create = lazy(() => import('./pages/Main/Create/Create'));
 const Bag = lazy(() => import('./pages/Main/Bag/Bag'));
 const Chat = lazy(() => import('./pages/Main/Chat/Chat'));
-const Profile = lazy(() => import('./pages/Main/Profile/Profile'));
+const Profile = lazy(() => import('./pages/Main/Profile-Pages/Profile/Profile'));
 const EmailValidatedSuccess = lazy(() => import('./pages/Auth/EmailValidatedSuccess/EmailValidatedSuccess'));
 const EmailValidationFailed = lazy(() => import('./pages/Auth/EmailValidationFailed/EmailValidationFailed'));
-const Data = lazy(() => import('./pages/Main/Data/Data'));
-const Cards = lazy(() => import('./pages/Main/Cards/Cards'));
-const Privacy = lazy(() => import('./pages/Main/Privacy/Privacy'));
-const EditProfile = lazy(() => import('./pages/Main/EditProfile/EditProfile'));
-const EditData = lazy(() => import('./pages/Main/EditData/EditData'));
+const Data = lazy(() => import('./pages/Main/Profile-Pages/Data/Data'));
+const Cards = lazy(() => import('./pages/Main/Profile-Pages/Cards/Cards'));
+const Privacy = lazy(() => import('./pages/Main/Profile-Pages/Privacy/Privacy'));
+const EditProfile = lazy(() => import('./pages/Main/Profile-Pages/EditProfile/EditProfile'));
+const EditData = lazy(() => import('./pages/Main/Profile-Pages/EditData/EditData'));
 const ZipCodeSearch = lazy(() => import('./pages/Main/ZipCodeSearch/ZipCodeSearch'));
-const Address = lazy(() => import('./pages/Main/Address/Address'));
-const AddAddress = lazy(() => import('./pages/Main/AddAddress/AddAddress'));
-const EditAddress = lazy(() => import('./pages/Main/EditAddress/EditAddress'));
-const AddChannel = lazy(() => import('./pages/Main/AddChannel/AddChannel'));
-const EditChannel = lazy(() => import('./pages/Main/EditChannel/EditChannel'));
-const MyChannel = lazy(() => import('./pages/Main/MyChannel/MyChannel'));
-const AboutChannel = lazy(() => import('./pages/Main/AboutChannel/AboutChannel'));
-const About = lazy(() => import('./pages/Main/About/About'));
+const Address = lazy(() => import('./pages/Main/Profile-Pages/Address/Address'));
+const AddAddress = lazy(() => import('./pages/Main/Profile-Pages/AddAddress/AddAddress'));
+const EditAddress = lazy(() => import('./pages/Main/Profile-Pages/EditAddress/EditAddress'));
+const AddChannel = lazy(() => import('./pages/Main/Channel-Pages/AddChannel/AddChannel'));
+const EditChannel = lazy(() => import('./pages/Main/Channel-Pages/EditChannel/EditChannel'));
+const MyChannel = lazy(() => import('./pages/Main/Channel-Pages/MyChannel/MyChannel'));
+const AboutChannel = lazy(() => import('./pages/Main/Channel-Pages/AboutChannel/AboutChannel'));
+const About = lazy(() => import('./pages/Main/Channel-Pages/About/About'));
 const StoreSearch = lazy(() => import('./pages/Main/StoreSearch/StoreSearch'));
-const MyFollowing = lazy(() => import('./pages/Main/MyFollowing/MyFollowing'));
-const ChannelFollow = lazy(() => import('./pages/Main/ChannelFollow/ChannelFollow'));
-const EditAbout = lazy(() => import('./pages/Main/EditAbout/EditAbout'));
-const CreateAbout = lazy(() => import('./pages/Main/CreateAbout/CreateAbout'));
-const AddFAQ = lazy(() => import('./pages/Main/AddFAQ/AddFAQ'));
-const EditFAQ = lazy(() => import('./pages/Main/EditFAQ/EditFAQ'));
-const Catalog = lazy(() => import('./pages/Main/Catalog/Catalog'));
-const AddCatalog = lazy(() => import('./pages/Main/AddCatalog/AddCatalog'));
+const MyFollowing = lazy(() => import('./pages/Main/Channel-Pages/MyFollowing/MyFollowing'));
+const ChannelFollow = lazy(() => import('./pages/Main/Channel-Pages/ChannelFollow/ChannelFollow'));
+const EditAbout = lazy(() => import('./pages/Main/Channel-Pages/EditAbout/EditAbout'));
+const CreateAbout = lazy(() => import('./pages/Main/Channel-Pages/CreateAbout/CreateAbout'));
+const AddFAQ = lazy(() => import('./pages/Main/Channel-Pages/AddFAQ/AddFAQ'));
+const EditFAQ = lazy(() => import('./pages/Main/Channel-Pages/EditFAQ/EditFAQ'));
+const Catalog = lazy(() => import('./pages/Main/Catalog-Pages/Catalog/Catalog'));
+const AddCatalog = lazy(() => import('./pages/Main/Catalog-Pages/AddCatalog/AddCatalog'));
 const Administration = lazy(() => import('./pages/Admin/Administration/Administration'));
-const MyCatalog = lazy(() => import('./pages/Main/MyCatalog/MyCatalog'));
-const EditCatalog = lazy(() => import('./pages/Main/EditCatalog/EditCatalog'));
+const MyCatalog = lazy(() => import('./pages/Main/Catalog-Pages/MyCatalog/MyCatalog'));
+const EditCatalog = lazy(() => import('./pages/Main/Catalog-Pages/EditCatalog/EditCatalog'));
+const Visualization = lazy(() => import('./pages/Main/Catalog-Pages/Visualization/Visualization'));
 
 const AppContent = () => {
     const { isAuthenticated } = useAuth();
@@ -153,6 +154,7 @@ const AppContent = () => {
                     <Route path="/admin" element={<AdminProtectedRoute element={<Administration/>} />} /> 
                     <Route path="/my-catalog" element={<ProtectedRoute element={<MyCatalog />} />} />
                     <Route path="/edit-catalog/:id" element={<ProtectedRoute element={<EditCatalog/>} />} />
+                    <Route path="/visualization" element={<ProtectedRoute element={<Visualization/>} />} />
                 </Routes>
             </Suspense>
             {renderFooter()}
