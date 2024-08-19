@@ -38,10 +38,10 @@ export const getHiddenCatalogs = async () => {
     }
 };
 
-// GET /catalog/{channelId}
-export const getCatalogByChannelId = async (channelId) => {
+// GET /catalog/{catalogId}
+export const getCatalogByCatalogId = async (catalogId) => {
     try {
-        const response = await catalogApi.get(`/catalog/${channelId}`);
+        const response = await catalogApi.get(`/catalog/${catalogId}`);
         return response.data;
     } catch (error) {
         throw error;
@@ -78,6 +78,17 @@ export const updateCatalogRelease = async (id, released) => {
     }
 };
 
+// GET /catalog/{id}/is-released
+export const isCatalogReleased = async (id) => {
+    try {
+        const response = await catalogApi.get(`/catalog/${id}/is-released`);
+        return response.data;
+    } catch (error) {
+        console.error('Erro ao verificar se o catálogo está liberado:', error);
+        throw error.response ? error.response.data : new Error('Erro desconhecido');
+    }
+};
+
 // PATCH /catalog/visibility/{id}
 export const updateCatalogVisibility = async (id, visible) => {
     try {
@@ -89,12 +100,13 @@ export const updateCatalogVisibility = async (id, visible) => {
     }
 };
 
-export const isCatalogReleased = async (id) => {
+// GET /catalog/{id}/is-visible
+export const isCatalogVisible = async (id) => {
     try {
-        const response = await catalogApi.get(`/catalog/${id}/is-released`);
+        const response = await catalogApi.get(`/catalog/${id}/is-visible`);
         return response.data;
     } catch (error) {
-        console.error('Erro ao verificar se o catálogo está liberado:', error);
+        console.error('Erro ao verificar se o catálogo está visível:', error);
         throw error.response ? error.response.data : new Error('Erro desconhecido');
     }
 };

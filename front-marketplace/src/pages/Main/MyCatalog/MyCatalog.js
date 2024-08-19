@@ -1,6 +1,6 @@
-import React, { memo, useCallback, useEffect, useState } from 'react';
+import React, { memo, useCallback, useEffect, useState, useContext } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import MobileHeader from '../../../components/Main/MobileHeader/MobileHeader';
 import SubHeader from '../../../components/Main/SubHeader/SubHeader';
 import './MyCatalog.css';
@@ -16,14 +16,18 @@ import productsIcon from '../../../assets/products.svg';
 import ordersCatalogIcon from '../../../assets/ordersCatalog.svg';
 import invoiceIcon from '../../../assets/invoice.svg';
 import eventsIcon from '../../../assets/events.svg';
-import { isCatalogReleased } from '../../../services/catalogApi';
+import { isCatalogReleased, isCatalogVisible, updateCatalogVisibility } from '../../../services/catalogApi';
+import { NotificationContext } from '../../../context/NotificationContext';
 
 const MyCatalog = () => {
+    const { setMessage } = useContext(NotificationContext);
+    const navigate = useNavigate();
+    const location = useLocation();
     const [catalogId, setCatalogId] = useState(null);
     const [badgeText, setBadgeText] = useState('Em analise');
     const [badgeBackgroundColor, setBadgeBackgroundColor] = useState('#DF1414');
+    const [isVisible, setIsVisible] = useState(false);
     const isMobile = window.innerWidth <= 768;
-    const navigate = useNavigate();
 
     const handleBack = useCallback(() => {
         navigate('/catalog');
@@ -34,17 +38,16 @@ const MyCatalog = () => {
     }, [navigate]);
 
     useEffect(() => {
-        const id = localStorage.getItem('selectedCatalogId');
+        const id = location.state?.catalogId || localStorage.getItem('selectedCatalogId');
         if (id) {
             setCatalogId(id);
         } else {
-            navigate('/catalog'); // Redireciona de volta se o ID não estiver presente
+            navigate('/catalog');
         }
-    }, [navigate]);
+    }, [location.state, navigate]);
 
     useEffect(() => {
         if (catalogId) {
-            // Chama a API para verificar se o catálogo está liberado
             isCatalogReleased(catalogId)
                 .then((released) => {
                     if (released) {
@@ -58,8 +61,37 @@ const MyCatalog = () => {
                 .catch((error) => {
                     console.error('Erro ao verificar liberação do catálogo:', error);
                 });
+
+            isCatalogVisible(catalogId)
+                .then((visible) => {
+                    setIsVisible(visible);
+                })
+                .catch((error) => {
+                    console.error('Erro ao verificar visibilidade do catálogo:', error);
+                });
         }
     }, [catalogId]);
+
+    const handleToggleVisibility = useCallback(() => {
+        if (catalogId) {
+            updateCatalogVisibility(catalogId, !isVisible)
+                .then(() => {
+                    setIsVisible(!isVisible);
+                    setMessage('Visibilidade do catálogo atualizada com sucesso!', 'success');
+                })
+                .catch((error) => {
+                    const errorMessage = error.response?.data?.message || 'Erro ao atualizar a visibilidade do catálogo.';
+                    setMessage(errorMessage, 'error');
+                    console.error('Erro ao atualizar a visibilidade do catálogo:', error);
+                });
+        }
+    }, [catalogId, isVisible, setMessage]);
+
+    const handleEditCatalog = useCallback(() => {
+        if (catalogId) {
+            navigate(`/edit-catalog/${catalogId}`);
+        }
+    }, [catalogId, navigate]);
 
     return (
         <div className="my-catalog-page">
@@ -79,7 +111,7 @@ const MyCatalog = () => {
                         icon={dataeditIcon}
                         title="Dados da empresa"
                         paragraph="Informações da sua empresa e informações sobre funcionamento."
-                        onClick={() => navigate('/about-channel')}
+                        onClick={handleEditCatalog}
                     />
                     <StepButton
                         icon={previewIcon}
@@ -134,8 +166,21 @@ const MyCatalog = () => {
                                     <a href="/" className="my-catalog-learn-more-link">Saiba mais sobre</a>
                                 </div>
                             </div>
-                            <SeeData title="Mostrar no canal" content="Mostrar o catálogo e todos os produtos associados a ele no seu canal." stackContent={true} showToggleButton={true} onToggle='' toggled=''/>
-                            <SeeData title="Liberação da nilrow" content="Liberação da comercialização pela nilrow." stackContent={true} badgeText={badgeText} badgeBackgroundColor={badgeBackgroundColor} />
+                            <SeeData
+                                title="Mostrar no canal"
+                                content="Mostrar o catálogo e todos os produtos associados a ele no seu canal."
+                                stackContent={true}
+                                showToggleButton={true}
+                                onToggle={handleToggleVisibility}
+                                toggled={isVisible}
+                            />
+                            <SeeData
+                                title="Liberação da nilrow"
+                                content="Liberação da comercialização pela nilrow."
+                                stackContent={true}
+                                badgeText={badgeText}
+                                badgeBackgroundColor={badgeBackgroundColor}
+                            />
                         </div>
                     </Card>
                 </div>

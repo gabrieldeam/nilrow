@@ -1,0 +1,172 @@
+.add-catalog-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #000;
+    color: #fff;
+    padding-top: 150px;
+    padding-bottom: 85px;
+    box-sizing: border-box;
+}
+
+.add-catalog-container {
+    width: 100%;
+    max-width: 419px;
+    padding: 6px;
+    box-sizing: border-box;
+    margin-top: auto; 
+    margin-bottom: auto; 
+}
+
+.confirmationButton-space {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.hour-see-data-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.hour-see-data-wrapper > div {
+    flex: 1 1 100%; 
+}
+
+.selection-see-data-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.selection-see-data-wrapper > div {
+    flex: 1 1 100%; 
+}
+
+.open-close-see-data-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: -10px;
+}
+
+.open-close-see-data-wrapper > div {
+    flex: 1 1 calc(50% - 16px);
+}
+
+.remove-time-button {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.add-time-button {
+    background: none;
+    color: #7B33E5;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 0 auto;
+    display: block;
+    margin-bottom: -15px;
+    margin-top: 15px;
+}
+
+.add-time-button:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .add-catalog-page {
+        padding-top: 105px;
+        padding-bottom: 85px;
+    }
+}
+
+.days-selection-label {
+    font-size: 15px;
+    color: #fff;
+    display: block;
+}
+
+.days-selection {
+    display: flex;
+    justify-content: space-around;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.day-box {
+    width: 100%;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-size: 20px;
+}
+
+.day-box.selected {
+    background-color: #7B33E5;
+}
+
+.day-details {
+    margin-bottom: 20px;
+}
+
+.day-details h4 {
+    margin-bottom: 10px;
+    margin-top: -10px;
+}
+
+.custom-input-container-phone {
+    width: 100%;
+    margin: 8px 0;
+}
+
+.input-title-phone {
+    display: block;
+    font-size: 15px;
+    color: #ffffff;
+    margin-bottom: 8px;
+}
+
+.phone-input {
+    width: 100% !important;
+    height: 40px !important;
+    padding: 0 45px !important;
+    border: 1px solid #ffffff !important;
+    background-color: transparent !important;
+    color: #ffffff !important;
+    font-size: 15px !important;
+    box-sizing: border-box !important;
+    border-radius: 4px !important;
+}
+
+.phone-input-button {
+    background-color: transparent !important;
+    border: none !important;
+}
+
+.phone-input-dropdown {
+    background-color: #212121 !important;
+    color: #ffffff !important;
+}
+
+.input-bottom-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 15px;
+}
+
+.bottom-left-phone {
+    color: #656565;
+    margin-top: 8px;
+}

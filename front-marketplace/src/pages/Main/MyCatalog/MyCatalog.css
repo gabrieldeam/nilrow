@@ -100,7 +100,7 @@
     .my-catalog-additional-steps {
         flex-direction: column;
         margin-top: 30px;
-        gap: 0px;
+        gap: 5px;
     }
 
     .my-catalog-additional-steps .step-button {
@@ -110,8 +110,8 @@
     .my-catalog-additional {
         flex-direction: column;
         margin-top: 0px;
-        gap: 0px;
-        margin-bottom: 0px;
+        gap: 5px;
+        margin-bottom: 5px;
     }
 
     .my-catalog-additional.step-button {

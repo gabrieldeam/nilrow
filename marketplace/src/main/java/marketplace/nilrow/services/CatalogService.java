@@ -97,24 +97,22 @@ public class CatalogService {
         Optional<Catalog> existingCatalogOpt = catalogRepository.findById(catalogId);
         if (existingCatalogOpt.isPresent()) {
             Catalog catalog = existingCatalogOpt.get();
-            if (catalogDTO.getName() != null) {
-                catalog.setName(catalogDTO.getName());
+
+            // Atualiza os campos simples
+            catalog.setName(catalogDTO.getName());
+            catalog.setNameBoss(catalogDTO.getNameBoss());
+            catalog.setCnpj(catalogDTO.getCnpj());
+            catalog.setEmail(catalogDTO.getEmail());
+            catalog.setPhone(catalogDTO.getPhone());
+
+            // Atualiza o tipo de horário de funcionamento
+            if (catalogDTO.getOperatingHoursType() != null) {
+                catalog.setOperatingHoursType(catalogDTO.getOperatingHoursType());
             }
-            if (catalogDTO.getNameBoss() != null) {
-                catalog.setNameBoss(catalogDTO.getNameBoss());
-            }
-            if (catalogDTO.getCnpj() != null) {
-                catalog.setCnpj(catalogDTO.getCnpj());
-            }
-            if (catalogDTO.getEmail() != null) {
-                catalog.setEmail(catalogDTO.getEmail());
-            }
-            if (catalogDTO.getPhone() != null) {
-                catalog.setPhone(catalogDTO.getPhone());
-            }
-            // Atualiza horários de funcionamento, se fornecidos
+
+            // Processa os horários de funcionamento
+            catalog.getOperatingHours().clear();
             if (catalogDTO.getOperatingHours() != null) {
-                List<OperatingHours> operatingHoursList = new ArrayList<>();
                 for (OperatingHoursDTO ohDTO : catalogDTO.getOperatingHours()) {
                     OperatingHours oh = new OperatingHours();
                     oh.setDayOfWeek(ohDTO.getDayOfWeek());
@@ -133,11 +131,12 @@ public class CatalogService {
                         }
                     }
                     oh.setTimeIntervals(timeIntervals);
-                    operatingHoursList.add(oh);
+                    catalog.getOperatingHours().add(oh);
                 }
-                catalog.setOperatingHours(operatingHoursList);
             }
-            return Optional.of(catalogRepository.save(catalog));
+
+            catalog = catalogRepository.save(catalog);
+            return Optional.of(catalog);
         }
         return Optional.empty();
     }

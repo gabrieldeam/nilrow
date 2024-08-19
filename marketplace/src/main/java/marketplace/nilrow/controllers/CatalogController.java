@@ -3,9 +3,11 @@ package marketplace.nilrow.controllers;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import marketplace.nilrow.domain.catalog.*;
 import marketplace.nilrow.domain.channel.Channel;
+import marketplace.nilrow.infra.exception.ExceptionDTO;
 import marketplace.nilrow.services.CatalogService;
 import marketplace.nilrow.services.ChannelService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -124,12 +126,13 @@ public class CatalogController {
         );
     }
 
-    @GetMapping("/{channelId}")
-    public ResponseEntity<CatalogDTO> getCatalogByChannelId(@PathVariable String channelId) {
-        Optional<Catalog> catalogOpt = catalogService.getCatalogByChannelId(channelId);
+    @GetMapping("/{catalogId}")
+    public ResponseEntity<CatalogDTO> getCatalogById(@PathVariable String catalogId) {
+        Optional<Catalog> catalogOpt = catalogService.getCatalogById(catalogId);
         if (catalogOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
+
         Catalog catalog = catalogOpt.get();
 
         // Convert OperatingHours to OperatingHoursDTO
@@ -157,6 +160,7 @@ public class CatalogController {
         );
         return ResponseEntity.ok(catalogDTO);
     }
+
 
     @PutMapping("/edit/{id}")
     public ResponseEntity<CatalogDTO> editCatalog(@PathVariable String id, @RequestBody CatalogDTO catalogDTO) {
@@ -220,12 +224,35 @@ public class CatalogController {
 
 
     @PatchMapping("/visibility/{id}")
-    public ResponseEntity<Void> updateCatalogVisibility(@PathVariable String id, @RequestParam boolean visible) {
-        Optional<Catalog> catalogOpt = catalogService.updateCatalogVisibility(id, visible);
+    public ResponseEntity<?> updateCatalogVisibility(@PathVariable String id, @RequestParam boolean visible) {
+        Optional<Catalog> catalogOpt = catalogService.getCatalogById(id);
+        if (catalogOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ExceptionDTO("Catálogo não encontrado", HttpStatus.NOT_FOUND.value()));
+        }
+
+        Catalog catalog = catalogOpt.get();
+        if (!catalog.isReleased()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new ExceptionDTO("A visibilidade só pode ser alterada se o catálogo estiver liberado.", HttpStatus.FORBIDDEN.value()));
+        }
+
+        Optional<Catalog> updatedCatalogOpt = catalogService.updateCatalogVisibility(id, visible);
+        if (updatedCatalogOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ExceptionDTO("Erro ao atualizar a visibilidade do catálogo.", HttpStatus.NOT_FOUND.value()));
+        }
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{id}/is-visible")
+    public ResponseEntity<Boolean> isCatalogVisible(@PathVariable String id) {
+        Optional<Catalog> catalogOpt = catalogService.getCatalogById(id);
         if (catalogOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok().build();
+        boolean isVisible = catalogOpt.get().isVisible();
+        return ResponseEntity.ok(isVisible);
     }
 
     @GetMapping("/channel/{channelId}/catalogs")
