@@ -111,4 +111,17 @@ export const isCatalogVisible = async (id) => {
     }
 };
 
+// Função para buscar detalhes do local usando o Google Places através do seu backend Spring Boot
+export const fetchPlaceDetails = async (placeId) => {
+    try {
+        const response = await catalogApi.get(`/google/google-place-details`, {
+            params: { placeId }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Erro ao buscar detalhes do lugar:', error);
+        throw error.response ? error.response.data : new Error('Erro desconhecido');
+    }
+};
+
 export default catalogApi;
