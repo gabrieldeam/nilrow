@@ -1,5 +1,6 @@
 package marketplace.nilrow.controllers;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import marketplace.nilrow.domain.catalog.location.LocationDTO;
 import marketplace.nilrow.infra.exception.ExceptionDTO;
 import marketplace.nilrow.services.LocationService;
@@ -12,6 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/locations")
+@Tag(name = "Catalog", description = "Operações relacionadas ao canal")
 public class LocationController {
 
     @Autowired

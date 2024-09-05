@@ -37,5 +37,4 @@ public class Location {
     @ManyToOne
     @JoinColumn(name = "catalog_id", nullable = false)
     private Catalog catalog;
-
 }

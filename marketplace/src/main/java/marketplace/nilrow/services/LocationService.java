@@ -30,12 +30,14 @@ public class LocationService {
         }
 
         Catalog catalog = catalogOpt.get();
-        Location location = convertToEntity(locationDTO);
+        // Corrigido aqui: Passando o catalog ao chamar convertToEntity
+        Location location = convertToEntity(locationDTO, catalog);
         location.setCatalog(catalog);
 
         Location savedLocation = locationRepository.save(location);
         return convertToDTO(savedLocation);
     }
+
 
     public void deleteLocation(String locationId) {
         locationRepository.deleteById(locationId);
@@ -48,11 +50,12 @@ public class LocationService {
                 .collect(Collectors.toList());
     }
 
-    private Location convertToEntity(LocationDTO locationDTO) {
+    private Location convertToEntity(LocationDTO locationDTO, Catalog catalog) {
         Location location = new Location();
         location.setName(locationDTO.getName());
         location.setPosition(locationDTO.getPosition());
         location.setAction(locationDTO.getAction());
+        location.setCatalog(catalog);
 
         // Convert includedPolygons
         location.setIncludedPolygons(locationDTO.getIncludedPolygons().stream()
@@ -61,6 +64,7 @@ public class LocationService {
                     polygon.setCoordinates(polygonCoords.stream()
                             .map(coord -> new Coordinate(null, coord.get(0), coord.get(1)))
                             .collect(Collectors.toList()));
+                    polygon.setLocation(location);  // Associar a Location ao Polygon
                     return polygon;
                 }).collect(Collectors.toList()));
 
@@ -71,11 +75,13 @@ public class LocationService {
                     polygon.setCoordinates(polygonCoords.stream()
                             .map(coord -> new Coordinate(null, coord.get(0), coord.get(1)))
                             .collect(Collectors.toList()));
+                    polygon.setLocation(location);  // Associar a Location ao Polygon
                     return polygon;
                 }).collect(Collectors.toList()));
 
         return location;
     }
+
 
     private LocationDTO convertToDTO(Location location) {
         LocationDTO locationDTO = new LocationDTO();

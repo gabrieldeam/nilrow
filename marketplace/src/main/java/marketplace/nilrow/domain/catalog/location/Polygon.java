@@ -18,12 +18,11 @@ public class Polygon {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @ManyToOne
-    @JoinColumn(name = "location_id", nullable = false)
-    private Location location;
-
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "polygon_id")
     private List<Coordinate> coordinates;
 
+    @ManyToOne
+    @JoinColumn(name = "location_id", nullable = false)
+    private Location location;
 }

@@ -124,4 +124,38 @@ export const fetchPlaceDetails = async (placeId) => {
     }
 };
 
+
+// POST /locations/create/{catalogId}
+export const createLocation = async (catalogId, locationDTO) => {
+    try {
+        const response = await catalogApi.post(`/locations/create/${catalogId}`, locationDTO);
+        return response.data;
+    } catch (error) {
+        console.error('Erro ao criar localização:', error);
+        throw error.response ? error.response.data : new Error('Erro desconhecido');
+    }
+};
+
+// DELETE /locations/delete/{locationId}
+export const deleteLocation = async (locationId) => {
+    try {
+        await catalogApi.delete(`/locations/delete/${locationId}`);
+    } catch (error) {
+        console.error('Erro ao deletar localização:', error);
+        throw error.response ? error.response.data : new Error('Erro desconhecido');
+    }
+};
+
+// GET /locations/catalog/{catalogId}
+export const getLocationsByCatalogId = async (catalogId) => {
+    try {
+        const response = await catalogApi.get(`/locations/catalog/${catalogId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Erro ao buscar localizações por ID do catálogo:', error);
+        throw error.response ? error.response.data : new Error('Erro desconhecido');
+    }
+};
+
+
 export default catalogApi;

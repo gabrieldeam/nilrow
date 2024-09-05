@@ -117,7 +117,7 @@ const MyCatalog = () => {
                         icon={previewIcon}
                         title="Visualização"
                         paragraph="Escolha onde seus produtos poderão ser vistos e vendidos"
-                        onClick={() => navigate('/visualization')}
+                        onClick={() => navigate('/visualization', { state: { catalogId } })}
                     />
                     <StepButton
                         icon={productsIcon}

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useContext, memo, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import MobileHeader from '../../../../components/Main/MobileHeader/MobileHeader';
 import SubHeader from '../../../../components/Main/SubHeader/SubHeader';
@@ -12,32 +12,50 @@ import { NotificationContext } from '../../../../context/NotificationContext';
 import 'leaflet/dist/leaflet.css';
 import includeIconSrc from '../../../../assets/include.svg';
 import excludeIconSrc from '../../../../assets/exclude.svg';
+import { createLocation, getLocationsByCatalogId, deleteLocation } from '../../../../services/catalogApi';
 
 const Visualization = () => {
     const navigate = useNavigate();
+    const location = useLocation(); // Para acessar o estado passado na navegação
     const isMobile = window.innerWidth <= 768;
     const { setMessage } = useContext(NotificationContext);
-    const REACT_APP_GOOGLE_API_KEY = process.env.REACT_APP_GOOGLE_API_KEY;
-
-    const [locations, setLocations] = useState(() => {
-        const savedLocations = localStorage.getItem('locations');
-        return savedLocations ? JSON.parse(savedLocations) : [];
-    });
-
+    
+    const [catalogId, setCatalogId] = useState(null); // Estado para armazenar o catalogId
+    const [locations, setLocations] = useState([]);
     const [suggestions, setSuggestions] = useState([]);
     const [query, setQuery] = useState('');
     const [action, setAction] = useState('include');
     const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [cep, setCep] = useState('');
 
     const dropdownRef = useRef(null);
     const suggestionsRef = useRef(null);
     const mapRef = useRef();
-    
+
+    // Fetch locations from backend on mount
+    useEffect(() => {
+        // Primeiro tenta pegar o catalogId do estado de navegação ou do localStorage
+        const id = location.state?.catalogId || localStorage.getItem('selectedCatalogId');
+        if (id) {
+            setCatalogId(id); // Define o catalogId no estado
+        } else {
+            navigate('/my-catalog'); // Redireciona se não houver catalogId
+        }
+    }, [location.state, navigate]);
 
     useEffect(() => {
-        localStorage.setItem('locations', JSON.stringify(locations));
-    }, [locations]);
+        if (catalogId) {
+            const fetchLocations = async () => {
+                try {
+                    const fetchedLocations = await getLocationsByCatalogId(catalogId);
+                    setLocations(fetchedLocations);
+                } catch (error) {
+                    setMessage({ type: 'error', text: 'Erro ao carregar localizações. Tente novamente.' });
+                }
+            };
+
+            fetchLocations();
+        }
+    }, [catalogId, setMessage]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -81,7 +99,7 @@ const Visualization = () => {
             if (data && data.length > 0) {
                 const { lat, lon, geojson } = data[0];
                 const newPosition = [parseFloat(lat), parseFloat(lon)];
-    
+
                 const newLocation = {
                     name: query,
                     position: newPosition,
@@ -89,9 +107,9 @@ const Visualization = () => {
                     excludedPolygons: [],
                     action: action,
                 };
-    
+
                 const bounds = [newPosition];
-    
+
                 if (geojson && geojson.type === 'Polygon') {
                     const coordinates = geojson.coordinates[0].map(coord => [coord[1], coord[0]]);
                     bounds.push(...coordinates);
@@ -109,15 +127,20 @@ const Visualization = () => {
                         newLocation.excludedPolygons.push(...coordinates);
                     }
                 }
-    
-                setLocations((prev) => [newLocation, ...prev]);
-    
+
+                try {
+                    await createLocation(catalogId, newLocation);  // Salvando no backend
+                    setLocations((prev) => [newLocation, ...prev]);
+                } catch (error) {
+                    setMessage({ type: 'error', text: 'Erro ao salvar a localização.' });
+                }
+
                 if (mapRef.current && bounds.length > 1) {
                     mapRef.current.fitBounds(bounds);
                 } else if (mapRef.current) {
                     mapRef.current.setView(newPosition, 13);
                 }
-    
+
                 setSuggestions([]);
             } else {
                 setMessage({ type: 'error', text: 'Nenhuma localização encontrada. Tente novamente.' });
@@ -126,7 +149,6 @@ const Visualization = () => {
             setMessage({ type: 'error', text: 'Erro ao buscar a localização. Tente novamente.' });
         }
     };
-    
 
     const debouncedFetchSuggestions = debounce(async (query, setSuggestions, setMessage) => {
         if (query.length > 2) {
@@ -145,7 +167,6 @@ const Visualization = () => {
             setSuggestions([]);
         }
     }, 300);
-    
 
     const handleInputChange = (e) => {
         const query = e.target.value;
@@ -171,7 +192,6 @@ const Visualization = () => {
             </>
         );
     };
-    
 
     const handleActionChange = (newAction) => {
         setAction(newAction);
@@ -182,8 +202,14 @@ const Visualization = () => {
         setDropdownOpen((prevOpen) => !prevOpen);
     };
 
-    const handleRemoveRegion = (index) => {
-        setLocations((prev) => prev.filter((_, i) => i !== index));
+    const handleRemoveRegion = async (index) => {
+        const locationToRemove = locations[index];
+        try {
+            await deleteLocation(locationToRemove.id); // Removendo no backend
+            setLocations((prev) => prev.filter((_, i) => i !== index));
+        } catch (error) {
+            setMessage({ type: 'error', text: 'Erro ao remover a localização. Tente novamente.' });
+        }
     };
 
     const handleFocusRegion = (index) => {
@@ -205,55 +231,6 @@ const Visualization = () => {
             }
         }
     };
-
-    const handleCheckCep = async () => {
-        if (!cep) {
-            setMessage('Por favor, insira um CEP válido.');
-            return;
-        }
-        
-        try {
-            const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${cep}&key=${REACT_APP_GOOGLE_API_KEY}`);
-            const data = await response.json();
-        
-            if (data.status === 'OK') {
-                const { lat, lng } = data.results[0].geometry.location;
-                const userLocation = L.latLng(lat, lng);
-        
-                // Verificar se a localização está dentro de qualquer polígono incluído
-                const isWithinIncludedRegion = locations.some(location =>
-                    location.includedPolygons.some(polygon => {
-                        const leafletPolygon = L.polygon(polygon);
-                        return leafletPolygon.getBounds().contains(userLocation);
-                    })
-                );
-
-                if (isWithinIncludedRegion) {
-                    // Se estiver dentro de um polígono incluído, verificar se também está dentro de qualquer polígono excluído
-                    const isWithinExcludedRegion = locations.some(location =>
-                        location.excludedPolygons.some(polygon => {
-                            const leafletPolygon = L.polygon(polygon);
-                            return leafletPolygon.getBounds().contains(userLocation);
-                        })
-                    );
-    
-                    if (isWithinExcludedRegion) {
-                        setMessage('O CEP inserido está dentro de uma região excluída. Não fazemos entregas para essa região.');
-                    } else {
-                        setMessage('O CEP inserido está dentro das regiões incluídas.');
-                    }
-                } else {
-                    setMessage('O CEP inserido não está dentro das regiões incluídas.');
-                }
-            } else {
-                setMessage('Não foi possível localizar o CEP inserido.');
-            }
-        } catch (error) {
-            console.error('Erro ao verificar o CEP:', error);
-            setMessage('Erro ao verificar o CEP. Tente novamente.');
-        }
-    };
-      
 
     return (
         <div className="visualization-page">
@@ -332,6 +309,21 @@ const Visualization = () => {
                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                         />
+
+                        {locations.map((location, index) => (
+                            <>
+                                {/* Renderiza os polígonos incluídos com base na ação */}
+                                {location.includedPolygons.map((polygon, i) => (
+                                    <Polygon key={`included-${index}-${i}`} positions={polygon} color={location.action === 'include' ? "blue" : "red"} />
+                                ))}
+                                
+                                {/* Renderiza os polígonos excluídos com base na ação */}
+                                {location.excludedPolygons.map((polygon, i) => (
+                                    <Polygon key={`excluded-${index}-${i}`} positions={polygon} color={location.action === 'exclude' ? "red" : "blue"} />
+                                ))}
+                            </>
+                        ))}
+
                         {locations.map((location, index) => (
                             <Marker 
                                 key={index} 
@@ -342,16 +334,6 @@ const Visualization = () => {
                                     {location.name}
                                 </Popup>
                             </Marker>
-                        ))}
-                        {locations.map((location, index) => (
-                            location.includedPolygons.map((polygon, i) => (
-                                <Polygon key={`included-${index}-${i}`} positions={polygon} color="blue" />
-                            ))
-                        ))}
-                        {locations.map((location, index) => (
-                            location.excludedPolygons.map((polygon, i) => (
-                                <Polygon key={`excluded-${index}-${i}`} positions={polygon} color="red" />
-                            ))
                         ))}
                     </MapContainer>
 
@@ -382,22 +364,7 @@ const Visualization = () => {
                             </div>
                         ))}
                     </div>
-                </Card>
-                {/* Novo Card para entrada de CEP */}
-                <Card title="Verificar CEP">
-                    <div className="cep-input-container">
-                        <input
-                            type="text"
-                            placeholder="Digite seu CEP"
-                            value={cep}
-                            onChange={(e) => setCep(e.target.value)}
-                            className="cep-input"
-                        />
-                        <button onClick={handleCheckCep} className="check-cep-button">
-                            Verificar
-                        </button>
-                    </div>
-                </Card>
+                </Card>                
             </div>
         </div>
     );

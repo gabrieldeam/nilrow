@@ -154,7 +154,7 @@ const AppContent = () => {
                     <Route path="/admin" element={<AdminProtectedRoute element={<Administration/>} />} /> 
                     <Route path="/my-catalog" element={<ProtectedRoute element={<MyCatalog />} />} />
                     <Route path="/edit-catalog/:id" element={<ProtectedRoute element={<EditCatalog/>} />} />
-                    <Route path="/visualization" element={<ProtectedRoute element={<Visualization/>} />} />
+                    <Route path="/visualization/" element={<ProtectedRoute element={<Visualization/>} />} />
                 </Routes>
             </Suspense>
             {renderFooter()}
