@@ -52,7 +52,7 @@ const formatUrl = (url) => {
 const Channel = ({ nickname }) => {
     const [channelData, setChannelData] = useState(null);
     const [isOwner, setIsOwner] = useState(false);
-    const [isFollowingChannel, setIsFollowingChannel] = useState(false);
+    const [isFollowingChannel, setIsFollowingChannel] = useState(false); // Inicializa como false
     const [followersCount, setFollowersCount] = useState(0);
     const [followingCount, setFollowingCount] = useState(0);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -68,40 +68,40 @@ const Channel = ({ nickname }) => {
             try {
                 const data = await getChannelByNickname(nickname);
                 setChannelData(data);
-    
+
+                // Obtem informações de seguidores e seguidos em paralelo
                 const [followersCount, followingCount] = await Promise.all([
                     getFollowersCount(data.id),
                     getFollowingCount(nickname)
                 ]);
                 setFollowersCount(followersCount);
                 setFollowingCount(followingCount);
-    
-                // Chamar isChannelOwner primeiro
+
+                // Verifica se o usuário é dono do canal
                 const ownerCheck = await isChannelOwner(data.id);
                 setIsOwner(ownerCheck);
-                
-                // Chamar as outras APIs
-                const [followingCheck, aboutData, faqsData] = await Promise.all([
-                    isFollowing(data.id),
+
+                // Verifica se o usuário está seguindo o canal (muito importante)
+                const followingCheck = await isFollowing(data.id);
+                setIsFollowingChannel(followingCheck); // Atualiza o estado imediatamente
+
+                // Verifica se há dados em about ou FAQs
+                const [aboutData, faqsData] = await Promise.all([
                     getAboutByNickname(nickname),
                     getFAQsByNickname(nickname)
                 ]);
-                
-                setIsFollowingChannel(followingCheck);
-    
-                // Verificar se há dados em about ou faqs
+
                 if ((aboutData && (aboutData.aboutText || aboutData.storePolicies || aboutData.exchangesAndReturns || aboutData.additionalInfo)) || (faqsData && faqsData.length > 0)) {
                     setShowAboutButton(true);
                 }
-    
+
             } catch (error) {
                 console.error('Erro ao buscar dados do canal:', error);
             }
         };
-    
+
         fetchChannelData();
     }, [nickname]);
-    
 
     const handleScroll = useCallback(() => {
         const offsetTop = 80;
@@ -174,7 +174,7 @@ const Channel = ({ nickname }) => {
 
         try {
             await followChannel(channelData.id);
-            setIsFollowingChannel(true);
+            setIsFollowingChannel(true); // Atualiza o estado imediatamente após seguir
             const newFollowersCount = await getFollowersCount(channelData.id);
             setFollowersCount(newFollowersCount);
         } catch (error) {
@@ -191,7 +191,7 @@ const Channel = ({ nickname }) => {
 
         try {
             await unfollowChannel(channelData.id);
-            setIsFollowingChannel(false);
+            setIsFollowingChannel(false); // Atualiza o estado imediatamente após deixar de seguir
             const newFollowersCount = await getFollowersCount(channelData.id);
             setFollowersCount(newFollowersCount);
         } catch (error) {
@@ -212,6 +212,7 @@ const Channel = ({ nickname }) => {
         return <LoadingSpinner />;
     }
 
+    // Verifica se o usuário é dono do canal e se está seguindo para exibir o botão correto
     const stageButtons = isOwner
         ? [
             { text: "Editar Canal", backgroundColor: "#212121", imageSrc: editChannelIcon, onClick: handleMyChannel },

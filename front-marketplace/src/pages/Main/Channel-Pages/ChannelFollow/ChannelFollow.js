@@ -25,7 +25,7 @@ const ChannelFollow = () => {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const isMobile = window.innerWidth <= 768;
-    const initialLoad = useRef(true); // Adicionando o useRef para controle de carregamento inicial
+    const initialLoad = useRef(true); 
 
     const fetchFollowers = useCallback(async (nickname, page) => {
         setLoading(true);

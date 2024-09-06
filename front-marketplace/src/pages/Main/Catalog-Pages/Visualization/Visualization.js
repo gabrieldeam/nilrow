@@ -31,31 +31,29 @@ const Visualization = () => {
     const suggestionsRef = useRef(null);
     const mapRef = useRef();
 
-    // Fetch locations from backend on mount
     useEffect(() => {
-        // Primeiro tenta pegar o catalogId do estado de navegação ou do localStorage
         const id = location.state?.catalogId || localStorage.getItem('selectedCatalogId');
         if (id) {
-            setCatalogId(id); // Define o catalogId no estado
+            setCatalogId(id);
         } else {
-            navigate('/my-catalog'); // Redireciona se não houver catalogId
+            navigate('/my-catalog');
         }
     }, [location.state, navigate]);
 
-    useEffect(() => {
+    const fetchLocations = useCallback(async () => {
         if (catalogId) {
-            const fetchLocations = async () => {
-                try {
-                    const fetchedLocations = await getLocationsByCatalogId(catalogId);
-                    setLocations(fetchedLocations);
-                } catch (error) {
-                    setMessage({ type: 'error', text: 'Erro ao carregar localizações. Tente novamente.' });
-                }
-            };
-
-            fetchLocations();
+            try {
+                const fetchedLocations = await getLocationsByCatalogId(catalogId);
+                setLocations(fetchedLocations);
+            } catch (error) {
+                setMessage({ type: 'error', text: 'Erro ao carregar localizações. Tente novamente.' });
+            }
         }
     }, [catalogId, setMessage]);
+
+    useEffect(() => {
+        fetchLocations();
+    }, [catalogId, fetchLocations]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -129,8 +127,8 @@ const Visualization = () => {
                 }
 
                 try {
-                    await createLocation(catalogId, newLocation);  // Salvando no backend
-                    setLocations((prev) => [newLocation, ...prev]);
+                    await createLocation(catalogId, newLocation);  
+                    await fetchLocations(); 
                 } catch (error) {
                     setMessage({ type: 'error', text: 'Erro ao salvar a localização.' });
                 }
@@ -205,8 +203,8 @@ const Visualization = () => {
     const handleRemoveRegion = async (index) => {
         const locationToRemove = locations[index];
         try {
-            await deleteLocation(locationToRemove.id); // Removendo no backend
-            setLocations((prev) => prev.filter((_, i) => i !== index));
+            await deleteLocation(locationToRemove.id);
+            await fetchLocations();
         } catch (error) {
             setMessage({ type: 'error', text: 'Erro ao remover a localização. Tente novamente.' });
         }
@@ -219,10 +217,10 @@ const Visualization = () => {
 
             bounds.push(location.position);
 
-            location.includedPolygons.forEach(polygon => {
+            location.includedPolygons.forEach((polygon) => {
                 bounds.push(...polygon);
             });
-            location.excludedPolygons.forEach(polygon => {
+            location.excludedPolygons.forEach((polygon) => {
                 bounds.push(...polygon);
             });
 
@@ -310,40 +308,44 @@ const Visualization = () => {
                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                         />
 
-                        {locations.map((location, index) => (
-                            <>
-                                {/* Renderiza os polígonos incluídos com base na ação */}
+                        {locations.map((location, locationIndex) => (
+                            <React.Fragment key={`location-${location.id}`}>
                                 {location.includedPolygons.map((polygon, i) => (
-                                    <Polygon key={`included-${index}-${i}`} positions={polygon} color={location.action === 'include' ? "blue" : "red"} />
+                                    <Polygon 
+                                        key={`included-${location.id}-${i}`} 
+                                        positions={polygon} 
+                                        color={location.action === 'include' ? "blue" : "red"} 
+                                    />
                                 ))}
                                 
-                                {/* Renderiza os polígonos excluídos com base na ação */}
                                 {location.excludedPolygons.map((polygon, i) => (
-                                    <Polygon key={`excluded-${index}-${i}`} positions={polygon} color={location.action === 'exclude' ? "red" : "blue"} />
+                                    <Polygon 
+                                        key={`excluded-${location.id}-${i}`} 
+                                        positions={polygon} 
+                                        color={location.action === 'exclude' ? "red" : "blue"} 
+                                    />
                                 ))}
-                            </>
-                        ))}
 
-                        {locations.map((location, index) => (
-                            <Marker 
-                                key={index} 
-                                position={location.position}
-                                icon={location.action === 'include' ? includeIcon : excludeIcon}
-                            >
-                                <Popup>
-                                    {location.name}
-                                </Popup>
-                            </Marker>
+                                <Marker 
+                                    key={`marker-${location.id}`} 
+                                    position={location.position}
+                                    icon={location.action === 'include' ? includeIcon : excludeIcon}
+                                >
+                                    <Popup>
+                                        {location.name}
+                                    </Popup>
+                                </Marker>
+                            </React.Fragment>
                         ))}
                     </MapContainer>
 
                     </div>
                     <div className="visualization-search-history">
-                        {locations.map((location, index) => (
+                        {locations.map((location) => (
                             <div 
-                                key={index} 
+                                key={`history-${location.id}`} 
                                 className="visualization-search-item"
-                                onClick={() => handleFocusRegion(index)}
+                                onClick={() => handleFocusRegion(locations.indexOf(location))}
                             >
                                 <img 
                                     src={location.action === 'include' ? includeIconSrc : excludeIconSrc} 
@@ -356,7 +358,7 @@ const Visualization = () => {
                                     className="remove-region-button"
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        handleRemoveRegion(index);
+                                        handleRemoveRegion(locations.indexOf(location));
                                     }}
                                 >
                                     X
