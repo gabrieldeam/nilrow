@@ -45,8 +45,8 @@ const Following = ({ channels, onLoadMore }) => {
 
     const renderFollowingChannels = () => {
         return Array.isArray(channels) && channels.length > 0 ? (
-            channels.map(channel => (
-                <a href={`${frontUrl}${channel.nickname}`} key={channel.id} className="following-channel-item">
+            channels.map((channel, index) => (
+                <a href={`${frontUrl}${channel.nickname}`} key={`${channel.id}-${index}`} className="following-channel-item">
                     <img src={`${apiUrl}${channel.imageUrl}`} alt={channel.name} className="channel-image-following" />
                     <div className="channel-name-following">{channel.name}</div>
                 </a>
@@ -54,7 +54,7 @@ const Following = ({ channels, onLoadMore }) => {
         ) : (
             <div>No channels found</div>
         );
-    };
+    };    
 
     return (
         <div className="following-channel-section-content">

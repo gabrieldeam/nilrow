@@ -1,4 +1,4 @@
-import React, { memo, useState, useEffect, useCallback } from 'react';
+import React, { memo, useState, useEffect, useCallback, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate, useLocation } from 'react-router-dom';
 import FixedSlide from '../components/Others/FixedSlide/FixedSlide';
@@ -12,6 +12,7 @@ import './Home.css';
 const Home = ({ initialSection }) => {
     const isMobile = window.innerWidth <= 768;
     const [activeSection, setActiveSection] = useState(initialSection || null);
+    const followingChannelsRef = useRef([]);
     const [followingChannels, setFollowingChannels] = useState([]);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [page, setPage] = useState(0);
@@ -31,7 +32,9 @@ const Home = ({ initialSection }) => {
         try {
             const response = await getMyFollowingChannels(page, 10);
             if (response) {
-                setFollowingChannels(prevChannels => [...prevChannels, ...response]);
+                // Armazena no ref e no estado
+                followingChannelsRef.current = [...followingChannelsRef.current, ...response];
+                setFollowingChannels(followingChannelsRef.current);
             } else {
                 console.error("API response data is undefined");
             }
@@ -42,7 +45,11 @@ const Home = ({ initialSection }) => {
 
     useEffect(() => {
         if (activeSection === 'following' && isAuthenticated) {
-            fetchFollowingChannels(page);
+            if (followingChannelsRef.current.length === 0) {
+                fetchFollowingChannels(page); // Apenas busca se ainda não foi carregado
+            } else {
+                setFollowingChannels(followingChannelsRef.current); // Usa os dados já carregados
+            }
         }
     }, [activeSection, isAuthenticated, page, fetchFollowingChannels]);
 
@@ -60,7 +67,7 @@ const Home = ({ initialSection }) => {
 
     const handleButtonClick = (buttonType) => {
         if (buttonType === 'following' && !isAuthenticated) {
-            navigate('/login'); // Redirect to login if not authenticated
+            navigate('/login'); // Redireciona para o login se não autenticado
         } else {
             setActiveSection(prevSection => prevSection === buttonType ? null : buttonType);
             navigate(`/${buttonType}`);
