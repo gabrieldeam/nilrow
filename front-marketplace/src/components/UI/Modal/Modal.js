@@ -1,6 +1,6 @@
 import React from 'react';
 import './Modal.css';
-import closeIcon from '../../../assets/close.svg';
+import closeIcon from '../../../assets/close.svg'; // Ícone de fechar
 
 const Modal = ({ isOpen, onClose, children }) => {
     if (!isOpen) return null;

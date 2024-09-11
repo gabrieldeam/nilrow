@@ -7,6 +7,8 @@ import HeaderButton from '../../../components/UI/Buttons/HeaderButton/HeaderButt
 import closeIcon from '../../../assets/close.svg';
 import Modal from '../../../components/UI/Modal/Modal'; 
 import getConfig from '../../../config';
+import CustomInput from '../../../components/UI/CustomInput/CustomInput'; // Custom Input
+import StageButton from '../../../components/UI/Buttons/StageButton/StageButton'; // Stage Button
 
 const { apiUrl } = getConfig();
 
@@ -15,6 +17,7 @@ const Category = () => {
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [newCategoryName, setNewCategoryName] = useState('');
     const [newCategoryImage, setNewCategoryImage] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null); // Para pré-visualização da imagem
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const navigate = useNavigate();
@@ -35,6 +38,7 @@ const Category = () => {
     const handleCategoryClick = (category) => {
         setSelectedCategory(category);
         setNewCategoryName(category.name);
+        setImagePreview(`${apiUrl}${category.imageUrl}`); // Pré-visualizar imagem da categoria
         setIsModalOpen(true); // Abre o modal para edição
     };
 
@@ -42,9 +46,7 @@ const Category = () => {
         try {
             await createCategory(newCategoryName, newCategoryImage);
             fetchCategories();
-            setNewCategoryName('');
-            setNewCategoryImage(null);
-            setIsModalOpen(false); // Fecha o modal após criar a categoria
+            clearModal();
         } catch (error) {
             console.error('Erro ao criar categoria:', error);
         }
@@ -55,10 +57,7 @@ const Category = () => {
             if (selectedCategory) {
                 await updateCategory(selectedCategory.id, newCategoryName, newCategoryImage);
                 fetchCategories();
-                setSelectedCategory(null);
-                setNewCategoryName('');
-                setNewCategoryImage(null);
-                setIsModalOpen(false); // Fecha o modal após atualizar a categoria
+                clearModal();
             }
         } catch (error) {
             console.error('Erro ao atualizar categoria:', error);
@@ -70,8 +69,7 @@ const Category = () => {
             if (selectedCategory) {
                 await deleteCategory(selectedCategory.id);
                 fetchCategories();
-                setSelectedCategory(null);
-                setIsModalOpen(false);
+                clearModal();
             }
         } catch (error) {
             console.error('Erro ao excluir categoria:', error);
@@ -83,17 +81,30 @@ const Category = () => {
         const file = e.target.files[0];
         if (file && file.type.startsWith('image/')) {
             setNewCategoryImage(file);
+            setImagePreview(URL.createObjectURL(file)); // Pré-visualizar imagem carregada
         } else {
             alert('Por favor, selecione um arquivo de imagem válido.');
         }
+    };
+
+    // Função para abrir a modal de criação
+    const openCreateModal = () => {
+        setSelectedCategory(null);
+        setNewCategoryName(''); // Limpar o nome da categoria
+        setNewCategoryImage(null); // Limpar a imagem
+        setImagePreview(null); // Limpar a pré-visualização da imagem
+        setIsModalOpen(true); // Abre a modal
     };
 
     const clearModal = () => {
         setSelectedCategory(null);
         setNewCategoryName('');
         setNewCategoryImage(null);
-        setIsModalOpen(true);
+        setImagePreview(null);
+        setIsModalOpen(false); // Certifique-se de que isso está fechando o modal corretamente
     };
+
+    const isFormValid = newCategoryName.trim() !== ''; // Validação do formulário
 
     return (
         <div className="category-page">
@@ -115,7 +126,7 @@ const Category = () => {
                         className="category-search-input"
                     />
                     <button 
-                        onClick={clearModal} // Abre o modal para criação
+                        onClick={openCreateModal} // Abre o modal para criação
                         className="add-category-btn"
                     >
                         + Adicionar categoria
@@ -162,27 +173,64 @@ const Category = () => {
                     </div>
                 </div>
 
-                <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+                <Modal isOpen={isModalOpen} onClose={clearModal}>
                     <div className="category-form">
                         <h3>{selectedCategory ? 'Editar Categoria' : 'Nova Categoria'}</h3>
-                        <input
+
+                        {/* Custom Input para nome da categoria */}
+                        <CustomInput
+                            title="Nome da Categoria"
                             type="text"
-                            placeholder="Nome da Categoria"
+                            name="name"
                             value={newCategoryName}
                             onChange={(e) => setNewCategoryName(e.target.value)}
                         />
-                        <input
-                            type="file"
-                            onChange={handleFileChange} // Validação do arquivo de imagem
-                        />
-                        {selectedCategory ? (
-                            <>
-                                <button onClick={handleUpdateCategory}>Atualizar</button>
-                                <button onClick={handleDeleteCategory} className="delete-btn">Excluir</button>
-                            </>
-                        ) : (
-                            <button onClick={handleCreateCategory}>Criar</button>
-                        )}
+
+                        {/* Upload da imagem e pré-visualização */}
+                        <div className="add-channel-image-upload">
+                            <div className="category-image-circle">
+                                {imagePreview && (
+                                    <img src={imagePreview} alt="Preview" className="category-image" />
+                                )}
+                            </div>
+                            <input
+                                type="file"
+                                id="category-image"
+                                name="image"
+                                onChange={handleFileChange}
+                                accept="image/*"
+                                style={{ display: 'none' }}
+                            />
+                            <label htmlFor="category-image" className="add-channel-upload-button">
+                                Escolher arquivo
+                            </label>
+                        </div>
+
+                        {/* Botões StageButton */}
+                        <div className="modal-buttons">
+                            {selectedCategory ? (
+                                <>
+                                    <StageButton
+                                        text="Atualizar"
+                                        backgroundColor={isFormValid ? "#7B33E5" : "#212121"}
+                                        onClick={handleUpdateCategory}
+                                        disabled={!isFormValid}
+                                    />
+                                    <StageButton
+                                        text="Excluir"
+                                        backgroundColor="#DF1414"
+                                        onClick={handleDeleteCategory}
+                                    />
+                                </>
+                            ) : (
+                                <StageButton
+                                    text="Criar"
+                                    backgroundColor={isFormValid ? "#7B33E5" : "#212121"}
+                                    onClick={handleCreateCategory}
+                                    disabled={!isFormValid}
+                                />
+                            )}
+                        </div>
                     </div>
                 </Modal>
             </div>
