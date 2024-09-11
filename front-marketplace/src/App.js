@@ -151,7 +151,7 @@ const AppContent = () => {
                     <Route path="/edit-faq/:id" element={<ProtectedRoute element={<EditFAQ/>} />} />
                     <Route path="/catalog" element={<ProtectedRoute element={<Catalog/>} />} />
                     <Route path="/add-catalog" element={<ProtectedRoute element={<AddCatalog/>} />} />
-                    <Route path="/admin" element={<AdminProtectedRoute element={<Administration/>} />} /> 
+                    <Route path="/admin/*" element={<AdminProtectedRoute element={<Administration/>} />} /> 
                     <Route path="/my-catalog" element={<ProtectedRoute element={<MyCatalog />} />} />
                     <Route path="/edit-catalog/:id" element={<ProtectedRoute element={<EditCatalog/>} />} />
                     <Route path="/visualization/" element={<ProtectedRoute element={<Visualization/>} />} />

@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
@@ -25,88 +26,99 @@ public class CategoryService {
     @Autowired
     private CategoryRepository categoryRepository;
 
+    // Criar categoria com upload de imagem
     public CategoryDTO createCategory(CategoryDTO categoryDTO, MultipartFile image) throws IOException {
         Category category = new Category();
         category.setName(categoryDTO.getName());
 
-        if (image == null || image.isEmpty()) {
-            category.setImageUrl(DEFAULT_IMAGE);
+        // Upload da imagem, se presente
+        if (image != null && !image.isEmpty()) {
+            String imagePath = saveImage(image);
+            category.setImageUrl(imagePath);
         } else {
-            if (!Files.exists(Paths.get(UPLOAD_DIR))) {
-                Files.createDirectories(Paths.get(UPLOAD_DIR));
-            }
-            String filename = UUID.randomUUID().toString() + "_" + image.getOriginalFilename();
-            String filepath = Paths.get(UPLOAD_DIR, filename).toString();
-
-            image.transferTo(new File(filepath));
-            category.setImageUrl("/uploads/" + filename);
+            category.setImageUrl(DEFAULT_IMAGE);  // Imagem padrão
         }
 
         Category savedCategory = categoryRepository.save(category);
         return convertToDTO(savedCategory);
     }
 
-    public CategoryDTO getCategoryById(String id) {
-        Optional<Category> categoryOpt = categoryRepository.findById(id);
-        if (categoryOpt.isEmpty()) {
-            throw new IllegalArgumentException("Categoria não encontrada");
+    // Atualizar categoria e imagem
+    public CategoryDTO updateCategory(String categoryId, CategoryDTO categoryDTO, MultipartFile image) throws IOException {
+        Optional<Category> categoryOpt = categoryRepository.findById(categoryId);
+        if (categoryOpt.isPresent()) {
+            Category category = categoryOpt.get();
+            category.setName(categoryDTO.getName());
+
+            // Se a imagem enviada não for nula, excluir a antiga (se não for a padrão) e salvar a nova
+            if (image != null && !image.isEmpty()) {
+                if (!category.getImageUrl().equals(DEFAULT_IMAGE)) {
+                    deleteImage(category.getImageUrl());
+                }
+                String newImagePath = saveImage(image);
+                category.setImageUrl(newImagePath);
+            }
+
+            Category updatedCategory = categoryRepository.save(category);
+            return convertToDTO(updatedCategory);
         }
-        return convertToDTO(categoryOpt.get());
+        return null;
     }
 
+    // Deletar categoria e remover imagem associada
+    public void deleteCategory(String categoryId) {
+        Optional<Category> categoryOpt = categoryRepository.findById(categoryId);
+        if (categoryOpt.isPresent()) {
+            Category category = categoryOpt.get();
+            if (!category.getImageUrl().equals(DEFAULT_IMAGE)) {
+                deleteImage(category.getImageUrl());
+            }
+            categoryRepository.delete(category);
+        }
+    }
+
+    // Obter todas as categorias
     public List<CategoryDTO> getAllCategories() {
         return categoryRepository.findAll().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
-    public CategoryDTO updateCategory(String id, CategoryDTO categoryDTO, MultipartFile image) throws IOException {
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Categoria não encontrada"));
-
-        // Excluir a imagem antiga se houver uma nova
-        if (image != null && !image.isEmpty()) {
-            if (category.getImageUrl() != null && !category.getImageUrl().equals(DEFAULT_IMAGE)) {
-                deleteImage(category.getImageUrl());
-            }
-
-            if (!Files.exists(Paths.get(UPLOAD_DIR))) {
-                Files.createDirectories(Paths.get(UPLOAD_DIR));
-            }
-            String filename = UUID.randomUUID().toString() + "_" + image.getOriginalFilename();
-            String filepath = Paths.get(UPLOAD_DIR, filename).toString();
-
-            image.transferTo(new File(filepath));
-            category.setImageUrl("/uploads/" + filename);
-        }
-
-        category.setName(categoryDTO.getName());
-        Category updatedCategory = categoryRepository.save(category);
-        return convertToDTO(updatedCategory);
+    // Obter categoria por ID
+    public CategoryDTO getCategoryById(String categoryId) {
+        Optional<Category> categoryOpt = categoryRepository.findById(categoryId);
+        return categoryOpt.map(this::convertToDTO).orElse(null);
     }
 
+    // Métodos auxiliares
 
-    public void deleteCategory(String id) {
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Categoria não encontrada"));
-
-        // Excluir a imagem ao deletar a categoria
-        if (category.getImageUrl() != null && !category.getImageUrl().equals(DEFAULT_IMAGE)) {
-            deleteImage(category.getImageUrl());
-        }
-
-        categoryRepository.deleteById(id);
-    }
-
-    private void deleteImage(String imageUrl) {
-        String filePath = System.getProperty("user.dir") + imageUrl;
-        File file = new File(filePath);
-        if (file.exists()) {
-            file.delete();
-        }
-    }
-
+    // Converter entidade Category para DTO
     private CategoryDTO convertToDTO(Category category) {
-        return new CategoryDTO(category.getId(), category.getName(), category.getImageUrl(), null);  // Assumindo que as subcategorias serão gerenciadas separadamente
+        return new CategoryDTO(
+                category.getId(),
+                category.getName(),
+                category.getImageUrl()
+        );
+    }
+
+    // Salvar imagem no diretório e retornar o caminho relativo
+    private String saveImage(MultipartFile image) throws IOException {
+        String uniqueFileName = UUID.randomUUID().toString() + "_" + image.getOriginalFilename();  // Nome único para evitar conflitos
+        String filePath = UPLOAD_DIR + uniqueFileName;
+        Path path = Paths.get(filePath);
+        Files.write(path, image.getBytes());
+
+        return "/uploads/" + uniqueFileName;  // Retorna apenas o caminho relativo
+    }
+
+    // Excluir imagem do sistema de arquivos
+    private void deleteImage(String imageUrl) {
+        String absoluteImagePath = System.getProperty("user.dir") + imageUrl;  // Resolve o caminho absoluto
+        Path path = Paths.get(absoluteImagePath);
+        try {
+            Files.deleteIfExists(path);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

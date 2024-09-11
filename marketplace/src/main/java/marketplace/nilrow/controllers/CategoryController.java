@@ -13,24 +13,31 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/categories")
-@Tag(name = "Catalog", description = "Operações relacionadas ao canal")
+@Tag(name = "Category", description = "Operações relacionadas a categorias")
 public class CategoryController {
 
     @Autowired
     private CategoryService categoryService;
 
     @PostMapping("/create")
-    public ResponseEntity<CategoryDTO> createCategory(@RequestParam("name") String name, @RequestParam(value = "image", required = false) MultipartFile image) throws IOException {
-        CategoryDTO categoryDTO = new CategoryDTO();
-        categoryDTO.setName(name);
+    public ResponseEntity<CategoryDTO> createCategory(@RequestPart("category") CategoryDTO categoryDTO,
+                                                      @RequestPart("image") MultipartFile image) throws IOException {
         CategoryDTO createdCategory = categoryService.createCategory(categoryDTO, image);
         return ResponseEntity.ok(createdCategory);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<CategoryDTO> getCategoryById(@PathVariable String id) {
-        CategoryDTO categoryDTO = categoryService.getCategoryById(id);
-        return ResponseEntity.ok(categoryDTO);
+    @PutMapping("/edit/{id}")
+    public ResponseEntity<CategoryDTO> updateCategory(@PathVariable String id,
+                                                      @RequestPart("category") CategoryDTO categoryDTO,
+                                                      @RequestPart(value = "image", required = false) MultipartFile image) throws IOException {
+        CategoryDTO updatedCategory = categoryService.updateCategory(id, categoryDTO, image);
+        return updatedCategory != null ? ResponseEntity.ok(updatedCategory) : ResponseEntity.notFound().build();
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<Void> deleteCategory(@PathVariable String id) {
+        categoryService.deleteCategory(id);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/all")
@@ -39,17 +46,9 @@ public class CategoryController {
         return ResponseEntity.ok(categories);
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<CategoryDTO> updateCategory(@PathVariable String id, @RequestParam("name") String name, @RequestParam(value = "image", required = false) MultipartFile image) throws IOException {
-        CategoryDTO categoryDTO = new CategoryDTO();
-        categoryDTO.setName(name);
-        CategoryDTO updatedCategory = categoryService.updateCategory(id, categoryDTO, image);
-        return ResponseEntity.ok(updatedCategory);
-    }
-
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Void> deleteCategory(@PathVariable String id) {
-        categoryService.deleteCategory(id);
-        return ResponseEntity.ok().build();
+    @GetMapping("/{id}")
+    public ResponseEntity<CategoryDTO> getCategoryById(@PathVariable String id) {
+        CategoryDTO category = categoryService.getCategoryById(id);
+        return category != null ? ResponseEntity.ok(category) : ResponseEntity.notFound().build();
     }
 }
