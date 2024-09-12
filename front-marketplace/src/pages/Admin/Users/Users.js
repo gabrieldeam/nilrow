@@ -1,7 +1,13 @@
 import React, { memo, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom'; 
-import { getAllUsers, getChannelByPersonId, getCatalogsByChannelId, updateCatalogRelease, isCatalogReleased } from '../../../services/adminApi';
+import { 
+    getAllUsers, 
+    getChannelByPersonId, 
+    getCatalogsByChannelId, 
+    updateCatalogRelease, 
+    isCatalogReleased 
+} from '../../../services/adminApi';
 import getConfig from '../../../config';
 import './Users.css';
 import HeaderButton from '../../../components/UI/Buttons/HeaderButton/HeaderButton';

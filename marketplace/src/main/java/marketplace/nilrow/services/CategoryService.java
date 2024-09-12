@@ -4,6 +4,9 @@ import marketplace.nilrow.domain.catalog.category.Category;
 import marketplace.nilrow.domain.catalog.category.CategoryDTO;
 import marketplace.nilrow.repositories.CategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,6 +28,13 @@ public class CategoryService {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    // Pesquisa de categorias pelo nome
+    public List<CategoryDTO> searchCategoriesByName(String name) {
+        return categoryRepository.findByNameContainingIgnoreCase(name).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
 
     // Criar categoria com upload de imagem
     public CategoryDTO createCategory(CategoryDTO categoryDTO, MultipartFile image) throws IOException {
@@ -78,10 +88,10 @@ public class CategoryService {
     }
 
     // Obter todas as categorias
-    public List<CategoryDTO> getAllCategories() {
-        return categoryRepository.findAll().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public Page<CategoryDTO> getAllCategories(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return categoryRepository.findAll(pageable)
+                .map(this::convertToDTO);
     }
 
     // Obter categoria por ID

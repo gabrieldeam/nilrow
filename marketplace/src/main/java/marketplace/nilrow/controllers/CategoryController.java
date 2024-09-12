@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import marketplace.nilrow.domain.catalog.category.CategoryDTO;
 import marketplace.nilrow.services.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -41,8 +42,10 @@ public class CategoryController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<CategoryDTO>> getAllCategories() {
-        List<CategoryDTO> categories = categoryService.getAllCategories();
+    public ResponseEntity<Page<CategoryDTO>> getAllCategories(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<CategoryDTO> categories = categoryService.getAllCategories(page, size);
         return ResponseEntity.ok(categories);
     }
 
@@ -50,5 +53,11 @@ public class CategoryController {
     public ResponseEntity<CategoryDTO> getCategoryById(@PathVariable String id) {
         CategoryDTO category = categoryService.getCategoryById(id);
         return category != null ? ResponseEntity.ok(category) : ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<CategoryDTO>> searchCategories(@RequestParam String name) {
+        List<CategoryDTO> categories = categoryService.searchCategoriesByName(name);
+        return ResponseEntity.ok(categories);
     }
 }

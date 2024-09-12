@@ -1,7 +1,17 @@
 import React, { useState, useEffect, memo } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
-import { getAllCategories, createCategory, updateCategory, deleteCategory, getSubCategoriesByCategory, createSubCategory, updateSubCategory, deleteSubCategory } from '../../../services/adminCategoryApi';
+import { 
+    getAllCategories, 
+    createCategory, 
+    updateCategory, 
+    deleteCategory, 
+    getSubCategoriesByCategory, 
+    createSubCategory, 
+    updateSubCategory, 
+    deleteSubCategory, 
+    searchCategoriesByName 
+} from '../../../services/adminCategoryApi';
 import './Category.css';
 import HeaderButton from '../../../components/UI/Buttons/HeaderButton/HeaderButton';
 import closeIcon from '../../../assets/close.svg';
@@ -16,38 +26,77 @@ const { apiUrl } = getConfig();
 
 const Category = () => {
     const [categories, setCategories] = useState([]);
-    const [subCategoriesByCategory, setSubCategoriesByCategory] = useState({}); // Subcategorias associadas às categorias
+    const [subCategoriesByCategory, setSubCategoriesByCategory] = useState({}); 
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [selectedSubCategory, setSelectedSubCategory] = useState(null);
     const [newCategoryName, setNewCategoryName] = useState('');
     const [newSubCategoryName, setNewSubCategoryName] = useState('');
-    const [newSubCategoryCategoryId, setNewSubCategoryCategoryId] = useState(''); // Estado para a categoria selecionada na subcategoria
+    const [newSubCategoryCategoryId, setNewSubCategoryCategoryId] = useState(''); 
     const [newCategoryImage, setNewCategoryImage] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubCategoryModalOpen, setIsSubCategoryModalOpen] = useState(false);
     const navigate = useNavigate();
+    const [currentPage, setCurrentPage] = useState(0);  // Página atual
+    const [totalPages, setTotalPages] = useState(0);    // Total de páginas
+    const pageSize = 10; // Tamanho da página
 
     useEffect(() => {
-        fetchCategoriesAndSubCategories();
-    }, []);
+        if (searchTerm.trim()) {
+            searchCategories(searchTerm); // Executar pesquisa se houver termo de busca
+        } else {
+            fetchCategoriesAndSubCategories(currentPage, pageSize);
+        }
+    }, [searchTerm, currentPage]);
 
-    // Carregar categorias e subcategorias associadas
-    const fetchCategoriesAndSubCategories = async () => {
+    const fetchCategoriesAndSubCategories = async (page, size) => {
         try {
-            const data = await getAllCategories();
-            setCategories(data);
+            const response = await getAllCategories(page, size);
+            if (response.content && Array.isArray(response.content)) {
+                setCategories(response.content);
+                setTotalPages(response.totalPages); 
+            } else {
+                console.error('Formato inesperado da resposta da API:', response);
+                setCategories([]);
+            }
 
-            // Carrega as subcategorias para cada categoria
             const subCategoriesMap = {};
-            for (const category of data) {
+            for (const category of response.content) {
                 const subData = await getSubCategoriesByCategory(category.id);
-                subCategoriesMap[category.id] = subData; // Associa as subcategorias à categoria pelo ID
+                subCategoriesMap[category.id] = subData;
             }
             setSubCategoriesByCategory(subCategoriesMap);
         } catch (error) {
             console.error('Erro ao buscar categorias e subcategorias:', error);
+        }
+    };
+
+    const searchCategories = async (name) => {
+        try {
+            const result = await searchCategoriesByName(name);
+            setCategories(result); // Atualizar com os resultados da pesquisa
+
+            const subCategoriesMap = {};
+            for (const category of result) {
+                const subData = await getSubCategoriesByCategory(category.id);
+                subCategoriesMap[category.id] = subData;
+            }
+            setSubCategoriesByCategory(subCategoriesMap);
+        } catch (error) {
+            console.error('Erro ao pesquisar categorias:', error);
+        }
+    };
+
+    const handleNextPage = () => {
+        if (currentPage < totalPages - 1) {
+            setCurrentPage(currentPage + 1);
+        }
+    };
+
+    const handlePreviousPage = () => {
+        if (currentPage > 0) {
+            setCurrentPage(currentPage - 1);
         }
     };
 
@@ -58,10 +107,17 @@ const Category = () => {
         setIsModalOpen(true);
     };
 
+    const handleSubCategoryClick = (subCategory) => {
+        setSelectedSubCategory(subCategory);
+        setNewSubCategoryName(subCategory.name);
+        setNewSubCategoryCategoryId(subCategory.categoryId);
+        setIsSubCategoryModalOpen(true);
+    };
+
     const handleCreateCategory = async () => {
         try {
             await createCategory(newCategoryName, newCategoryImage);
-            fetchCategoriesAndSubCategories();
+            fetchCategoriesAndSubCategories(currentPage, pageSize);
             clearModal();
         } catch (error) {
             console.error('Erro ao criar categoria:', error);
@@ -72,7 +128,7 @@ const Category = () => {
         try {
             if (selectedCategory) {
                 await updateCategory(selectedCategory.id, newCategoryName, newCategoryImage);
-                fetchCategoriesAndSubCategories();
+                fetchCategoriesAndSubCategories(currentPage, pageSize);
                 clearModal();
             }
         } catch (error) {
@@ -84,7 +140,7 @@ const Category = () => {
         try {
             if (selectedCategory) {
                 await deleteCategory(selectedCategory.id);
-                fetchCategoriesAndSubCategories();
+                fetchCategoriesAndSubCategories(currentPage, pageSize);
                 clearModal();
             }
         } catch (error) {
@@ -95,7 +151,7 @@ const Category = () => {
     const handleCreateSubCategory = async () => {
         try {
             await createSubCategory({ name: newSubCategoryName, categoryId: newSubCategoryCategoryId });
-            fetchCategoriesAndSubCategories();
+            fetchCategoriesAndSubCategories(currentPage, pageSize);
             clearSubCategoryModal();
         } catch (error) {
             console.error('Erro ao criar subcategoria:', error);
@@ -106,7 +162,7 @@ const Category = () => {
         try {
             if (selectedSubCategory) {
                 await updateSubCategory(selectedSubCategory.id, { name: newSubCategoryName, categoryId: newSubCategoryCategoryId });
-                fetchCategoriesAndSubCategories();
+                fetchCategoriesAndSubCategories(currentPage, pageSize);
                 clearSubCategoryModal();
             }
         } catch (error) {
@@ -118,7 +174,7 @@ const Category = () => {
         try {
             if (selectedSubCategory) {
                 await deleteSubCategory(selectedSubCategory.id);
-                fetchCategoriesAndSubCategories();
+                fetchCategoriesAndSubCategories(currentPage, pageSize);
                 clearSubCategoryModal();
             }
         } catch (error) {
@@ -203,45 +259,53 @@ const Category = () => {
                             <div className="category-columnname">Nome</div>
                             <div className="category-columnsubcategories">Subcategorias</div>
                         </div>
-                        {categories
-                            .filter(category => category.name.toLowerCase().includes(searchTerm.toLowerCase()))
-                            .map((category, index) => (
-                                <div
-                                    key={category.id}
-                                    className={`category-row ${selectedCategory?.id === category.id ? 'selected' : ''}`}
-                                    onClick={() => handleCategoryClick(category)}
-                                    style={{ 
-                                        backgroundColor: selectedCategory?.id === category.id ? '#414141' : (index % 2 === 0 ? '#0B0B0B' : 'black'), 
-                                        height: '57px' 
-                                    }}
-                                >
-                                    <div className="category-columnindex">{index + 1}</div>
+                        {categories.length > 0 && categories.map((category, index) => (
+                            <div
+                                key={category.id}
+                                className={`category-row ${selectedCategory?.id === category.id ? 'selected' : ''}`}
+                                onClick={() => handleCategoryClick(category)}
+                                style={{ 
+                                    backgroundColor: selectedCategory?.id === category.id ? '#414141' : (index % 2 === 0 ? '#0B0B0B' : 'black'), 
+                                    height: '57px' 
+                                }}
+                            >
+                                <div className="category-columnindex">{index + 1 + currentPage * pageSize}</div>
 
-                                    <div className="category-columnimage">
-                                        <div className="category-image-wrapper">
-                                            <div className="category-image-circle">
-                                                {category.imageUrl && (
-                                                    <img
-                                                        src={`${apiUrl}${category.imageUrl}`}
-                                                        alt={category.name}
-                                                        className="category-image"
-                                                    />
-                                                )}
-                                            </div>
-                                        </div>                                
-                                    </div>
-
-                                    <div className="category-columnname">{category.name}</div>
-
-                                    <div className="category-columnsubcategories">
-                                        {subCategoriesByCategory[category.id]?.map((sub, idx) => (
-                                            <span key={sub.id}>
-                                                {sub.name}{idx < subCategoriesByCategory[category.id].length - 1 && <span>,&nbsp;</span>}
-                                            </span>
-                                        )) || 'Nenhuma subcategoria'}
-                                    </div>
+                                <div className="category-columnimage">
+                                    <div className="category-image-wrapper">
+                                        <div className="category-image-circle">
+                                            {category.imageUrl && (
+                                                <img
+                                                    src={`${apiUrl}${category.imageUrl}`}
+                                                    alt={category.name}
+                                                    className="category-image"
+                                                />
+                                            )}
+                                        </div>
+                                    </div>                                
                                 </div>
-                            ))}
+
+                                <div className="category-columnname">{category.name}</div>
+
+                                <div className="category-columnsubcategories">
+                                    {subCategoriesByCategory[category.id]?.map((sub, idx) => (
+                                        <span key={sub.id} onClick={() => handleSubCategoryClick(sub)}>
+                                            {sub.name}{idx < subCategoriesByCategory[category.id].length - 1 && <span>,&nbsp;</span>}
+                                        </span>
+                                    )) || 'Nenhuma subcategoria'}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="pagination-controls">
+                        <button onClick={handlePreviousPage} disabled={currentPage === 0}>
+                            Anterior
+                        </button>
+                        <span>Página {currentPage + 1} de {totalPages}</span>
+                        <button onClick={handleNextPage} disabled={currentPage >= totalPages - 1}>
+                            Próxima
+                        </button>
                     </div>
                 </div>
 
@@ -303,6 +367,21 @@ const Category = () => {
                                 />
                             )}
                         </div>
+
+                        <h4>Subcategorias</h4>
+                        {selectedCategory && (
+                            <div className="subcategory-list">
+                                {subCategoriesByCategory[selectedCategory.id]?.map((sub) => (
+                                    <div
+                                        key={sub.id}
+                                        className="subcategory-item"
+                                        onClick={() => handleSubCategoryClick(sub)}
+                                    >
+                                        {sub.name}
+                                    </div>
+                                )) || 'Nenhuma subcategoria'}
+                            </div>
+                        )}
                     </div>
                 </Modal>
 

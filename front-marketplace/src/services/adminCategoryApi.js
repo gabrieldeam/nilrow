@@ -44,16 +44,28 @@ export const getCategoryById = async (id) => {
     }
 };
 
-// Obter todas as categorias
-export const getAllCategories = async () => {
+// Obter todas as categorias com paginação
+export const getAllCategories = async (page, size) => {
     try {
-        const response = await adminCategoryApi.get('/categories/all');
+        const response = await adminCategoryApi.get(`/categories/all?page=${page}&size=${size}`);
         return response.data;
     } catch (error) {
         console.error('Erro ao buscar todas as categorias:', error);
         throw error.response ? error.response.data : new Error('Erro desconhecido');
     }
 };
+
+// Buscar categorias pelo nome
+export const searchCategoriesByName = async (name) => {
+    try {
+        const response = await adminCategoryApi.get(`/categories/search?name=${name}`);
+        return response.data;
+    } catch (error) {
+        console.error('Erro ao buscar categorias por nome:', error);
+        throw error.response ? error.response.data : new Error('Erro desconhecido');
+    }
+};
+
 
 // Atualizar uma categoria
 export const updateCategory = async (id, name, image) => {
