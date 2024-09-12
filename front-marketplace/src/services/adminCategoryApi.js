@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const adminCategoryApi = axios.create({
-    baseURL: 'http://localhost:8080/api/categories',
+    baseURL: 'http://localhost:8080/api',
     withCredentials: true,
 });
 
@@ -20,7 +20,7 @@ export const createCategory = async (name, image) => {
             formData.append('image', image); // Adiciona a imagem ao FormData
         }
 
-        const response = await adminCategoryApi.post('/create', formData, {
+        const response = await adminCategoryApi.post('/categories/create', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -36,7 +36,7 @@ export const createCategory = async (name, image) => {
 // Obter uma categoria pelo ID
 export const getCategoryById = async (id) => {
     try {
-        const response = await adminCategoryApi.get(`/${id}`);
+        const response = await adminCategoryApi.get(`/categories/${id}`);
         return response.data;
     } catch (error) {
         console.error('Erro ao buscar categoria pelo ID:', error);
@@ -47,7 +47,7 @@ export const getCategoryById = async (id) => {
 // Obter todas as categorias
 export const getAllCategories = async () => {
     try {
-        const response = await adminCategoryApi.get('/all');
+        const response = await adminCategoryApi.get('/categories/all');
         return response.data;
     } catch (error) {
         console.error('Erro ao buscar todas as categorias:', error);
@@ -71,7 +71,7 @@ export const updateCategory = async (id, name, image) => {
             formData.append('image', image); // Adiciona a imagem ao FormData
         }
 
-        const response = await adminCategoryApi.put(`/edit/${id}`, formData, {
+        const response = await adminCategoryApi.put(`/categories/edit/${id}`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -87,9 +87,73 @@ export const updateCategory = async (id, name, image) => {
 // Deletar uma categoria
 export const deleteCategory = async (id) => {
     try {
-        await adminCategoryApi.delete(`/delete/${id}`);
+        await adminCategoryApi.delete(`/categories/delete/${id}`);
     } catch (error) {
         console.error('Erro ao deletar categoria:', error);
+        throw error.response ? error.response.data : new Error('Erro desconhecido');
+    }
+};
+
+// Endpoints para subcategorias
+
+// Criar uma nova subcategoria
+export const createSubCategory = async (subCategory) => {
+    try {
+        const response = await adminCategoryApi.post('/subcategory/create', subCategory, {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Erro ao criar subcategoria:', error);
+        throw error.response ? error.response.data : new Error('Erro desconhecido');
+    }
+};
+
+// Atualizar uma subcategoria
+export const updateSubCategory = async (id, subCategory) => {
+    try {
+        const response = await adminCategoryApi.put(`/subcategory/edit/${id}`, subCategory, {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Erro ao atualizar subcategoria:', error);
+        throw error.response ? error.response.data : new Error('Erro desconhecido');
+    }
+};
+
+// Deletar uma subcategoria
+export const deleteSubCategory = async (id) => {
+    try {
+        await adminCategoryApi.delete(`/subcategory/delete/${id}`);
+    } catch (error) {
+        console.error('Erro ao deletar subcategoria:', error);
+        throw error.response ? error.response.data : new Error('Erro desconhecido');
+    }
+};
+
+// Obter todas as subcategorias de uma categoria
+export const getSubCategoriesByCategory = async (categoryId) => {
+    try {
+        const response = await adminCategoryApi.get(`/subcategory/category/${categoryId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Erro ao buscar subcategorias por categoria:', error);
+        throw error.response ? error.response.data : new Error('Erro desconhecido');
+    }
+};
+
+// Obter subcategoria por ID
+export const getSubCategoryById = async (id) => {
+    try {
+        const response = await adminCategoryApi.get(`/subcategory/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error('Erro ao buscar subcategoria pelo ID:', error);
         throw error.response ? error.response.data : new Error('Erro desconhecido');
     }
 };

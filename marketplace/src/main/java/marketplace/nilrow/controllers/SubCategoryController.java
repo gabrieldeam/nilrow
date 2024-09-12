@@ -17,34 +17,44 @@ public class SubCategoryController {
     @Autowired
     private SubCategoryService subCategoryService;
 
+    // Criar subcategoria
     @PostMapping("/create")
     public ResponseEntity<SubCategoryDTO> createSubCategory(@RequestBody SubCategoryDTO subCategoryDTO) {
         SubCategoryDTO createdSubCategory = subCategoryService.createSubCategory(subCategoryDTO);
         return ResponseEntity.ok(createdSubCategory);
     }
 
+    // Atualizar subcategoria
     @PutMapping("/edit/{id}")
-    public ResponseEntity<SubCategoryDTO> updateSubCategory(@PathVariable String id,
-                                                            @RequestBody SubCategoryDTO subCategoryDTO) {
+    public ResponseEntity<SubCategoryDTO> updateSubCategory(@PathVariable String id, @RequestBody SubCategoryDTO subCategoryDTO) {
         SubCategoryDTO updatedSubCategory = subCategoryService.updateSubCategory(id, subCategoryDTO);
-        return updatedSubCategory != null ? ResponseEntity.ok(updatedSubCategory) : ResponseEntity.notFound().build();
+        if (updatedSubCategory == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(updatedSubCategory);
     }
 
+    // Deletar subcategoria
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteSubCategory(@PathVariable String id) {
         subCategoryService.deleteSubCategory(id);
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/all")
-    public ResponseEntity<List<SubCategoryDTO>> getAllSubCategories() {
-        List<SubCategoryDTO> subCategories = subCategoryService.getAllSubCategories();
+    // Obter todas as subcategorias de uma categoria
+    @GetMapping("/category/{categoryId}")
+    public ResponseEntity<List<SubCategoryDTO>> getSubCategoriesByCategory(@PathVariable String categoryId) {
+        List<SubCategoryDTO> subCategories = subCategoryService.getSubCategoriesByCategory(categoryId);
         return ResponseEntity.ok(subCategories);
     }
 
+    // Obter subcategoria por ID
     @GetMapping("/{id}")
     public ResponseEntity<SubCategoryDTO> getSubCategoryById(@PathVariable String id) {
         SubCategoryDTO subCategory = subCategoryService.getSubCategoryById(id);
-        return subCategory != null ? ResponseEntity.ok(subCategory) : ResponseEntity.notFound().build();
+        if (subCategory == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(subCategory);
     }
 }

@@ -1,51 +1,67 @@
 import React, { useState, useEffect, memo } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
-import { getAllCategories, createCategory, updateCategory, deleteCategory } from '../../../services/adminCategoryApi';
+import { getAllCategories, createCategory, updateCategory, deleteCategory, getSubCategoriesByCategory, createSubCategory, updateSubCategory, deleteSubCategory } from '../../../services/adminCategoryApi';
 import './Category.css';
 import HeaderButton from '../../../components/UI/Buttons/HeaderButton/HeaderButton';
 import closeIcon from '../../../assets/close.svg';
 import Modal from '../../../components/UI/Modal/Modal'; 
 import getConfig from '../../../config';
-import CustomInput from '../../../components/UI/CustomInput/CustomInput'; // Custom Input
-import StageButton from '../../../components/UI/Buttons/StageButton/StageButton'; // Stage Button
+import CustomInput from '../../../components/UI/CustomInput/CustomInput'; 
+import StageButton from '../../../components/UI/Buttons/StageButton/StageButton';
+import ExternalSelect from '../../../components/UI/ExternalSelect/ExternalSelect'; 
+import defaultImage from '../../../assets/user.png';
 
 const { apiUrl } = getConfig();
 
 const Category = () => {
     const [categories, setCategories] = useState([]);
+    const [subCategoriesByCategory, setSubCategoriesByCategory] = useState({}); // Subcategorias associadas às categorias
     const [selectedCategory, setSelectedCategory] = useState(null);
+    const [selectedSubCategory, setSelectedSubCategory] = useState(null);
     const [newCategoryName, setNewCategoryName] = useState('');
+    const [newSubCategoryName, setNewSubCategoryName] = useState('');
+    const [newSubCategoryCategoryId, setNewSubCategoryCategoryId] = useState(''); // Estado para a categoria selecionada na subcategoria
     const [newCategoryImage, setNewCategoryImage] = useState(null);
-    const [imagePreview, setImagePreview] = useState(null); // Para pré-visualização da imagem
+    const [imagePreview, setImagePreview] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isSubCategoryModalOpen, setIsSubCategoryModalOpen] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
-        fetchCategories();
+        fetchCategoriesAndSubCategories();
     }, []);
 
-    const fetchCategories = async () => {
+    // Carregar categorias e subcategorias associadas
+    const fetchCategoriesAndSubCategories = async () => {
         try {
             const data = await getAllCategories();
             setCategories(data);
+
+            // Carrega as subcategorias para cada categoria
+            const subCategoriesMap = {};
+            for (const category of data) {
+                const subData = await getSubCategoriesByCategory(category.id);
+                subCategoriesMap[category.id] = subData; // Associa as subcategorias à categoria pelo ID
+            }
+            setSubCategoriesByCategory(subCategoriesMap);
         } catch (error) {
-            console.error('Erro ao buscar categorias:', error);
+            console.error('Erro ao buscar categorias e subcategorias:', error);
         }
     };
 
     const handleCategoryClick = (category) => {
         setSelectedCategory(category);
         setNewCategoryName(category.name);
-        setImagePreview(`${apiUrl}${category.imageUrl}`); // Pré-visualizar imagem da categoria
-        setIsModalOpen(true); // Abre o modal para edição
+        setImagePreview(`${apiUrl}${category.imageUrl}`);
+        setIsModalOpen(true);
     };
 
     const handleCreateCategory = async () => {
         try {
             await createCategory(newCategoryName, newCategoryImage);
-            fetchCategories();
+            fetchCategoriesAndSubCategories();
             clearModal();
         } catch (error) {
             console.error('Erro ao criar categoria:', error);
@@ -56,7 +72,7 @@ const Category = () => {
         try {
             if (selectedCategory) {
                 await updateCategory(selectedCategory.id, newCategoryName, newCategoryImage);
-                fetchCategories();
+                fetchCategoriesAndSubCategories();
                 clearModal();
             }
         } catch (error) {
@@ -68,7 +84,7 @@ const Category = () => {
         try {
             if (selectedCategory) {
                 await deleteCategory(selectedCategory.id);
-                fetchCategories();
+                fetchCategoriesAndSubCategories();
                 clearModal();
             }
         } catch (error) {
@@ -76,24 +92,63 @@ const Category = () => {
         }
     };
 
-    // Função para validar o arquivo de imagem
+    const handleCreateSubCategory = async () => {
+        try {
+            await createSubCategory({ name: newSubCategoryName, categoryId: newSubCategoryCategoryId });
+            fetchCategoriesAndSubCategories();
+            clearSubCategoryModal();
+        } catch (error) {
+            console.error('Erro ao criar subcategoria:', error);
+        }
+    };
+
+    const handleUpdateSubCategory = async () => {
+        try {
+            if (selectedSubCategory) {
+                await updateSubCategory(selectedSubCategory.id, { name: newSubCategoryName, categoryId: newSubCategoryCategoryId });
+                fetchCategoriesAndSubCategories();
+                clearSubCategoryModal();
+            }
+        } catch (error) {
+            console.error('Erro ao atualizar subcategoria:', error);
+        }
+    };
+
+    const handleDeleteSubCategory = async () => {
+        try {
+            if (selectedSubCategory) {
+                await deleteSubCategory(selectedSubCategory.id);
+                fetchCategoriesAndSubCategories();
+                clearSubCategoryModal();
+            }
+        } catch (error) {
+            console.error('Erro ao excluir subcategoria:', error);
+        }
+    };
+
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file && file.type.startsWith('image/')) {
             setNewCategoryImage(file);
-            setImagePreview(URL.createObjectURL(file)); // Pré-visualizar imagem carregada
+            setImagePreview(URL.createObjectURL(file));
         } else {
             alert('Por favor, selecione um arquivo de imagem válido.');
         }
     };
 
-    // Função para abrir a modal de criação
     const openCreateModal = () => {
         setSelectedCategory(null);
-        setNewCategoryName(''); // Limpar o nome da categoria
-        setNewCategoryImage(null); // Limpar a imagem
-        setImagePreview(null); // Limpar a pré-visualização da imagem
-        setIsModalOpen(true); // Abre a modal
+        setNewCategoryName('');
+        setNewCategoryImage(null);
+        setImagePreview(null);
+        setIsModalOpen(true);
+    };
+
+    const openSubCategoryModal = () => {
+        setSelectedSubCategory(null);
+        setNewSubCategoryName('');
+        setNewSubCategoryCategoryId(''); 
+        setIsSubCategoryModalOpen(true);
     };
 
     const clearModal = () => {
@@ -101,10 +156,18 @@ const Category = () => {
         setNewCategoryName('');
         setNewCategoryImage(null);
         setImagePreview(null);
-        setIsModalOpen(false); // Certifique-se de que isso está fechando o modal corretamente
+        setIsModalOpen(false);
     };
 
-    const isFormValid = newCategoryName.trim() !== ''; // Validação do formulário
+    const clearSubCategoryModal = () => {
+        setSelectedSubCategory(null);
+        setNewSubCategoryName('');
+        setNewSubCategoryCategoryId(''); 
+        setIsSubCategoryModalOpen(false);
+    };
+
+    const isFormValid = newCategoryName.trim() !== '';
+    const isSubCategoryFormValid = newSubCategoryName.trim() !== '' && newSubCategoryCategoryId.trim() !== ''; 
 
     return (
         <div className="category-page">
@@ -125,11 +188,11 @@ const Category = () => {
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="category-search-input"
                     />
-                    <button 
-                        onClick={openCreateModal} // Abre o modal para criação
-                        className="add-category-btn"
-                    >
+                    <button onClick={openCreateModal} className="add-category-btn">
                         + Adicionar categoria
+                    </button>
+                    <button onClick={openSubCategoryModal} className="add-category-btn">
+                        + Adicionar subcategoria
                     </button>
                 </div>
                 <div className="category-section">
@@ -138,6 +201,7 @@ const Category = () => {
                             <div className="category-columnindex">#</div>
                             <div className="category-columnimage">Imagem</div>
                             <div className="category-columnname">Nome</div>
+                            <div className="category-columnsubcategories">Subcategorias</div>
                         </div>
                         {categories
                             .filter(category => category.name.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -168,6 +232,14 @@ const Category = () => {
                                     </div>
 
                                     <div className="category-columnname">{category.name}</div>
+
+                                    <div className="category-columnsubcategories">
+                                        {subCategoriesByCategory[category.id]?.map((sub, idx) => (
+                                            <span key={sub.id}>
+                                                {sub.name}{idx < subCategoriesByCategory[category.id].length - 1 && <span>,&nbsp;</span>}
+                                            </span>
+                                        )) || 'Nenhuma subcategoria'}
+                                    </div>
                                 </div>
                             ))}
                     </div>
@@ -175,9 +247,8 @@ const Category = () => {
 
                 <Modal isOpen={isModalOpen} onClose={clearModal}>
                     <div className="category-form">
-                        <h3>{selectedCategory ? 'Editar Categoria' : 'Nova Categoria'}</h3>
+                        <h3 className="category-title-form">{selectedCategory ? 'Editar Categoria' : 'Nova Categoria'}</h3>
 
-                        {/* Custom Input para nome da categoria */}
                         <CustomInput
                             title="Nome da Categoria"
                             type="text"
@@ -186,13 +257,18 @@ const Category = () => {
                             onChange={(e) => setNewCategoryName(e.target.value)}
                         />
 
-                        {/* Upload da imagem e pré-visualização */}
                         <div className="add-channel-image-upload">
                             <div className="category-image-circle">
-                                {imagePreview && (
-                                    <img src={imagePreview} alt="Preview" className="category-image" />
+                                {imagePreview ? (
+                                    <img src={imagePreview} alt="Preview" className="category-image-preview" />
+                                ) : (
+                                    <img src={defaultImage} alt="Default" className="category-image-preview" />
                                 )}
                             </div>
+
+                            <label htmlFor="category-image" className="add-channel-upload-button">
+                                Escolher arquivo
+                            </label>
                             <input
                                 type="file"
                                 id="category-image"
@@ -201,12 +277,8 @@ const Category = () => {
                                 accept="image/*"
                                 style={{ display: 'none' }}
                             />
-                            <label htmlFor="category-image" className="add-channel-upload-button">
-                                Escolher arquivo
-                            </label>
                         </div>
 
-                        {/* Botões StageButton */}
                         <div className="modal-buttons">
                             {selectedCategory ? (
                                 <>
@@ -228,6 +300,54 @@ const Category = () => {
                                     backgroundColor={isFormValid ? "#7B33E5" : "#212121"}
                                     onClick={handleCreateCategory}
                                     disabled={!isFormValid}
+                                />
+                            )}
+                        </div>
+                    </div>
+                </Modal>
+
+                <Modal isOpen={isSubCategoryModalOpen} onClose={clearSubCategoryModal}>
+                    <div className="subcategory-form">
+                        <h3 className="subcategory-title-form">{selectedSubCategory ? 'Editar Subcategoria' : 'Nova Subcategoria'}</h3>
+
+                        <CustomInput
+                            title="Nome da Subcategoria"
+                            type="text"
+                            name="subCategoryName"
+                            value={newSubCategoryName}
+                            onChange={(e) => setNewSubCategoryName(e.target.value)}
+                        />
+
+                        <ExternalSelect
+                            title="Selecionar Categoria"
+                            placeholder="Escolha uma categoria"
+                            options={categories.map(cat => ({ value: cat.id, label: cat.name }))}
+                            onChange={(e) => setNewSubCategoryCategoryId(e.target.value)}
+                            value={newSubCategoryCategoryId}
+                            isValid={newSubCategoryCategoryId.trim() !== ''}
+                        />
+
+                        <div className="modal-buttons">
+                            {selectedSubCategory ? (
+                                <>
+                                    <StageButton
+                                        text="Atualizar Subcategoria"
+                                        backgroundColor={isSubCategoryFormValid ? "#7B33E5" : "#212121"}
+                                        onClick={handleUpdateSubCategory}
+                                        disabled={!isSubCategoryFormValid}
+                                    />
+                                    <StageButton
+                                        text="Excluir Subcategoria"
+                                        backgroundColor="#DF1414"
+                                        onClick={handleDeleteSubCategory}
+                                    />
+                                </>
+                            ) : (
+                                <StageButton
+                                    text="Criar Subcategoria"
+                                    backgroundColor={isSubCategoryFormValid ? "#7B33E5" : "#212121"}
+                                    onClick={handleCreateSubCategory}
+                                    disabled={!isSubCategoryFormValid}
                                 />
                             )}
                         </div>
