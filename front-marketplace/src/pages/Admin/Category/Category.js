@@ -11,7 +11,7 @@ import {
     updateSubCategory, 
     deleteSubCategory, 
     searchCategoriesByName 
-} from '../../../services/adminCategoryApi';
+} from '../../../services/categoryApi';
 import './Category.css';
 import HeaderButton from '../../../components/UI/Buttons/HeaderButton/HeaderButton';
 import closeIcon from '../../../assets/close.svg';

@@ -1,7 +1,6 @@
 package marketplace.nilrow.services;
 
 import marketplace.nilrow.domain.catalog.category.Category;
-import marketplace.nilrow.domain.catalog.category.CategoryDTO;
 import marketplace.nilrow.domain.catalog.category.UserCategoryOrder;
 import marketplace.nilrow.domain.catalog.category.UserCategoryOrderDTO;
 import marketplace.nilrow.domain.user.User;
@@ -51,7 +50,7 @@ public class UserCategoryOrderService {
         String userId = getAuthenticatedUserId();
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-        Optional<Category> categoryOpt = categoryRepository.findById(orderDTO.getCategory().getId());
+        Optional<Category> categoryOpt = categoryRepository.findById(orderDTO.getCategoryId());
         if (categoryOpt.isEmpty()) {
             throw new RuntimeException("Categoria não encontrada");
         }
@@ -73,7 +72,7 @@ public class UserCategoryOrderService {
         String userId = getAuthenticatedUserId();
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-        Category category = categoryRepository.findById(orderDTO.getCategory().getId())
+        Category category = categoryRepository.findById(orderDTO.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
 
         UserCategoryOrder order = new UserCategoryOrder();
@@ -92,16 +91,10 @@ public class UserCategoryOrderService {
 
     // Converter para DTO
     private UserCategoryOrderDTO convertToDTO(UserCategoryOrder order) {
-        CategoryDTO categoryDTO = new CategoryDTO(
-                order.getCategory().getId(),
-                order.getCategory().getName(),
-                order.getCategory().getImageUrl()
-        );
-
         return new UserCategoryOrderDTO(
                 order.getId(),
                 order.getUser().getId(),
-                categoryDTO,
+                order.getCategory().getId(),  // Retorna o ID da categoria
                 order.getDisplayOrder()
         );
     }

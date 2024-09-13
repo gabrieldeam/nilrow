@@ -11,6 +11,6 @@ public class UserCategoryOrderDTO {
 
     private String id;
     private String userId;
-    private CategoryDTO category;
+    private String categoryId;
     private int displayOrder;
 }

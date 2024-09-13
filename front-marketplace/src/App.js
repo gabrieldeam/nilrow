@@ -58,6 +58,7 @@ const Administration = lazy(() => import('./pages/Admin/Administration/Administr
 const MyCatalog = lazy(() => import('./pages/Main/Catalog-Pages/MyCatalog/MyCatalog'));
 const EditCatalog = lazy(() => import('./pages/Main/Catalog-Pages/EditCatalog/EditCatalog'));
 const Visualization = lazy(() => import('./pages/Main/Catalog-Pages/Visualization/Visualization'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 const AppContent = () => {
     const { isAuthenticated } = useAuth();
@@ -155,6 +156,8 @@ const AppContent = () => {
                     <Route path="/my-catalog" element={<ProtectedRoute element={<MyCatalog />} />} />
                     <Route path="/edit-catalog/:id" element={<ProtectedRoute element={<EditCatalog/>} />} />
                     <Route path="/visualization/" element={<ProtectedRoute element={<Visualization/>} />} />
+                    <Route path="/category/:categoryName" element={<Home />} />
+                    <Route path="*" element={<NotFound />} />
                 </Routes>
             </Suspense>
             {renderFooter()}

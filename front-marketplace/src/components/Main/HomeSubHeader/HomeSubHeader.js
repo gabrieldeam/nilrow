@@ -4,8 +4,11 @@ import ontheriseIcon from '../../../assets/ontherise.svg';
 import followingIcon from '../../../assets/following.svg';
 import curationIcon from '../../../assets/curation.svg';
 import { checkAuth } from '../../../services/api';
+import getConfig from '../../../config';
 
-const HomeSubHeader = ({ onButtonClick, activeSection }) => {
+const { apiUrl } = getConfig();
+
+const HomeSubHeader = ({ onButtonClick, activeSection, categories }) => {
     const [activeButton, setActiveButton] = useState(activeSection);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -59,6 +62,25 @@ const HomeSubHeader = ({ onButtonClick, activeSection }) => {
                 </div>
                 <span className="home-sub-header-text">Curadoria</span>
             </div>
+
+            {/* Renderiza as categorias dinamicamente */}
+            {categories.map((category) => (
+                <div 
+                    key={category.id} 
+                    className={`home-sub-header-item ${activeButton === category.id ? 'active' : ''}`} 
+                    onClick={() => handleButtonClick(category.id)}
+                >
+                    <div className="home-sub-header-button">
+                        <img 
+                            src={`${apiUrl}${category.imageUrl}`} 
+                            alt={category.name} 
+                            className="home-sub-header-icon"
+                        /> 
+                    </div>
+                    <span className="home-sub-header-text">{category.name}</span>
+                </div>
+            ))}
+
             <div className="home-sub-header-divider"></div>
         </div>
     );
