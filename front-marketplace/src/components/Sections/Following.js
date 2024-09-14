@@ -3,73 +3,131 @@ import { useNavigate } from 'react-router-dom';
 import './Following.css';
 import getConfig from '../../config';
 import rightArrow from '../../assets/rightarrow.svg';
-import { getMyFollowingChannels } from '../../services/channelApi'; 
+import { getMyFollowingChannels } from '../../services/channelApi';
 import './Sections.css';
 
 const Following = () => {
   const { apiUrl, frontUrl } = getConfig();
   const navigate = useNavigate();
   const followingListRef = useRef(null);
-  
-  const [channels, setChannels] = useState([]); // Lista de canais seguidos
-  const [page, setPage] = useState(0); // Página atual de carregamento
-  const [isLoading, setIsLoading] = useState(false); // Estado de carregamento
-  const [hasMore, setHasMore] = useState(true); // Indica se há mais canais para carregar
 
-  // Função para carregar canais, memoizada com useCallback
-  const loadChannels = useCallback(async () => {
-    if (isLoading || !hasMore) return; // Evita carregamentos se já está carregando ou não há mais itens
-    
-    setIsLoading(true); // Inicia o estado de carregamento
+  const [channels, setChannels] = useState([]);
+  const [page, setPage] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
-    try {
-      const response = await getMyFollowingChannels(page, 10); // Carrega 10 canais por vez
-      setChannels((prevChannels) => [...prevChannels, ...response]); // Atualiza a lista de canais
+  // Use refs to keep track of isLoading and hasMore without causing re-renders
+  const isLoadingRef = useRef(isLoading);
+  const hasMoreRef = useRef(hasMore);
 
-      if (response.length < 10) {
-        setHasMore(false); // Se menos de 10 itens, marca como sem mais itens
-      }
-    } catch (error) {
-      console.error('Erro ao carregar canais seguidos:', error);
-    } finally {
-      setIsLoading(false); // Finaliza o estado de carregamento
-    }
-  }, [page, isLoading, hasMore]); // Incluímos as dependências corretas
-
-  // Chama loadChannels quando a página muda
   useEffect(() => {
-    loadChannels(); // Carrega os canais sempre que a página for incrementada
-  }, [loadChannels]); // Agora o useEffect depende de loadChannels, resolvendo o aviso do ESLint
+    isLoadingRef.current = isLoading;
+  }, [isLoading]);
 
-  // Função de rolagem para carregar mais canais quando o usuário atinge o final da lista
+  useEffect(() => {
+    hasMoreRef.current = hasMore;
+  }, [hasMore]);
+
+  // Use a ref to ensure initial load happens only once
+  const initialLoadRef = useRef(false);
+
+  const loadChannels = useCallback(
+    async (currentPage) => {
+      if (isLoadingRef.current || !hasMoreRef.current) return;
+
+      setIsLoading(true);
+
+      try {
+        const response = await getMyFollowingChannels(currentPage, 10);
+
+        setChannels((prevChannels) => {
+          const combinedChannels = [...prevChannels, ...response];
+
+          // Remove duplicates based on channel ID
+          const uniqueChannels = combinedChannels.filter(
+            (channel, index, self) =>
+              index === self.findIndex((c) => c.id === channel.id)
+          );
+
+          return uniqueChannels;
+        });
+
+        if (response.length < 10) {
+          setHasMore(false);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar canais seguidos:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [] // Keep dependencies empty
+  );
+
+  // Load channels on component mount
+  useEffect(() => {
+    if (!initialLoadRef.current) {
+      initialLoadRef.current = true;
+      loadChannels(0);
+    }
+  }, [loadChannels]);
+
+  // Handle scroll for loading more channels
   const handleScroll = useCallback(() => {
-    const { scrollLeft, scrollWidth, clientWidth } = followingListRef.current;
+    if (followingListRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = followingListRef.current;
 
-    if (scrollLeft + clientWidth >= scrollWidth - 50 && !isLoading && hasMore) {
-      setPage((prevPage) => prevPage + 1); // Incrementa a página para carregar mais canais
+      // Only proceed if content is scrollable
+      if (scrollWidth <= clientWidth) {
+        return;
+      }
+
+      if (
+        scrollLeft + clientWidth >= scrollWidth - 50 &&
+        !isLoading &&
+        hasMore
+      ) {
+        setPage((prevPage) => prevPage + 1);
+      }
     }
   }, [isLoading, hasMore]);
 
+  // Load more channels when page number increases
+  useEffect(() => {
+    if (page > 0) {
+      loadChannels(page);
+    }
+  }, [page, loadChannels]);
+
+  // Add scroll event listener
   useEffect(() => {
     const ref = followingListRef.current;
 
     if (ref) {
-      ref.addEventListener('scroll', handleScroll); // Adiciona evento de rolagem
+      ref.addEventListener('scroll', handleScroll);
     }
 
     return () => {
       if (ref) {
-        ref.removeEventListener('scroll', handleScroll); // Remove evento de rolagem ao desmontar
+        ref.removeEventListener('scroll', handleScroll);
       }
     };
   }, [handleScroll]);
 
-  // Renderiza os canais seguidos
+  // Render followed channels
   const renderFollowingChannels = () => {
     return channels.length > 0 ? (
-      channels.map((channel, index) => (
-        <a href={`${frontUrl}${channel.nickname}`} key={`${channel.id}-${index}`} className="following-channel-item">
-          <img src={`${apiUrl}${channel.imageUrl}`} alt={channel.name} className="channel-image-following" />
+      channels.map((channel) => (
+        <a
+          href={`${frontUrl}${channel.nickname}`}
+          key={channel.id}
+          className="following-channel-item"
+        >
+          <img
+            src={`${apiUrl}${channel.imageUrl}`}
+            alt={channel.name}
+            className="channel-image-following"
+          />
           <div className="channel-name-following">{channel.name}</div>
         </a>
       ))
@@ -82,7 +140,10 @@ const Following = () => {
     <div className="following-channel-section-content">
       <div className="following-channel-header">
         <div className="following-title">Canais que você segue</div>
-        <button onClick={() => navigate('/my-following')} className="following-button">
+        <button
+          onClick={() => navigate('/my-following')}
+          className="following-button"
+        >
           <img src={rightArrow} alt="Following" className="right-arrow-icon" />
         </button>
       </div>

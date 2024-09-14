@@ -1,27 +1,32 @@
 import React, { useEffect, useState } from 'react';
 import './HomeSubHeader.css';
 import { getAllCategories } from '../../../services/categoryApi';
-import { checkAuth } from '../../../services/api'; // Importa o checkAuth
+import { checkAuth } from '../../../services/api';
 import ontheriseIcon from '../../../assets/ontherise.svg';
 import followingIcon from '../../../assets/following.svg';
 import curationIcon from '../../../assets/curation.svg';
 import moreIcon from '../../../assets/more.svg';
 import getConfig from '../../../config';
 import SubCategoryList from './SubCategoryList/SubCategoryList';
-import { useNavigate } from 'react-router-dom';
-import { useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const { apiUrl } = getConfig();
 
-const HomeSubHeader = ({ onSectionChange, activeSection, selectedCategory, selectedSubCategory }) => {
+const HomeSubHeader = ({
+  onSectionChange,
+  activeSection,
+  selectedCategory,
+  selectedSubCategory,
+  onMoreClick, // Accept onMoreClick as a prop
+}) => {
   const [categories, setCategories] = useState([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [visibleItems, setVisibleItems] = useState(4);
-  const [isAuthenticated, setIsAuthenticated] = useState(false); // Estado para verificar autenticação
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Carrega todas as categorias
+  // Load all categories
   const fetchAllCategories = async () => {
     let allCategories = [];
     let page = 0;
@@ -46,24 +51,22 @@ const HomeSubHeader = ({ onSectionChange, activeSection, selectedCategory, selec
     setCategories(allCategories);
   };
 
-  // Verifica se o usuário está logado
+  // Check if the user is authenticated
   const verifyAuth = async () => {
     try {
-      const { isAuthenticated } = await checkAuth(); // Verifica o campo isAuthenticated no retorno
-      console.log('Autenticação verificada, está autenticado:', isAuthenticated);
-      setIsAuthenticated(isAuthenticated); // Atualiza o estado com base na resposta
+      const { isAuthenticated } = await checkAuth();
+      setIsAuthenticated(isAuthenticated);
     } catch (error) {
       console.error('Erro ao verificar autenticação:', error);
-      setIsAuthenticated(false); // Define como não autenticado em caso de erro
+      setIsAuthenticated(false);
     }
   };
 
   useEffect(() => {
     fetchAllCategories();
-    verifyAuth(); // Verifica autenticação ao carregar o componente
+    verifyAuth();
   }, []);
 
-  // Atualiza o número de itens visíveis conforme a largura da tela
   useEffect(() => {
     const handleResize = () => {
       const screenWidth = window.innerWidth;
@@ -95,19 +98,19 @@ const HomeSubHeader = ({ onSectionChange, activeSection, selectedCategory, selec
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Define o ID da categoria com base na categoria selecionada
+  // Set the category ID based on the selected category
   useEffect(() => {
     if (activeSection === 'categories' && selectedCategory) {
       const category = categories.find((cat) => cat.name === selectedCategory);
       if (category) {
-        setSelectedCategoryId(category.id); // Define o ID da categoria
+        setSelectedCategoryId(category.id);
       }
     } else {
-      setSelectedCategoryId(null); // Reseta o ID quando não estiver em categorias
+      setSelectedCategoryId(null);
     }
   }, [activeSection, selectedCategory, categories]);
 
-  // Lida com a mudança de seção ou categoria
+  // Handle section or category changes
   const handleClick = (section, isCategory = false) => {
     if (isCategory) {
       const [, categoryName] = section.split('/');
@@ -136,12 +139,14 @@ const HomeSubHeader = ({ onSectionChange, activeSection, selectedCategory, selec
     }
   };
 
-  // Filtra os itens de menu com base na autenticação
+  // Filter menu items based on authentication
   const items = [
     { name: 'Em Alta', section: 'ontherise', icon: ontheriseIcon },
-    isAuthenticated ? { name: 'Seguindo', section: 'following', icon: followingIcon } : null, // Exibe "Seguindo" apenas se autenticado
-    { name: 'Curadoria', section: 'curation', icon: curationIcon }
-  ].filter(Boolean); // Remove itens indefinidos
+    isAuthenticated
+      ? { name: 'Seguindo', section: 'following', icon: followingIcon }
+      : null,
+    { name: 'Curadoria', section: 'curation', icon: curationIcon },
+  ].filter(Boolean);
 
   return (
     <div className="homesubheader-container">
@@ -149,14 +154,22 @@ const HomeSubHeader = ({ onSectionChange, activeSection, selectedCategory, selec
         {items.slice(0, visibleItems).map((item) => (
           <div
             key={item.section}
-            className={`subheader-item-container ${activeSection === item.section ? 'active' : ''}`}
+            className={`subheader-item-container ${
+              activeSection === item.section ? 'active' : ''
+            }`}
             onClick={() => handleClick(item.section)}
           >
-            <div className={`subheader-item ${activeSection === item.section ? 'active' : ''}`}>
+            <div
+              className={`subheader-item ${
+                activeSection === item.section ? 'active' : ''
+              }`}
+            >
               <img
                 src={item.icon}
                 alt={`${item.name} icon`}
-                className={`subheader-icon ${activeSection === item.section ? 'active' : ''}`}
+                className={`subheader-icon ${
+                  activeSection === item.section ? 'active' : ''
+                }`}
               />
             </div>
             <span className="subheader-item-title">{item.name}</span>
@@ -166,14 +179,28 @@ const HomeSubHeader = ({ onSectionChange, activeSection, selectedCategory, selec
         {categories.slice(0, visibleItems).map((category) => (
           <div
             key={category.id}
-            className={`subheader-item-container ${(activeSection === 'categories' && selectedCategory === category.name) ? 'active' : ''}`}
+            className={`subheader-item-container ${
+              activeSection === 'categories' && selectedCategory === category.name
+                ? 'active'
+                : ''
+            }`}
             onClick={() => handleClick(`category/${category.name}`, true)}
           >
-            <div className={`subheader-item ${(activeSection === 'categories' && selectedCategory === category.name) ? 'active' : ''}`}>
+            <div
+              className={`subheader-item ${
+                activeSection === 'categories' && selectedCategory === category.name
+                  ? 'active'
+                  : ''
+              }`}
+            >
               <img
                 src={`${apiUrl}${category.imageUrl}`}
                 alt={`${category.name} icon`}
-                className={`subheader-icon ${(activeSection === 'categories' && selectedCategory === category.name) ? 'active' : ''}`}
+                className={`subheader-icon ${
+                  activeSection === 'categories' && selectedCategory === category.name
+                    ? 'active'
+                    : ''
+                }`}
               />
             </div>
             <span className="subheader-item-title">{category.name}</span>
@@ -181,23 +208,34 @@ const HomeSubHeader = ({ onSectionChange, activeSection, selectedCategory, selec
         ))}
 
         <div
-          className={`subheader-item-container ${activeSection === 'more' ? 'active' : ''}`}
-          onClick={() => handleClick('more')}
+          className={`subheader-item-container ${
+            activeSection === 'more' ? 'active' : ''
+          }`}
+          onClick={onMoreClick} // Use onMoreClick prop here
         >
-          <div className={`subheader-item ${activeSection === 'more' ? 'active' : ''}`}>
+          <div
+            className={`subheader-item ${
+              activeSection === 'more' ? 'active' : ''
+            }`}
+          >
             <img
               src={moreIcon}
               alt="Mais icon"
-              className={`subheader-icon ${activeSection === 'more' ? 'active' : ''}`}
+              className={`subheader-icon ${
+                activeSection === 'more' ? 'active' : ''
+              }`}
             />
           </div>
           <span className="subheader-item-title">Mais</span>
         </div>
       </div>
 
-      {/* Renderiza SubCategoryList quando estiver em uma categoria */}
+      {/* Render SubCategoryList when in a category */}
       {activeSection === 'categories' && selectedCategoryId && (
-        <SubCategoryList categoryId={selectedCategoryId} activeSubCategory={selectedSubCategory || 'tudo'} />
+        <SubCategoryList
+          categoryId={selectedCategoryId}
+          activeSubCategory={selectedSubCategory || 'tudo'}
+        />
       )}
     </div>
   );

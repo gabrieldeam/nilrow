@@ -59,6 +59,7 @@ const MyCatalog = lazy(() => import('./pages/Main/Catalog-Pages/MyCatalog/MyCata
 const EditCatalog = lazy(() => import('./pages/Main/Catalog-Pages/EditCatalog/EditCatalog'));
 const Visualization = lazy(() => import('./pages/Main/Catalog-Pages/Visualization/Visualization'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+const Categories = lazy(() => import('./pages/Main/Categories/Categories'));
 
 const AppContent = () => {
     const { isAuthenticated } = useAuth();
@@ -160,6 +161,7 @@ const AppContent = () => {
                     <Route path="/category/:categoryName" element={<Home />} />
                     <Route path="/category/:categoryName/:subCategoryName" element={<Home />} />
                     <Route path="*" element={<NotFound />} />
+                    <Route path="/categories" element={<Categories />} />
                 </Routes>
             </Suspense>
             {renderFooter()}

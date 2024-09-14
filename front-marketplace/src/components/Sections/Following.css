@@ -3,16 +3,16 @@
     text-align: center;
     border-radius: 5px;
     width: 100%;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0);
     margin-left: 505px;
+    width: calc(100% - 505px);
   }
   
   .following-channel-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 5px 45px;
-    margin-right: 25px;
+    padding: 5px 60px;
+    margin-right: 20px;
   }
   
   .following-button {
@@ -46,13 +46,13 @@
     gap: 10px;
     overflow-x: auto;
     justify-content: flex-start;
-    margin-left: 35px;
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none;  /* IE and Edge */
+    margin-left: 55px;
+    scrollbar-width: none; 
+    -ms-overflow-style: none; 
   }
   
   .following-channel-content::-webkit-scrollbar {
-    display: none; /* Chrome, Safari and Opera */
+    display: none; 
   }
   
   .following-channel-item {
@@ -116,6 +116,7 @@
 
     .following-channel-section-content {
         margin-left: 0;
+        width: 100%;
     }
     .following-channel {
       justify-content: flex-start;
@@ -126,11 +127,11 @@
     }
   
     .following-channel-content {
-      margin-left: -4px;
+      margin-left: 0px;
     }
   
     .following-channel-header {
-      padding: 6px;
+      padding: 5px 10px;
       margin-top: 5px;
       margin-bottom: 25px;
       margin-right: 0;    
@@ -141,3 +142,11 @@
     }
   }
   
+
+  @media (min-width: 768px) and (max-width: 1380px) {
+    .following-channel-section-content {
+      margin-left: 0;
+      width: 100%;
+  }
+    
+}

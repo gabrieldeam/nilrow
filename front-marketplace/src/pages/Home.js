@@ -7,20 +7,20 @@ import OnTheRise from '../components/Sections/OnTheRise';
 import Following from '../components/Sections/Following';
 import Curation from '../components/Sections/Curation';
 import Categories from '../components/Sections/Categories';
-import More from '../components/Sections/More';
 import Default from '../components/Sections/Default';
 import MobileHeader from '../components/Main/MobileHeader/MobileHeader';
+import ModalCategories from '../components/UI/ModalCategories/ModalCategories'; 
 import './Home.css';
 
 const Home = () => {
     const [activeSection, setActiveSection] = useState('default');
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [selectedSubCategory, setSelectedSubCategory] = useState('tudo');
+    const [showCategoriesModal, setShowCategoriesModal] = useState(false); 
     const location = useLocation();
     const { categoryName, subCategoryName } = useParams();
     const navigate = useNavigate();
 
-    // Atualiza a seção ativa e a subcategoria com base na URL
     useEffect(() => {
         const path = location.pathname;
 
@@ -30,13 +30,12 @@ const Home = () => {
             setActiveSection('following');
         } else if (path === '/curation') {
             setActiveSection('curation');
-        } else if (path === '/more') {
-            setActiveSection('more');
+        } else if (path === '/categories') {
+            setActiveSection('categoriesList');
         } else if (categoryName) {
             setSelectedCategory(categoryName);
             setActiveSection('categories');
 
-            // Se nenhuma subcategoria for definida, define "Tudo" como padrão
             if (!subCategoryName) {
                 setSelectedSubCategory('tudo');
                 navigate(`/category/${categoryName}/tudo`, { replace: true });
@@ -60,11 +59,24 @@ const Home = () => {
             setActiveSection('categories');
             setSelectedSubCategory('tudo');
             navigate(`/category/${categoryName}/tudo`);
+        } else if (section === 'categoriesList') {
+            setSelectedCategory(null);
+            setSelectedSubCategory('tudo');
+            setActiveSection('categoriesList');
+            navigate('/categories');
         } else {
             setSelectedCategory(null);
             setSelectedSubCategory('tudo');
             setActiveSection(section);
             navigate(`/${section}`);
+        }
+    };
+
+    const handleMoreClick = () => {
+        if (window.innerWidth > 768) {
+            setShowCategoriesModal(true);
+        } else {
+            handleSectionChange('categoriesList');
         }
     };
 
@@ -78,8 +90,8 @@ const Home = () => {
                 return <Curation />;
             case 'categories':
                 return <Categories selectedCategory={selectedCategory} />;
-            case 'more':
-                return <More />;
+            case 'categoriesList':
+                return <Categories />;
             case 'default':
             default:
                 return <Default />;
@@ -96,8 +108,8 @@ const Home = () => {
                 return 'Curadoria';
             case 'categories':
                 return selectedCategory || 'Categorias';
-            case 'more':
-                return 'Mais';
+            case 'categoriesList':
+                return 'Categorias';
             default:
                 return null;
         }
@@ -110,7 +122,7 @@ const Home = () => {
                 <meta name="description" content="Welcome to the Nilrow home page." />
             </Helmet>
 
-            {/* Renderiza o MobileHeader */}
+            {/* Render MobileHeader */}
             {activeSection === 'default' ? (
                 <MobileHeader showLogo={true} buttons={{ address: true, bag: true }} />
             ) : (
@@ -123,8 +135,14 @@ const Home = () => {
                 activeSection={activeSection} 
                 selectedCategory={selectedCategory} 
                 selectedSubCategory={selectedSubCategory}
+                onMoreClick={handleMoreClick}
             />
             {renderSection()}
+
+            {/* Render ModalCategories when showCategoriesModal is true */}
+            {showCategoriesModal && (
+                <ModalCategories onClose={() => setShowCategoriesModal(false)} />
+            )}
         </div>
     );
 };
