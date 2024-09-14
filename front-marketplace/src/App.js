@@ -114,9 +114,10 @@ const AppContent = () => {
             <Suspense fallback={<LoadingSpinner />}>
                 <Routes>
                     <Route path="/" element={<Home />} />
-                    <Route path="/following" element={<Home initialSection="following" />} />
-                    <Route path="/ontherise" element={<Home initialSection="ontherise" />} />
-                    <Route path="/curation" element={<Home initialSection="curation" />} />
+                    <Route path="/following" element={<Home/>} />
+                    <Route path="/ontherise" element={<Home/>} />
+                    <Route path="/curation" element={<Home/>} />
+                    <Route path="/more" element={<Home/>} />
                     <Route path="/login" element={<ProtectedLoginRoute isAuthenticated={isAuthenticated}><Login /></ProtectedLoginRoute>} />
                     <Route path="/login-phone" element={<ProtectedLoginRoute isAuthenticated={isAuthenticated}><LoginPhone /></ProtectedLoginRoute>} />
                     <Route path="/signup/*" element={<ProtectedLoginRoute isAuthenticated={isAuthenticated}><Signup /></ProtectedLoginRoute>} />
@@ -157,6 +158,7 @@ const AppContent = () => {
                     <Route path="/edit-catalog/:id" element={<ProtectedRoute element={<EditCatalog/>} />} />
                     <Route path="/visualization/" element={<ProtectedRoute element={<Visualization/>} />} />
                     <Route path="/category/:categoryName" element={<Home />} />
+                    <Route path="/category/:categoryName/:subCategoryName" element={<Home />} />
                     <Route path="*" element={<NotFound />} />
                 </Routes>
             </Suspense>

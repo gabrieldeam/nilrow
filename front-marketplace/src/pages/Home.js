@@ -1,140 +1,105 @@
-import React, { memo, useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useNavigate, useParams } from 'react-router-dom'; 
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import FixedSlide from '../components/Others/FixedSlide/FixedSlide';
-import MobileHeader from '../components/Main/MobileHeader/MobileHeader';
 import HomeSubHeader from '../components/Main/HomeSubHeader/HomeSubHeader';
-import { getMyFollowingChannels } from '../services/channelApi'; 
-import { getAllCategories } from '../services/categoryApi'; 
-import FollowingSection from './Main/FollowingSection/FollowingSection';
-import { checkAuth } from '../services/api';
+import OnTheRise from '../components/Sections/OnTheRise';
+import Following from '../components/Sections/Following';
+import Curation from '../components/Sections/Curation';
+import Categories from '../components/Sections/Categories';
+import More from '../components/Sections/More';
+import Default from '../components/Sections/Default';
+import MobileHeader from '../components/Main/MobileHeader/MobileHeader';
 import './Home.css';
 
-const Home = ({ initialSection }) => {
-    const isMobile = window.innerWidth <= 768;    
-    const [activeSection, setActiveSection] = useState(initialSection || null);
-    const followingChannelsRef = useRef([]); 
-    const [followingChannels, setFollowingChannels] = useState([]);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [categories, setCategories] = useState([]); 
+const Home = () => {
+    const [activeSection, setActiveSection] = useState('default');
+    const [selectedCategory, setSelectedCategory] = useState(null);
+    const [selectedSubCategory, setSelectedSubCategory] = useState('tudo');
+    const location = useLocation();
+    const { categoryName, subCategoryName } = useParams();
     const navigate = useNavigate();
-    const { categoryName } = useParams(); // Pega o nome da categoria da URL
 
+    // Atualiza a seção ativa e a subcategoria com base na URL
     useEffect(() => {
-        const verifyAuth = async () => {
-            const authStatus = await checkAuth();
-            setIsAuthenticated(authStatus.isAuthenticated);
-        };
+        const path = location.pathname;
 
-        verifyAuth();
-    }, []);
+        if (path === '/ontherise') {
+            setActiveSection('ontherise');
+        } else if (path === '/following') {
+            setActiveSection('following');
+        } else if (path === '/curation') {
+            setActiveSection('curation');
+        } else if (path === '/more') {
+            setActiveSection('more');
+        } else if (categoryName) {
+            setSelectedCategory(categoryName);
+            setActiveSection('categories');
 
-    useEffect(() => {
-        const fetchCategories = async () => {
-            try {
-                let allCategories = [];
-                let currentPage = 0;
-                let totalPages = 1;
-                const pageSize = 10;
-
-                while (currentPage < totalPages) {
-                    const response = await getAllCategories(currentPage, pageSize);
-                    allCategories = [...allCategories, ...response.content];
-                    totalPages = response.totalPages;
-                    currentPage++;
-                }
-
-                setCategories(allCategories);
-
-                // Verifica se o categoryName da URL corresponde a alguma categoria carregada
-                if (categoryName) {
-                    const matchedCategory = allCategories.find(category => category.name.toLowerCase() === categoryName.toLowerCase());
-                    if (matchedCategory) {
-                        setActiveSection(matchedCategory.id); // Define a seção ativa com o ID da categoria
-                    }
-                }
-            } catch (error) {
-                console.error('Erro ao buscar categorias:', error);
-            }
-        };
-
-        fetchCategories();
-    }, [categoryName]);
-
-    const fetchFollowingChannels = useCallback(async (page) => {
-        try {
-            const response = await getMyFollowingChannels(page, 10);
-            if (response) {
-                followingChannelsRef.current = [...followingChannelsRef.current, ...response];
-                setFollowingChannels(followingChannelsRef.current);
+            // Se nenhuma subcategoria for definida, define "Tudo" como padrão
+            if (!subCategoryName) {
+                setSelectedSubCategory('tudo');
+                navigate(`/category/${categoryName}/tudo`, { replace: true });
             } else {
-                console.error("API response data is undefined");
+                setSelectedSubCategory(subCategoryName);
             }
-        } catch (error) {
-            console.error("Error fetching following channels", error);
-        }
-    }, []);
-
-    useEffect(() => {
-        if (activeSection === 'following' && isAuthenticated) {
-            if (followingChannelsRef.current.length === 0) {
-                fetchFollowingChannels(0);
-            }
-        }
-    }, [activeSection, isAuthenticated, fetchFollowingChannels]);
-
-    const handleButtonClick = (buttonType) => {
-        if (buttonType === 'following' && !isAuthenticated) {
-            navigate('/login');
         } else {
-            const selectedCategory = categories.find(category => category.id === buttonType);
-            if (selectedCategory) {
-                setActiveSection(buttonType);
-                navigate(`/category/${selectedCategory.name.toLowerCase()}`);
-            } else {
-                setActiveSection(prevSection => prevSection === buttonType ? null : buttonType);
-                navigate(`/${buttonType}`);
-            }
+            setActiveSection('default');
+        }
+    }, [location, categoryName, subCategoryName, navigate]);
+
+    const handleSectionChange = (section) => {
+        if (section === 'default') {
+            setSelectedCategory(null);
+            setSelectedSubCategory('tudo');
+            setActiveSection('default');
+            navigate('/', { replace: true });
+        } else if (section.startsWith('category/')) {
+            const categoryName = section.split('/')[1];
+            setSelectedCategory(categoryName);
+            setActiveSection('categories');
+            setSelectedSubCategory('tudo');
+            navigate(`/category/${categoryName}/tudo`);
+        } else {
+            setSelectedCategory(null);
+            setSelectedSubCategory('tudo');
+            setActiveSection(section);
+            navigate(`/${section}`);
         }
     };
-
-    const handleBack = useCallback(() => {
-        setActiveSection(null);
-        navigate('/');
-    }, [navigate]);
 
     const renderSection = () => {
         switch (activeSection) {
             case 'ontherise':
-                return <div className="section-content">Em Alta</div>;
+                return <OnTheRise />;
             case 'following':
-                return isAuthenticated ? (
-                    <FollowingSection channels={followingChannels} />
-                ) : (
-                    <div className="section-content">Por favor, faça login para ver esta seção.</div>
-                );
+                return <Following />;
             case 'curation':
-                return <div className="section-content">Curadoria</div>;
+                return <Curation />;
+            case 'categories':
+                return <Categories selectedCategory={selectedCategory} />;
+            case 'more':
+                return <More />;
+            case 'default':
             default:
-                const selectedCategory = categories.find(category => category.id === activeSection);
-                return selectedCategory ? (
-                    <div className="section-content">{`Seção de "${selectedCategory.name}"`}</div>
-                ) : (
-                    <div className="section-content">Seção Padrão</div>
-                );
+                return <Default />;
         }
     };
 
-    const renderMobileHeader = () => {
+    const getSectionTitle = () => {
         switch (activeSection) {
             case 'ontherise':
-                return <MobileHeader showLogo={true} buttons={{ address: true, bag: true }} />;
+                return 'Em Alta';
             case 'following':
-                return <MobileHeader title="Seguindo" buttons={{ close: true, address: true, bag: true, blocked: true }} handleBack={handleBack} />;
+                return 'Seguindo';
             case 'curation':
-                return <MobileHeader showLogo={true} buttons={{ address: true, bag: true }} />;
+                return 'Curadoria';
+            case 'categories':
+                return selectedCategory || 'Categorias';
+            case 'more':
+                return 'Mais';
             default:
-                return <MobileHeader showLogo={true} buttons={{ address: true, bag: true }} />;
+                return null;
         }
     };
 
@@ -144,14 +109,24 @@ const Home = ({ initialSection }) => {
                 <title>Home - Nilrow</title>
                 <meta name="description" content="Welcome to the Nilrow home page." />
             </Helmet>
+
+            {/* Renderiza o MobileHeader */}
+            {activeSection === 'default' ? (
+                <MobileHeader showLogo={true} buttons={{ address: true, bag: true }} />
+            ) : (
+                <MobileHeader title={getSectionTitle()} buttons={{ address: true, bag: true }} />
+            )}
+
             <FixedSlide />
-            {isMobile && renderMobileHeader()}
-            <HomeSubHeader activeSection={activeSection} onButtonClick={handleButtonClick} categories={categories} />
-            <div className="section-container">
-                {renderSection()}
-            </div>
+            <HomeSubHeader 
+                onSectionChange={handleSectionChange} 
+                activeSection={activeSection} 
+                selectedCategory={selectedCategory} 
+                selectedSubCategory={selectedSubCategory}
+            />
+            {renderSection()}
         </div>
     );
 };
 
-export default memo(Home);
+export default Home;
