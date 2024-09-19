@@ -8,7 +8,6 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1003;
 }
 
 .address-modal-container {
@@ -21,6 +20,7 @@
     overflow-y: auto;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     border: 1px solid #FFFFFF;
+    z-index: 1002;
 }
 
 .address-modal-close-button-wrapper {
