@@ -6,8 +6,8 @@ import marketplace.nilrow.services.UserCategoryOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/user-category-order")
@@ -24,26 +24,15 @@ public class UserCategoryOrderController {
         return ResponseEntity.ok(orders);
     }
 
-    // Criar uma nova ordem de exibição
-    @PostMapping("/create")
-    public ResponseEntity<UserCategoryOrderDTO> createUserCategoryOrder(@RequestBody UserCategoryOrderDTO orderDTO) {
-        UserCategoryOrderDTO createdOrder = userCategoryOrderService.createUserCategoryOrder(orderDTO);
-        return ResponseEntity.ok(createdOrder);
+    // Novo Endpoint Upsert: Cria ou Atualiza a ordem de exibição
+    @PutMapping("/upsert")
+    public ResponseEntity<List<UserCategoryOrderDTO>> upsertUserCategoryOrder(@RequestBody List<UserCategoryOrderDTO> orderDTOList) {
+        List<UserCategoryOrderDTO> upsertedOrders = orderDTOList.stream()
+                .map(userCategoryOrderService::upsertUserCategoryOrder)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(upsertedOrders);
     }
 
-    // Atualizar uma ordem de exibição
-    @PutMapping("/update/{id}")
-    public ResponseEntity<UserCategoryOrderDTO> updateUserCategoryOrder(
-            @PathVariable String id, @RequestBody UserCategoryOrderDTO orderDTO) {
-        orderDTO.setId(id);
-        UserCategoryOrderDTO updatedOrder = userCategoryOrderService.updateUserCategoryOrder(orderDTO);
-        return ResponseEntity.ok(updatedOrder);
-    }
 
-    // Deletar uma ordem de exibição
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Void> deleteUserCategoryOrder(@PathVariable String id) {
-        userCategoryOrderService.deleteUserCategoryOrder(id);
-        return ResponseEntity.ok().build();
-    }
+
 }

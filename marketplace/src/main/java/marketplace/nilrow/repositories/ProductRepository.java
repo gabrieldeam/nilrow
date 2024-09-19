@@ -1,10 +1,10 @@
 package marketplace.nilrow.repositories;
 
-import marketplace.nilrow.domain.product.Product;
+import marketplace.nilrow.domain.catalog.product.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
 public interface ProductRepository extends JpaRepository<Product, String> {
-    List<Product> findAllByActiveTrue();
+    List<Product> findByCatalogId(String catalogId);
 }

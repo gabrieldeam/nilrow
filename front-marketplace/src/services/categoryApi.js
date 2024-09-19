@@ -170,4 +170,31 @@ export const getSubCategoryById = async (id) => {
     }
 };
 
+// Obter todas as ordens de exibição de categorias do usuário autenticado
+export const getAllUserCategoryOrders = async () => {
+    try {
+        const response = await categoryApi.get('/user-category-order/all');
+        return response.data;
+    } catch (error) {
+        console.error('Erro ao buscar ordens de exibição de categorias do usuário:', error);
+        throw error.response ? error.response.data : new Error('Erro desconhecido');
+    }
+};
+
+// Upsert: Cria ou Atualiza a ordem de exibição de categoria do usuário
+export const upsertUserCategoryOrder = async (orderDTO) => {
+    try {
+        const response = await categoryApi.put('/user-category-order/upsert', orderDTO, {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Erro ao upsertar ordem de exibição de categoria do usuário:', error);
+        throw error.response ? error.response.data : new Error('Erro desconhecido');
+    }
+};
+
+
 export default categoryApi;

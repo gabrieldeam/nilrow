@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 public class UserCategoryOrderDTO {
 
     private String id;
-    private String userId;
     private String categoryId;
     private int displayOrder;
 }

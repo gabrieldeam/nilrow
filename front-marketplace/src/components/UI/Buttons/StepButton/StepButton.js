@@ -46,7 +46,7 @@ StepButton.propTypes = {
     icon: PropTypes.string,
     customIcon: PropTypes.string,
     title: PropTypes.string.isRequired,
-    paragraph: PropTypes.string.isRequired,
+    paragraph: PropTypes.string,
     isVerified: PropTypes.bool,
     onClick: PropTypes.func.isRequired,
     className: PropTypes.string

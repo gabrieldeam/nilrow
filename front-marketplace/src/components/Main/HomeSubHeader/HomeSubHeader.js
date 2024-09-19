@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './HomeSubHeader.css';
-import { getAllCategories } from '../../../services/categoryApi';
+import { getAllCategories, getAllUserCategoryOrders } from '../../../services/categoryApi';
 import { checkAuth } from '../../../services/api';
 import ontheriseIcon from '../../../assets/ontherise.svg';
 import followingIcon from '../../../assets/following.svg';
@@ -17,22 +17,24 @@ const HomeSubHeader = ({
   activeSection,
   selectedCategory,
   selectedSubCategory,
-  onMoreClick, // Accept onMoreClick as a prop
+  onMoreClick,
 }) => {
   const [categories, setCategories] = useState([]);
+  const [userCategoryOrders, setUserCategoryOrders] = useState([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [visibleItems, setVisibleItems] = useState(4);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Load all categories
-  const fetchAllCategories = async () => {
+  // Função para buscar as categorias e ordená-las
+  const fetchCategoriesWithOrder = async () => {
     let allCategories = [];
     let page = 0;
     let size = 10;
     let hasMore = true;
 
+    // Busca todas as categorias
     while (hasMore) {
       try {
         const response = await getAllCategories(page, size);
@@ -48,10 +50,26 @@ const HomeSubHeader = ({
       }
     }
 
+    // Tenta buscar a ordem das categorias do usuário
+    try {
+      const orders = await getAllUserCategoryOrders();
+      if (orders && Array.isArray(orders)) {
+        // Ordena as categorias de acordo com a ordem do usuário
+        allCategories.sort((a, b) => {
+          const orderA = orders.find(order => order.categoryId === a.id)?.displayOrder || 0;
+          const orderB = orders.find(order => order.categoryId === b.id)?.displayOrder || 0;
+          return orderA - orderB;
+        });
+        setUserCategoryOrders(orders); // Armazena a ordem atual
+      }
+    } catch (error) {
+      console.error('Erro ao buscar ordem das categorias, usando ordem padrão:', error);
+    }
+
     setCategories(allCategories);
   };
 
-  // Check if the user is authenticated
+  // Verificar autenticação
   const verifyAuth = async () => {
     try {
       const { isAuthenticated } = await checkAuth();
@@ -63,9 +81,26 @@ const HomeSubHeader = ({
   };
 
   useEffect(() => {
-    fetchAllCategories();
+    fetchCategoriesWithOrder();
     verifyAuth();
-  }, []);
+
+    // Intervalo de 2 segundos para verificar se a ordem foi modificada
+    const intervalId = setInterval(async () => {
+      try {
+        const newOrders = await getAllUserCategoryOrders();
+
+        // Verifica se a ordem mudou comparando o novo array com o anterior
+        if (JSON.stringify(newOrders) !== JSON.stringify(userCategoryOrders)) {
+          console.log('A ordem das categorias foi modificada, atualizando...');
+          fetchCategoriesWithOrder(); // Atualiza as categorias se houver mudanças
+        }
+      } catch (error) {
+        console.error('Erro ao verificar a atualização da ordem das categorias:', error);
+      }
+    }, 2000); // Verifica a cada 2 segundos
+
+    return () => clearInterval(intervalId); // Limpa o intervalo ao desmontar o componente
+  }, [userCategoryOrders]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -78,7 +113,7 @@ const HomeSubHeader = ({
       } else if (screenWidth > 1050 && screenWidth <= 1100) {
         setVisibleItems(10);
       } else if (screenWidth > 1100 && screenWidth <= 1261) {
-        setVisibleItems(11);
+        setVisibleItems(8);
       } else if (screenWidth > 1261 && screenWidth <= 1379) {
         setVisibleItems(12);
       } else if (screenWidth > 1379 && screenWidth <= 1469) {
@@ -98,7 +133,6 @@ const HomeSubHeader = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Set the category ID based on the selected category
   useEffect(() => {
     if (activeSection === 'categories' && selectedCategory) {
       const category = categories.find((cat) => cat.name === selectedCategory);
@@ -110,7 +144,6 @@ const HomeSubHeader = ({
     }
   }, [activeSection, selectedCategory, categories]);
 
-  // Handle section or category changes
   const handleClick = (section, isCategory = false) => {
     if (isCategory) {
       const [, categoryName] = section.split('/');
@@ -139,7 +172,6 @@ const HomeSubHeader = ({
     }
   };
 
-  // Filter menu items based on authentication
   const items = [
     { name: 'Em Alta', section: 'ontherise', icon: ontheriseIcon },
     isAuthenticated
@@ -211,7 +243,7 @@ const HomeSubHeader = ({
           className={`subheader-item-container ${
             activeSection === 'more' ? 'active' : ''
           }`}
-          onClick={onMoreClick} // Use onMoreClick prop here
+          onClick={onMoreClick}
         >
           <div
             className={`subheader-item ${
@@ -230,7 +262,6 @@ const HomeSubHeader = ({
         </div>
       </div>
 
-      {/* Render SubCategoryList when in a category */}
       {activeSection === 'categories' && selectedCategoryId && (
         <SubCategoryList
           categoryId={selectedCategoryId}
