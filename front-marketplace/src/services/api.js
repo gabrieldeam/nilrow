@@ -1,5 +1,5 @@
 import axios from 'axios';
-import getConfig from '../../../config';
+import getConfig from '../config';
 
 const { apiUrl } = getConfig();
 
