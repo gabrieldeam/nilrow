@@ -1,0 +1,33 @@
+.authfooterContainer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    transition: height 0.3s;
+    background-color: #000000;
+    color: #ffffff;
+  }
+  
+  .authfooterContainer.closed {
+    height: 40px; /* Altura do botão fechado */
+    overflow: hidden;
+  }
+  
+  .authfooterContainer.open {
+    height: 200px; /* Altura do rodapé aberto */
+  }
+  
+  .authfooterToggleButton {
+    width: 100%;
+    height: 40px;
+    background-color: #FFFFFF;
+    color: #000000;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    text-align: center;
+  }
+  
+  .authfooterContent {
+    padding: 20px;
+  }
+  

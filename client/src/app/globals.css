@@ -1,0 +1,127 @@
+/* src/styles/global.css */
+/* index.css ou App.css */
+@import 'leaflet/dist/leaflet.css';
+
+body, html {
+    background-color: #000000;
+    color: #ffffff;
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+}
+
+/* Estilos específicos para diferentes pesos e estilos da fonte Roboto */
+.roboto-thin {
+  font-family: "Roboto", sans-serif;
+  font-weight: 100;
+  font-style: normal;
+}
+
+.roboto-light {
+  font-family: "Roboto", sans-serif;
+  font-weight: 300;
+  font-style: normal;
+}
+
+.roboto-regular {
+  font-family: "Roboto", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.roboto-medium {
+  font-family: "Roboto", sans-serif;
+  font-weight: 500;
+  font-style: normal;
+}
+
+.roboto-bold {
+  font-family: "Roboto", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.roboto-black {
+  font-family: "Roboto", sans-serif;
+  font-weight: 900;
+  font-style: normal;
+}
+
+.roboto-thin-italic {
+  font-family: "Roboto", sans-serif;
+  font-weight: 100;
+  font-style: italic;
+}
+
+.roboto-light-italic {
+  font-family: "Roboto", sans-serif;
+  font-weight: 300;
+  font-style: italic;
+}
+
+.roboto-regular-italic {
+  font-family: "Roboto", sans-serif;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.roboto-medium-italic {
+  font-family: "Roboto", sans-serif;
+  font-weight: 500;
+  font-style: italic;
+}
+
+.roboto-bold-italic {
+  font-family: "Roboto", sans-serif;
+  font-weight: 700;
+  font-style: italic;
+}
+
+.roboto-black-italic {
+  font-family: "Roboto", sans-serif;
+  font-weight: 900;
+  font-style: italic;
+}
+
+.App {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.body-no-scroll {
+  overflow: hidden;
+}
+
+.App > * {
+  flex: 1;
+}
+
+
+/* Estilo para a barra de rolagem do navegador */
+::-webkit-scrollbar {
+  width: 12px; /* Largura da barra de rolagem vertical */
+  height: 12px; /* Altura da barra de rolagem horizontal */
+}
+
+/* Fundo da barra de rolagem 
+::-webkit-scrollbar-track {
+  /* background: #f1f1f1;  Cor de fundo da barra de rolagem 
+  /* border-radius: 10px; Bordas arredondadas 
+} */
+
+/* Polegar da barra de rolagem */
+::-webkit-scrollbar-thumb {
+  background: #151515; /* Cor do polegar da barra de rolagem */
+  border-radius: 10px; /* Bordas arredondadas */
+}
+
+/* Polegar da barra de rolagem ao passar o mouse */
+::-webkit-scrollbar-thumb:hover {
+  background: #212121; /* Cor do polegar ao passar o mouse */
+}
+
+/* Polegar da barra de rolagem ao ser clicado */
+::-webkit-scrollbar-thumb:active {
+  background: #212121; /* Cor do polegar ao ser clicado */
+}

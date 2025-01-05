@@ -5,11 +5,14 @@ import Card from '../../../components/UI/Card/Card';
 import ConfirmationButton from '../../../components/UI/Buttons/ConfirmationButton/ConfirmationButton';
 import PrivacyNotice from '../../../components/Others/PrivacyNotice/PrivacyNotice';
 import { login } from '../../../services/api';
+
 import Notification from '../../../components/UI/Notification/Notification'; 
 import { NotificationContext } from '../../../context/NotificationContext'; 
-import { LocationContext } from '../../../context/LocationContext'; // Importar o LocationContext
+
+import { LocationContext } from '../../../context/LocationContext'; 
+
 import { Helmet } from 'react-helmet-async';
-import LoadingSpinner from '../../../components/UI/LoadingSpinner/LoadingSpinner'; // Importar o LoadingSpinner
+import LoadingSpinner from '../../../components/UI/LoadingSpinner/LoadingSpinner'; 
 import './Login.css';
 
 const Login = () => {

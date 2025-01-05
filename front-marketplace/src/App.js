@@ -7,16 +7,19 @@ import { LocationProvider } from './context/LocationContext';
 import { SearchProvider } from './context/SearchContext';
 import Notification from './components/UI/Notification/Notification';
 import ProtectedLoginRoute from './components/Others/ProtectedRoute/ProtectedLoginRoute';
+
 import ProtectedRoute from './components/Others/ProtectedRoute/ProtectedRoute';
 import AdminProtectedRoute from './components/Others/ProtectedRoute/AdminProtectedRoute'; // Importe o novo AdminProtectedRoute
 import NicknameRoute from './components/Others/ProtectedRoute/NicknameRoute';
+
 import MainHeader from './components/Main/MainHeader/MainHeader';
 import AuthHeader from './components/Auth/AuthHeader/AuthHeader';
 import AuthFooter from './components/Auth/AuthFooter/AuthFooter';
 import MobileFooter from './components/Main/MobileFooter/MobileFooter';
-import './styles/global.css';
+
 import useAuth from './hooks/useAuth';
 import LoadingSpinner from './components/UI/LoadingSpinner/LoadingSpinner';
+import './styles/global.css';
 
 // Lazy loading pages
 const Home = lazy(() => import('./pages/Home'));
@@ -58,6 +61,7 @@ const Administration = lazy(() => import('./pages/Admin/Administration/Administr
 const MyCatalog = lazy(() => import('./pages/Main/Catalog-Pages/MyCatalog/MyCatalog'));
 const EditCatalog = lazy(() => import('./pages/Main/Catalog-Pages/EditCatalog/EditCatalog'));
 const Visualization = lazy(() => import('./pages/Main/Catalog-Pages/Visualization/Visualization'));
+const Product = lazy(() => import('./pages/Main/Catalog-Pages/Product/Product'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const Categories = lazy(() => import('./pages/Main/Categories/Categories'));
 
@@ -162,6 +166,7 @@ const AppContent = () => {
                     <Route path="/category/:categoryName/:subCategoryName" element={<Home />} />
                     <Route path="*" element={<NotFound />} />
                     <Route path="/categories" element={<Categories />} />
+                    <Route path="/product/" element={<ProtectedRoute element={<Product/>} />} />
                 </Routes>
             </Suspense>
             {renderFooter()}

@@ -3,7 +3,9 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './MainHeader.css';
 import HeaderButton from '../../UI/Buttons/HeaderButton/HeaderButton';
 import LoginButton from '../../UI/Buttons/LoginButton/LoginButton';
+
 import ProtectedLink from '../../Others/ProtectedRoute/ProtectedLink';
+
 import logo from '../../../assets/nilrow.svg';
 import searchIcon from '../../../assets/search.svg';
 import createIcon from '../../../assets/create.svg';
@@ -14,9 +16,12 @@ import profileIcon from '../../../assets/profile.svg';
 import scanIcon from '../../../assets/scan.svg';
 import adminIcon from '../../../assets/admin.svg'; // Importe o ícone de admin
 import useAuth from '../../../hooks/useAuth';
+
 import { LocationContext } from '../../../context/LocationContext';
 import { useSearch } from '../../../context/SearchContext';
+
 import { isAdmin } from '../../../services/api'; // Importe a função isAdmin
+
 import ModalInfoAddress from '../../Others/ModalInfoAddres/ModalInfoAddress';
 import AddressModal from '../../Others/AddressModal/AddressModal';
 

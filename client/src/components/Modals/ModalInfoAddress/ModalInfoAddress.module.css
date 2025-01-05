@@ -1,0 +1,73 @@
+.modal-info-address {
+    position: absolute;
+    background-color: #212121;
+    padding: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    color: #fff;
+    width: 450px;
+    transform: translateX(-67%);
+  }
+  
+  .modal-content {
+    display: flex;
+    align-items: center;
+    width: 100%;
+  }
+  
+  .modal-map {
+    flex-shrink: 0;
+    margin-right: 20px;
+  }
+  
+  .modal-text {
+    flex-grow: 1;
+  }
+  
+  .modal-text h2 {
+    font-size: 20px;
+    margin: 0 0 5px 0;
+  }
+  
+  .modal-text p {
+    font-size: 15px;
+    margin: 0 0 10px 0;
+  }
+  
+  .modal-buttons {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .modal-link {
+    font-size: 15px;
+    color: #7b33e5;
+    text-decoration: none;
+  }
+  
+  .modal-link:hover {
+    text-decoration: underline;
+  }
+  
+  .modal-close {
+    position: absolute;
+    top: -5px;
+    right: 5px;
+    background: none;
+    border: none;
+    font-size: 30px;
+    cursor: pointer;
+  }
+  
+  .close-icon {
+    width: 11px;
+    height: 11px;
+  }
+  
+  .leaflet-container .leaflet-control-attribution {
+    display: none;
+  }
+  

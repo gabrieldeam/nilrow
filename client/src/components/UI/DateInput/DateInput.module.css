@@ -1,0 +1,36 @@
+.container {
+    width: 100%;
+    margin: 8px 0;
+  }
+  
+  .title {
+    display: block;
+    font-size: 15px;
+    color: #fff;
+  }
+  
+  .wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .selectContainer {
+    width: 30%;
+  }
+  
+  .selectTitle {
+    font-size: 15px;
+    color: #fff;
+  }
+  
+  .select {
+    width: 100%;
+    margin: 8px 0;
+  }
+  
+  .bottomLeftText {
+    color: #656565;
+    font-size: 15px;
+  }
+  

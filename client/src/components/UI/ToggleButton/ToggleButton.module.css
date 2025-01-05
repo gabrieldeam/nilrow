@@ -1,0 +1,30 @@
+.toggle-button {
+    width: 43px;
+    height: 20px;
+    background-color: #7b33e5;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 3px;
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: justify-content 0.3s ease;
+  }
+  
+  .toggle-button.toggled {
+    justify-content: flex-end;
+  }
+  
+  .toggle-button-circle {
+    width: 14px;
+    height: 14px;
+    background-color: white;
+    border-radius: 50%;
+    transition: background-color 0.3s ease;
+  }
+  
+  .toggle-button-circle.toggled {
+    background-color: #31076f;
+  }
+  

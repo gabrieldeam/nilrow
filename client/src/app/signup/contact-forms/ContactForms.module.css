@@ -1,0 +1,108 @@
+.contactFormsPage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #000;
+  color: #fff;
+  padding: 90px 0 70px;
+  box-sizing: border-box;
+}
+
+.contactFormsPageContainer {
+  width: 100%;
+  max-width: 419px;
+  padding: 6px;
+  margin: auto;
+}
+
+.phoneInputContainer {
+  margin-top: 10px;
+}
+
+.inputTitle {
+  font-size: 15px;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.phoneInput {
+  width: 100% !important;
+  height: 40px !important;
+  padding: 0 45px !important;
+  border: 1px solid #ffffff !important;
+  background-color: transparent !important;
+  color: #ffffff !important;
+  font-size: 15px !important;
+  border-radius: 4px !important;
+}
+
+.phoneButton {
+  background-color: transparent !important;
+  border: none !important;
+}
+
+.phoneDropdown {
+  background-color: #212121 !important;
+  color: #ffffff !important;
+}
+
+.inputBottomText {
+  font-size: 13px;
+  color: #656565;
+  margin-top: 8px;
+}
+
+.checkboxContainer {
+  margin: 20px 0;
+  font-size: 14px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+}
+
+.checkboxContainer input[type="checkbox"] {
+  margin-right: 15px;
+  min-width: 20px;  
+  min-height: 20px; 
+  accent-color: #7B33E5;
+  appearance: none;
+  background-color: transparent;
+  border: 2px solid #ffffff;
+  border-radius: 4px;
+  position: relative;
+}
+
+.checkboxContainer input[type="checkbox"]:checked {
+  background-color: #7B33E5;
+}
+
+.checkboxContainer input[type="checkbox"]:checked::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  background-color: #7B33E5;
+  transform: translate(-50%, -50%);
+}
+
+.confirmationButton {
+  margin-top: 30px;
+}
+
+.backLink {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.backLink a {
+  color: #7b33e5;
+  text-decoration: none;
+}
+
+.backLink a:hover {
+  text-decoration: underline;
+}

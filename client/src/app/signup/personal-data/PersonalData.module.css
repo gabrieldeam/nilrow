@@ -1,0 +1,37 @@
+.personalDataPage {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+    background-color: #000;
+    color: #fff;
+    min-height: 100vh;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .personalDataPageContainer {
+    width: 100%;
+    max-width: 419px;
+    padding: 6px;
+    margin: auto;
+  }
+
+  .confirmationButton {
+    margin-top: 20px;
+  }
+  
+  .backLink {
+    text-align: center;
+    margin-top: 20px;
+  }
+  
+  .backLink a {
+    color: #7B33E5;
+    text-decoration: none;
+  }
+  
+  .backLink a:hover {
+    text-decoration: underline;
+  }
+  

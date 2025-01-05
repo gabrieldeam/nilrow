@@ -123,7 +123,7 @@ const MyCatalog = () => {
                         icon={productsIcon}
                         title="Produtos"
                         paragraph="Escolha onde seus produtos poderão ser vistos e vendidos."
-                        onClick={() => navigate('/catalog')}
+                        onClick={() => navigate('/product')}
                     />
                     <StepButton
                         icon={ordersCatalogIcon}

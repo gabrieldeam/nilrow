@@ -1,0 +1,44 @@
+.custom-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    padding: 0 13px;
+    border: none;
+    border-radius: 100px;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 16px;
+    background-color: #212121;
+    transition: border 0.3s ease;
+  }
+  
+  .button-icon {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .button-icon.with-text {
+    margin-right: 8px;
+  }
+  
+  .custom-button:hover,
+  .custom-button:active,
+  .custom-button:focus {
+    border: 1px solid #FFFFFF;
+    outline: none; 
+  }
+  
+  .custom-button.active {
+    border: 1px solid #FFFFFF;
+  }
+  
+  @media (max-width: 768px) {
+    .custom-button span {
+      display: none;
+    }
+    .button-icon.with-text {
+      margin-right: 0px;
+    }
+  }
+  

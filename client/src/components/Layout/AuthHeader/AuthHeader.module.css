@@ -1,0 +1,35 @@
+.authheader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 32px 58px; /* Estilo padrão para desktop */
+    background-color: #000000;
+    border-bottom: 11px solid #151515;
+    position: fixed; /* Torna o header fixo */
+    top: 0; /* Fixa no topo da página */
+    left: 0;
+    right: 0;
+    width: 100%; /* Largura total */
+    box-sizing: border-box; /* Inclui padding e borda na largura total */
+    z-index: 1000; /* Garante que o header fique sobre outros elementos */
+  }
+  
+  .authheaderLeft .authlogo {
+    width: 149px;
+    height: 30px;
+  }
+  
+  /* Estilos para tablet */
+  @media (max-width: 1024px) {
+    .authheader {
+      padding: 32px 50px;
+    }
+  }
+  
+  /* Estilos para mobile */
+  @media (max-width: 768px) {
+    .authheader {
+      padding: 32px 20px;
+    }
+  }
+  

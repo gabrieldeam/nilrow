@@ -1,0 +1,28 @@
+.confirmationButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    width: 100%; /* Ocupa 100% da largura do contêiner pai */
+    padding: 0 13px;
+    border-radius: 100px;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 16px;
+    border: none; /* Remove a borda */
+}
+
+.confirmationButtonIcon {
+    width: 20px;
+    height: 20px;
+}
+
+.confirmationButtonIcon.confirmationWithText {
+    margin-right: 8px;
+}
+
+.confirmationButton:hover,
+.confirmationButton:active,
+.confirmationButton:focus {
+    outline: none; /* Remove o outline padrão do foco */
+}

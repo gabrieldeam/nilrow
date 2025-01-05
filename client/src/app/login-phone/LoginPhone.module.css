@@ -1,0 +1,82 @@
+.loginPhonePage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #000;
+    color: #fff;
+    padding-top: 90px;
+    padding-bottom: 70px;
+    box-sizing: border-box;
+  }
+  
+  .loginPhoneContainer {
+    width: 100%;
+    max-width: 419px;
+    padding: 6px;
+    box-sizing: border-box;
+    margin-top: auto;
+    margin-bottom: auto;
+  }
+  
+  .loginPhoneTitle {
+    font-size: 43px;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 900;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .signupLink {
+    text-align: center;
+    margin-top: 20px;
+  }
+  
+  .signupLink a {
+    color: #7b33e5;
+    text-decoration: none;
+  }
+  
+  .signupLink a:hover {
+    text-decoration: underline;
+  }
+  
+  .customInputContainer {
+    width: 100%;
+    margin: 8px 0;
+  }
+  
+  .inputTitle {
+    display: block;
+    font-size: 15px;
+    color: #ffffff;
+    margin-bottom: 8px;
+  }
+  
+  .loginPhoneInput {
+    width: 100% !important;
+    height: 40px !important;
+    padding: 0 45px !important;
+    border: 1px solid #ffffff !important;
+    background-color: transparent !important;
+    color: #ffffff !important;
+    font-size: 15px !important;
+    box-sizing: border-box !important;
+    border-radius: 4px !important;
+  }
+  
+  .loginPhoneButton {
+    background-color: transparent !important;
+    border: none !important;
+  }
+  
+  .loginPhoneDropdown {
+    background-color: #212121 !important;
+    color: #ffffff !important;
+  }
+  
+  .space {
+    margin-bottom: 10px;
+  }
+  

@@ -1,0 +1,22 @@
+.codeInputContainer {
+    display: flex;
+    gap: 8px;
+}
+
+.codeInput {
+    width: 40px;
+    height: 40px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    border: 2px solid #7b33e5;
+    border-radius: 4px;
+    outline: none;
+    color: #212121;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.codeInput:focus {
+    border-color: #5a24b5;
+}

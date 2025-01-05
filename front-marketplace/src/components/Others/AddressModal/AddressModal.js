@@ -1,15 +1,23 @@
 import React, { useState, useContext, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './AddressModal.css';
+
 import { LocationContext } from '../../../context/LocationContext';
 import { NotificationContext } from '../../../context/NotificationContext';
+
 import CustomInput from '../../UI/CustomInput/CustomInput';
 import Card from '../../UI/Card/Card';
+
 import { useNavigate } from 'react-router-dom';
+
 import HeaderButton from '../../UI/Buttons/HeaderButton/HeaderButton';
+
 import closeIcon from '../../../assets/close.svg';
+
 import { getAddresses } from '../../../services/profileApi';
+
 import SeeData from '../../UI/SeeData/SeeData';
+
 import useAuth from '../../../hooks/useAuth';
 
 const AddressModal = ({ isOpen, onClose }) => {
