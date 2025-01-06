@@ -1,0 +1,59 @@
+.fixedSlide {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #151515;
+  }
+  
+  .fixedSlideImg {
+    width: 100%;
+    max-height: 100%;
+    object-fit: cover;
+  }
+  
+  .prevButton,
+  .nextButton {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: #fff;
+    cursor: pointer;
+    z-index: 5;
+  }
+  
+  .prevButton {
+    left: 10px;
+  }
+  
+  .nextButton {
+    right: 10px;
+  }
+  
+  .indicatorContainer {
+    position: absolute;
+    bottom: 10px;
+    display: flex;
+    gap: 8px;
+  }
+  
+  .indicator {
+    width: 12px;
+    height: 12px;
+    background-color: #bbb;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .indicator.active {
+    background-color: #7b33e5;
+  }
+  

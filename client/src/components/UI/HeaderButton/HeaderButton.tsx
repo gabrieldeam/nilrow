@@ -1,4 +1,5 @@
 import React, { useCallback, forwardRef, memo } from 'react';
+import Image from 'next/image';
 import styles from './HeaderButton.module.css';
 import { HeaderButtonProps } from '../../../types/components/UI/HeaderButton';
 
@@ -24,10 +25,12 @@ const HeaderButton = forwardRef<HTMLButtonElement, HeaderButtonProps>(
         ref={ref}
       >
         {icon && (
-          <img
+          <Image
             src={icon}
             alt="icon"
             className={`${styles['button-icon']} ${text ? styles['with-text'] : ''}`}
+            width={20} 
+            height={20}
             loading="lazy"
           />
         )}
@@ -37,5 +40,5 @@ const HeaderButton = forwardRef<HTMLButtonElement, HeaderButtonProps>(
   }
 );
 
-HeaderButton.displayName = 'HeaderButton'; // Necessário para forwardRef
+HeaderButton.displayName = 'HeaderButton'; 
 export default memo(HeaderButton);

@@ -1,0 +1,76 @@
+.container {
+    font-size: 18px;
+    text-align: center;
+    border-radius: 5px;
+    width: calc(100% - 505px);
+    margin-left: 505px;
+  }
+  
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 60px;
+    margin-right: 20px;
+  }
+  
+  .button {
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .title {
+    font-size: 17px;
+    font-weight: bold;
+  }
+  
+  .channelWrapper {
+    display: flex;
+    align-items: center;
+    overflow-x: hidden;
+    border-bottom: 11px solid #151515;
+    padding: 10px;
+    position: relative;
+  }
+  
+  .channelItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #fff;
+  }
+  
+  .channelImage {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    margin-bottom: 5px;
+  }
+  
+  .channelName {
+    font-size: 12px;
+    max-width: 50px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .posts {
+    margin-top: 100px;
+  }
+  
+  /* Responsivo */
+  @media (max-width: 768px) {
+    .container {
+      margin-left: 0;
+      width: 100%;
+    }
+  
+    .header {
+      padding: 5px 10px;
+      margin-bottom: 25px;
+    }
+  }
+  

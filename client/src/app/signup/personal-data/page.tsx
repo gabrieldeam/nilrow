@@ -2,13 +2,15 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import CustomInput from '../../../components/UI/CustomInput/CustomInput';
-import DateInput from '../../../components/UI/DateInput/DateInput';
-import Card from '../../../components/UI/Card/Card';
-import ConfirmationButton from '../../../components/UI/ConfirmationButton/ConfirmationButton';
-import Notification from '../../../components/UI/Notification/Notification';
-import { StepProps, SignupFormData } from '../../../types/pages/Signup';
+
+import CustomInput from '@/components/UI/CustomInput/CustomInput';
+import DateInput from '@/components/UI/DateInput/DateInput';
+import Card from '@/components/UI/Card/Card';
+import ConfirmationButton from '@/components/UI/ConfirmationButton/ConfirmationButton';
+import Notification from '@/components/UI/Notification/Notification';
+
 import styles from './PersonalData.module.css';
+import { useSignupContext } from '../layout';
 
 const validateCPF = (cpf: string): boolean => {
   const regex = /^\d{11}$/;
@@ -21,52 +23,56 @@ const validateNickname = (nickname: string): boolean => {
   return regex.test(nickname) && hasNoConsecutiveSpecialChars;
 };
 
-const PersonalData: React.FC<StepProps> = ({ formData = {}, setFormData, handleStepCompletion }) => {
-  const initialData: Required<SignupFormData> = {
-    email: '',
-    phone: '',
-    name: '',
-    cpf: '',
-    birthDate: '',
-    nickname: '',
-    password: '',
-    confirmPassword: '',
-    acceptsSms: false,
-    ...formData,
-  };
+export default function PersonalData() {
+  const router = useRouter();
+
+  const {
+    formData,
+    setFormData,
+    handleStepCompletion,
+  } = useSignupContext();
 
   const [nicknameValid, setNicknameValid] = useState<boolean | undefined>(undefined);
   const [error, setError] = useState('');
   const [showNotification, setShowNotification] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
-  const router = useRouter();
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement> | { target: { name: string; value: string } }) => {
       const { name, value } = e.target;
-      setFormData({ ...initialData, [name]: name === 'nickname' ? value.toLowerCase() : value });
+      // Atualiza o formData no contexto
+      setFormData((prevData) => ({
+        ...prevData,
+        [name]: name === 'nickname' ? value.toLowerCase() : value
+      }));
 
+      // Valida nickname enquanto digita
       if (name === 'nickname') {
         setNicknameValid(validateNickname(value.toLowerCase()));
       }
     },
-    [initialData, setFormData]
+    [setFormData]
   );
 
+  // Dispara toda vez que formData muda
   useEffect(() => {
-    const { name, cpf, birthDate, nickname } = initialData;
-    setIsFormValid(
-      name.trim() !== '' &&
-      cpf.trim() !== '' &&
-      birthDate.trim() !== '' &&
-      nickname.trim() !== '' &&
+    const { name, cpf, birthDate, nickname } = formData;
+    const allFilled = (
+      name?.trim() &&
+      cpf?.trim() &&
+      birthDate?.trim() &&
+      nickname?.trim() &&
       nicknameValid === true
     );
-  }, [initialData, nicknameValid]);
+    setIsFormValid(!!allFilled);
+  }, [formData, nicknameValid]);
 
+  // Garante que nickname seja validado na montagem
   useEffect(() => {
-    setNicknameValid(validateNickname(initialData.nickname));
-  }, [initialData.nickname]);
+    if (formData.nickname) {
+      setNicknameValid(validateNickname(formData.nickname));
+    }
+  }, [formData.nickname]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -77,21 +83,31 @@ const PersonalData: React.FC<StepProps> = ({ formData = {}, setFormData, handleS
         return;
       }
 
-      if (!validateCPF(initialData.cpf)) {
+      if (!validateCPF(formData.cpf || '')) {
         setError('Por favor, insira um CPF válido.');
         setShowNotification(true);
         return;
       }
 
-      handleStepCompletion('step2');
-      router.push('/signup');
+      handleStepCompletion('step2', {
+        name: formData.name,
+        cpf: formData.cpf,
+        birthDate: formData.birthDate,
+        nickname: formData.nickname,
+      });
+      // O handleStepCompletion já faz router.push('/signup');
     },
-    [isFormValid, initialData, handleStepCompletion, router]
+    [isFormValid, formData, handleStepCompletion]
   );
 
   return (
     <div className={styles.personalDataPage}>
-      {showNotification && <Notification message={error} onClose={() => setShowNotification(false)} />}
+      {showNotification && (
+        <Notification
+          message={error}
+          onClose={() => setShowNotification(false)}
+        />
+      )}
       <div className={styles.personalDataPageContainer}>
         <form onSubmit={handleSubmit}>
           <Card title="Dados">
@@ -99,14 +115,14 @@ const PersonalData: React.FC<StepProps> = ({ formData = {}, setFormData, handleS
               title="Seu nome completo"
               type="text"
               name="name"
-              value={initialData.name || ''}
+              value={formData.name || ''}
               onChange={handleChange}
             />
             <CustomInput
               title="CPF"
               type="text"
               name="cpf"
-              value={initialData.cpf || ''}
+              value={formData.cpf || ''}
               onChange={handleChange}
               bottomLeftText="Apenas números, sem pontos ou traços"
             />
@@ -114,7 +130,7 @@ const PersonalData: React.FC<StepProps> = ({ formData = {}, setFormData, handleS
           <Card title="Aniversário">
             <DateInput
               name="birthDate"
-              value={initialData.birthDate || ''}
+              value={formData.birthDate || ''}
               onChange={handleChange}
               bottomLeftText="Sua data de nascimento não será divulgada."
             />
@@ -124,7 +140,7 @@ const PersonalData: React.FC<StepProps> = ({ formData = {}, setFormData, handleS
               title="Nome de usuário"
               type="text"
               name="nickname"
-              value={initialData.nickname || ''}
+              value={formData.nickname || ''}
               onChange={handleChange}
               isValid={nicknameValid !== undefined ? nicknameValid : false}
               prefix="nilrow.com/@"
@@ -133,18 +149,15 @@ const PersonalData: React.FC<StepProps> = ({ formData = {}, setFormData, handleS
           <div className={styles.confirmationButton}>
             <ConfirmationButton
               text="Continuar"
-              backgroundColor={isFormValid ? "#7B33E5" : "#212121"}
-              type="button"
-              onClick={handleSubmit}
+              backgroundColor={isFormValid ? '#7B33E5' : '#212121'}
+              type="submit"
             />
           </div>
           <div className={styles.backLink}>
             <a href="/signup">Voltar sem salvar</a>
           </div>
         </form>
-      </div>      
+      </div>
     </div>
   );
-};
-
-export default PersonalData;
+}

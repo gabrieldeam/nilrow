@@ -1,0 +1,34 @@
+.slidefooterContainer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    transition: height 0.3s;
+    background-color: #000000;
+    color: #ffffff;
+    z-index: 10;
+  }
+  
+  .slidefooterContainer.closed {
+    height: 40px;
+    overflow: hidden;
+  }
+  
+  .slidefooterContainer.open {
+    height: 200px;
+  }
+  
+  .slidefooterToggleButton {
+    width: 100%;
+    height: 40px;
+    background-color: #ffffff;
+    color: #000000;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    text-align: center;
+  }
+  
+  .slidefooterContent {
+    padding: 20px;
+  }
+  

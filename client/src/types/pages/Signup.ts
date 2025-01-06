@@ -9,10 +9,3 @@ export interface SignupFormData {
   confirmPassword: string; 
   acceptsSms?: boolean;
 }
-
-  export interface StepProps {
-    formData: SignupFormData;
-    setFormData: React.Dispatch<React.SetStateAction<SignupFormData>>;
-    handleStepCompletion: (step: string, data?: Partial<SignupFormData>) => void;
-  }
-  

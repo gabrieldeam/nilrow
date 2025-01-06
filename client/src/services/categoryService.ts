@@ -1,5 +1,5 @@
 import api from './api';
-import { CategoryDTO, SubCategoryDTO, UserCategoryOrderDTO, CategoryData, SubCategoryData } from '../types/services/category';
+import { SubCategoryDTO, UserCategoryOrderDTO, CategoryData, SubCategoryData } from '../types/services/category';
 
 // Criar uma nova categoria
 export const createCategory = async (name: string, image?: File) => {
@@ -25,9 +25,10 @@ export const getCategoryById = async (id: string) => {
 
 // Obter todas as categorias com paginação
 export const getAllCategories = async (page: number, size: number) => {
-  const response = await api.get<CategoryData[]>('/categories/all', { params: { page, size } });
-  return response.data;
+  const response = await api.get('/categories/all', { params: { page, size } });
+  return response.data.content || [];
 };
+
 
 // Buscar categorias pelo nome
 export const searchCategoriesByName = async (name: string) => {
@@ -74,10 +75,11 @@ export const deleteSubCategory = async (id: string) => {
 };
 
 // Obter todas as subcategorias de uma categoria
-export const getSubCategoriesByCategory = async (categoryId: string) => {
-  const response = await api.get<SubCategoryData[]>(`/subcategory/category/${categoryId}`);
+export const getSubCategoriesByCategory = async (categoryId: string | number) => {
+  const response = await api.get(`/subcategory/category/${categoryId}`);
   return response.data;
 };
+
 
 // Obter subcategoria por ID
 export const getSubCategoryById = async (id: string) => {
@@ -92,7 +94,8 @@ export const getAllUserCategoryOrders = async () => {
 };
 
 // Upsert: Cria ou Atualiza a ordem de exibição de categoria do usuário
-export const upsertUserCategoryOrder = async (orderDTO: UserCategoryOrderDTO) => {
-  const response = await api.put('/user-category-order/upsert', orderDTO);
+export const upsertUserCategoryOrder = async (orderDTOs: UserCategoryOrderDTO[]) => {
+  const response = await api.put('/user-category-order/upsert', orderDTOs);
   return response.data;
 };
+

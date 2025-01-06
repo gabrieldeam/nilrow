@@ -3,11 +3,13 @@ import { Helmet } from 'react-helmet-async';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import FixedSlide from '../components/Others/FixedSlide/FixedSlide';
 import HomeSubHeader from '../components/Main/HomeSubHeader/HomeSubHeader';
+
 import OnTheRise from '../components/Sections/OnTheRise';
 import Following from '../components/Sections/Following';
 import Curation from '../components/Sections/Curation';
 import Categories from '../components/Sections/Categories';
 import Default from '../components/Sections/Default';
+
 import MobileHeader from '../components/Main/MobileHeader/MobileHeader';
 import ModalCategories from '../components/UI/ModalCategories/ModalCategories'; 
 import './Home.css';

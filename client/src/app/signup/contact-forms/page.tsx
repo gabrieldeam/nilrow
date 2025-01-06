@@ -4,12 +4,16 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
-import CustomInput from '../../../components/UI/CustomInput/CustomInput';
-import Card from '../../../components/UI/Card/Card';
-import ConfirmationButton from '../../../components/UI/ConfirmationButton/ConfirmationButton';
-import Notification from '../../../components/UI/Notification/Notification';
-import { StepProps } from '../../../types/pages/Signup';
+
+import CustomInput from '@/components/UI/CustomInput/CustomInput';
+import Card from '@/components/UI/Card/Card';
+import ConfirmationButton from '@/components/UI/ConfirmationButton/ConfirmationButton';
+import Notification from '@/components/UI/Notification/Notification';
+
 import styles from './ContactForms.module.css';
+
+// Importa o hook do contexto
+import { useSignupContext } from '../layout';
 
 const validateEmail = (email: string): boolean => {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -21,11 +25,19 @@ const validatePhone = (phone: string): boolean => {
   return regex.test(phone);
 };
 
-const ContactForms: React.FC<StepProps> = ({ formData, setFormData, handleStepCompletion }) => {
+export default function ContactForms() {
+  const router = useRouter();
+
+  // Pega do contexto
+  const {
+    formData,
+    setFormData,
+    handleStepCompletion
+  } = useSignupContext();
+
   const [isFormValid, setIsFormValid] = useState(false);
   const [error, setError] = useState('');
   const [showNotification, setShowNotification] = useState(false);
-  const router = useRouter();
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,7 +55,7 @@ const ContactForms: React.FC<StepProps> = ({ formData, setFormData, handleStepCo
   );
 
   useEffect(() => {
-    const { email = '', phone = '' } = formData || {};
+    const { email = '', phone = '' } = formData;
     setIsFormValid(validateEmail(email) && validatePhone(phone));
   }, [formData]);
 
@@ -57,15 +69,25 @@ const ContactForms: React.FC<StepProps> = ({ formData, setFormData, handleStepCo
         return;
       }
 
-      handleStepCompletion('step1');
-      router.push('/signup');
+      // Passamos dados parciais se quisermos
+      handleStepCompletion('step1', {
+        email: formData.email,
+        phone: formData.phone,
+        acceptsSms: formData.acceptsSms,
+      });
+      // O handleStepCompletion já faz router.push('/signup');
     },
-    [isFormValid, handleStepCompletion, router]
+    [isFormValid, formData, handleStepCompletion]
   );
 
   return (
     <div className={styles.contactFormsPage}>
-      {showNotification && <Notification message={error} onClose={() => setShowNotification(false)} />}
+      {showNotification && (
+        <Notification
+          message={error}
+          onClose={() => setShowNotification(false)}
+        />
+      )}
       <div className={styles.contactFormsPageContainer}>
         <form onSubmit={handleSubmit}>
           <Card title="E-mail">
@@ -73,7 +95,7 @@ const ContactForms: React.FC<StepProps> = ({ formData, setFormData, handleStepCo
               title="Digite seu e-mail"
               type="email"
               name="email"
-              value={formData?.email || ''}
+              value={formData.email || ''}
               onChange={handleChange}
               bottomLeftText="Certifique-se de que você tenha acesso a ele"
             />
@@ -83,7 +105,7 @@ const ContactForms: React.FC<StepProps> = ({ formData, setFormData, handleStepCo
               <label className={styles.inputTitle}>Informe seu telefone</label>
               <PhoneInput
                 country={'br'}
-                value={formData?.phone || ''}
+                value={formData.phone || ''}
                 onChange={handlePhoneChange}
                 inputProps={{
                   name: 'phone',
@@ -103,23 +125,30 @@ const ContactForms: React.FC<StepProps> = ({ formData, setFormData, handleStepCo
             <input
               type="checkbox"
               id="accept-terms"
-              checked={formData?.acceptsSms || false}
-              onChange={(e) => setFormData((prevData) => ({ ...prevData, acceptsSms: e.target.checked }))}
+              checked={!!formData.acceptsSms}
+              onChange={(e) => {
+                setFormData((prevData) => ({
+                  ...prevData,
+                  acceptsSms: e.target.checked,
+                }));
+              }}
             />
             <label htmlFor="accept-terms">
               Aceito que entrem em contato comigo via WhatsApp e/ou SMS neste número.
             </label>
           </div>
           <div className={styles.confirmationButton}>
-            <ConfirmationButton text="Continuar" backgroundColor={isFormValid ? '#7B33E5' : '#212121'} type="submit" />
+            <ConfirmationButton
+              text="Continuar"
+              backgroundColor={isFormValid ? '#7B33E5' : '#212121'}
+              type="submit"
+            />
           </div>
           <div className={styles.backLink}>
             <a href="/signup">Voltar sem salvar</a>
           </div>
         </form>
-      </div>      
+      </div>
     </div>
   );
-};
-
-export default ContactForms;
+}

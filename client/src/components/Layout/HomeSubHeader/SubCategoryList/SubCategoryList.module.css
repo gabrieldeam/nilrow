@@ -1,0 +1,61 @@
+/* src/components/layout/HomeSubHeader/SubCategoryList/SubCategoryList.module.css */
+
+.sub-category-container {
+    display: flex;
+    overflow-x: auto;
+    padding: 10px 60px;
+    white-space: nowrap;
+    margin-top: -20px;
+    margin-bottom: 10px;
+    margin-left: 505px;
+  }
+  
+  .sub-category-container::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  .sub-category-container::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 10px;
+  }
+  
+  .sub-category-item {
+    display: inline-block;
+    padding: 8px 12px;
+    margin-right: 10px;
+    background-color: #333;
+    color: white;
+    font-size: 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    z-index: 1000;
+  }
+  
+  .sub-category-item:hover {
+    background-color: #444;
+  }
+  
+  .sub-category-item.active {
+    background-color: #7B33E5;
+    color: white;
+  }
+  
+  /* Mobile */
+  @media (max-width: 768px) {
+    .sub-category-container {
+      margin-top: -15px;
+      margin-bottom: 15px;
+      margin-left: 0; 
+      padding: 10px 10px;
+    }
+  }
+  
+  @media (min-width: 768px) and (max-width: 1380px) {
+    .sub-category-container {
+      margin-top: -15px;
+      margin-bottom: 15px;
+      padding: 10px 10px;
+    }
+  }
+  

@@ -20,6 +20,7 @@ import trashIcon from '../../../assets/trash.svg';
 import ordersIcon from '../../../assets/orders.svg';  
 import logo from '../../../assets/nilrow.svg';
 import { LocationContext } from '../../../context/LocationContext';
+
 import AddressModal from '../../Others/AddressModal/AddressModal';
 import QRCodeModal from '../../UI/QRCodeModal/QRCodeModal';
 import ChatModal from '../../Others/ChatModal/ChatModal'; 

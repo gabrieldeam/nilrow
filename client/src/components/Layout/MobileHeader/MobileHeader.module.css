@@ -1,0 +1,51 @@
+.mobileHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 32px 20px;
+    background-color: #000;
+    color: #fff;
+    width: 100%;
+    box-sizing: border-box;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000; /* Sempre acima do conteúdo */
+  }
+  
+  .mobileHeaderLeft,
+  .mobileHeaderRight {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .mobileHeaderTitle {
+    flex-grow: 1;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .mobileHeaderTitle h1 {
+    font-size: 18px;
+    margin: 0;
+  }
+  
+  .mobileHeaderLogo {
+    width: 149px;
+    height: 30px;
+  }
+  
+  .searchLayoutWrapper {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .withSearch {
+    padding-top: 10px; /* Ajusta o alinhamento quando a busca está visível */
+  }
+  

@@ -2,14 +2,16 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import CustomInput from '../../../components/UI/CustomInput/CustomInput';
-import Card from '../../../components/UI/Card/Card';
-import ConfirmationButton from '../../../components/UI/ConfirmationButton/ConfirmationButton';
-import Notification from '../../../components/UI/Notification/Notification';
-import { StepProps, SignupFormData } from '../../../types/pages/Signup';
-import styles from './CreatePassword.module.css';
 
-// Função que valida a senha e retorna uma string de erro ou null se estiver tudo certo
+import CustomInput from '@/components/UI/CustomInput/CustomInput';
+import Card from '@/components/UI/Card/Card';
+import ConfirmationButton from '@/components/UI/ConfirmationButton/ConfirmationButton';
+import Notification from '@/components/UI/Notification/Notification';
+
+import styles from './CreatePassword.module.css';
+import { useSignupContext } from '../layout';
+
+// Validação local da senha
 const validatePassword = (password: string): string | null => {
   const specialCharRegex = /[!@#$%^&*()]/;
   const uppercaseRegex = /[A-Z]/;
@@ -33,11 +35,10 @@ const validatePassword = (password: string): string | null => {
   if (password.length < minLength || password.length > maxLength) {
     return `A senha deve ter entre ${minLength} e ${maxLength} caracteres.`;
   }
-
   return null;
 };
 
-// Função que calcula a “força” da senha
+// Cálculo da força da senha
 const calculatePasswordStrength = (password: string): number => {
   let strength = 0;
   if (password.length >= 8) strength += 1;
@@ -45,50 +46,29 @@ const calculatePasswordStrength = (password: string): number => {
   if (/[a-z]/.test(password)) strength += 1;
   if (/\d/.test(password)) strength += 1;
   if (/[!@#$%^&*()]/.test(password)) strength += 1;
-
   return strength;
 };
 
-const CreatePassword: React.FC<StepProps> = ({
-  // Define aqui o valor padrão para garantir que as propriedades existam
-  formData = { password: '', confirmPassword: '' },
-  setFormData,
-  handleStepCompletion
-}) => {
+export default function CreatePassword() {
+  const router = useRouter();
+
+  const {
+    formData,
+    setFormData,
+    handleStepCompletion,
+  } = useSignupContext();
+
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [error, setError] = useState('');
   const [showNotification, setShowNotification] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
-  const router = useRouter();
 
-  // Inicializa os valores de password e confirmPassword caso sejam undefined
+  // Atualiza a força da senha quando formData.password mudar
   useEffect(() => {
-    if (setFormData) {
-      setFormData((prevData: SignupFormData) => ({
-        ...prevData,
-        password: prevData?.password || '',
-        confirmPassword: prevData?.confirmPassword || '',
-      }));
+    if (formData.password) {
+      setPasswordStrength(calculatePasswordStrength(formData.password));
     }
-  }, [setFormData]);
-
-  const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const { name, value } = e.target;
-      if (setFormData) {
-        setFormData((prevData: SignupFormData) => ({
-          ...prevData,
-          [name]: value,
-        }));
-      }
-
-      // Atualiza a força da senha sempre que o campo "password" mudar
-      if (name === 'password') {
-        setPasswordStrength(calculatePasswordStrength(value));
-      }
-    },
-    [setFormData]
-  );
+  }, [formData.password]);
 
   // Verifica se os dois campos estão preenchidos
   useEffect(() => {
@@ -96,36 +76,43 @@ const CreatePassword: React.FC<StepProps> = ({
     setIsFormValid(password.trim() !== '' && confirmPassword.trim() !== '');
   }, [formData]);
 
-  // Ao clicar em “Continuar”
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setFormData((prevData) => ({
+        ...prevData,
+        [name]: value,
+      }));
+    },
+    [setFormData]
+  );
+
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      const passwordError = validatePassword(formData.password);
 
-      // Se a senha for inválida, mostra notificação
+      const passwordError = validatePassword(formData.password);
       if (passwordError) {
         setError(passwordError);
         setShowNotification(true);
         return;
       }
 
-      // Verifica se as senhas coincidem
       if (formData.password !== formData.confirmPassword) {
         setError('As senhas não coincidem.');
         setShowNotification(true);
         return;
       }
 
-      // Chama função para avançar o passo e redireciona
-      if (handleStepCompletion) {
-        handleStepCompletion('step3');
-      }
-      router.push('/signup');
+      handleStepCompletion('step3', {
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+      });
+      // handleStepCompletion => router.push('/signup');
     },
-    [formData, handleStepCompletion, router]
+    [formData, handleStepCompletion]
   );
 
-  // Função auxiliar para mostrar o texto da força da senha
   const getPasswordStrengthLabel = useCallback((strength: number) => {
     switch (strength) {
       case 1:
@@ -162,7 +149,7 @@ const CreatePassword: React.FC<StepProps> = ({
               onChange={handleChange}
             />
             <div className={styles.passwordStrengthBar}>
-              <div className={styles[`strength-${passwordStrength}`]}></div>
+              <div className={styles[`strength-${passwordStrength}`]} />
             </div>
             <div className={styles.passwordStrengthLabel}>
               {getPasswordStrengthLabel(passwordStrength)}
@@ -189,6 +176,4 @@ const CreatePassword: React.FC<StepProps> = ({
       </div>
     </div>
   );
-};
-
-export default CreatePassword;
+}

@@ -4,7 +4,7 @@ import Card from '../../../components/UI/Card/Card';
 import ConfirmationButton from '../../../components/UI/Buttons/ConfirmationButton/ConfirmationButton';
 import { login } from '../../../services/api';
 import { NotificationContext } from '../../../context/NotificationContext';
-import { LocationContext } from '../../../context/LocationContext'; // Importar o LocationContext
+import { LocationContext } from '../../../context/LocationContext';
 import LoadingSpinner from '../../../components/UI/LoadingSpinner/LoadingSpinner'; // Importar o LoadingSpinner
 import './LoginSlide.css';
 

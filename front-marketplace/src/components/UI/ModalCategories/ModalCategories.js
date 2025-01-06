@@ -9,11 +9,11 @@ const ModalCategories = ({ onClose }) => {
     setIsClosing(true);
     setTimeout(() => {
       onClose();
-    }, 300); // Duration matches the CSS animation duration
+    }, 300); 
   };
 
   useEffect(() => {
-    // Prevent body from scrolling when modal is open
+ 
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = 'auto';
@@ -27,7 +27,7 @@ const ModalCategories = ({ onClose }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <button className="modal-close-button" onClick={handleClose}>X</button>
-        <Categories onClose={handleClose} /> {/* Pass handleClose as onClose prop */}
+        <Categories onClose={handleClose} />
       </div>
     </div>
   );

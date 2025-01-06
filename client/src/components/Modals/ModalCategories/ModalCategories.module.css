@@ -1,0 +1,53 @@
+.overlay {
+    position: fixed;
+    top: 119px;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1002;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.content {
+    width: 430px;
+    height: 100%;
+    background-color: #000000;
+    position: relative;
+    overflow-y: auto;
+    transform: translateX(100%);
+    animation: slideIn 0.3s forwards;
+}
+
+.closing {
+    animation: slideOut 0.3s forwards;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(100%);
+    }
+}
+
+.closeButton {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+}
