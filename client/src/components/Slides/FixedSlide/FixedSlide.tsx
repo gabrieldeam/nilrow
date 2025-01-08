@@ -3,11 +3,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import LoginSlide from '../../Auth/LoginSlide/LoginSlide';
 import SlideFooter from '../SlideFooter/SlideFooter';
-import { useAuthContext } from '../../../context/AuthContext'; 
+import { useAuth } from '../../../hooks/useAuth';
 import styles from './FixedSlide.module.css';
 
 const FixedSlide: React.FC = () => {
-  const { isAuthenticated } = useAuthContext();
+  const { isAuthenticated } = useAuth(); 
   const slides = useMemo(
     () => [
       { type: 'login', component: <LoginSlide /> },
@@ -20,11 +20,13 @@ const FixedSlide: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [filteredSlides, setFilteredSlides] = useState(slides);
 
-  useEffect(() => {
+  useEffect(() => {  
     const filtered = slides.filter(slide => slide.type !== 'login' || !isAuthenticated);
     setFilteredSlides(filtered);
     setCurrentIndex(0);
   }, [isAuthenticated, slides]);
+  
+  
 
   const nextSlide = () => {
     setCurrentIndex(prevIndex => (prevIndex + 1) % filteredSlides.length);

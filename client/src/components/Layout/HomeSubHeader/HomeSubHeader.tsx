@@ -11,7 +11,7 @@ import followingIcon from '../../../../public/assets/following.svg';
 import curationIcon from '../../../../public/assets/curation.svg';
 import moreIcon from '../../../../public/assets/more.svg';
 import SubCategoryList from './SubCategoryList/SubCategoryList';
-import { useAuth } from '../../../hooks/useAuth'; // Import do useAuth
+import { useAuth } from '../../../hooks/useAuth';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 

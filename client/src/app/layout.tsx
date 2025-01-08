@@ -4,7 +4,6 @@ import './globals.css';
 import { NotificationProvider } from '../context/NotificationContext';
 import { LocationProvider } from '../context/LocationContext';
 import { SearchProvider } from '../context/SearchContext';
-import { AuthProvider } from '../context/AuthContext';
 import { LoadingProvider } from '../context/LoadingContext';
 import Notification from '../components/UI/Notification/Notification';
 import { useNotification } from '../hooks/useNotification';
@@ -82,7 +81,6 @@ export default function RootLayout({
         <NotificationProvider>
           <LocationProvider>
             <SearchProvider>
-              <AuthProvider>
                 <LoadingProvider>
                   <NotificationWrapper>
                     {renderHeader()}
@@ -91,7 +89,6 @@ export default function RootLayout({
                     {renderAuthFooter()}
                   </NotificationWrapper>
                 </LoadingProvider>
-              </AuthProvider>
             </SearchProvider>
           </LocationProvider>
         </NotificationProvider>

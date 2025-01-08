@@ -62,13 +62,13 @@
   }
   
   @media (max-width: 768px) {
-    .fixed-slide {
+    .fixedSlide {
         display: none;
     }
 }
 
 @media (min-width: 768px) and (max-width: 1380px) {
-    .fixed-slide {
+    .fixedSlide {
         display: none;
     }
 }
