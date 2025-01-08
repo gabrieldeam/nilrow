@@ -3,26 +3,16 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
-
 import styles from './HomeSubHeader.module.css';
-
-// Services
 import { getAllCategories, getAllUserCategoryOrders } from '../../../services/categoryService';
-import { checkAuth } from '../../../services/authService';
-
-// Tipagem de props do componente (ajuste conforme sua estrutura)
 import { HomeSubHeaderProps } from '../../../types/components/Layout/HomeSubHeaderProps';
-
-// Imagens
 import ontheriseIcon from '../../../../public/assets/ontherise.svg';
 import followingIcon from '../../../../public/assets/following.svg';
 import curationIcon from '../../../../public/assets/curation.svg';
 import moreIcon from '../../../../public/assets/more.svg';
-
-// Subcomponente
 import SubCategoryList from './SubCategoryList/SubCategoryList';
+import { useAuth } from '../../../hooks/useAuth'; // Import do useAuth
 
-// Variável de ambiente para URL da API
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
 const HomeSubHeader: React.FC<HomeSubHeaderProps> = ({
@@ -32,30 +22,24 @@ const HomeSubHeader: React.FC<HomeSubHeaderProps> = ({
   selectedSubCategory,
   onMoreClick,
 }) => {
-  // Se quiser tipar mais forte, substitua `any[]` por `CategoryData[]` 
   const [categories, setCategories] = useState<any[]>([]);
-  // Idem para userCategoryOrders -> `UserCategoryOrderDTO[]`
   const [userCategoryOrders, setUserCategoryOrders] = useState<any[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [visibleItems, setVisibleItems] = useState(4);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  const { isAuthenticated } = useAuth(); 
   const router = useRouter();
   const pathname = usePathname();
 
-  // Função para buscar as categorias e ordená-las
   const fetchCategoriesWithOrder = async () => {
     let allCategories: any[] = [];
     let page = 0;
     let size = 10;
     let hasMore = true;
 
-    // Busca todas as categorias com paginação
     while (hasMore) {
       try {
-        // getAllCategories(page, size) retorna CategoryData[]
         const response = await getAllCategories(page, size);
-        // Ajuste: não existe 'content', então validamos diretamente no array
         if (response && response.length > 0) {
           allCategories = [...allCategories, ...response];
           page++;
@@ -68,58 +52,44 @@ const HomeSubHeader: React.FC<HomeSubHeaderProps> = ({
       }
     }
 
-    // Tenta buscar a ordem das categorias do usuário
-    try {
-      const orders = await getAllUserCategoryOrders();
-      if (orders && Array.isArray(orders)) {
-        // Ordena as categorias de acordo com a ordem do usuário
-        // Em UserCategoryOrderDTO existe 'order', não 'displayOrder'
-        allCategories.sort((a, b) => {
-          const orderA = orders.find((order) => order.categoryId === a.id)?.order || 0;
-          const orderB = orders.find((order) => order.categoryId === b.id)?.order || 0;
-          return orderA - orderB;
-        });
-        setUserCategoryOrders(orders);
+    if (isAuthenticated) { 
+      try {
+        const orders = await getAllUserCategoryOrders();
+        if (orders && Array.isArray(orders)) {
+          allCategories.sort((a, b) => {
+            const orderA = orders.find((order) => order.categoryId === a.id)?.order || 0;
+            const orderB = orders.find((order) => order.categoryId === b.id)?.order || 0;
+            return orderA - orderB;
+          });
+          setUserCategoryOrders(orders);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar ordem das categorias, usando ordem padrão:', error);
       }
-    } catch (error) {
-      console.error('Erro ao buscar ordem das categorias, usando ordem padrão:', error);
     }
 
     setCategories(allCategories);
   };
 
-  // Verificar autenticação
-  const verifyAuth = async () => {
-    try {
-      const { isAuthenticated } = await checkAuth();
-      setIsAuthenticated(isAuthenticated);
-    } catch (error) {
-      console.error('Erro ao verificar autenticação:', error);
-      setIsAuthenticated(false);
-    }
-  };
-
   useEffect(() => {
     fetchCategoriesWithOrder();
-    verifyAuth();
 
-    // Intervalo de 2 segundos para verificar se a ordem foi modificada
-    const intervalId = setInterval(async () => {
-      try {
-        const newOrders = await getAllUserCategoryOrders();
-        // Verifica se a ordem mudou comparando o novo array com o anterior
-        if (JSON.stringify(newOrders) !== JSON.stringify(userCategoryOrders)) {
-          console.log('A ordem das categorias foi modificada, atualizando...');
-          fetchCategoriesWithOrder();
+    if (isAuthenticated) {
+      const intervalId = setInterval(async () => {
+        try {
+          const newOrders = await getAllUserCategoryOrders();
+          if (JSON.stringify(newOrders) !== JSON.stringify(userCategoryOrders)) {
+            console.log('A ordem das categorias foi modificada, atualizando...');
+            fetchCategoriesWithOrder();
+          }
+        } catch (error) {
+          console.error('Erro ao verificar a atualização da ordem das categorias:', error);
         }
-      } catch (error) {
-        console.error('Erro ao verificar a atualização da ordem das categorias:', error);
-      }
-    }, 2000);
+      }, 2000);
 
-    return () => clearInterval(intervalId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userCategoryOrders]);
+      return () => clearInterval(intervalId);
+    }
+  }, [isAuthenticated, userCategoryOrders]); // Verifica quando isAuthenticated muda
 
   useEffect(() => {
     const handleResize = () => {
@@ -165,33 +135,34 @@ const HomeSubHeader: React.FC<HomeSubHeaderProps> = ({
 
   const handleClick = (section: string, isCategory = false) => {
     if (isCategory) {
-      // Ex: section = 'category/Tech'
       const [, categoryName] = section.split('/');
       const category = categories.find((cat) => cat.name === categoryName);
       const currentPath = `/category/${categoryName}/tudo`;
-
+  
       if (activeSection === 'categories' && selectedCategory === category?.name) {
         onSectionChange('default');
         setSelectedCategoryId(null);
       } else if (pathname !== currentPath) {
         onSectionChange(section);
         setSelectedCategoryId(category?.id || null);
-        router.push(currentPath);
+        // Atualiza o URL sem redirecionar
+        window.history.replaceState(null, '', currentPath);
       }
     } else {
-      // Ex: section = 'ontherise', 'following', 'curation'
       const currentPath = `/${section}`;
-
+  
       if (activeSection === section) {
         onSectionChange('default');
         setSelectedCategoryId(null);
       } else if (pathname !== currentPath) {
         onSectionChange(section);
         setSelectedCategoryId(null);
-        router.push(currentPath);
+        // Atualiza o URL sem redirecionar
+        window.history.replaceState(null, '', currentPath);
       }
     }
   };
+  
 
   const items = [
     { name: 'Em Alta', section: 'ontherise', icon: ontheriseIcon },
@@ -204,7 +175,6 @@ const HomeSubHeader: React.FC<HomeSubHeaderProps> = ({
   return (
     <div className={styles['homesubheader-container']}>
       <div className={styles['subheader-container']}>
-        {/* Renderiza itens fixos (Em Alta, Seguindo, Curadoria) */}
         {items.slice(0, visibleItems).map((item) => (
           <div
             key={item.section}
@@ -232,7 +202,6 @@ const HomeSubHeader: React.FC<HomeSubHeaderProps> = ({
           </div>
         ))}
 
-        {/* Renderiza categorias */}
         {categories.slice(0, visibleItems).map((category) => (
           <div
             key={category.id}
@@ -266,7 +235,6 @@ const HomeSubHeader: React.FC<HomeSubHeaderProps> = ({
           </div>
         ))}
 
-        {/* Botão \"Mais\" */}
         <div
           className={`${styles['subheader-item-container']} ${
             activeSection === 'more' ? styles['active'] : ''
@@ -292,7 +260,6 @@ const HomeSubHeader: React.FC<HomeSubHeaderProps> = ({
         </div>
       </div>
 
-      {/* Se estiver em uma categoria, mostra SubCategoryList */}
       {activeSection === 'categories' && selectedCategoryId && (
         <SubCategoryList
           categoryId={selectedCategoryId}

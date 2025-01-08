@@ -5,13 +5,13 @@ const api = axios.create({
   withCredentials: true, 
 });
 
-api.interceptors.response.use(
-  response => response, 
-  error => {
-    const errorMessage = error.response?.data?.message || 'Erro desconhecido';
-    console.error('Erro na requisição:', errorMessage);
-    return Promise.reject(new Error(errorMessage));
-  }
-);
+// api.interceptors.response.use(
+//   response => response, 
+//   error => {
+//     const errorMessage = error.response?.data?.message || 'Erro desconhecido';
+//     console.error('Erro na requisição:', errorMessage);
+//     return Promise.reject(new Error(errorMessage));
+//   }
+// );
 
 export default api;

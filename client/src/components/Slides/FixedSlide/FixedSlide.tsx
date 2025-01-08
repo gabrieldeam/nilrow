@@ -1,39 +1,29 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import LoginSlide from '../../Auth/LoginSlide/LoginSlide';
 import SlideFooter from '../SlideFooter/SlideFooter';
-import { checkAuth } from '../../../services/authService';
+import { useAuthContext } from '../../../context/AuthContext'; 
 import styles from './FixedSlide.module.css';
 
 const FixedSlide: React.FC = () => {
+  const { isAuthenticated } = useAuthContext();
   const slides = useMemo(
     () => [
       { type: 'login', component: <LoginSlide /> },
-      { type: 'image', src: '/assets/sample-image1.jpg' }, 
-      { type: 'image', src: '/assets/sample-image2.jpg' },
+      { type: 'image', src: 'https://conteudo.imguol.com.br/c/noticias/ff/2018/08/31/compra-online-e-entrega-de-produtos-encomenda-internacional-comercio-eletronico-carrinho-de-compras-1535725447310_v2_450x600.jpg' },
+      { type: 'image', src: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRaZt8Z_5UoAc_LTeDr_29jjjBTJyCrF7a68Q&s' },
     ],
     []
   );
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [filteredSlides, setFilteredSlides] = useState(slides);
 
   useEffect(() => {
-    const fetchAuthStatus = async () => {
-      const { isAuthenticated } = await checkAuth();
-      setIsAuthenticated(isAuthenticated);
-    };
-    fetchAuthStatus();
-  }, []);
-
-  useEffect(() => {
-    if (isAuthenticated !== null) {
-      const filtered = slides.filter(slide => slide.type !== 'login' || !isAuthenticated);
-      setFilteredSlides(filtered);
-      setCurrentIndex(0); 
-    }
+    const filtered = slides.filter(slide => slide.type !== 'login' || !isAuthenticated);
+    setFilteredSlides(filtered);
+    setCurrentIndex(0);
   }, [isAuthenticated, slides]);
 
   const nextSlide = () => {
@@ -43,10 +33,6 @@ const FixedSlide: React.FC = () => {
   const prevSlide = () => {
     setCurrentIndex(prevIndex => (prevIndex - 1 + filteredSlides.length) % filteredSlides.length);
   };
-
-  if (isAuthenticated === null) {
-    return <div>Loading...</div>; // Spinner pode ser adicionado aqui
-  }
 
   return (
     <div className={styles.fixedSlide}>

@@ -8,3 +8,8 @@ export interface Category {
     categoryId: string | number;
     displayOrder: number;
   }
+
+  export interface CategoriesProps {
+    selectedCategory: string | null;
+  }
+  

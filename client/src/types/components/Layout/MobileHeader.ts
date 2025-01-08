@@ -1,5 +1,5 @@
 export interface MobileHeaderProps {
-    title?: string;
+    title?: string | null;
     buttons: {
       address?: boolean;
       close?: boolean;
