@@ -56,6 +56,7 @@ const HomeSubHeader: React.FC<HomeSubHeaderProps> = ({
       try {
         const orders = await getAllUserCategoryOrders();
         if (orders && Array.isArray(orders)) {
+          // Ordena as categorias conforme 'order' do usuário
           allCategories.sort((a, b) => {
             const orderA = orders.find((order) => order.categoryId === a.id)?.order || 0;
             const orderB = orders.find((order) => order.categoryId === b.id)?.order || 0;
@@ -89,7 +90,7 @@ const HomeSubHeader: React.FC<HomeSubHeaderProps> = ({
 
       return () => clearInterval(intervalId);
     }
-  }, [isAuthenticated, userCategoryOrders]); // Verifica quando isAuthenticated muda
+  }, [isAuthenticated, userCategoryOrders]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -122,6 +123,7 @@ const HomeSubHeader: React.FC<HomeSubHeaderProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Identifica o ID da categoria selecionada, se houver
   useEffect(() => {
     if (activeSection === 'categories' && selectedCategory) {
       const category = categories.find((cat) => cat.name === selectedCategory);
@@ -133,6 +135,7 @@ const HomeSubHeader: React.FC<HomeSubHeaderProps> = ({
     }
   }, [activeSection, selectedCategory, categories]);
 
+  // Clique em "Em Alta", "Seguindo", "Curadoria" ou em uma das categorias
   const handleClick = (section: string, isCategory = false) => {
     if (isCategory) {
       const [, categoryName] = section.split('/');
@@ -145,7 +148,6 @@ const HomeSubHeader: React.FC<HomeSubHeaderProps> = ({
       } else if (pathname !== currentPath) {
         onSectionChange(section);
         setSelectedCategoryId(category?.id || null);
-        // Atualiza o URL sem redirecionar
         window.history.replaceState(null, '', currentPath);
       }
     } else {
@@ -157,13 +159,12 @@ const HomeSubHeader: React.FC<HomeSubHeaderProps> = ({
       } else if (pathname !== currentPath) {
         onSectionChange(section);
         setSelectedCategoryId(null);
-        // Atualiza o URL sem redirecionar
         window.history.replaceState(null, '', currentPath);
       }
     }
   };
   
-
+  // Botões fixos: Em Alta, Seguindo, Curadoria
   const items = [
     { name: 'Em Alta', section: 'ontherise', icon: ontheriseIcon },
     isAuthenticated
@@ -175,6 +176,7 @@ const HomeSubHeader: React.FC<HomeSubHeaderProps> = ({
   return (
     <div className={styles['homesubheader-container']}>
       <div className={styles['subheader-container']}>
+        {/* Botões "Em Alta", "Seguindo", "Curadoria" */}
         {items.slice(0, visibleItems).map((item) => (
           <div
             key={item.section}
@@ -202,6 +204,7 @@ const HomeSubHeader: React.FC<HomeSubHeaderProps> = ({
           </div>
         ))}
 
+        {/* Lista das categorias do backend */}
         {categories.slice(0, visibleItems).map((category) => (
           <div
             key={category.id}
@@ -235,6 +238,7 @@ const HomeSubHeader: React.FC<HomeSubHeaderProps> = ({
           </div>
         ))}
 
+        {/* Botão "Mais" */}
         <div
           className={`${styles['subheader-item-container']} ${
             activeSection === 'more' ? styles['active'] : ''
@@ -260,10 +264,12 @@ const HomeSubHeader: React.FC<HomeSubHeaderProps> = ({
         </div>
       </div>
 
+      {/* Se o usuário estiver na categoria X, renderiza a SubCategoryList */}
       {activeSection === 'categories' && selectedCategoryId && (
         <SubCategoryList
           categoryId={selectedCategoryId}
           activeSubCategory={selectedSubCategory || 'tudo'}
+          categoryName={selectedCategory}  // <-- prop crucial
         />
       )}
     </div>

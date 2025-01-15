@@ -9,17 +9,17 @@ import { getSubCategoriesByCategory } from '../../../../services/categoryService
 interface SubCategoryListProps {
   categoryId: string | number;
   activeSubCategory: string;
+  categoryName: string | null | undefined;
 }
 
 const SubCategoryList: React.FC<SubCategoryListProps> = ({
   categoryId,
   activeSubCategory,
+  categoryName, 
 }) => {
   const [subCategories, setSubCategories] = useState<any[]>([]);
-
   const router = useRouter();
-  const params = useParams() as { categoryName?: string; subCategoryName?: string };
-
+  
   useEffect(() => {
     const fetchSubCategories = async () => {
       try {
@@ -36,8 +36,8 @@ const SubCategoryList: React.FC<SubCategoryListProps> = ({
   }, [categoryId]);
 
   const handleSubCategoryClick = (subCategoryName: string) => {
-    if (params.categoryName) {
-      router.push(`/category/${params.categoryName}/${subCategoryName}`);
+    if (categoryName) {
+      router.push(`/category/${categoryName}/${subCategoryName}`);
     }
   };
 
