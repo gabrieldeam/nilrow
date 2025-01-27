@@ -13,6 +13,7 @@ import {
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { CategoryData, SubCategoryData, UserCategoryOrderDTO } from '../../types/services/category';
 import styles from './Categories.module.css';
+import { useAuth } from '../../hooks/useAuth';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -21,6 +22,9 @@ const Categories: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
   const [categories, setCategories] = useState<CategoryData[]>([]);
   const [subCategoriesMap, setSubCategoriesMap] = useState<{ [key: string]: SubCategoryData[] }>({});
   const [loading, setLoading] = useState(true);
+
+  const { isAuthenticated } = useAuth();
+  console.log('Categories.tsx -> isAuthenticated:', isAuthenticated);
 
   const handleBack = useCallback(() => {
     if (onClose) {
@@ -32,8 +36,9 @@ const Categories: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
 
   useEffect(() => {
     const fetchCategoriesAndSubCategories = async () => {
+      setLoading(true);
+
       try {
-        // 1) Buscar categorias em várias páginas, se necessário
         let allCategories: CategoryData[] = [];
         let page = 0;
         const size = 10;
@@ -49,43 +54,41 @@ const Categories: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
           }
         }
 
-        // 2) Tentar buscar a ordem do usuário
-        let userCategoryOrders: UserCategoryOrderDTO[] = [];
-        try {
-          userCategoryOrders = await getAllUserCategoryOrders();
-        } catch (error: any) {
-          // Se der 401 ou 403, significa que o usuário não está logado ou não tem permissão
-          if (error.response?.status === 401 || error.response?.status === 403) {
-            console.warn('Usuário não autenticado ou sem permissão. Exibindo categorias na ordem padrão.');
-          } else {
+        if (isAuthenticated) {
+          try {
+            const userCategoryOrders: UserCategoryOrderDTO[] = await getAllUserCategoryOrders();
+            console.log('Orders retornadas pela API:', userCategoryOrders);
+            if (Array.isArray(userCategoryOrders) && userCategoryOrders.length > 0) {
+              const normalizedOrders = userCategoryOrders.map((o) => ({
+                ...o,
+                categoryId: Number(o.categoryId),
+              }));
+
+              allCategories.sort((a, b) => {
+                const orderA = userCategoryOrders.find(o => String(o.categoryId) === String(a.id))?.displayOrder ?? 0;
+                const orderB = userCategoryOrders.find(o => String(o.categoryId) === String(b.id))?.displayOrder ?? 0;
+                return orderA - orderB;
+              });
+            }
+          } catch (error: any) {
             console.error('Erro ao buscar ordens de categorias do usuário:', error);
           }
+        } else {
+          console.log('Usuário não autenticado, usando ordem padrão das categorias.');
         }
 
-        // 3) Se conseguimos pegar userCategoryOrders, reordenamos
-        if (Array.isArray(userCategoryOrders) && userCategoryOrders.length > 0) {
-          allCategories.sort((a, b) => {
-            const orderA = userCategoryOrders.find(o => o.categoryId === a.id)?.order || 0;
-            const orderB = userCategoryOrders.find(o => o.categoryId === b.id)?.order || 0;
-            return orderA - orderB;
-          });
-        }
-
-        // 4) Setar as categorias no state
         setCategories(allCategories);
 
-        // 5) Buscar subcategorias de cada categoria
         const subCategoriesData: { [key: string]: SubCategoryData[] } = {};
         for (const category of allCategories) {
           try {
-            const subResponse = await getSubCategoriesByCategory(category.id);  
+            const subResponse = await getSubCategoriesByCategory(category.id);
             subCategoriesData[category.id] = subResponse;
           } catch (subError) {
             console.error(`Erro ao buscar subcategorias de ${category.id}:`, subError);
             subCategoriesData[category.id] = [];
           }
         }
-        
         setSubCategoriesMap(subCategoriesData);
       } catch (error) {
         console.error('Erro ao buscar categorias e subcategorias:', error);
@@ -95,9 +98,8 @@ const Categories: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
     };
 
     fetchCategoriesAndSubCategories();
-  }, []);
+  }, [isAuthenticated]);
 
-  // Drag-and-drop para reordenar na tela
   const handleOnDragEnd = async (result: any) => {
     if (!result.destination) return;
 
@@ -106,24 +108,29 @@ const Categories: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
     reorderedCategories.splice(result.destination.index, 0, movedCategory);
 
     setCategories(reorderedCategories);
+    if (isAuthenticated) {
+      try {
+        const updatedOrder: UserCategoryOrderDTO[] = reorderedCategories.map((category, index) => ({
+          categoryId: category.id,
+          displayOrder: index,
+        }));
 
-    const updatedOrder: UserCategoryOrderDTO[] = reorderedCategories.map((category, index) => ({
-      categoryId: category.id,
-      order: index,
-    }));
+        await upsertUserCategoryOrder(updatedOrder);
+        console.log('Ordem de exibição atualizada com sucesso!', updatedOrder);
+        const newOrders = await getAllUserCategoryOrders();
+        console.log('Ordem retornada após upsertUserCategoryOrder:', newOrders);
 
-    // Aqui também, se não tiver permissão, retornará 401/403
-    try {
-      await upsertUserCategoryOrder(updatedOrder);
-      console.log('Ordem de exibição atualizada com sucesso!');
-    } catch (error) {
-      console.error('Erro ao atualizar a ordem de exibição (usuário não autenticado ou sem permissão):', error);
+      } catch (error) {
+        console.error('Erro ao atualizar a ordem de exibição:', error);
+      }
+    } else {
+      console.log('Usuário não autenticado, ordem não será salva no servidor.');
     }
   };
-
   return (
     <div className={styles.container}>
       <MobileHeader title="Categorias" buttons={{ close: true }} handleBack={handleBack} />
+
       {loading ? (
         <div>Carregando...</div>
       ) : (
@@ -132,7 +139,12 @@ const Categories: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
             {(provided) => (
               <div className={styles.list} {...provided.droppableProps} ref={provided.innerRef}>
                 {categories.map((category, index) => (
-                  <Draggable key={category.id} draggableId={category.id.toString()} index={index}>
+                  <Draggable 
+                  key={category.id} 
+                  draggableId={String(category.id)} 
+                  index={index}
+                  isDragDisabled={!isAuthenticated}
+                  >
                     {(provided, snapshot) => (
                       <div
                         ref={provided.innerRef}

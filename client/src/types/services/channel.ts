@@ -10,6 +10,7 @@ export interface ChannelData {
     description?: string;
     visibility: boolean;
     isActive: boolean;
+    imageUrl?: string;
 }
 
 export interface FollowerData {

@@ -9,7 +9,7 @@ export interface CategoryDTO {
   
   export interface UserCategoryOrderDTO {
     categoryId: string;
-    order: number;
+    displayOrder: number;
   }
   
   export interface CategoryData {

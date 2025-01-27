@@ -58,8 +58,8 @@ const HomeSubHeader: React.FC<HomeSubHeaderProps> = ({
         if (orders && Array.isArray(orders)) {
           // Ordena as categorias conforme 'order' do usuário
           allCategories.sort((a, b) => {
-            const orderA = orders.find((order) => order.categoryId === a.id)?.order || 0;
-            const orderB = orders.find((order) => order.categoryId === b.id)?.order || 0;
+            const orderA = orders.find((order) => order.categoryId === a.id)?.displayOrder || 0;
+            const orderB = orders.find((order) => order.categoryId === b.id)?.displayOrder || 0;
             return orderA - orderB;
           });
           setUserCategoryOrders(orders);
