@@ -5,4 +5,5 @@ export interface StageButtonProps {
   backgroundColor?: string;
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
   imageSrc?: string | StaticImageData; 
+  type?: 'button' | 'submit' | 'reset';
 }

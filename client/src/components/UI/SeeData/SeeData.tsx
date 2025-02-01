@@ -1,6 +1,7 @@
 'use client';
 
 import React, { memo } from 'react';
+import Image from 'next/image';
 import styles from './SeeData.module.css';
 import ToggleButton from '../ToggleButton/ToggleButton';
 import verifiedIcon from '../../../../public/assets/verificacao.svg';
@@ -28,7 +29,7 @@ const SeeData: React.FC<SeeDataProps> = ({
       <div className={styles['see-data-main']}>
         <div className={styles['see-data-title']}>{title}</div>
         {showIcon && (
-          <img
+          <Image
             src={verifiedIcon}
             alt="Verified"
             className={styles['see-data-verified-icon']}

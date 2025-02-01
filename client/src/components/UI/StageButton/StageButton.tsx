@@ -1,13 +1,14 @@
 import React, { memo, useCallback } from 'react';
-import Image from 'next/image'; // Para otimização de imagens
-import styles from './StageButton.module.css'; // Importa os estilos
-import { StageButtonProps } from '../../../types/components/UI/StageButton'; // Importa as interfaces
+import Image from 'next/image'; 
+import styles from './StageButton.module.css'; 
+import { StageButtonProps } from '../../../types/components/UI/StageButton';
 
 const StageButton: React.FC<StageButtonProps> = ({ 
   text, 
   backgroundColor = '#7B33E5', 
   onClick = () => {}, 
-  imageSrc = null 
+  imageSrc = null,
+  type = 'button',
 }) => {
   const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
     onClick(e);
@@ -18,6 +19,7 @@ const StageButton: React.FC<StageButtonProps> = ({
       className={styles.stageButton}
       style={{ backgroundColor }}
       onClick={handleClick}
+      type={type}
     >
       {imageSrc && (
         <Image 

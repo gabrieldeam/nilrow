@@ -1,0 +1,35 @@
+.subHeader {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 40px;
+  }
+  
+  .subHeaderContent {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+  
+  .subHeaderInfo {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+  }
+  
+  .subHeaderTitle {
+    font-size: 18px;
+    margin-bottom: 0;
+  }
+  
+  .subHeaderButtons {
+    display: flex;
+    gap: 20px; /* Ajuste o espaçamento conforme necessário */
+  }
+  
+  @media (max-width: 768px) {
+    .subHeader {
+      display: none;
+    }
+  }
+  
