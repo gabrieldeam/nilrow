@@ -1,0 +1,270 @@
+.myChannelPage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    color: #fff;
+    padding-top: 90px;
+    padding-bottom: 70px;
+    box-sizing: border-box;
+}
+
+.myChannelContainer {
+    width: 100%;
+    padding: 0 58px;
+    box-sizing: border-box;
+}
+
+.myChannelContent {
+    display: flex;
+    flex-direction: column;
+}
+
+.myChannelHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.myChannelInfo {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+}
+
+.myChannelTitle {
+    font-size: 18px;
+    margin-bottom: 0;
+}
+
+.myChannelButtons {
+    display: flex;
+    gap: 40px;
+}
+
+/* Visibilidade */
+.toggleVisibilityLink {
+    margin-left: auto;
+}
+
+.toggleVisibilityButton {
+    background: none;
+    border: none;
+    color: #7B33E5;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.toggleVisibilityButton:hover {
+    text-decoration: underline;
+}
+
+.myChannelSteps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 40px;
+}
+
+.myChannelStepCardWrapper {
+    display: flex;
+    gap: 5px;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+.stepButton {
+    max-width: 398px;
+}
+
+.cardContainer {
+    flex: 1;
+    width: 100%;
+}
+
+/* Passos adicionais */
+.myChannelAdditionalSteps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.myChannelAdditionalSteps .stepButton {
+    flex: 1 1 calc(25% - 20px); 
+}
+
+.toggleVisibilityDesktopOnly {
+    display: block;
+}
+
+.toggleVisibilityMobileOnly {
+    display: none;
+}
+
+/* Upload de imagem */
+.myChannelImageUpload {
+    background-color: #212121;
+    padding: 20px;
+    border-radius: 5px;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.myChannelImagePreview {
+    width: 70px;
+    height: 70px;
+    border-radius: 100px;
+}
+
+.myChannelUploadSection {
+    display: flex;
+    flex-direction: column;
+    margin-left: 20px;
+    align-items: flex-start;
+}
+
+.myChannelUploadInstruction {
+    color: #9F9F9F;
+    font-size: 15px;
+    margin-bottom: 10px;
+    width: 280px;
+    margin-top: -1px;
+}
+
+.myChannelButtonsWrapper {
+    display: flex;
+    gap: 10px;
+}
+
+.myChannelUploadButton {
+    color: #7B33E5;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.myChannelUploadButton:hover {
+    text-decoration: underline;
+}
+
+.myChannelFileName {
+    margin-top: 10px;
+    color: white;
+    font-size: 14px;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .myChannelPage {
+        padding-bottom: 110px;
+        padding-top: 69px;
+    }
+
+    .myChannelContainer {
+        max-width: 419px;
+        padding: 0 6px;
+    }
+
+    .myChannelTitle,
+    .toggleVisibilityLink.toggleVisibilityDesktopOnly {
+        display: none;
+    }
+
+    .myChannelContent {
+        flex-direction: column-reverse; 
+    }
+
+    .myChannelHeader {
+        justify-content: center;
+    }
+
+    .myChannelButtons {
+        justify-content: space-around;
+        width: 100%;
+    }
+
+    .myChannelSteps {
+        justify-content: center;
+    }
+
+    .myChannelStepCardWrapper {
+        flex-direction: column;
+        margin-bottom: 25px;
+    }
+
+    .stepButton {
+        max-width: none;
+        margin-bottom: 0px;
+    }
+
+    .cardContainer {
+        max-width: 100%;
+    }
+
+    .myChannelAdditionalSteps {
+        flex-direction: column;
+        margin-top: 30px;
+    }
+
+    .myChannelAdditionalSteps .stepButton {
+        max-width: 100%;
+    }
+
+    .stepButton.data-personal {
+        max-width: 100%;
+    }
+
+    .toggleVisibilityLink.toggleVisibilityMobileOnly {
+        display: block;
+        margin-top: 20px;
+        text-align: center;
+    }
+
+    .myChannelUploadInstruction {
+        width: 100%;
+    }
+
+    .myChannelImageUpload {
+        margin-bottom: 0.3px;
+    }
+
+    .myChannelImagePreview {
+        width: 70px;
+        height: 70px;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+    .myChannelPage {
+        padding-top: 150px;
+    }
+
+    .cardContainer {
+        max-width: 100%;
+    }
+    
+    .myChannelAdditionalSteps {
+        flex-direction: column;
+        margin-top: 5px;
+    }
+
+    .myChannelAdditionalSteps .stepButton {
+        max-width: 100%;
+    }
+
+    .stepButton.data-personal {
+        max-width: 100%;
+    }
+
+    .myChannelUploadInstruction {
+        width: 100%;
+    }
+
+    .myChannelStepCardWrapper {
+        flex-direction: column;
+    }
+}

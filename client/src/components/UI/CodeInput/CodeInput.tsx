@@ -58,7 +58,7 @@ const CodeInput: React.FC<CodeInputProps> = ({ length, onChange }) => {
           onPaste={handlePaste}
           onKeyDown={(e) => handleKeyDown(e, index)}
           ref={(el) => {
-            inputsRef.current[index] = el; // Use ref callback sem retorno
+            inputsRef.current[index] = el; 
           }}
           className={styles.codeInput}
         />

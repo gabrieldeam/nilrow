@@ -1,0 +1,227 @@
+.category-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  color: #fff;
+  padding-top: 115px;
+  box-sizing: border-box;
+  }
+  
+  .category-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 0 58px;
+    box-sizing: border-box;
+    position: relative;
+  }
+  
+  .category-search-container {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    margin-bottom: 50px;
+  }
+  
+  .category-search-input {
+    width: 400px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    background-color: #D9D9D9;
+  }
+  
+  .add-category-btn {
+    font-size: 15px;
+    color: #fff;
+    padding: 10px;
+    background-color: #1a1a1a;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    border: none;
+  }
+  
+  .add-category-btn:hover {
+    background-color: #333;
+  }
+  
+  .category-section {
+    position: relative;
+  }
+  
+  .category-list {
+    flex: 1;
+  }
+  
+  .category-header,
+  .category-row {
+    display: flex;
+    flex-direction: row;
+    padding: 10px;
+    box-sizing: border-box;
+    border-radius: 5px;
+  }
+  
+  .category-row.selected {
+    background-color: #414141;
+  }
+  
+  .category-columnindex {
+    flex: 0.5;
+    padding-left: 30px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .category-columnname {
+    flex: 0.5;
+    display: flex;
+    align-items: center;
+  }
+  
+  .category-columnimage {
+    flex: 0.5;
+    display: flex;
+    align-items: center;
+  }
+  
+  .category-columnsubcategories {
+    flex: 0.5;
+    display: flex;
+    align-items: center;
+  }
+  
+  .category-header {
+    background-color: transparent;
+    font-weight: bold;
+  }
+  
+  .category-image-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background-color: #D9D9D9;
+    border-radius: 50%;
+    margin-left: 10px;
+  }
+  
+  .category-image {
+    width: 21px;
+    height: 21px;
+    object-fit: cover;
+  }
+  
+  .category-form {
+    width: 100%;
+  }
+  
+  .category-title-form {
+    font-size: 20px;
+    color: #fff;
+    text-align: left;
+    margin-top: -5px;
+  }
+  
+  .add-channel-image-upload {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  
+  .category-image-circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background-color: #D9D9D9;
+    border-radius: 50%;
+    overflow: hidden;
+  }
+  
+  .category-image-preview {
+    width: 21px;
+    height: 21px;
+    object-fit: cover;
+  }
+  
+  .add-channel-upload-button {
+    color: #7B33E5;
+    padding: 10px;
+    font-size: 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    background-color: transparent;
+    border: none;
+  }
+  
+  .add-channel-upload-button:hover {
+    text-decoration: underline;
+  }
+  
+  .subcategory-form {
+    width: 100%;
+  }
+  
+  .subcategory-title-form {
+    font-size: 20px;
+    color: #fff;
+    text-align: left;
+    margin-top: -5px;
+  }
+  
+  .subcategory-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  
+  .subcategory-item {
+    background-color: #151515;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .subcategory-item:hover {
+    background-color: #333333;
+  }
+  
+  .pagination-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+  }
+  
+  .pagination-controls button {
+    padding: 10px 20px;
+    background-color: #1a1a1a;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .pagination-controls button:disabled {
+    background-color: #333;
+    cursor: not-allowed;
+  }
+  
+  .pagination-controls span {
+    color: #fff;
+    font-size: 16px;
+  }
+  

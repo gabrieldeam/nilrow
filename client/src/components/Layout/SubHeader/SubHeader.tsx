@@ -1,13 +1,12 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import { SubHeaderProps } from "../../../types/components/Layout/SubHeader";
 import styles from "./SubHeader.module.css";
-import HeaderButton from "../../..//components/UI/HeaderButton/HeaderButton";
-import closeIcon from "@/assets/close.svg";
-import trashIcon from "@/assets/trash.svg";
-import ordersIcon from "@/assets/orders.svg";
+import HeaderButton from "../../../components/UI/HeaderButton/HeaderButton";
+import closeIcon from "../../../../public/assets/close.svg";
+import trashIcon from "../../../../public/assets/trash.svg";
+import ordersIcon from "../../../../public/assets/orders.svg";
 
 const SubHeader: React.FC<SubHeaderProps> = ({
   title,

@@ -1,13 +1,13 @@
 import api from './api';
-import { ProfileData, AddressData } from '../types/services/profile';
+import { ProfileData, AddressData, ProfileUpdateData } from '../types/services/profile';
 
 export const getUserProfile = async () => {
   const response = await api.get('/people');
   return response.data;
 };
 
-export const updateUserProfile = async (profileData: ProfileData) => {
-  const response = await api.put('/people', profileData);
+export const updateUserProfile = async (  data: ProfileUpdateData ): Promise<ProfileData> => {
+  const response = await api.put('/people', data);
   return response.data;
 };
 

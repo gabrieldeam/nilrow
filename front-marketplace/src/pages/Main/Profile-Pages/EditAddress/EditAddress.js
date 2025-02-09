@@ -179,7 +179,7 @@ const EditAddress = () => {
     }, [formData, isFormValid, id, navigate, setMessage]);
 
     return (
-        <div className="add-address-page">
+        <div className="edit-address-page">
             <Helmet>
                 <title>Editar Endereço</title>
                 <meta name="description" content="Edite seu endereço na Nilrow." />
@@ -187,7 +187,7 @@ const EditAddress = () => {
             {isMobile && (
                 <MobileHeader title="Editar Endereço" buttons={{ close: true, delete: true }} handleBack={handleBack} onDelete={handleDelete} />
             )}
-            <div className="add-address-container">
+            <div className="edit-address-container">
                 <SubHeader title="Editar Endereço" handleBack={handleBack} showDeleteButton={true} handleDelete={handleDelete} />
                 <form onSubmit={handleSubmit}>
                     <Card title="Quem vai receber?">

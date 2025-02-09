@@ -1,9 +1,8 @@
 import api from './api';
-import { AcceptsSmsDTO } from '../types/services/privacy';
 
 // Obter se o usuário aceita SMS
-export const getAcceptsSms = async () => {
-  const response = await api.get<string>('/people/accepts-sms');
+export const getAcceptsSms = async (): Promise<boolean> => {
+  const response = await api.get<boolean>('/people/accepts-sms');
   return response.data;
 };
 

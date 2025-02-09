@@ -1,9 +1,10 @@
 import api from './api';
 import { UserData, ChannelData, CatalogData } from '../types/services/admin';
+import { PagedUserResponse } from '../types/pages/admin/users/PagedUserResponse';
 
 // Busca todos os usuários
 export const getAllUsers = async (page = 0, size = 10, sortBy = 'nickname') => {
-  const response = await api.get<UserData[]>('/user/all', {
+  const response = await api.get<PagedUserResponse>('/user/all', {
     params: { page, size, sortBy },
   });
   return response.data;

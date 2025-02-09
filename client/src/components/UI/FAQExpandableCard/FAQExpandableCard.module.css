@@ -1,0 +1,31 @@
+.faqExpandableCardContainer {
+    margin-top: 10px;
+}
+
+.faqExpandableCardHeader {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 0 15px;
+    background-color: black;
+    border-radius: 5px;
+    justify-content: space-between;
+}
+
+.expandIcon {
+    transition: transform 0.3s;
+    margin-left: 5px;
+}
+
+.expanded {
+    transform: rotate(90deg);
+}
+
+.faqExpandableCardTitle {
+    font-size: 15px;
+}
+
+.faqExpandableCardText {
+    font-size: 15px;
+    padding: 10px 15px 0 15px;
+}

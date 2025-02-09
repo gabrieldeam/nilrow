@@ -1,0 +1,86 @@
+.edit-data-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #000;
+    color: #fff;
+    padding-top: 150px;
+    padding-bottom: 85px;
+    box-sizing: border-box;
+  }
+  
+  .edit-data-container {
+    width: 100%;
+    max-width: 419px;
+    padding: 6px;
+    box-sizing: border-box;
+    margin-top: auto;
+    margin-bottom: auto;
+  }
+  
+  .confirmationButton-space {
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .password-data-strength-bar {
+    height: 8px;
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 1px;
+    margin: 8px 0;
+    position: relative;
+    margin-top: -8px;
+  }
+  
+  .password-data-strength-bar div {
+    height: 100%;
+    border-radius: 1px;
+    transition: width 0.3s ease-in-out;
+  }
+  
+  .strength-0 {
+    width: 0%;
+    background-color: red;
+  }
+  
+  .strength-1 {
+    width: 20%;
+    background-color: red;
+  }
+  
+  .strength-2 {
+    width: 40%;
+    background-color: orange;
+  }
+  
+  .strength-3 {
+    width: 60%;
+    background-color: yellow;
+  }
+  
+  .strength-4 {
+    width: 80%;
+    background-color: lightgreen;
+  }
+  
+  .strength-5 {
+    width: 100%;
+    background-color: green;
+  }
+  
+  .password-data-strength-label {
+    text-align: right;
+    font-size: 14px;
+    color: #ffffff;
+  }
+  
+  @media (max-width: 768px) {
+    .edit-data-page {
+      padding-top: 105px;
+      padding-bottom: 85px;
+    }
+  }
+  

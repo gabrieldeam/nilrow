@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect, useCallback, FormEvent } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/navigation';
@@ -21,7 +23,7 @@ import {
   updateUserNickname
 } from '@/services/profileService';
 
-import { FormDataProps, ProfileUpdateData } from '../../../types/pages/Profile';
+import { FormDataProps, ProfileUpdateData } from '../../../types/services/profile';
 
 import styles from './editProfile.module.css';
 
@@ -61,7 +63,6 @@ function EditProfile() {
   const [isFormValid, setIsFormValid] = useState(false);
   const [error, setError] = useState('');
   const [showNotification, setShowNotification] = useState(false);
-
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -80,7 +81,7 @@ function EditProfile() {
         const userProfile = await getUserProfile();
         const userNickname = await getUserNickname();
 
-        // e.g. se veio como '@john123', remove o '@'
+        // Se o nickname veio com '@' remove o caractere
         const nicknameNoAt = userNickname.replace('@', '');
 
         setFormData({
@@ -168,18 +169,18 @@ function EditProfile() {
         updatedProfileData.phone = formData.phone;
       }
       
-      // Atualiza nickname, se mudou
+      // Atualiza o nickname se ele foi alterado
       const updatedNickname =
         formData.nickname !== originalData.nickname
           ? formData.nickname
           : undefined;
 
       try {
-        // Faz update do perfil (email, phone, etc) se algo mudou
+        // Se houver alguma alteração em email ou telefone, atualiza o perfil
         if (Object.keys(updatedProfileData).length > 0) {
           await updateUserProfile(updatedProfileData);
         }
-        // Faz update do nickname se ele mudou
+        // Se o nickname foi alterado, atualiza-o
         if (updatedNickname) {
           await updateUserNickname(updatedNickname);
         }

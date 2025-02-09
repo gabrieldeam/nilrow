@@ -2,7 +2,7 @@ import api from './api';
 import {  MessageContent,  MessageData,  ConversationData,  ChannelData,  BlockStatus,} from '../types/services/chat';
 
 // Inicia uma nova conversa
-export const startConversation = async (channelId: string, content: string) => {
+export const startConversation = async (channelId: string, content: string): Promise<string> => {
   const response = await api.post<string>(`/chats/start/${channelId}`, content, {
     headers: { 'Content-Type': 'text/plain' },
   });

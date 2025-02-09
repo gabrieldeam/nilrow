@@ -1,0 +1,78 @@
+.addChannelPage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #000;
+    color: #fff;
+    padding-top: 150px;
+    padding-bottom: 85px;
+    box-sizing: border-box;
+}
+
+.addChannelContainer {
+    width: 100%;
+    max-width: 419px;
+    padding: 6px;
+    box-sizing: border-box;
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+.confirmationButtonSpace {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.addChannelImageUpload {
+    background-color: #212121;
+    padding: 20px;
+    border-radius: 5px;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.addChannelImagePreview {
+    width: 70px;
+    height: 70px;
+    border-radius: 100px;
+}
+
+.addChannelUploadSection {
+    display: flex;
+    flex-direction: column;
+    margin-left: 20px;
+}
+
+.uploadInstruction {
+    color: #fff;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.addChannelUploadButton {
+    color: #7B33E5;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.addChannelUploadButton:hover {
+    text-decoration: underline;
+}
+
+.fileName {
+    margin-top: 10px;
+    color: white;
+    font-size: 14px;
+}
+
+@media (max-width: 768px) {
+    .addChannelPage {
+        padding-top: 105px;
+        padding-bottom: 85px;
+    }
+}

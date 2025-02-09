@@ -19,6 +19,10 @@ const nextConfig: NextConfig = {
         hostname: parsedURL.hostname,
         port: parsedURL.port || '',
         pathname: `${cleanPathname}/uploads/**`,
+      },      {
+        protocol: 'https',
+        hostname: 'www.showmetech.com.br',
+        pathname: '/wp-content/uploads/**',
       },
     ],
   },

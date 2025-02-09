@@ -36,10 +36,16 @@ export const isChannelActive = async (id: string) => {
 };
 
 // Obtém canal pelo nickname
-export const getChannelByNickname = async (nickname: string) => {
-  const response = await api.get<ChannelData>(`/channels/nickname/${nickname}`);
-  return response.data;
+export const getChannelByNickname = async (nickname: string): Promise<ChannelData | null> => {
+  try {
+    const response = await api.get<ChannelData>(`/channels/nickname/${nickname}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Erro ao buscar canal com nickname "${nickname}":`, error);
+    return null; // Retorna null se o canal não for encontrado
+  }
 };
+
 
 // Verifica se o usuário é dono do canal
 export const isChannelOwner = async (id: string) => {

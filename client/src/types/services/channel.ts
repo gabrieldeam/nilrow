@@ -27,6 +27,10 @@ export interface FollowingChannelData {
 
 export interface AboutData {
     content: string;
+    aboutText: string;
+    storePolicies: string;
+    exchangesAndReturns: string;
+    additionalInfo: string;
 }
 
 export interface FAQData {

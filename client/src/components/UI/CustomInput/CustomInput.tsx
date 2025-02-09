@@ -19,6 +19,7 @@ const CustomInput: React.FC<CustomInputProps> = ({
   readOnly = false,
   checkbox = null,
   isTextarea = false,
+  disabled = false,
 }) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
@@ -41,6 +42,7 @@ const CustomInput: React.FC<CustomInputProps> = ({
             value={value}
             name={name}
             style={{ paddingLeft: prefix ? '106px' : '14px' }}
+            disabled={disabled}
             readOnly={readOnly}
           />
         ) : (

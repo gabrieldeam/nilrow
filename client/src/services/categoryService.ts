@@ -2,7 +2,7 @@ import api from './api';
 import { SubCategoryDTO, UserCategoryOrderDTO, CategoryData, SubCategoryData } from '../types/services/category';
 
 // Criar uma nova categoria
-export const createCategory = async (name: string, image?: File) => {
+export const createCategory = async (name: string, image?: File | null) => {
   const formData = new FormData();
   const category = { name };
   formData.append('category', new Blob([JSON.stringify(category)], { type: 'application/json' }));

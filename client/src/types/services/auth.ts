@@ -6,6 +6,7 @@ export interface LoginData {
   }
   
   export interface ResetPasswordData {
+    email?: string;
     token: string;
     newPassword: string;
   }

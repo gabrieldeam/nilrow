@@ -1,0 +1,126 @@
+.aboutChannelPage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    box-sizing: border-box;
+    padding-top: 160px;
+    padding-bottom: 30px;
+  }
+  
+  .aboutChannelContainer {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 0 58px;
+    box-sizing: border-box;
+    align-items: center;
+  }
+  
+  .aboutChannelHeader {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    justify-content: space-between;
+    margin-bottom: 30px;
+  }
+  
+  .aboutChannelLeft {
+    display: flex;
+    align-items: center;
+  }
+  
+  .aboutChannelImage {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    margin-right: 15px;
+  }
+  
+  .aboutChannelInfo {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .aboutChannelFollow {
+    margin-left: 150px;
+  }
+  
+  .aboutChannelRight {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .aboutChannelName {
+    font-size: 16px;
+    margin: 0;
+    font-weight: 600;
+  }
+  
+  .aboutChannelNickname {
+    font-size: 14px;
+    margin: 0;
+    color: #aaa;
+  }
+  
+  .aboutChannelOutro {
+    width: 100%;
+  }
+  
+  .aboutChannelText {
+    font-size: 15px;
+  }
+  
+  /* mobile */
+  @media (max-width: 768px) {
+    .aboutChannelPage {
+      padding-bottom: 93px;
+      padding-top: 120px;
+    }
+  
+    .aboutChannelContainer {
+      max-width: 419px;
+      padding: 0 20px;
+    }
+  
+    .aboutChannelHeader {
+      flex-direction: column;
+    }
+  
+    .aboutChannelRight {
+      flex-direction: column;
+      align-items: center;
+      margin-top: 30px;
+      gap: 0px;
+      width: 50%;
+    }
+  
+    .aboutChannelLeft {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+    }
+  
+    .aboutChannelInfo {
+      flex-grow: 1;
+    }
+  
+    .aboutChannelFollow {
+      margin-left: 0;
+      align-self: flex-end;
+      margin-right: 0;
+    }
+  
+    .aboutChannelName {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      width: 70%;
+    }
+  
+    .aboutChannelOutro {
+      width: 106%;
+    }
+  }
+  

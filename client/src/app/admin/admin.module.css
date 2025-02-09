@@ -1,0 +1,31 @@
+.administration-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    color: #fff;
+    padding-top: 115px;
+    box-sizing: border-box;
+  }
+  
+  .administration-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 0 58px;
+    box-sizing: border-box;
+    position: relative;
+  }
+  
+  .administration-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  
+  .administration-list > * {
+    flex: 0 1 calc(50% - 5px);
+    margin-bottom: 5px;
+  }
+  
