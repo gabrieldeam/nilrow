@@ -165,7 +165,7 @@ function formatNumber(num: number) {
   
     // Ir para MyChannel
     const handleMyChannel = useCallback(() => {
-      router.push('/my-channel');
+      router.push('/channel');
     }, [router]);
   
     // Exibir about

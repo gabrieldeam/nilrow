@@ -2,10 +2,9 @@
 
 import { memo, useCallback, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Head from 'next/head';
+import Image from 'next/image';
 import styles from './Channel.module.css';
 
-// Componentes de UI e hooks de notificação
 import MobileHeader from '../../components/Layout/MobileHeader/MobileHeader';
 import HeaderButton from '../../components/UI/HeaderButton/HeaderButton';
 import StepButton from '../../components/UI/StepButton/StepButton';
@@ -14,13 +13,10 @@ import ConfirmationModal from '../../components/Modals/ConfirmationModal/Confirm
 import SeeData from '../../components/UI/SeeData/SeeData';
 import { useNotification } from '../../hooks/useNotification';
 
-// Serviços da API
 import { getMyChannel, updateChannelImage, toggleChannelVisibility, isChannelActive } from '@/services/channel/channelService';
 
-// Interface do canal
 import { ChannelData } from '../../types/pages/Channel';
 
-// Ícones e imagens
 import ordersIcon from '../../../public/assets/orders.svg';
 import notificationsIcon from '../../../public/assets/notifications.svg';
 import editAboutIcon from '../../../public/assets/editAbout.svg';
@@ -43,10 +39,8 @@ const MyChannel: React.FC = () => {
   );
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-  // Verificação de tela mobile no client side
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 
-  // Buscar dados do canal ao montar
   useEffect(() => {
     const fetchChannelData = async () => {
       try {
@@ -81,7 +75,6 @@ const MyChannel: React.FC = () => {
     }
   };
 
-  // Fazer upload da imagem
   const handleImageUpload = async () => {
     if (imageFile && channelData) {
       try {
@@ -124,11 +117,6 @@ const MyChannel: React.FC = () => {
 
   return (
     <div className={styles.myChannelPage}>
-      <Head>
-        <title>Meu Canal</title>
-        <meta name="description" content="Veja seu perfil na Nilrow." />
-      </Head>
-
       {isMobile && (
         <MobileHeader
           title="Meu Canal"
@@ -163,10 +151,12 @@ const MyChannel: React.FC = () => {
             <div className={styles.myChannelStepCardWrapper}>
               <div className={styles.myChannelImageUpload}>
                 {imagePreview && (
-                  <img
+                  <Image
                     src={imagePreview}
                     alt="Preview"
                     className={styles.myChannelImagePreview}
+                    width={70}
+                    height={70}
                   />
                 )}
                 <div className={styles.myChannelUploadSection}>
