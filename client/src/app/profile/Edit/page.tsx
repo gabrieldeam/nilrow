@@ -105,7 +105,7 @@ function EditProfile() {
   }, []);
 
   const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const { name, value } = e.target;
       const newValue = name === 'nickname' ? value.toLowerCase() : value;
       setFormData((prev) => ({
