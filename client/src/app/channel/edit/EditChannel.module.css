@@ -1,0 +1,25 @@
+.editChannelPage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #000;
+  color: #fff;
+  padding-top: 90px;
+  padding-bottom: 70px;
+  box-sizing: border-box;
+}
+
+.editChannelContainer {
+  width: 100%;
+  max-width: 419px;
+  padding: 6px;
+  box-sizing: border-box;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.confirmationButtonSpace {
+  margin-top: 20px;
+}

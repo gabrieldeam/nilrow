@@ -63,7 +63,6 @@
 
 .myChannelSteps {
     display: flex;
-    flex-wrap: wrap;
     gap: 20px;
     margin-top: 40px;
 }
@@ -72,7 +71,12 @@
     display: flex;
     gap: 5px;
     width: 100%;
-    flex-wrap: wrap;
+}
+
+.seeDataWrapper {
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
 }
 
 .stepButton {
@@ -87,8 +91,7 @@
 /* Passos adicionais */
 .myChannelAdditionalSteps {
     display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
+    gap: 5px;  
 }
 
 .myChannelAdditionalSteps .stepButton {
@@ -210,6 +213,11 @@
         margin-top: 30px;
     }
 
+    .seeDataWrapper {
+        display: flex;
+        flex-direction: column;
+    }
+
     .myChannelAdditionalSteps .stepButton {
         max-width: 100%;
     }
@@ -250,6 +258,11 @@
     .myChannelAdditionalSteps {
         flex-direction: column;
         margin-top: 5px;
+    }
+
+    .seeDataWrapper {
+        display: flex;
+        flex-direction: column;
     }
 
     .myChannelAdditionalSteps .stepButton {

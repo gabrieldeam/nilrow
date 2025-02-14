@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, memo } from 'react';
-import Head from 'next/head';
 import { useRouter } from 'next/navigation';
 
 import { useAuth } from '../../hooks/useAuth'; 
@@ -80,7 +79,7 @@ function Profile() {
       if (activeStatus) {
         router.push(`/${nickname}`);
       } else {
-        router.push('channel');
+        router.push('/channel');
       }
     } catch (error) {
       router.push('/profile/add');
@@ -93,12 +92,7 @@ function Profile() {
     : profile.phone;
 
   return (
-    <div className={styles['profile-page']}>
-      <Head>
-        <title>Meu perfil - Nilrow</title>
-        <meta name="description" content="Veja seu perfil na Nilrow." />
-      </Head>
-
+    <div className={styles.profilePage}>
       {isMobile && (
         <MobileHeader
           title="Meu perfil"
@@ -106,14 +100,14 @@ function Profile() {
         />
       )}
 
-      <div className={styles['profile-container']}>
-        <div className={styles['profile-content']}>
-          <div className={styles['profile-header']}>
-            <div className={styles['profile-info']}>
+      <div className={styles.profileContainer}>
+        <div className={styles.profileContent}>
+          <div className={styles.profileHeader}>
+            <div className={styles.profileInfo}>
               <h1 className={`${styles['profile-title']} roboto-medium`}>
                 Meu perfil
               </h1>
-              <div className={styles['profile-buttons']}>
+              <div className={styles.profileButtons}>
                 <HeaderButton icon={ordersIcon} link="/orders" />
                 <HeaderButton icon={notificationsIcon} link="/notifications" />
                 <HeaderButton icon={blockedIcon} link="/blocked" />
@@ -121,9 +115,9 @@ function Profile() {
               </div>
             </div>
 
-            <div className={`${styles['logout-link']} ${styles['desktop-only']}`}>
+            <div className={`${styles.logoutLink} ${styles.desktopOnly}`}>
               <button
-                className={styles['logout-button']}
+                className={styles.logoutButton}
                 onClick={handleLogout}
               >
                 Sair
@@ -131,8 +125,8 @@ function Profile() {
             </div>
           </div>
 
-            <div className={styles['profile-steps']}>
-                <div className={styles['profile-step-card-wrapper']}>
+            <div className={styles.profileSteps}>
+                <div className={styles.profileStepCardWrapper}>
                     <StepButton
                         icon={dataEditIcon}
                         title="Dados pessoais"
@@ -143,7 +137,7 @@ function Profile() {
                         title="Dados da sua conta"
                         rightLink={{ href: '/profile/edit', text: 'Alterar' }}
                     >
-                        <div className={styles['see-data-wrapper']}> 
+                        <div className={styles.seeDataWrapper}> 
                             <SeeData
                                 title="E-mail"
                                 content={profile.email}
@@ -157,7 +151,7 @@ function Profile() {
             </div>
         </div>
 
-        <div className={styles['additional-steps']}>
+        <div className={styles.additionalSteps}>
           <StepButton
             customIcon={channelImageUrl ? `${apiUrl}${channelImageUrl}` : userIcon}
             title="Canal"
@@ -184,9 +178,9 @@ function Profile() {
           />
         </div>
 
-        <div className={`${styles['logout-link']} ${styles['mobile-only']}`}>
+        <div className={`${styles.logoutLink} ${styles.mobileOnly}`}>
           <button
-            className={styles['logout-button']}
+            className={styles.logoutButton}
             onClick={handleLogout}
           >
             Sair

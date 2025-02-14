@@ -7,10 +7,12 @@ export interface ChannelDTO {
 export interface ChannelData {
     id: string;
     name: string;
-    description?: string;
-    visibility: boolean;
-    isActive: boolean;
-    imageUrl?: string;
+    nickname?: string;
+    biography?: string;
+    externalLink?: string;
+    visibility?: boolean;
+    isActive?: boolean;
+    imageUrl?: string; 
 }
 
 export interface FollowerData {

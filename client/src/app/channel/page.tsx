@@ -15,7 +15,7 @@ import { useNotification } from '../../hooks/useNotification';
 
 import { getMyChannel, updateChannelImage, toggleChannelVisibility, isChannelActive } from '@/services/channel/channelService';
 
-import { ChannelData } from '../../types/pages/Channel';
+import { ChannelData } from '../../types/services/channel';
 
 import ordersIcon from '../../../public/assets/orders.svg';
 import notificationsIcon from '../../../public/assets/notifications.svg';
@@ -25,6 +25,8 @@ import catalogIcon from '../../../public/assets/catalog.svg';
 import purchaseEventIcon from '../../../public/assets/purchaseEvent.svg';
 
 import defaultImage from '../../../public/assets/user.png'; 
+
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
 const MyChannel: React.FC = () => {
   const { setMessage } = useNotification();
@@ -152,7 +154,7 @@ const MyChannel: React.FC = () => {
               <div className={styles.myChannelImageUpload}>
                 {imagePreview && (
                   <Image
-                    src={imagePreview}
+                    src={channelData?.imageUrl ? `${apiUrl}${channelData.imageUrl}` : defaultImage.src}
                     alt="Preview"
                     className={styles.myChannelImagePreview}
                     width={70}
@@ -191,11 +193,11 @@ const MyChannel: React.FC = () => {
               <Card
                 title="Dados do canal"
                 rightLink={{
-                  href: `/edit-channel/${channelData?.id}`,
+                  href: `/channel/edit/`,
                   text: 'Alterar',
                 }}
               >
-                <div className="see-data-wrapper">
+                <div className={styles.seeDataWrapper}>
                   <SeeData
                     title="Nome"
                     content={channelData?.name || 'Nome do canal'}
@@ -219,25 +221,25 @@ const MyChannel: React.FC = () => {
             icon={editAboutIcon}
             title="Sobre"
             paragraph="Informações adicionais sobre o canal."
-            onClick={() => router.push('/about-channel')}
+            onClick={() => router.push('/channel/about')}
           />
           <StepButton
             icon={promoterIcon}
             title="Divulgador"
             paragraph="Crie uma conta para divulgar produtos e ganhar comissão."
-            onClick={() => router.push('/depois-colocar')}
+            onClick={() => router.push('/channel/depois-colocar')}
           />
           <StepButton
             icon={catalogIcon}
             title="Catálogo"
             paragraph="Crie um catálogo e começe a divulgar seus produtos ou serviços."
-            onClick={() => router.push('/catalog')}
+            onClick={() => router.push('/channel/catalog')}
           />
           <StepButton
             icon={purchaseEventIcon}
             title="Evento de compra"
             paragraph="Crie eventos de compras especiais para divulgar com seus amigos."
-            onClick={() => router.push('/depois-colocar')}
+            onClick={() => router.push('/channel/depois-colocar')}
           />
         </div>
 
