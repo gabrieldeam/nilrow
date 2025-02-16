@@ -1,0 +1,51 @@
+.aboutMyChannelPage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #000;
+    color: #fff;
+    padding-top: 90px;
+    padding-bottom: 70px;
+    box-sizing: border-box;
+}
+
+.aboutMyChannelContainer {
+    width: 100%;
+    padding: 0 58px;
+    box-sizing: border-box;
+}
+
+.aboutMyChannelHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.aboutMyChannelSeeDataWrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.aboutMyChannelSeeDataWrapper > div {
+    flex: 1 1 calc(25% - 16px);
+}
+
+@media (max-width: 768px) {
+    .aboutMyChannelPage {
+        padding-bottom: 110px;
+        padding-top: 109px;
+    }
+
+    .aboutMyChannelContainer {
+        max-width: 419px;
+        padding: 0 6px;
+    }  
+
+    .aboutMyChannelSeeDataWrapper > div {
+        flex: 1 1 100%;
+    }
+}

@@ -4,13 +4,13 @@ import React, { memo, useCallback, useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/navigation';
 
-import MobileHeader from '../../../components/Layout/MobileHeader/MobileHeader';
-import SubHeader from '../../../components/Layout/SubHeader/SubHeader';
-import Card from '../../../components/UI/Card/Card';
-import SeeData from '../../../components/UI/SeeData/SeeData';
-import ConfirmationModal from '../../../components/Modals/ConfirmationModal/ConfirmationModal';
+import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';
+import SubHeader from '@/components/Layout/SubHeader/SubHeader';
+import Card from '@/components/UI/Card/Card';
+import SeeData from '@/components/UI/SeeData/SeeData';
+import ConfirmationModal from '@/components/Modals/ConfirmationModal/ConfirmationModal';
 
-import { getAcceptsSms, updateAcceptsSms, deleteUser } from '../../../services/privacyService';
+import { getAcceptsSms, updateAcceptsSms, deleteUser } from '@/services/privacyService';
 
 import styles from './privacy.module.css';
 

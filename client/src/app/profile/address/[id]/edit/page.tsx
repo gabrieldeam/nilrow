@@ -11,24 +11,24 @@ import Head from 'next/head';
 import { useRouter, useParams } from 'next/navigation';
 import axios from 'axios';
 
-import MobileHeader from '../../../../../components/Layout/MobileHeader/MobileHeader';
-import SubHeader from '../../../../../components/Layout/SubHeader/SubHeader';
-import AuthFooter from '../../../../../components/Layout/AuthFooter/AuthFooter';
-import CustomInput from '../../../../../components/UI/CustomInput/CustomInput';
+import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';
+import SubHeader from '@/components/Layout/SubHeader/SubHeader';
+import AuthFooter from '@/components/Layout/AuthFooter/AuthFooter';
+import CustomInput from '@/components/UI/CustomInput/CustomInput';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
-import Card from '../../../../../components/UI/Card/Card';
-import StageButton from '../../../../../components/UI/StageButton/StageButton';
-import ClassificationSelect from '../../../../../components/UI/ClassificationSelect/ClassificationSelect';
+import Card from '@/components/UI/Card/Card';
+import StageButton from '@/components/UI/StageButton/StageButton';
+import ClassificationSelect from '@/components/UI/ClassificationSelect/ClassificationSelect';
 
 import {
   getAddressById,
   updateAddress,
   getAddressClassifications,
   deleteAddress,
-} from '../../../../../services/profileService';
+} from '@/services/profileService';
 
-import { useNotification } from '../../../../../hooks/useNotification';
+import { useNotification } from '@/hooks/useNotification';
 
 import styles from './editAddress.module.css';
 

@@ -5,17 +5,17 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import styles from './Channel.module.css';
 
-import MobileHeader from '../../components/Layout/MobileHeader/MobileHeader';
-import HeaderButton from '../../components/UI/HeaderButton/HeaderButton';
-import StepButton from '../../components/UI/StepButton/StepButton';
-import Card from '../../components/UI/Card/Card';
-import ConfirmationModal from '../../components/Modals/ConfirmationModal/ConfirmationModal';
-import SeeData from '../../components/UI/SeeData/SeeData';
-import { useNotification } from '../../hooks/useNotification';
+import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';
+import HeaderButton from '@/components/UI/HeaderButton/HeaderButton';
+import StepButton from '@/components/UI/StepButton/StepButton';
+import Card from '@/components/UI/Card/Card';
+import ConfirmationModal from '@/components/Modals/ConfirmationModal/ConfirmationModal';
+import SeeData from '@/components/UI/SeeData/SeeData';
+import { useNotification } from '@/hooks/useNotification';
 
 import { getMyChannel, updateChannelImage, toggleChannelVisibility, isChannelActive } from '@/services/channel/channelService';
 
-import { ChannelData } from '../../types/services/channel';
+import { ChannelData } from '@/types/services/channel';
 
 import ordersIcon from '../../../public/assets/orders.svg';
 import notificationsIcon from '../../../public/assets/notifications.svg';

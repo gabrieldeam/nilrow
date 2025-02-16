@@ -3,26 +3,26 @@
 import React, { useState, useEffect, memo } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { useAuth } from '../../hooks/useAuth'; 
+import { useAuth } from '@/hooks/useAuth'; 
 
-import HeaderButton from '../../components/UI/HeaderButton/HeaderButton';
-import StepButton from '../../components/UI/StepButton/StepButton';
-import Card from '../../components/UI/Card/Card';
-import MobileHeader from '../../components/Layout/MobileHeader/MobileHeader';
-import SeeData from '../../components/UI/SeeData/SeeData';
+import HeaderButton from '@/components/UI/HeaderButton/HeaderButton';
+import StepButton from '@/components/UI/StepButton/StepButton';
+import Card from '@/components/UI/Card/Card';
+import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';
+import SeeData from '@/components/UI/SeeData/SeeData';
 
-import { getUserProfile, getUserNickname, getEmailValidated } from '../../services/profileService';
-import { getMyChannel, isChannelActive } from '../../services/channel/channelService';
+import { getUserProfile, getUserNickname, getEmailValidated } from '@/services/profileService';
+import { getMyChannel, isChannelActive } from '@/services/channel/channelService';
 
-import ordersIcon from '../../../public/assets/orders.svg';
-import notificationsIcon from '../../../public/assets/notifications.svg';
-import blockedIcon from '../../../public/assets/blocked.svg';
-import likesIcon from '../../../public/assets/likes.svg';
-import dataEditIcon from '../../../public/assets/dataedit.svg';
-import addressIcon from '../../../public/assets/addressProfile.svg';
-import cardIcon from '../../../public/assets/card.svg';
-import privacyIcon from '../../../public/assets/privacy.svg';
-import userIcon from '../../../public/assets/user.png';
+import ordersIcon from '@/../public/assets/orders.svg';
+import notificationsIcon from '@/../public/assets/notifications.svg';
+import blockedIcon from '@/../public/assets/blocked.svg';
+import likesIcon from '@/../public/assets/likes.svg';
+import dataEditIcon from '@/../public/assets/dataedit.svg';
+import addressIcon from '@/../public/assets/addressProfile.svg';
+import cardIcon from '@/../public/assets/card.svg';
+import privacyIcon from '@/../public/assets/privacy.svg';
+import userIcon from '@/../public/assets/user.png';
 
 import styles from './profile.module.css';
 

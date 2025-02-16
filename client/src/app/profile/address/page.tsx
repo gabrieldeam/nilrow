@@ -10,7 +10,7 @@ import Card from '@/components/UI/Card/Card';
 import SeeData from '@/components/UI/SeeData/SeeData';
 import { getAddresses } from '@/services/profileService';
 
-import { useNotification } from '../../../hooks/useNotification';
+import { useNotification } from '@/hooks/useNotification';
 
 import styles from './address.module.css';
 

@@ -77,7 +77,7 @@ export default function CreatePassword() {
   }, [formData]);
 
   const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const { name, value } = e.target;
       setFormData((prevData) => ({
         ...prevData,

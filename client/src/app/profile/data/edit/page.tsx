@@ -11,18 +11,18 @@ import React, {
 import Head from 'next/head';
 import { useRouter } from 'next/navigation';
 
-import MobileHeader from '../../../../components/Layout/MobileHeader/MobileHeader';
-import SubHeader from '../../../../components/Layout/SubHeader/SubHeader';
-import CustomInput from '../../../../components/UI/CustomInput/CustomInput';
-import DateInput from '../../../../components/UI/DateInput/DateInput';
-import Card from '../../../../components/UI/Card/Card';
-import StageButton from '../../../../components/UI/StageButton/StageButton';
-import Notification from '../../../../components/UI/Notification/Notification';
-import CodeInput from '../../../../components/UI/CodeInput/CodeInput';
-import LoadingSpinner from '../../../../components/UI/LoadingSpinner/LoadingSpinner';
+import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';
+import SubHeader from '@/components/Layout/SubHeader/SubHeader';
+import CustomInput from '@/components/UI/CustomInput/CustomInput';
+import DateInput from '@/components/UI/DateInput/DateInput';
+import Card from '@/components/UI/Card/Card';
+import StageButton from '@/components/UI/StageButton/StageButton';
+import Notification from '@/components/UI/Notification/Notification';
+import CodeInput from '@/components/UI/CodeInput/CodeInput';
+import LoadingSpinner from '@/components/UI/LoadingSpinner/LoadingSpinner';
 
-import { getUserProfile, updateUserProfile } from '../../../../services/profileService';
-import { sendResetCode, resetPassword } from '../../../../services/authService';
+import { getUserProfile, updateUserProfile } from '@/services/profileService';
+import { sendResetCode, resetPassword } from '@/services/authService';
 
 import styles from './editData.module.css';
 

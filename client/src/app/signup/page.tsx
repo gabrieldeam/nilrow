@@ -2,12 +2,12 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import StepButton from '../../components/UI/StepButton/StepButton';
-import ConfirmationButton from '../../components/UI/ConfirmationButton/ConfirmationButton';
-import PrivacyNotice from '../../components/UI/PrivacyNotice/PrivacyNotice';
-import Notification from '../../components/UI/Notification/Notification';
-import LoadingSpinner from '../../components/UI/LoadingSpinner/LoadingSpinner';
-import { register } from '../../services/authService';
+import StepButton from '@/components/UI/StepButton/StepButton';
+import ConfirmationButton from '@/components/UI/ConfirmationButton/ConfirmationButton';
+import PrivacyNotice from '@/components/UI/PrivacyNotice/PrivacyNotice';
+import Notification from '@/components/UI/Notification/Notification';
+import LoadingSpinner from '@/components/UI/LoadingSpinner/LoadingSpinner';
+import { register } from '@/services/authService';
 import styles from './Signup.module.css';
 
 // Importa nosso hook do contexto

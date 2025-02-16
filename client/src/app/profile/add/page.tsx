@@ -3,16 +3,16 @@
 import { memo, useCallback, useState, useEffect, useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import MobileHeader from '../../../components/Layout/MobileHeader/MobileHeader';
-import SubHeader from '../../../components/Layout/SubHeader/SubHeader';
+import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';
+import SubHeader from '@/components/Layout/SubHeader/SubHeader';
 import Card from '@/components/UI/Card/Card';
-import StageButton from '../../../components/UI/StageButton/StageButton';
+import StageButton from '@/components/UI/StageButton/StageButton';
 import CustomInput from '@/components/UI/CustomInput/CustomInput';
-import PrivacyNotice from '../../../components/UI/PrivacyNotice/PrivacyNotice';
-import { useNotification } from '../../../hooks/useNotification';
+import PrivacyNotice from '@/components/UI/PrivacyNotice/PrivacyNotice';
+import { useNotification } from '@/hooks/useNotification';
 import { getUserNickname } from '@/services/profileService';
 import { addChannel, uploadChannelImage, getMyChannel } from '@/services/channel/channelService';
-import defaultImage from '../../../../public/assets/user.png';
+import defaultImage from '@/../public/assets/user.png';
 import styles from './AddChannel.module.css';
 
 const AddChannel = () => {

@@ -1,0 +1,39 @@
+.editAboutPage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #000;
+    color: #fff;
+    padding-top: 150px;
+    padding-bottom: 80px;
+    box-sizing: border-box;
+}
+
+.editAboutContainer {
+    width: 100%;
+    max-width: 419px;
+    padding: 6px;
+    box-sizing: border-box;
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+.editAboutConfirmationButtonSpace {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.errorMessage {
+    color: red;
+    font-size: 14px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .editAboutPage {
+        padding-top: 104px;
+    }
+}

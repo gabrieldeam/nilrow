@@ -2,16 +2,16 @@
 
 import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import CustomInput from '../../components/UI/CustomInput/CustomInput';
-import Card from '../../components/UI/Card/Card';
-import ConfirmationButton from '../../components/UI/ConfirmationButton/ConfirmationButton';
-import PrivacyNotice from '../../components/UI/PrivacyNotice/PrivacyNotice';
-import Notification from '../../components/UI/Notification/Notification';
-import { useNotification } from '../../hooks/useNotification';
-import { useLocationContext } from '../../context/LocationContext';
-import { login } from '../../services/authService';
+import CustomInput from '@/components/UI/CustomInput/CustomInput';
+import Card from '@/components/UI/Card/Card';
+import ConfirmationButton from '@/components/UI/ConfirmationButton/ConfirmationButton';
+import PrivacyNotice from '@/components/UI/PrivacyNotice/PrivacyNotice';
+import Notification from '@/components/UI/Notification/Notification';
+import { useNotification } from '@/hooks/useNotification';
+import { useLocationContext } from '@/context/LocationContext';
+import { login } from '@/services/authService';
 import styles from './Login.module.css';
-import LoadingSpinner from '../../components/UI/LoadingSpinner/LoadingSpinner';
+import LoadingSpinner from '@/components/UI/LoadingSpinner/LoadingSpinner';
 
 export default function LoginPage() {
   const [emailOrUsername, setEmailOrUsername] = useState('');

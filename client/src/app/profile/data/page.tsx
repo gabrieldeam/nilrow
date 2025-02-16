@@ -4,12 +4,12 @@ import React, { useState, useEffect, useCallback, memo } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/navigation';
 
-import Card from '../../../components/UI/Card/Card';
-import MobileHeader from '../../../components/Layout/MobileHeader/MobileHeader';
-import SeeData from '../../../components/UI/SeeData/SeeData';
-import SubHeader from '../../../components/Layout/SubHeader/SubHeader';
+import Card from '@/components/UI/Card/Card';
+import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';
+import SeeData from '@/components/UI/SeeData/SeeData';
+import SubHeader from '@/components/Layout/SubHeader/SubHeader';
 
-import { getUserProfile } from '../../../services/profileService';
+import { getUserProfile } from '@/services/profileService';
 
 import styles from './data.module.css';
 

@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import Channel from '../../components/Layout/Channel/Channel';
-import LoadingSpinner from '../../components/UI/LoadingSpinner/LoadingSpinner'; 
-import { getChannels } from '../../services/channel/channelService'; 
+import Channel from '@/components/Layout/Channel/Channel';
+import LoadingSpinner from '@/components/UI/LoadingSpinner/LoadingSpinner'; 
+import { getChannels } from '@/services/channel/channelService'; 
 
 export default function NicknameRoutePage() {
   const router = useRouter();

@@ -1,16 +1,16 @@
 'use client';
 
 import './globals.css';
-import { NotificationProvider } from '../context/NotificationContext';
-import { LocationProvider } from '../context/LocationContext';
-import { SearchProvider } from '../context/SearchContext';
-import { LoadingProvider } from '../context/LoadingContext';
-import Notification from '../components/UI/Notification/Notification';
-import { useNotification } from '../hooks/useNotification';
-import MainHeader from '../components/Layout/MainHeader/MainHeader';
-import AuthHeader from '../components/Layout/AuthHeader/AuthHeader';
-import MobileFooter from '../components/Layout/MobileFooter/MobileFooter';
-import AuthFooter from '../components/Layout/AuthFooter/AuthFooter';
+import { NotificationProvider } from '@/context/NotificationContext';
+import { LocationProvider } from '@/context/LocationContext';
+import { SearchProvider } from '@/context/SearchContext';
+import { LoadingProvider } from '@/context/LoadingContext';
+import Notification from '@/components/UI/Notification/Notification';
+import { useNotification } from '@/hooks/useNotification';
+import MainHeader from '@/components/Layout/MainHeader/MainHeader';
+import AuthHeader from '@/components/Layout/AuthHeader/AuthHeader';
+import MobileFooter from '@/components/Layout/MobileFooter/MobileFooter';
+import AuthFooter from '@/components/Layout/AuthFooter/AuthFooter';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 

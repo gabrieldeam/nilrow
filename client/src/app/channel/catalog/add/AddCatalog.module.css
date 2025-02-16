@@ -1,0 +1,173 @@
+.addCatalogPage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #000;
+    color: #fff;
+    padding-top: 150px;
+    padding-bottom: 85px;
+    box-sizing: border-box;
+  }
+  
+  .addCatalogContainer {
+    width: 100%;
+    max-width: 419px;
+    padding: 6px;
+    box-sizing: border-box;
+    margin-top: auto;
+    margin-bottom: auto;
+  }
+  
+  .confirmationButtonSpace {
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .hourSeeDataWrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .hourSeeDataWrapper > div {
+    flex: 1 1 100%;
+  }
+  
+  .selectionSeeDataWrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .selectionSeeDataWrapper > div {
+    flex: 1 1 100%;
+  }
+  
+  .openCloseSeeDataWrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: -10px;
+  }
+  
+  .openCloseSeeDataWrapper > div {
+    flex: 1 1 calc(50% - 16px);
+  }
+  
+  .removeTimeButton {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+  }
+  
+  .addTimeButton {
+    background: none;
+    color: #7B33E5;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 0 auto;
+    display: block;
+    margin-bottom: -15px;
+    margin-top: 15px;
+  }
+  
+  .addTimeButton:hover {
+    text-decoration: underline;
+  }
+  
+  @media (max-width: 768px) {
+    .addCatalogPage {
+      padding-top: 105px;
+      padding-bottom: 85px;
+    }
+  }
+  
+  .daysSelectionLabel {
+    font-size: 15px;
+    color: #fff;
+    display: block;
+  }
+  
+  .daysSelection {
+    display: flex;
+    justify-content: space-around;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .dayBox {
+    width: 100%;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-size: 20px;
+  }
+  
+  .dayBox.selected {
+    background-color: #7B33E5;
+  }
+  
+  .dayDetails {
+    margin-bottom: 20px;
+  }
+  
+  .dayDetails h4 {
+    margin-bottom: 10px;
+    margin-top: -10px;
+  }
+  
+  .customInputContainerPhone {
+    width: 100%;
+    margin: 8px 0;
+  }
+  
+  .inputTitlePhone {
+    display: block;
+    font-size: 15px;
+    color: #ffffff;
+    margin-bottom: 8px;
+  }
+  
+  .phoneInput {
+    width: 100% !important;
+    height: 40px !important;
+    padding: 0 45px !important;
+    border: 1px solid #ffffff !important;
+    background-color: transparent !important;
+    color: #ffffff !important;
+    font-size: 15px !important;
+    box-sizing: border-box !important;
+    border-radius: 4px !important;
+  }
+  
+  .phoneInputButton {
+    background-color: transparent !important;
+    border: none !important;
+  }
+  
+  .phoneInputDropdown {
+    background-color: #212121 !important;
+    color: #ffffff !important;
+  }
+  
+  .inputBottomText {
+    display: flex;
+    justify-content: space-between;
+    font-size: 15px;
+  }
+  
+  .bottomLeftPhone {
+    color: #656565;
+    margin-top: 8px;
+  }
+  

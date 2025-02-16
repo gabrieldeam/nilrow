@@ -7,14 +7,14 @@ import { useRouter } from 'next/navigation';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 
-import CustomInput from '../../../components/UI/CustomInput/CustomInput';
-import Card from '../../../components/UI/Card/Card';
-import StageButton from '../../../components/UI/StageButton/StageButton';
-import Notification from '../../../components/UI/Notification/Notification';
-import MobileHeader from '../../../components/Layout/MobileHeader/MobileHeader';
-import SubHeader from '../../../components/Layout/SubHeader/SubHeader';
+import CustomInput from '@/components/UI/CustomInput/CustomInput';
+import Card from '@/components/UI/Card/Card';
+import StageButton from '@/components/UI/StageButton/StageButton';
+import Notification from '@/components/UI/Notification/Notification';
+import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';
+import SubHeader from '@/components/Layout/SubHeader/SubHeader';
 
-import { useNotification } from '../../../hooks/useNotification';
+import { useNotification } from '@/hooks/useNotification';
 
 import {
   getUserProfile,
@@ -23,7 +23,7 @@ import {
   updateUserNickname
 } from '@/services/profileService';
 
-import { FormDataProps, ProfileUpdateData } from '../../../types/services/profile';
+import { FormDataProps, ProfileUpdateData } from '@/types/services/profile';
 
 import styles from './editProfile.module.css';
 

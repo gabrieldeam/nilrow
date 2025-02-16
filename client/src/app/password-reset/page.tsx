@@ -5,17 +5,17 @@ import Head from 'next/head';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-import CustomInput from '../../components/UI/CustomInput/CustomInput';
-import Card from '../../components/UI/Card/Card';
-import ConfirmationButton from '../../components/UI/ConfirmationButton/ConfirmationButton';
-import StageButton from '../../components/UI/StageButton/StageButton';
-import CodeInput from '../../components/UI/CodeInput/CodeInput';
-import Notification from '../../components/UI/Notification/Notification';
-import LoadingSpinner from '../../components/UI/LoadingSpinner/LoadingSpinner';
+import CustomInput from '@/components/UI/CustomInput/CustomInput';
+import Card from '@/components/UI/Card/Card';
+import ConfirmationButton from '@/components/UI/ConfirmationButton/ConfirmationButton';
+import StageButton from '@/components/UI/StageButton/StageButton';
+import CodeInput from '@/components/UI/CodeInput/CodeInput';
+import Notification from '@/components/UI/Notification/Notification';
+import LoadingSpinner from '@/components/UI/LoadingSpinner/LoadingSpinner';
 
-import { sendResetCode, resetPassword } from '../../services/authService';
+import { sendResetCode, resetPassword } from '@/services/authService';
 
-import { useNotification } from '../../hooks/useNotification';
+import { useNotification } from '@/hooks/useNotification';
 
 import styles from './passwordReset.module.css';
 

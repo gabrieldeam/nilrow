@@ -28,6 +28,7 @@ export interface FollowingChannelData {
 }
 
 export interface AboutData {
+    id: string;
     content: string;
     aboutText: string;
     storePolicies: string;
@@ -45,6 +46,10 @@ export interface AboutDTO {
     title: string;
     content: string;
     channelId?: string; 
+    aboutText?: string; 
+    storePolicies?: string;
+    exchangesAndReturns?: string;
+    additionalInfo?: string;
 }
   
   

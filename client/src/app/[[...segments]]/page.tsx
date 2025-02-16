@@ -4,17 +4,17 @@ import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter  } from 'next/navigation';
 
 // Imports dos seus componentes:
-import FixedSlide from '../../components/Slides/FixedSlide/FixedSlide';
-import HomeSubHeader from '../../components/Layout/HomeSubHeader/HomeSubHeader';
+import FixedSlide from '@/components/Slides/FixedSlide/FixedSlide';
+import HomeSubHeader from '@/components/Layout/HomeSubHeader/HomeSubHeader';
 
-import OnTheRise from '../../components/Layout/Home/OnTheRise/OnTheRise';
-import Following from '../../components/Layout/Home/Following/Following';
-import Curation from '../../components/Layout/Home/Curation/Curation';
-import Categories from '../../components/Layout/Home/Categories/Categories';
-import Default from '../../components/Layout/Home/Default/Default';
+import OnTheRise from '@/components/Layout/Home/OnTheRise/OnTheRise';
+import Following from '@/components/Layout/Home/Following/Following';
+import Curation from '@/components/Layout/Home/Curation/Curation';
+import Categories from '@/components/Layout/Home/Categories/Categories';
+import Default from '@/components/Layout/Home/Default/Default';
 
-import MobileHeader from '../../components/Layout/MobileHeader/MobileHeader';
-import ModalCategories from '../../components/Modals/ModalCategories/ModalCategories';
+import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';
+import ModalCategories from '@/components/Modals/ModalCategories/ModalCategories';
 
 import styles from './Page.module.css';
 

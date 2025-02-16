@@ -1,0 +1,65 @@
+.catalogPage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #000;
+    color: #fff;
+    padding-top: 90px;
+    padding-bottom: 70px;
+    box-sizing: border-box;
+}
+
+.catalogContainer {
+    width: 100%;
+    padding: 0 58px;
+    box-sizing: border-box;
+}
+
+.catalogHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.catalogSeeDataWrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.catalogSeeDataWrapper > div {
+    flex: 1 1 calc(25% - 16px);
+}
+
+.emptyCatalogMessage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #000000;
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+    border-radius: 5px;
+    width: 100%;
+    min-height: 100px;
+    box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    .catalogPage {
+        padding-bottom: 110px;
+        padding-top: 109px;
+    }
+
+    .catalogContainer {
+        max-width: 419px;
+        padding: 0 6px;
+    }
+
+    .catalogSeeDataWrapper > div {
+        flex: 1 1 100%;
+    }
+}

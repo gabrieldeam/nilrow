@@ -4,24 +4,24 @@ import React, { memo, useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Head from 'next/head';
 
-import MobileHeader from '../../../components/Layout/MobileHeader/MobileHeader';
-import StageButton from '../../../components/UI/StageButton/StageButton';
-import ExpandableCard from '../../../components/UI/ExpandableCard/ExpandableCard';
-import FAQExpandableCard from '../../../components/UI/FAQExpandableCard/FAQExpandableCard';
+import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';
+import StageButton from '@/components/UI/StageButton/StageButton';
+import ExpandableCard from '@/components/UI/ExpandableCard/ExpandableCard';
+import FAQExpandableCard from '@/components/UI/FAQExpandableCard/FAQExpandableCard';
 
 import {
   getChannelByNickname,
   getAboutByNickname,
   getFAQsByNickname,
   isChannelOwner,
-} from '../../../services/channel/channelService';
+} from '@/services/channel/channelService';
 import {
     followChannel,
     unfollowChannel,
     isFollowing,
-  } from '../../../services/channel/followService';
-import { checkAuth } from '../../../services/authService';
-import { startConversation } from '../../../services/chatService';
+  } from '@/services/channel/followService';
+import { checkAuth } from '@/services/authService';
+import { startConversation } from '@/services/chatService';
 
 import shareIcon from '../../../../public/assets/share.svg';
 import chatIcon from '../../../../public/assets/chat.svg';

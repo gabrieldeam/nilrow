@@ -1,19 +1,18 @@
 'use client';
 
-
 import { useState, useEffect, useCallback, useContext, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import Head from 'next/head';
 
-import CustomInput from '../../../components/UI/CustomInput/CustomInput';
-import Card from '../../../components/UI/Card/Card';
-import StageButton from '../../../components/UI/StageButton/StageButton';
-import Notification from '../../../components/UI/Notification/Notification';
-import MobileHeader from '../../../components/Layout/MobileHeader/MobileHeader';
-import SubHeader from '../../../components/Layout/SubHeader/SubHeader';
-import { NotificationContext } from '../../../context/NotificationContext';
-import { getMyChannel, updateChannel } from '../../../services/channel/channelService';
-import { ChannelData } from '../../../types/services/channel';
+import CustomInput from '@/components/UI/CustomInput/CustomInput';
+import Card from '@/components/UI/Card/Card';
+import StageButton from '@/components/UI/StageButton/StageButton';
+import Notification from '@/components/UI/Notification/Notification';
+import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';
+import SubHeader from '@/components/Layout/SubHeader/SubHeader';
+import { useNotification } from '@/hooks/useNotification';
+import { getMyChannel, updateChannel } from '@/services/channel/channelService';
+import { ChannelData } from '@/types/services/channel';
 
 import styles from './EditChannel.module.css';
 
@@ -28,14 +27,8 @@ const EditChannel = () => {
   });
 
   const [error, setError] = useState('');
-  const [showNotification, setShowNotification] = useState(false);
-
-  const notificationContext = useContext(NotificationContext);
-  if (!notificationContext) {
-    throw new Error('NotificationContext não foi fornecido!');
-  }
-  const { setMessage } = notificationContext;
-
+  const [showNotification, setShowNotification] = useState(false);  
+   const { setMessage } = useNotification();
   const router = useRouter();
   const [isMobile, setIsMobile] = useState(false);
 

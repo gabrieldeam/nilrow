@@ -4,15 +4,15 @@ import React, { memo, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
-import CustomInput from '../../components/UI/CustomInput/CustomInput';
-import Card from '../../components/UI/Card/Card';
-import ConfirmationButton from '../../components/UI/ConfirmationButton/ConfirmationButton';
-import PrivacyNotice from '../../components/UI/PrivacyNotice/PrivacyNotice';
-import Notification from '../../components/UI/Notification/Notification';
-import { loginWithPhone } from '../../services/authService';
-import { useNotification } from '../../hooks/useNotification';
-import { useLocationContext } from '../../context/LocationContext';
-import LoadingSpinner from '../../components/UI/LoadingSpinner/LoadingSpinner';
+import CustomInput from '@/components/UI/CustomInput/CustomInput';
+import Card from '@/components/UI/Card/Card';
+import ConfirmationButton from '@/components/UI/ConfirmationButton/ConfirmationButton';
+import PrivacyNotice from '@/components/UI/PrivacyNotice/PrivacyNotice';
+import Notification from '@/components/UI/Notification/Notification';
+import { loginWithPhone } from '@/services/authService';
+import { useNotification } from '@/hooks/useNotification';
+import { useLocationContext } from '@/context/LocationContext';
+import LoadingSpinner from '@/components/UI/LoadingSpinner/LoadingSpinner';
 import styles from './LoginPhone.module.css';
 
 const LoginPhonePage = () => {

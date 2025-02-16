@@ -1,0 +1,152 @@
+.myCatalogPage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #000;
+    color: #fff;
+    padding-top: 90px;
+    padding-bottom: 70px;
+    box-sizing: border-box;
+  }
+  
+  .myCatalogContainer {
+    width: 100%;
+    padding: 0 58px;
+    box-sizing: border-box;
+  }
+  
+  .myCatalogHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+  
+  .myCatalogAdditionalSteps {
+    display: flex;
+    gap: 5px;
+    flex-direction: column;
+  }
+  
+  .myCatalogAdditional {
+    display: flex;
+    gap: 5px;
+    margin-bottom: -5px;
+  }  
+  
+  .myCatalogElementInfo {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    max-width: 450px;
+    height: auto;
+    border: 1px solid #fff;
+    flex-shrink: 0;
+    border-radius: 5px;
+  }
+  
+  .myCatalogInfoIcon {
+    width: 24px;
+    height: 24px;
+    margin-right: 15px;
+  }
+  
+  .myCtalogElementInfoText {
+    flex: 1;
+    color: #fff;
+  }
+  
+  .myCtalogElementInfoText p {
+    font-size: 14px;
+    margin: 0;
+  }
+  
+  .myCatalogLearnMoreLink {
+    font-size: 15px;
+    color: #6225BC;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 5px;
+  }
+  
+  .myCatalogLearnMoreLink:hover {
+    text-decoration: underline;
+  }
+
+  .seeDataWrapper {
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+    .seeDataWrapper {
+        display: flex;
+        flex-direction: column;
+    }
+}
+  
+  @media (max-width: 768px) {
+    .myCatalogPage {
+      padding-bottom: 100px;
+      padding-top: 80px;
+    }
+  
+    .myCatalogContainer {
+      max-width: 419px;
+      padding: 0 6px;
+    }
+  
+    .myCatalogAdditionalSteps {      
+      flex-direction: column;
+      margin-top: 30px;
+      gap: 5px;
+    }
+  
+    .myCatalogAdditionalSteps .step-button {
+      max-width: 100%;
+    }
+  
+    .myCatalogAdditional {
+      flex-direction: column;
+      margin-top: 0px;
+      gap: 5px;
+      margin-bottom: 0;
+    }
+  
+    .myCatalogAdditional.step-button {
+      max-width: 100%;
+    }
+  
+    .myCatalogElementInfo {
+      max-width: 100%;
+    }
+  
+    .myCtalogElementInfoText {
+      display: block;
+      text-align: left;
+    }
+  
+    .myCtalogElementInfoText p {
+      font-size: 14px;
+      margin: 0;
+      white-space: normal;
+    }
+  
+    .myCatalogLearnMoreLink {
+      font-size: 15px;
+      color: #6225BC;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 5px;
+    }
+
+    .seeDataWrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+  }
+  

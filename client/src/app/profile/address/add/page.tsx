@@ -12,17 +12,17 @@ import Head from 'next/head';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 
-import MobileHeader from '../../../../components/Layout/MobileHeader/MobileHeader';
-import SubHeader from '../../../../components/Layout/SubHeader/SubHeader';
-import CustomInput from '../../../../components/UI/CustomInput/CustomInput';
+import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';
+import SubHeader from '@/components/Layout/SubHeader/SubHeader';
+import CustomInput from '@/components/UI/CustomInput/CustomInput';
 import PhoneInput from 'react-phone-input-2';
-import Card from '../../../../components/UI/Card/Card';
-import StageButton from '../../../../components/UI/StageButton/StageButton';
-import ClassificationSelect from '../../../../components/UI/ClassificationSelect/ClassificationSelect';
+import Card from '@/components/UI/Card/Card';
+import StageButton from '@/components/UI/StageButton/StageButton';
+import ClassificationSelect from '@/components/UI/ClassificationSelect/ClassificationSelect';
 
 import { addAddress, getAddressClassifications, getUserProfile } from '@/services/profileService';
 
-import { useNotification } from '../../../../hooks/useNotification'; 
+import { useNotification } from '@/hooks/useNotification'; 
 
 import styles from './addAddress.module.css';
 import 'react-phone-input-2/lib/style.css';
