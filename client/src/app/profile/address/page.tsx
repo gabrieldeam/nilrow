@@ -21,7 +21,7 @@ function AddressPage() {
   const [addresses, setAddresses] = useState<any[]>([]);
   const [isMobile, setIsMobile] = useState(false);
   const selectMode = searchParams.get('selectMode') === '1';
-  const returnTo = searchParams.get('returnTo') || '/add-catalog';
+  const returnTo = searchParams.get('returnTo') || '/channel/catalog/add';
 
   useEffect(() => {
     if (typeof window !== 'undefined') {

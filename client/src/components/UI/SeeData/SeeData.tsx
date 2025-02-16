@@ -21,10 +21,13 @@ const SeeData: React.FC<SeeDataProps> = ({
   showIcon = false,
   badgeText,
   badgeBackgroundColor,
+  buttonType = 'button',
 }) => {
   return (
     <div
-      className={`${styles['see-data-container']} ${stackContent ? styles['stack-content'] : ''}`}
+      className={`${styles['see-data-container']} ${
+        stackContent ? styles['stack-content'] : ''
+      }`}
     >
       <div className={styles['see-data-main']}>
         <div className={styles['see-data-title']}>{title}</div>
@@ -38,8 +41,11 @@ const SeeData: React.FC<SeeDataProps> = ({
         <div className={`${styles['see-data-content']} ${styles['ellipsis']}`}>
           {content}
         </div>
-        {subContent && <div className={styles['see-data-sub-content']}>{subContent}</div>}
+        {subContent && (
+          <div className={styles['see-data-sub-content']}>{subContent}</div>
+        )}
       </div>
+
       <div className={styles['see-data-actions']}>
         {badgeText && (
           <div
@@ -55,11 +61,18 @@ const SeeData: React.FC<SeeDataProps> = ({
           </a>
         )}
         {onClick && linkText && (
-          <button className={styles['see-data-button']} onClick={onClick}>
+          <button
+            type={buttonType}
+            className={styles['see-data-button']}
+            onClick={onClick}
+          >
             {linkText}
           </button>
         )}
-        {showToggleButton && <ToggleButton onToggle={onToggle || (() => {})} initial={toggled} />}
+
+        {showToggleButton && (
+          <ToggleButton onToggle={onToggle || (() => {})} initial={toggled} />
+        )}
       </div>
     </div>
   );

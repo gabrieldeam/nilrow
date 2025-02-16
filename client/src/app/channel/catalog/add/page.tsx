@@ -75,7 +75,6 @@ const AddCatalog: React.FC = () => {
   const [isFormValid, setIsFormValid] = useState(false);
 
   useEffect(() => {
-    // Recupera dados salvos no localStorage (se existirem)
     if (typeof window !== 'undefined') {
       const savedData = localStorage.getItem('addCatalogFormData');
       if (savedData) {
@@ -90,7 +89,6 @@ const AddCatalog: React.FC = () => {
       }
     }
 
-    // Recupera os parâmetros da URL usando useSearchParams
     const selectedAddressId = searchParams.get('selectedAddressId');
     const selectedAddressStreet = searchParams.get('selectedAddressStreet');
     const selectedAddressCep = searchParams.get('selectedAddressCep');
@@ -311,7 +309,7 @@ const AddCatalog: React.FC = () => {
       localStorage.setItem('addCatalogFormData', JSON.stringify(formDataWithTimestamp));
     }
     // Monta a URL com os parâmetros desejados
-    router.push('/address?selectMode=true&returnTo=/add-catalog');
+    router.push('/profile/address?selectMode=1&returnTo=/channel/catalog/add');
   };
 
   return (
@@ -385,22 +383,23 @@ const AddCatalog: React.FC = () => {
             </div>
           </Card>
           <Card title="Endereço de origem">
-            <SeeData
-              title="Endereço"
-              content={
-                formData.addressCep
-                  ? `CEP: ${formData.addressCep} - ${formData.addressCity}/${formData.addressState}`
-                  : 'Nenhum endereço selecionado'
-              }
-              subContent={
-                formData.addressRecipientName
-                  ? `${formData.addressRecipientName} - ${formData.addressRecipientPhone}`
-                  : ''
-              }
-              stackContent={true}
-              linkText="Selecionar"
-              onClick={handleSelectAddress}
-            />
+          <SeeData
+            title="Endereço"
+            content={
+              formData.addressCep
+                ? `CEP: ${formData.addressCep} - ${formData.addressCity}/${formData.addressState}`
+                : 'Nenhum endereço selecionado'
+            }
+            subContent={
+              formData.addressRecipientName
+                ? `${formData.addressRecipientName} - ${formData.addressRecipientPhone}`
+                : ''
+            }
+            linkText="Selecionar"
+            onClick={handleSelectAddress}
+            buttonType="button" 
+            stackContent={true}
+          />
           </Card>
           <Card title="Funcionamento">
             <div className={styles.selectionSeeDataWrapper}>

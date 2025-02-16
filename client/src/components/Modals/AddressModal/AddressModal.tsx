@@ -13,7 +13,6 @@ import closeIcon from '../../../../public/assets/close.svg';
 import { getAddresses } from '../../../services/profileService';
 import { useRouter } from 'next/navigation';
 
-// Importar o hook de autenticação
 import { useAuth } from '../../../hooks/useAuth';
 
 const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose }) => {
@@ -21,7 +20,6 @@ const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose }) => {
   const { setMessage } = useNotification();
   const router = useRouter();
   
-  // Hook de autenticação
   const { isAuthenticated, loading } = useAuth();
 
   const [zip, setZip] = useState(location.zip || '');
@@ -32,7 +30,6 @@ const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose }) => {
     setZip(location.zip || '');
   }, [location.zip]);
 
-  // Impede que role a tela de fundo ao abrir o modal
   useEffect(() => {
     document.body.classList.toggle(styles['body-no-scroll'], isOpen);
     return () => {
@@ -40,7 +37,6 @@ const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose }) => {
     };
   }, [isOpen]);
 
-  // Busca endereços somente se o modal estiver aberto e o usuário estiver autenticado
   useEffect(() => {
     if (!isOpen) return;
     if (!loading && isAuthenticated) {
@@ -69,7 +65,7 @@ const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose }) => {
         alert('CEP inválido');
         return;
       }
-      // Salva apenas informações básicas no contexto
+
       setLocation({
         city: data.localidade,
         state: data.uf,
@@ -87,7 +83,6 @@ const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose }) => {
     setShowAllAddresses((prev) => !prev);
   }, []);
 
-  // Ao clicar em "Usar esse CEP" no bloco de "Endereços cadastrados"
   const handleUseZip = (address: Address) => {
     setLocation({
       city: address.city,
@@ -99,7 +94,6 @@ const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose }) => {
     onClose();
   };
 
-  // Fecha modal se clicar no overlay
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if ((e.target as HTMLDivElement).classList.contains(styles['address-modal-overlay'])) {
       onClose();
@@ -123,10 +117,6 @@ const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose }) => {
         <p className={`${styles['address-modal-description']} roboto-regular`}>
           Você poderá ver custos e prazos de entrega precisos em tudo que procurar.
         </p>
-
-        {/* 
-          BLOCO DE “ENDEREÇOS CADASTRADOS” SÓ APARECE SE O USUÁRIO ESTIVER LOGADO
-        */}
         {isAuthenticated && (
           <Card
             title="Endereços cadastrados"
@@ -144,6 +134,7 @@ const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose }) => {
                   content={`${address.cep} - ${address.city}/${address.state}`}
                   linkText="Usar esse CEP"
                   onClick={() => handleUseZip(address)}
+                  stackContent={true}
                 />
               ))
             )}
@@ -155,9 +146,6 @@ const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose }) => {
           </Card>
         )}
 
-        {/* 
-          FORMULÁRIO DE CEP É SEMPRE VISÍVEL (INDEPENDENTE DE LOGIN)
-        */}
         <form className={styles['address-modal-form']} onSubmit={handleSubmit}>
           <Card title="CEP">
             <CustomInput

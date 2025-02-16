@@ -14,4 +14,5 @@ export interface SeeDataProps {
   showIcon?: boolean;
   badgeText?: string;
   badgeBackgroundColor?: CSSProperties['backgroundColor'];
+  buttonType?: 'button' | 'submit' | 'reset';
 }

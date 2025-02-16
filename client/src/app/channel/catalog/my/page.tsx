@@ -111,7 +111,7 @@ const MyCatalog: React.FC = () => {
 
   const handleEditCatalog = useCallback(() => {
     if (catalogId) {
-      router.push(`/channel/catalog/my/edit/${catalogId}`);
+      router.push(`/channel/catalog/my/edit?${catalogId}`);
     }
   }, [catalogId, router]);
 
@@ -123,12 +123,12 @@ const MyCatalog: React.FC = () => {
       </Head>
 
       {isMobile && (
-        <MobileHeader title="Catálogo" buttons={{ close: true, orders: true }} handleBack={handleBack} />
+        <MobileHeader title="Meu Catálogo" buttons={{ close: true, orders: true }} handleBack={handleBack} />
       )}
 
       <div className={styles.myCatalogContainer}>
         <div className={styles.myCatalogHeader}>
-          <SubHeader title="Catálogo" handleBack={handleBack} showOrdersButton={true} handleOrders={handleOrders} />
+          <SubHeader title="Meu Catálogo" handleBack={handleBack} showOrdersButton={true} handleOrders={handleOrders} />
         </div>
         <div className={styles.myCatalogAdditionalSteps}>
           <div className={styles.myCatalogAdditional}>
