@@ -1,5 +1,5 @@
 import api from './api';
-import {  MessageContent,  MessageData,  ConversationData,  ChannelData,  BlockStatus,} from '../types/services/chat';
+import {  MessageData, ConversationChannelDTO, ConversationPeopleDTO,  ChannelData,  BlockStatus,} from '../types/services/chat';
 
 // Inicia uma nova conversa
 export const startConversation = async (channelId: string, content: string): Promise<string> => {
@@ -95,13 +95,13 @@ export const disableChat = async (conversationId: string) => {
 
 // Obtém todas as conversas
 export const getConversations = async () => {
-  const response = await api.get<ConversationData[]>('/chats/conversations');
+  const response = await api.get<ConversationPeopleDTO[]>('/chats/conversations');
   return response.data;
 };
 
 // Obtém conversas de um canal
 export const getChannelConversations = async () => {
-  const response = await api.get<ConversationData[]>('/chats/conversations/channel');
+  const response = await api.get<ConversationChannelDTO[]>('/chats/conversations/channel');
   return response.data;
 };
 

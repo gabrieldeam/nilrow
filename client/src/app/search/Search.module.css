@@ -1,0 +1,135 @@
+.searchPage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    padding-top: 130px;
+    padding-bottom: 70px;
+    box-sizing: border-box;
+  }
+  
+  .searchContainer {
+    width: 100%;
+    padding: 0 58px;
+    box-sizing: border-box;
+    position: relative;
+  }
+  
+  .searchHistory,
+  .searchResults {
+    margin-top: 20px;
+  }
+  
+  .searchHistory h2,
+  .searchResults h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+  }
+  
+  .searchHistory ul,
+  .searchResults ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 10px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    font-family: "Roboto", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+  }
+  
+  .searchHistory ul::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .searchHistory li,
+  .searchResults li {
+    background-color: #212121;
+    padding: 10px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    color: #fff;
+    min-width: fit-content;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+  }
+  
+  .clockIcon {
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+  }
+  
+  .searchResults li {
+    background-color: #333;
+  }
+  
+  .scrollArrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    padding: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+  }
+  
+  .scrollArrowLeft {
+    left: 58px;
+  }
+  
+  .scrollArrowRight {
+    right: 58px;
+  }
+  
+  .scrollArrowLeft img {
+    transform: rotate(180deg);
+  }
+  
+  .clearHistoryButton {
+    background-color: #7B33E5;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 5px;
+    min-width: fit-content;
+  }
+  
+  .clearHistoryButton:hover {
+    background-color: #6225BC;
+  }
+  
+  /* Estilos para mobile */
+  @media (max-width: 768px) {
+    .searchPage {
+      padding-bottom: 110px;
+      padding-top: 89px;
+    }
+  
+    .searchContainer {
+      max-width: 419px;
+      padding: 0 6px;
+    }
+  
+    .scrollArrow {
+      display: none;
+    }
+  }
+  

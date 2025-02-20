@@ -120,7 +120,7 @@ const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose }) => {
         {isAuthenticated && (
           <Card
             title="Endereços cadastrados"
-            rightLink={{ href: '/address', text: 'Editar endereços' }}
+            rightLink={{ href: '/profile/address', text: 'Editar endereços' }}
           >
             {addresses.length === 0 ? (
               <div className={styles['address-modal-no-results']}>
@@ -153,7 +153,7 @@ const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose }) => {
               type="text"
               value={zip}
               onChange={(e) => setZip(e.target.value)}
-              bottomRightLink={{ href: '/zip-code-search', text: 'Não sei o meu CEP' }}
+              bottomRightLink={{ href: '/cep-search', text: 'Não sei o meu CEP' }}
             />
           </Card>
           <button type="submit" className={styles['address-modal-save-button']}>

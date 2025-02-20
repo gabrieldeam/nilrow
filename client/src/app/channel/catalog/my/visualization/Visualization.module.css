@@ -1,0 +1,196 @@
+.visualizationPage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #000;
+    color: #fff;
+    padding-top: 150px;
+    padding-bottom: 70px;
+    box-sizing: border-box;
+  }
+  
+  .visualizationContainer {
+    width: 100%;
+    padding: 0 58px;
+    box-sizing: border-box;
+  }
+  
+  .visualizationHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+  
+  .visualizationSearchHistory {
+    max-height: 100%;
+    overflow-y: auto;
+    padding: 10px;
+    background-color: white;
+    border-radius: 0 0 5px 5px;
+  }
+  
+  .visualizationSearchItem {
+    padding: 10px;
+    color: #000000;
+    background-color: #ececec;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+  }
+  
+  .visualizationSearchItem span {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: 80%;
+  }
+  
+  .removeRegionButton {
+    background: none;
+    border: none;
+    color: #000000;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  
+  .visualizationMapContainer {
+    width: 100%;
+    height: 500px;
+    margin-top: 20px; /* Ajuste do espaço acima do mapa */
+  }
+  
+  .visualizationInputGroup {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: white;
+    border-radius: 5px 5px 0 0;
+    position: relative;
+    margin-bottom: -20px;
+  }
+  
+  .dropdownContainer {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .dropdownSelected {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 5px 10px 5px 5px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-left: 5px;
+    margin-right: 5px;
+    color: #000;
+  }
+  
+  .dropdownOptions {
+    display: none;
+    position: absolute;
+    background-color: white;
+    margin-top: 10px;
+    margin-left: 5px;
+    color: #000;
+    z-index: 1001;
+    border-radius: 5px;
+  }
+  
+  .dropdownContainer:hover .dropdownOptions {
+    display: block;
+  }
+  
+  .dropdownOption {
+    padding: 10px;
+    display: flex;
+    cursor: pointer;
+  }
+  
+  .dropdownOption:hover {
+    background-color: #f1f1f1;
+  }
+  
+  .dropdownIcon {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+  }
+  
+  .visualizationSearchInput {
+    flex: 3;
+    height: 44px;
+    border-radius: 5px;
+    font-size: 16px;
+    padding: 0 10px;
+    box-sizing: border-box;
+    background-color: white;
+    border: none;
+  }
+  
+  .suggestionsContainer {
+    position: absolute;
+    top: 35%;
+    left: 150px;
+    width: 85%;
+    background-color: white;
+    border-radius: 0 0 5px 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 1001;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  
+  .suggestionItem {
+    padding: 10px;
+    color: #9f9f9f;
+    cursor: pointer;
+  }
+  
+  .highlight {
+    color: black;
+    font-weight: bold;
+  }
+  
+  .suggestionItem:hover,
+  .suggestionItem.selected {
+    background-color: #7b33e5;
+    color: white;
+  }
+  
+  @media (max-width: 768px) {
+    .visualizationPage {
+      padding-bottom: 110px;
+      padding-top: 109px;
+    }
+  
+    .visualizationContainer {
+      max-width: 419px;
+      padding: 0 6px;
+    }
+  
+    .suggestionsContainer {
+      top: 27%;
+      left: 32px;
+      width: 85%;
+      max-height: 400px;
+    }
+  
+    .visualizationInputGroup {
+      display: flex;
+      flex-direction: row;
+      width: 100%;
+    }
+  
+    .visualizationSearchInput {
+      flex: 2;
+    }
+  }
+  

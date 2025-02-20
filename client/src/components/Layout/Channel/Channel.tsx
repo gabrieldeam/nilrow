@@ -195,10 +195,10 @@ function formatNumber(num: number) {
   
     // Ir para followers e following
     const handleFollowersClick = () => {
-      router.push(`/channel-follow/${nickname}`);
+      router.push(`/channel/follow/${nickname}`);
     };
     const handleFollowingClick = () => {
-      router.push(`/channel-follow/${nickname}`);
+      router.push(`/channel/follow/${nickname}`);
     };
   
     // Seguir / Deixar de seguir

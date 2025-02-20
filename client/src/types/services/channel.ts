@@ -7,7 +7,7 @@ export interface ChannelDTO {
 export interface ChannelData {
     id: string;
     name: string;
-    nickname?: string;
+    nickname: string;
     biography?: string;
     externalLink?: string;
     visibility?: boolean;
@@ -17,6 +17,7 @@ export interface ChannelData {
 
 export interface FollowerData {
     id: string;
+    name?: string;
     nickname: string;
     profileImage?: string;
 }
@@ -24,6 +25,8 @@ export interface FollowerData {
 export interface FollowingChannelData {
     id: string;
     name: string;
+    nickname: string;
+    imageUrl?: string;
     visibility: boolean;
 }
 

@@ -7,4 +7,5 @@ export interface HeaderButtonProps {
   newTab?: boolean;
   isActive?: boolean;
   onClick?: () => void;
+  className?: string;
 }

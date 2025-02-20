@@ -10,6 +10,8 @@ import closeIcon from '../../../../public/assets/close.svg';
 import userIcon from '../../../../public/assets/user.png';
 import styles from './ChatModal.module.css';
 
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+
 const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose }) => {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -93,7 +95,7 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose }) => {
               onClick={() => handleChannelSelect(channel)}
             >
               <Image
-                src={channel.imageUrl || userIcon}
+                src={`${apiUrl}${channel.imageUrl}` || userIcon}
                 alt="Channel Avatar"
                 width={45}
                 height={45}

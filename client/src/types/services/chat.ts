@@ -8,22 +8,51 @@ export interface MessageContent {
     senderId: string;
     timestamp: string;
     seen: boolean;
+    contentType?: string;
+    isSender?: boolean;
+    sentAt: string;    
+    senderType: string; 
   }
-  
-  export interface ConversationData {
+
+  export interface MessageDataDTO {
     id: string;
-    participants: string[];
-    lastMessage: MessageData;
-    isMuted: boolean;
+    content: string;
+    senderType: string; 
+    seen: boolean;
+    isSender?: boolean;
+    sentAt: string;
+    contentType?: "text" | "image" | "file" | string;
   }
+
+  export interface UIBasicConversation {
+    id: string; 
+    name: string;
+    imageUrl?: string;
+    nickname?: string;
+    isBlocked?: boolean;
+    newMessagesCount?: number;
+    lastMessage?: MessageData;
+    lastMessageTime?: string;
+  }
+
+  export type BlockStatus = boolean;
   
   export interface ChannelData {
     id: string;
     name: string;
+  }  
+
+  export interface ConversationChannelDTO {
+    conversationId: string;
+    channelId: string;
+    name: string;
+    imageUrl: string;
+    nickname: string;
   }
   
-  export interface BlockStatus {
-    isBlocked: boolean;
-    blockedBy: string | null;
+  export interface ConversationPeopleDTO {
+    conversationId: string;
+    peopleId: string;
+    name: string;
+    nickname: string;
   }
-  

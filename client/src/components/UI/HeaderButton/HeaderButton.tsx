@@ -1,10 +1,11 @@
+// HeaderButton.tsx
 import React, { useCallback, forwardRef, memo } from 'react';
 import Image from 'next/image';
 import styles from './HeaderButton.module.css';
 import { HeaderButtonProps } from '../../../types/components/UI/HeaderButton';
 
 const HeaderButton = forwardRef<HTMLButtonElement, HeaderButtonProps>(
-  ({ text, icon, link, newTab = false, isActive = false, onClick }, ref) => {
+  ({ text, icon, link, newTab = false, isActive = false, onClick, className }, ref) => {
     const handleClick = useCallback(() => {
       if (onClick) {
         onClick();
@@ -20,7 +21,7 @@ const HeaderButton = forwardRef<HTMLButtonElement, HeaderButtonProps>(
 
     return (
       <button
-        className={`${styles['custom-button']} roboto-regular ${isActive ? styles.active : ''}`}
+        className={`${styles['custom-button']} roboto-regular ${isActive ? styles.active : ''} ${className || ''}`}
         onClick={handleClick}
         ref={ref}
       >
@@ -29,7 +30,7 @@ const HeaderButton = forwardRef<HTMLButtonElement, HeaderButtonProps>(
             src={icon}
             alt="icon"
             className={`${styles['button-icon']} ${text ? styles['with-text'] : ''}`}
-            width={20} 
+            width={20}
             height={20}
             loading="lazy"
           />
@@ -40,5 +41,5 @@ const HeaderButton = forwardRef<HTMLButtonElement, HeaderButtonProps>(
   }
 );
 
-HeaderButton.displayName = 'HeaderButton'; 
+HeaderButton.displayName = 'HeaderButton';
 export default memo(HeaderButton);

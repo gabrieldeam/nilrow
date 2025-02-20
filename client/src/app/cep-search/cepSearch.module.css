@@ -1,0 +1,115 @@
+.zipCodeSearchPage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    color: #fff;
+    padding-top: 90px;
+    padding-bottom: 70px;
+    box-sizing: border-box;
+  }
+  
+  .zipCodeSearchContainer {
+    width: 100%;
+    padding: 0 58px;
+    box-sizing: border-box;
+  }
+  
+  .zipCodeSearchHeader {
+    display: flex;
+    align-items: center;
+    width: 100%;
+  }
+  
+  .zipCodeSearchSubmit {
+    margin-bottom: 9px;
+  }
+  
+  .zipCodeSearchForm {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    width: 40%;
+  }
+  
+  .zipCodeSearchResults {
+    margin-top: 25px;
+  }
+  
+  .zipCodeSearchError {
+    color: #df1414;
+    font-weight: bold;
+  }
+  
+  .seeDataContainerWrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .seeDataContainer {
+    flex: 1 1 calc(33.333% - 10px); /* Ajusta para três colunas */
+    min-width: 250px; /* Largura mínima */
+  }
+  
+  .zipCodeSearchNoResults {
+    background-color: #000000;
+    border-radius: 5px;
+    height: 60px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 20px;
+    box-sizing: border-box;
+    color: #ffffff;
+    text-align: center;
+  }
+  
+  .zipCodeSearchTitle {
+    font-size: 18px;
+    margin-right: 20px;
+    flex: 1;
+    white-space: nowrap;
+    margin-bottom: 25px;
+  }
+  
+  /* Estilos para mobile */
+  @media (max-width: 768px) {
+    .zipCodeSearchPage {
+      padding-bottom: 110px;
+      padding-top: 100px;
+    }
+  
+    .zipCodeSearchContainer {
+      max-width: 419px;
+      padding: 0 6px;
+    }
+  
+    .zipCodeSearchHeader {
+      width: 100%;
+    }
+  
+    .zipCodeSearchForm {
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 10px;
+      width: 100%;
+    }
+  
+    .zipCodeSearchForm > * {
+      width: calc(33.333% - 10px);
+    }
+  
+    .zipCodeSearchSubmit {
+      width: 100%;
+      margin-bottom: -10px;
+      margin-top: -15px;
+    }
+  
+    .zipCodeSearchTitle {
+      display: none;
+    }
+  }
+  

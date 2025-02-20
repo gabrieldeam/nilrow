@@ -87,7 +87,7 @@ const Following: React.FC = () => {
     <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.title}>Canais que você segue</div>
-        <button onClick={() => router.push('/my-following')} className={styles.button}>
+        <button onClick={() => router.push('/profile/following')} className={styles.button}>
           <Image src="/assets/rightarrow.svg" alt="Following" width={24} height={24} />
         </button>
       </div>

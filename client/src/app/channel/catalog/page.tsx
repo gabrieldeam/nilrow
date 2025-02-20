@@ -25,7 +25,7 @@ const Catalog = () => {
   }, []);
 
   const handleBack = useCallback(() => {
-    router.push('/channel/catalog/my');
+    router.push('/channel');
   }, [router]);
 
   useEffect(() => {

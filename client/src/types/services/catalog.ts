@@ -48,6 +48,10 @@ export interface CatalogDTO {
     latitude: number;
     longitude: number;
     address: AddressData;
+    name?: string;
+    action?: "include" | "exclude";
+    includedPolygons?: [number, number][][]; 
+    excludedPolygons?: [number, number][][];
   }
   
   export interface CatalogDataWithAddress extends CatalogData {

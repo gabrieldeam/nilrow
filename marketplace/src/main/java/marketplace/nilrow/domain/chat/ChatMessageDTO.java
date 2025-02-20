@@ -1,5 +1,6 @@
 package marketplace.nilrow.domain.chat;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,6 +17,7 @@ public class ChatMessageDTO {
     private String content;
     private String senderType;
     private boolean seen;
+    @JsonProperty("isSender")
     private boolean isSender;
     private LocalDateTime sentAt;
     private String contentType;

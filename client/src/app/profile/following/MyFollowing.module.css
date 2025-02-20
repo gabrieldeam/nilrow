@@ -1,0 +1,125 @@
+.myFollowingPage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    padding-top: 160px;
+    padding-bottom: 70px;
+    box-sizing: border-box;
+  }
+  
+  .myFollowingContainer {
+    width: 100%;
+    padding: 0 58px;
+    box-sizing: border-box;
+  }
+  
+  .channelsListDesktopMyFollowing {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 50px;
+  }
+  
+  .channelsListMobileMyFollowing {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .channelItemMyFollowing {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .channelInfoMyFollowing {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .channelImageMyFollowing {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    margin-right: 10px;
+  }
+  
+  .channelDetailsMyFollowing {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+  
+  .channelNameMyFollowing {
+    font-size: 16px;
+    font-weight: bold;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 300px;
+  }
+  
+  .channelNicknameMyFollowing {
+    font-size: 14px;
+    color: #fff;
+    text-align: left;
+  }
+  
+  .myFollowingSearchContainer {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 40px;
+  }
+  
+  .myFollowingSearchInput {
+    width: 400px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    margin-left: 10px;
+    background-color: #d9d9d9;
+  }
+  
+  .myFollowingDesktopOnly {
+    display: none;
+  }
+  
+  @media (min-width: 769px) {
+    .myFollowingDesktopOnly {
+      display: block;
+    }
+  }
+  
+  /* Styles para mobile */
+  @media (max-width: 768px) {
+    .myFollowingPage {
+      padding-top: 109px;
+      padding-bottom: 110px;
+      min-height: 0vh;
+    }
+    .myFollowingContainer {
+      max-width: 419px;
+      padding: 0 6px;
+    }
+    .channelNameMyFollowing {
+      max-width: 150px;
+    }
+    .myFollowingSearchContainer {
+      justify-content: center;
+    }
+    .myFollowingSearchInput {
+      width: 90%;
+      margin-left: 0;
+    }
+  }
+  
