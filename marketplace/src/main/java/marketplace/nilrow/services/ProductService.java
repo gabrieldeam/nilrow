@@ -3,16 +3,24 @@ package marketplace.nilrow.services;
 import marketplace.nilrow.domain.catalog.Catalog;
 import marketplace.nilrow.domain.catalog.category.Category;
 import marketplace.nilrow.domain.catalog.category.SubCategory;
+import marketplace.nilrow.domain.catalog.location.Location;
 import marketplace.nilrow.domain.catalog.product.Product;
 import marketplace.nilrow.domain.catalog.product.ProductDTO;
 import marketplace.nilrow.domain.catalog.product.brand.Brand;
 import marketplace.nilrow.repositories.*;
+import marketplace.nilrow.util.GeoPoint;
+import marketplace.nilrow.util.GeoUtils;
+import marketplace.nilrow.util.OperatingHoursUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -36,6 +44,12 @@ public class ProductService {
 
     @Autowired
     private BrandRepository brandRepository;
+
+    @Autowired
+    private GeocodingService geocodingService;
+
+    @Autowired
+    private LocationRepository locationRepository;
 
     // Criar Produto
     public ProductDTO createProduct(ProductDTO productDTO, List<MultipartFile> images) throws IOException {
@@ -157,6 +171,111 @@ public class ProductService {
 
         // Tratamento de Variações se houver (Implementação omitida para brevidade)
     }
+
+
+    public Page<Product> getProductsByCepAndNoTemplatePaginated(String cep, Pageable pageable) {
+        // Geocodifica o CEP para obter as coordenadas
+        GeoPoint point = geocodingService.geocode(cep);
+        LocalTime now = LocalTime.now();
+        String currentDay = OperatingHoursUtils.getPortugueseDayName(java.time.LocalDate.now().getDayOfWeek());
+
+        // Busca apenas os produtos que não possuem template associado
+        List<Product> products = productRepository.findByProductTemplateIsNull();
+
+        // Filtra os produtos: localização permitida e catálogo aberto
+        List<Product> filtered = products.stream().filter(product -> {
+            String catalogId = product.getCatalog().getId();
+            List<Location> locations = locationRepository.findByCatalogId(catalogId);
+            boolean locationAllowed = locations.stream()
+                    .anyMatch(loc -> GeoUtils.isLocationAllowed(point, loc));
+            if (!locationAllowed) {
+                return false;
+            }
+            Catalog catalog = product.getCatalog();
+            return OperatingHoursUtils.isCatalogOpen(catalog, now, currentDay);
+        }).collect(Collectors.toList());
+
+        // Paginação manual sobre a lista filtrada
+        int start = Math.min((int) pageable.getOffset(), filtered.size());
+        int end = Math.min(start + pageable.getPageSize(), filtered.size());
+        return new PageImpl<>(filtered.subList(start, end), pageable, filtered.size());
+    }
+
+
+    // Método para pesquisar produtos (sem template associado) filtrando por CEP, horário, categoria e subcategoria – com paginação.
+    public Page<Product> getProductsByCepCategoryAndNoTemplate(String cep, String categoryId, String subCategoryId, Pageable pageable) {
+        GeoPoint point = geocodingService.geocode(cep);
+        LocalTime now = LocalTime.now();
+        String currentDay = OperatingHoursUtils.getPortugueseDayName(java.time.LocalDate.now().getDayOfWeek());
+
+        List<Product> products = productRepository.findByProductTemplateIsNull();
+
+        List<Product> filtered = products.stream().filter(product -> {
+            // Filtra pela localização
+            String catalogId = product.getCatalog().getId();
+            List<Location> locations = locationRepository.findByCatalogId(catalogId);
+            boolean locationAllowed = locations.stream().anyMatch(loc -> GeoUtils.isLocationAllowed(point, loc));
+            if (!locationAllowed) {
+                return false;
+            }
+            // Filtra pelo horário de funcionamento
+            Catalog catalog = product.getCatalog();
+            if (!OperatingHoursUtils.isCatalogOpen(catalog, now, currentDay)) {
+                return false;
+            }
+            // Filtra pela categoria, se informado
+            if (categoryId != null && !categoryId.trim().isEmpty()) {
+                if (product.getCategory() == null || !product.getCategory().getId().equals(categoryId)) {
+                    return false;
+                }
+            }
+            // Filtra pela subcategoria, se informado
+            if (subCategoryId != null && !subCategoryId.trim().isEmpty()) {
+                if (product.getSubCategory() == null || !product.getSubCategory().getId().equals(subCategoryId)) {
+                    return false;
+                }
+            }
+            return true;
+        }).collect(Collectors.toList());
+
+        // Paginação manual
+        int start = Math.min((int) pageable.getOffset(), filtered.size());
+        int end = Math.min(start + pageable.getPageSize(), filtered.size());
+        return new PageImpl<>(filtered.subList(start, end), pageable, filtered.size());
+    }
+
+    public Page<Product> searchProductsByCepAndNameAndNoTemplate(String cep, String name, Pageable pageable) {
+        // 1. Geocodifica o CEP para obter as coordenadas
+        GeoPoint point = geocodingService.geocode(cep);
+        LocalTime now = LocalTime.now();
+        String currentDay = OperatingHoursUtils.getPortugueseDayName(java.time.LocalDate.now().getDayOfWeek());
+
+        // 2. Busca os produtos sem template que contenham o nome (ignorando caixa)
+        List<Product> products = productRepository.findByProductTemplateIsNullAndNameContainingIgnoreCase(name);
+
+        // 3. Filtra cada produto pela localização e horário de funcionamento
+        List<Product> filtered = products.stream().filter(product -> {
+            // Verifica localização: obtém as Locations do catálogo do produto
+            String catalogId = product.getCatalog().getId();
+            List<Location> locations = locationRepository.findByCatalogId(catalogId);
+            boolean locationAllowed = locations.stream()
+                    .anyMatch(loc -> GeoUtils.isLocationAllowed(point, loc));
+            if (!locationAllowed) {
+                return false;
+            }
+            // Verifica se o catálogo está aberto no horário atual
+            Catalog catalog = product.getCatalog();
+            return OperatingHoursUtils.isCatalogOpen(catalog, now, currentDay);
+        }).collect(Collectors.toList());
+
+        // 4. Pagina os resultados manualmente
+        int start = Math.min((int) pageable.getOffset(), filtered.size());
+        int end = Math.min(start + pageable.getPageSize(), filtered.size());
+        List<Product> paged = filtered.subList(start, end);
+
+        return new PageImpl<>(paged, pageable, filtered.size());
+    }
+
 
     private ProductDTO convertToDTO(Product product) {
         ProductDTO productDTO = new ProductDTO();

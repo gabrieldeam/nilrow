@@ -3,7 +3,7 @@ import Image from 'next/image';
 import styles from './CustomInput.module.css';
 import eyeIcon from '../../../../public/assets/olho.svg';
 import eyeOffIcon from '../../../../public/assets/olhos-cruzado.svg';
-import { CustomInputProps } from '../../../types/components/UI/CustomInput'; // Importando as interfaces
+import { CustomInputProps } from '../../../types/components/UI/CustomInput';
 
 const CustomInput: React.FC<CustomInputProps> = ({
   title,
@@ -11,7 +11,7 @@ const CustomInput: React.FC<CustomInputProps> = ({
   bottomLeftText = '',
   bottomRightLink = null,
   onChange,
-  value = '',
+  value,
   type = 'text',
   name = '',
   isValid,
@@ -27,6 +27,9 @@ const CustomInput: React.FC<CustomInputProps> = ({
     setIsPasswordVisible((prevState) => !prevState);
   }, []);
 
+  // Converter value para string
+  const stringValue = value !== undefined ? value.toString() : '';
+
   return (
     <div className={styles.customInputContainer}>
       {title && <label className={styles.inputTitle}>{title}</label>}
@@ -39,7 +42,7 @@ const CustomInput: React.FC<CustomInputProps> = ({
             } ${readOnly ? styles.readOnly : ''}`}
             placeholder={placeholder}
             onChange={onChange}
-            value={value}
+            value={stringValue}
             name={name}
             style={{ paddingLeft: prefix ? '106px' : '14px' }}
             disabled={disabled}
@@ -53,7 +56,7 @@ const CustomInput: React.FC<CustomInputProps> = ({
             } ${readOnly ? styles.readOnly : ''}`}
             placeholder={placeholder}
             onChange={onChange}
-            value={value}
+            value={stringValue}
             name={name}
             style={{ paddingLeft: prefix ? '106px' : '14px' }}
             readOnly={readOnly}

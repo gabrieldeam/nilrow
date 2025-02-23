@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import styles from './SubCategoryList.module.css';
 
 import { getSubCategoriesByCategory } from '../../../../services/categoryService';
@@ -23,17 +23,18 @@ const SubCategoryList: React.FC<SubCategoryListProps> = ({
   useEffect(() => {
     const fetchSubCategories = async () => {
       try {
-        const response = await getSubCategoriesByCategory(categoryId);
-        setSubCategories([{ id: 'tudo', name: 'Tudo' }, ...response]);
+        const response = await getSubCategoriesByCategory(categoryId, 0, 9999);
+        setSubCategories([{ id: 'tudo', name: 'Tudo' }, ...response.content]);
       } catch (error) {
         console.error('Erro ao buscar subcategorias:', error);
       }
     };
-
+  
     if (categoryId) {
       fetchSubCategories();
     }
   }, [categoryId]);
+  
 
   const handleSubCategoryClick = (subCategoryName: string) => {
     if (categoryName) {

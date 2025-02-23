@@ -15,7 +15,7 @@ export interface BottomRightLink {
     bottomLeftText?: string;
     bottomRightLink?: BottomRightLink | null;
     onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-    value?: string;
+    value?: string | number;
     type?: string;
     name?: string;
     isValid?: boolean;
@@ -25,4 +25,3 @@ export interface BottomRightLink {
     isTextarea?: boolean;
     disabled?: boolean;
   }
-  

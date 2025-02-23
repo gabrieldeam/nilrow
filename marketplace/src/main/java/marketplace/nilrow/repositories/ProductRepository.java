@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface ProductRepository extends JpaRepository<Product, String> {
     List<Product> findByCatalogId(String catalogId);
+    List<Product> findByProductTemplateIsNull();
+    List<Product> findByProductTemplateIsNullAndNameContainingIgnoreCase(String name);
 }

@@ -1,9 +1,13 @@
 package marketplace.nilrow.controllers;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import marketplace.nilrow.domain.catalog.product.Product;
 import marketplace.nilrow.domain.catalog.product.ProductDTO;
 import marketplace.nilrow.services.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -60,5 +64,41 @@ public class ProductController {
     public ResponseEntity<List<ProductDTO>> getProductsByCatalog(@PathVariable String catalogId) {
         List<ProductDTO> products = productService.getProductsByCatalog(catalogId);
         return ResponseEntity.ok(products);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<Product>> searchProducts(
+            @RequestParam String cep,
+            @RequestParam String name,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Product> result = productService.searchProductsByCepAndNameAndNoTemplate(cep, name, pageable);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/products")
+    public ResponseEntity<Page<Product>> searchProductsByCep(
+            @RequestParam String cep,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Product> result = productService.getProductsByCepAndNoTemplatePaginated(cep, pageable);
+        return ResponseEntity.ok(result);
+    }
+
+    // Pesquisa produtos (sem template associado) filtrando por CEP, horário, categoria e subcategoria – com paginação
+    @GetMapping("/products-by-filters")
+    public ResponseEntity<Page<Product>> searchProductsByFilters(
+            @RequestParam String cep,
+            @RequestParam(required = false) String categoryId,
+            @RequestParam(required = false) String subCategoryId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Product> result = productService.getProductsByCepCategoryAndNoTemplate(cep, categoryId, subCategoryId, pageable);
+        return ResponseEntity.ok(result);
     }
 }

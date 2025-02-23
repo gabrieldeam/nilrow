@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
 import {
-  getAllCategories,
+  getAllCategoriesAdmin,
   createCategory,
   updateCategory,
   deleteCategory,
@@ -47,6 +47,12 @@ function CategoryPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubCategoryModalOpen, setIsSubCategoryModalOpen] = useState(false);
 
+
+const [categoryId, setCategoryId] = useState<string>('');
+const [subCategories, setSubCategories] = useState<any[]>([]);
+const [hasMoreSubCategories, setHasMoreSubCategories] = useState(true);
+const [subCategoryPage, setSubCategoryPage] = useState(0);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -57,32 +63,61 @@ function CategoryPage() {
     }
   }, [searchTerm, currentPage]);
 
-  async function fetchCategoriesAndSubCategories(page: number, size: number) {
-    try {
-      const response = await getAllCategories(page, size);
-      // Supondo que "response" SEJA um array de categorias
-      if (Array.isArray(response)) {
-        setCategories(response);
-  
-        // Se não há paginação real no back, set totalPages = 1 (ou calcule a partir do length)
-        setTotalPages(1);
-  
-        const subCategoriesMap: { [key: string]: any[] } = {};
-        // Agora iteramos direto em "response" (é um array):
-        for (const category of response) {
-          const subData = await getSubCategoriesByCategory(category.id);
-          subCategoriesMap[category.id] = subData;
-        }
-        setSubCategoriesByCategory(subCategoriesMap);
-      } else {
-        console.error('Formato inesperado da resposta da API:', response);
-        setCategories([]);
+  // In the fetchCategoriesAndSubCategories function
+async function fetchCategoriesAndSubCategories(page: number, size: number) {
+  try {
+    const data = await getAllCategoriesAdmin(page, size);
+    if (data && Array.isArray(data.content)) {
+      setCategories(data.content);
+      setTotalPages(data.totalPages);
+
+      // Add type annotation here
+      const subCategoriesMap: { [key: string]: any[] } = {}; // <-- Fix
+      for (const category of data.content) {
+        const subData = await getSubCategoriesByCategory(category.id, 0, 10);
+        subCategoriesMap[category.id] = subData.content;
       }
-    } catch (error) {
-      console.error('Erro ao buscar categorias e subcategorias:', error);
+      setSubCategoriesByCategory(subCategoriesMap);
+    } else {
+      console.error('Unexpected API response format:', data);
+      setCategories([]);
     }
+  } catch (error) {
+    console.error('Error fetching categories:', error);
   }
+}
+
+const fetchSubCategories = async (catId: string, page: number = 0) => {
+  try {
+    const result = await getSubCategoriesByCategory(catId, page, 4);
+    
+    if (page === 0) {
+      setSubCategories(result.content);
+    } else {
+      setSubCategories((prev: any[]) => [...prev, ...result.content]); // Adicione tipagem aqui
+    }
+    
+    setHasMoreSubCategories(!result.last);
+  } catch (error) {
+    console.error('Error fetching subcategories:', error);
+  }
+};
   
+useEffect(() => {
+  if (categoryId) {
+    setSubCategoryPage(0);
+    fetchSubCategories(categoryId, 0);
+  }
+}, [categoryId]); // Adicione categoryId como dependência
+  
+
+const handleLoadMoreSubCategories = async () => {
+  if (!categoryId) return;
+  
+  const nextPage = subCategoryPage + 1;
+  setSubCategoryPage(nextPage);
+  await fetchSubCategories(categoryId, nextPage);
+};
 
   async function searchCategories(name: string) {
     try {
@@ -92,7 +127,7 @@ function CategoryPage() {
       const subCategoriesMap: { [key: string]: any[] } = {};
       for (const category of result) {
         const subData = await getSubCategoriesByCategory(category.id);
-        subCategoriesMap[category.id] = subData;
+        subCategoriesMap[category.id] = subData.content;
       }
       setSubCategoriesByCategory(subCategoriesMap);
     } catch (error) {
@@ -322,21 +357,28 @@ function CategoryPage() {
 
                   <div className={styles['category-columnsubcategories']}>
                     {subCategoriesByCategory[category.id]?.length > 0 ? (
-                      subCategoriesByCategory[category.id].map((sub, idx) => (
-                        <span
-                          key={sub.id}
-                          onClick={(e) => {
-                            e.stopPropagation(); // para não selecionar a categoria
-                            handleSubCategoryClick(sub);
-                          }}
-                        >
-                          {sub.name}
-                          {idx <
-                            subCategoriesByCategory[category.id].length - 1 && (
-                            <span>,&nbsp;</span>
-                          )}
-                        </span>
-                      ))
+                      <>
+                        {subCategoriesByCategory[category.id].slice(0, 3).map((sub, idx) => (
+                          <span
+                            key={sub.id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSubCategoryClick(sub);
+                            }}
+                            className={styles['subcategory-link']}
+                          >
+                            {sub.name}
+                            {idx < Math.min(2, subCategoriesByCategory[category.id].length - 1) && (
+                              <span>,&nbsp;</span>
+                            )}
+                          </span>
+                        ))}
+                        {subCategoriesByCategory[category.id].length > 3 && (
+                          <span className={styles['more-subcategories']}>
+                            + {subCategoriesByCategory[category.id].length - 3} mais
+                          </span>
+                        )}
+                      </>
                     ) : (
                       'Nenhuma subcategoria'
                     )}

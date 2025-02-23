@@ -23,11 +23,18 @@ export const getCategoryById = async (id: string) => {
   return response.data;
 };
 
+// Tirar a repetição
 // Obter todas as categorias com paginação
 export const getAllCategories = async (page: number, size: number) => {
   const response = await api.get('/categories/all', { params: { page, size } });
   return response.data.content || [];
 };
+// Obter todas as categorias com paginação
+export const getAllCategoriesAdmin = async (page: number, size: number) => {
+  const response = await api.get('/categories/all', { params: { page, size } });
+  return response.data;
+};
+
 
 
 // Buscar categorias pelo nome
@@ -75,11 +82,10 @@ export const deleteSubCategory = async (id: string) => {
 };
 
 // Obter todas as subcategorias de uma categoria
-export const getSubCategoriesByCategory = async (categoryId: string | number) => {
-  const response = await api.get(`/subcategory/category/${categoryId}`);
+export const getSubCategoriesByCategory = async (categoryId: string | number, page: number = 0, size: number = 10) => {
+  const response = await api.get(`/subcategory/category/${categoryId}`, { params: { page, size } });
   return response.data;
 };
-
 
 // Obter subcategoria por ID
 export const getSubCategoryById = async (id: string) => {

@@ -6,6 +6,7 @@ import marketplace.nilrow.domain.catalog.Catalog;
 import marketplace.nilrow.domain.catalog.category.Category;
 import marketplace.nilrow.domain.catalog.category.SubCategory;
 import marketplace.nilrow.domain.catalog.product.brand.Brand;
+import marketplace.nilrow.domain.catalog.product.template.ProductTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -136,4 +137,7 @@ public class Product {
         @JoinColumn(name = "catalog_id", nullable = false)
         private Catalog catalog;
 
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "template_id")
+        private ProductTemplate productTemplate;
     }

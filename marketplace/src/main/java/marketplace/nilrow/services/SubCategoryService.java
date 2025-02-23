@@ -6,6 +6,8 @@ import marketplace.nilrow.domain.catalog.category.SubCategoryDTO;
 import marketplace.nilrow.repositories.CategoryRepository;
 import marketplace.nilrow.repositories.SubCategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -61,11 +63,9 @@ public class SubCategoryService {
     }
 
     // Obter todas as subcategorias de uma categoria
-    public List<SubCategoryDTO> getSubCategoriesByCategory(String categoryId) {
-        return subCategoryRepository.findByCategoryId(categoryId)
-                .stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public Page<SubCategoryDTO> getSubCategoriesByCategory(String categoryId, Pageable pageable) {
+        Page<SubCategory> page = subCategoryRepository.findByCategoryId(categoryId, pageable);
+        return page.map(this::convertToDTO);
     }
 
     // Obter subcategoria por ID

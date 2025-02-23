@@ -6,7 +6,7 @@ import { ExpandableCardProps } from '../../../types/components/UI/ExpandableCard
 import styles from './ExpandableCard.module.css';
 import rightArrowIcon from '../../../../public/assets/setadireito.svg';
 
-const ExpandableCard: React.FC<ExpandableCardProps> = ({ title, children, defaultExpanded = false }) => {
+const ExpandableCard: React.FC<ExpandableCardProps> = ({ title, subtitle, children, defaultExpanded = false }) => {
     const [isExpanded, setIsExpanded] = useState<boolean>(defaultExpanded);
 
     useEffect(() => {
@@ -22,11 +22,14 @@ const ExpandableCard: React.FC<ExpandableCardProps> = ({ title, children, defaul
             {title && (
                 <div className={styles.expandableCardHeader} onClick={toggleExpand}>
                     <h2 className={styles.expandableCardTitle}>{title}</h2>
-                    <Image 
-                        src={rightArrowIcon} 
-                        alt="Toggle expand" 
-                        className={`${styles.expandIcon} ${isExpanded ? styles.expanded : ''}`} 
-                    />
+                    <div className={styles.expandableCardSI}>
+                        <h3 className={styles.expandableCardSubtitle}>{subtitle}</h3>
+                        <Image 
+                            src={rightArrowIcon} 
+                            alt="Toggle expand" 
+                            className={`${styles.expandIcon} ${isExpanded ? styles.expanded : ''}`} 
+                        />
+                    </div>
                 </div>
             )}
             {isExpanded && <div className={styles.expandableCardContent}>{children}</div>}

@@ -9,6 +9,7 @@ import SubHeader from '@/components/Layout/SubHeader/SubHeader';
 import CustomInput from '@/components/UI/CustomInput/CustomInput';
 import StageButton from '@/components/UI/StageButton/StageButton';
 import Card from '@/components/UI/Card/Card';
+import ExpandableCard from '@/components/UI/ExpandableCard/ExpandableCard';
 import defaultImage from '../../../../../../../public/assets/user.png';
 import styles from './addProduct.module.css';
 
@@ -81,9 +82,21 @@ const Product: React.FC = () => {
                             )}
                         </div>
                     </div>
-                    <Card title="Produto">
+                    <Card title="Dados básicos">
                         <h1>teste</h1>                        
                     </Card>
+                    <ExpandableCard title="Características" subtitle="Opcional" defaultExpanded={false}>
+                        <h1>teste</h1>
+                    </ExpandableCard>
+                    <ExpandableCard title="Estoque" subtitle="Opcional" defaultExpanded={false}>
+                        <h1>teste</h1>
+                    </ExpandableCard>
+                    <ExpandableCard title="Tributação" subtitle="Opcional" defaultExpanded={false}>
+                        <h1>teste</h1>
+                    </ExpandableCard>
+                    <ExpandableCard title="Variação" subtitle="Opcional" defaultExpanded={false}>
+                        <h1>teste</h1>
+                    </ExpandableCard>
                     <div className={styles.confirmationButtonSpace}>
                         <StageButton text="Criar" backgroundColor={'#7B33E5'} type="submit" />
                     </div>

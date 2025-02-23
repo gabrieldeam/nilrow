@@ -4,6 +4,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import marketplace.nilrow.domain.catalog.category.SubCategoryDTO;
 import marketplace.nilrow.services.SubCategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,8 +46,12 @@ public class SubCategoryController {
 
     // Obter todas as subcategorias de uma categoria
     @GetMapping("/category/{categoryId}")
-    public ResponseEntity<List<SubCategoryDTO>> getSubCategoriesByCategory(@PathVariable String categoryId) {
-        List<SubCategoryDTO> subCategories = subCategoryService.getSubCategoriesByCategory(categoryId);
+    public ResponseEntity<Page<SubCategoryDTO>> getSubCategoriesByCategory(
+            @PathVariable String categoryId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<SubCategoryDTO> subCategories = subCategoryService.getSubCategoriesByCategory(categoryId, pageable);
         return ResponseEntity.ok(subCategories);
     }
 

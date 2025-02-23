@@ -12,4 +12,7 @@ export interface CustomSelectProps {
     isValid?: boolean;
     prefix?: string;
     readOnly?: boolean;
+    options: Array<{ value: string; label: string }>;
+    onLoadMore?: () => void;
+    hasMore?: boolean;
 }

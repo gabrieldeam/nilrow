@@ -82,8 +82,8 @@ const Categories: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
         const subCategoriesData: { [key: string]: SubCategoryData[] } = {};
         for (const category of allCategories) {
           try {
-            const subResponse = await getSubCategoriesByCategory(category.id);
-            subCategoriesData[category.id] = subResponse;
+            const subResponse = await getSubCategoriesByCategory(category.id, 0, 6);
+            subCategoriesData[category.id] = subResponse.content;
           } catch (subError) {
             console.error(`Erro ao buscar subcategorias de ${category.id}:`, subError);
             subCategoriesData[category.id] = [];
@@ -156,7 +156,11 @@ const Categories: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
                           title={category.name}
                           paragraph={
                             subCategoriesMap[category.id]?.length
-                              ? subCategoriesMap[category.id].map(sub => sub.name).join(', ')
+                              ? ((): string => {
+                                  const subs = subCategoriesMap[category.id];
+                                  const names = subs.slice(0, 5).map(sub => sub.name);
+                                  return names.join(', ') + (subs.length > 5 ? ', …' : '');
+                                })()
                               : 'Sem subcategorias'
                           }
                           icon={`${apiUrl}${category.imageUrl}`}

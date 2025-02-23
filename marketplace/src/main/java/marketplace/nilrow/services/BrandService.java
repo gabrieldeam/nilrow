@@ -4,6 +4,8 @@ import marketplace.nilrow.domain.catalog.product.brand.Brand;
 import marketplace.nilrow.domain.catalog.product.brand.BrandDTO;
 import marketplace.nilrow.repositories.BrandRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -52,11 +54,9 @@ public class BrandService {
     }
 
     // Obter Todas as Marcas
-    public List<BrandDTO> getAllBrands() {
-        List<Brand> brands = brandRepository.findAll();
-        return brands.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public Page<BrandDTO> getAllBrands(Pageable pageable) {
+        return brandRepository.findAll(pageable)
+                .map(this::convertToDTO);
     }
 
     // Converter Entidade para DTO

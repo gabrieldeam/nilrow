@@ -38,9 +38,21 @@ function Administration() {
 
           <StepButton
             icon={iconStep2}
-            title="Categorias"
+            title="Categorias e Subcatagorias"
             paragraph="Crie e veja as categorias e subcategorias"
             onClick={() => router.push('/admin/category')} 
+          />
+          <StepButton
+            icon={iconStep2}
+            title="Marcas"
+            paragraph="Crie e veja as Marcas"
+            onClick={() => router.push('/admin/brand')} 
+          />
+          <StepButton
+            icon={iconStep2}
+            title="Tamplates"
+            paragraph="Crie e veja os Tamplates de Produtos"
+            onClick={() => router.push('/admin/template')} 
           />
         </div>
       </div>
