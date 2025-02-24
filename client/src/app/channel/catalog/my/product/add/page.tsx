@@ -13,20 +13,35 @@ import StageButton from '@/components/UI/StageButton/StageButton';
 import Card from '@/components/UI/Card/Card';
 import ExpandableCard from '@/components/UI/ExpandableCard/ExpandableCard';
 
-import { createProduct } from '@/services/product/productService';
+import { createProduct /*, updateProduct */ } from '@/services/product/productService';
 import { ProductDTO, ProductType, ProductCondition, ProductionType } from '@/types/services/product';
 
 import defaultImage from '../../../../../../../public/assets/user.png';
 import styles from './addProduct.module.css';
 
+// Tipo para armazenar imagens do produto principal
+interface ImageData {
+  file: File;
+  preview: string;
+}
+
+// Tipo para os produtos associados
+// (Utilizamos os mesmos campos do ProductDTO, exceto id, images e associated que serão tratados separadamente)
+interface AssociatedProductInput extends Omit<ProductDTO, 'id' | 'images' | 'associated'> {
+  id?: string;               // Se já existir no BD
+  uploadedImages?: File[];   // Imagens para upload
+  isRemoved?: boolean;       // Marcação para remoção
+  images?: string[];         // Caso existam imagens já salvas
+}
+
 const ProductCreatePage: React.FC = () => {
   const router = useRouter();
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 
-  const [imagePreview, setImagePreview] = useState<string>(defaultImage.src);
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  // Estado para imagens do produto principal
+  const [images, setImages] = useState<ImageData[]>([]);
 
-  // Campos do ProductDTO
+  // Estados dos campos básicos do produto principal
   const [name, setName] = useState('');
   const [skuCode, setSkuCode] = useState('');
   const [salePrice, setSalePrice] = useState<number>(0);
@@ -37,6 +52,7 @@ const ProductCreatePage: React.FC = () => {
   const [productionType, setProductionType] = useState<ProductionType>(ProductionType.OWN);
   const [freeShipping, setFreeShipping] = useState(false);
 
+  // Estados de dimensões e estoque
   const [netWeight, setNetWeight] = useState<number>(0);
   const [grossWeight, setGrossWeight] = useState<number>(0);
   const [width, setWidth] = useState<number>(0);
@@ -44,53 +60,56 @@ const ProductCreatePage: React.FC = () => {
   const [depth, setDepth] = useState<number>(0);
   const [stock, setStock] = useState<number>(0);
 
-  // Exemplo IDs
+  // Estados dos campos adicionais do produto principal
+  const [shortDescription, setShortDescription] = useState('');
+  const [complementaryDescription, setComplementaryDescription] = useState('');
+  const [notes, setNotes] = useState('');
+  const [volumes, setVolumes] = useState<number>(0);
+  const [itemsPerBox, setItemsPerBox] = useState<number>(0);
+  const [gtinEan, setGtinEan] = useState('');
+  const [gtinEanTax, setGtinEanTax] = useState('');
+
+  // IDs de exemplo
   const [catalogId, setCatalogId] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [subCategoryId, setSubCategoryId] = useState('');
   const [brandId, setBrandId] = useState('');
 
-  // Opções de select
-  const catalogOptions = [
-    { value: 'CATALOG_1', label: 'Meu Catálogo 1' },
-    { value: 'CATALOG_2', label: 'Meu Catálogo 2' },
-  ];
-  const categoryOptions = [
-    { value: 'CAT_1', label: 'Categoria 1' },
-    { value: 'CAT_2', label: 'Categoria 2' },
-  ];
-  const subCategoryOptions = [
-    { value: 'SUB_1', label: 'SubCategoria 1' },
-    { value: 'SUB_2', label: 'SubCategoria 2' },
-  ];
-  const brandOptions = [
-    { value: 'BRAND_1', label: 'Marca 1' },
-    { value: 'BRAND_2', label: 'Marca 2' },
-  ];
+  // Estado para os produtos associados
+  const [associations, setAssociations] = useState<AssociatedProductInput[]>([]);
 
-  const handleBack = useCallback(() => {
-    router.push('/channel/catalog/my/product');
-  }, [router]);
-
+  // -- Funções para o upload de imagens do produto principal --
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const filesArray = Array.from(e.target.files);
-      if (filesArray.length > 0) {
-        setImageFiles(filesArray);
-        setImagePreview(URL.createObjectURL(filesArray[0]));
+      const newFiles = Array.from(e.target.files);
+      const availableSlots = 5 - images.length;
+      if (newFiles.length > availableSlots) {
+        alert('Você pode enviar no máximo 5 imagens.');
+        newFiles.splice(availableSlots);
       }
+      const newImages = newFiles.map((file) => ({
+        file,
+        preview: URL.createObjectURL(file),
+      }));
+      setImages((prev) => [...prev, ...newImages]);
     }
   };
 
-  const handleSubmit = useCallback(async (event: React.FormEvent) => {
-    event.preventDefault();
-    console.log('Enviando form com dados do produto...');
+  const handleRemoveImage = (index: number) => {
+    setImages((prev) => {
+      const newImages = [...prev];
+      const [removed] = newImages.splice(index, 1);
+      URL.revokeObjectURL(removed.preview); // Libera memória
+      return newImages;
+    });
+  };
 
-    // Monta o objeto ProductDTO
-    const newProduct: ProductDTO = {
-      id: '',
-      catalogId,
-      images: [],
+  // -- Funções para manipular produtos associados --
+
+  // Adiciona uma associação copiando os dados atuais do produto principal
+  const handleAddAssociation = () => {
+    const newAssoc: AssociatedProductInput = {
+      catalogId, // usando o estado do produto principal
       name,
       skuCode,
       salePrice,
@@ -102,39 +121,189 @@ const ProductCreatePage: React.FC = () => {
       subCategoryId,
       brandId,
       productionType,
-      expirationDate: null,    // ou '' se preferir
+      expirationDate: null, // ou outro valor padrão, se necessário
       freeShipping,
       netWeight,
       grossWeight,
       width,
       height,
       depth,
-      volumes: 0,
-      itemsPerBox: 0,
-      gtinEan: '',
-      gtinEanTax: '',
-      shortDescription: '',
-      complementaryDescription: '',
-      notes: '',
+      volumes,
+      itemsPerBox,
+      gtinEan,
+      gtinEanTax,
+      shortDescription,
+      complementaryDescription,
+      notes,
       stock,
       active: true,
-      associated: [],
+      uploadedImages: [],
+      isRemoved: false,
+      images: [],
     };
+    setAssociations((prev) => [...prev, newAssoc]);
+  };
+  
+  
 
-    try {
-      const created = await createProduct(newProduct, imageFiles);
-      console.log('Produto criado com sucesso', created);
-      router.push('/channel/catalog/my/product');
-    } catch (error) {
-      console.error('Erro ao criar produto:', error);
-      alert('Ocorreu um erro ao criar o produto!');
-    }
-  }, [
-    catalogId, name, skuCode, salePrice, discountPrice, unitOfMeasure, type, condition,
-    categoryId, subCategoryId, brandId, productionType, freeShipping,
-    netWeight, grossWeight, width, height, depth, stock,
-    imageFiles, router
-  ]);
+  // Atualiza um campo de um associado
+  const updateAssociationField = (index: number, field: keyof AssociatedProductInput, value: any) => {
+    setAssociations((prev) => {
+      const newArr = [...prev];
+      newArr[index] = { ...newArr[index], [field]: value };
+      return newArr;
+    });
+  };
+
+  // Remove um associado (se já existir no BD, marca para remoção; caso contrário, remove do array)
+  const removeAssociation = (index: number) => {
+    setAssociations((prev) => {
+      const newArr = [...prev];
+      // Se o associado já tiver um id, podemos marcar como removido
+      if (newArr[index].id) {
+        newArr[index].isRemoved = true;
+      } else {
+        newArr.splice(index, 1);
+      }
+      return newArr;
+    });
+  };
+
+  // -- Função de envio do formulário --
+  const handleSubmit = useCallback(
+    async (event: React.FormEvent) => {
+      event.preventDefault();
+      console.log('Enviando form com dados do produto...');
+
+      // Monta o objeto do produto principal
+      const newProduct: ProductDTO = {
+        id: '',
+        catalogId,
+        images: [],
+        name,
+        skuCode,
+        salePrice,
+        discountPrice,
+        unitOfMeasure,
+        type,
+        condition,
+        categoryId,
+        subCategoryId,
+        brandId,
+        productionType,
+        expirationDate: null,
+        freeShipping,
+        netWeight,
+        grossWeight,
+        width,
+        height,
+        depth,
+        volumes,
+        itemsPerBox,
+        gtinEan,
+        gtinEanTax,
+        shortDescription,
+        complementaryDescription,
+        notes,
+        stock,
+        active: true,
+        associated: [], // Aqui serão armazenados os IDs dos produtos associados
+      };
+
+      try {
+        // 1. Cria o produto principal
+        const createdMain = await createProduct(newProduct, images.map((img) => img.file));
+        console.log('Produto principal criado', createdMain);
+
+        // 2. Cria os produtos associados (se houver)
+        const associatedIds: string[] = [];
+        for (const assoc of associations) {
+          if (assoc.isRemoved) continue;
+          // Aqui você pode adaptar a lógica: o associado pode ter campos editados
+          // Se desejar, remova campos desnecessários ou faça merge com o produto principal
+          const assocPayload: ProductDTO = {
+            id: '',
+            catalogId,
+            images: [],
+            name: assoc.name,
+            skuCode: assoc.skuCode,
+            salePrice: assoc.salePrice,
+            discountPrice: assoc.discountPrice,
+            unitOfMeasure: assoc.unitOfMeasure,
+            type: assoc.type,
+            condition: assoc.condition,
+            categoryId,
+            subCategoryId,
+            brandId,
+            productionType: assoc.productionType,
+            expirationDate: null,
+            freeShipping: assoc.freeShipping,
+            netWeight: assoc.netWeight,
+            grossWeight: assoc.grossWeight,
+            width: assoc.width,
+            height: assoc.height,
+            depth: assoc.depth,
+            volumes: assoc.volumes,
+            itemsPerBox: assoc.itemsPerBox,
+            gtinEan: assoc.gtinEan,
+            gtinEanTax: assoc.gtinEanTax,
+            shortDescription: assoc.shortDescription,
+            complementaryDescription: assoc.complementaryDescription,
+            notes: assoc.notes,
+            stock: assoc.stock,
+            active: true,
+            associated: [],
+          };
+
+          const createdAssoc = await createProduct(assocPayload, assoc.uploadedImages || []);
+          console.log('Produto associado criado', createdAssoc);
+          associatedIds.push(createdAssoc.id);
+        }
+
+        // 3. Atualiza o produto principal com os IDs dos associados, se necessário.
+        // Exemplo: se você possuir uma função updateProduct, poderia chamar:
+        // await updateProduct(createdMain.id, { ...createdMain, associated: associatedIds });
+        // Neste exemplo, apenas exibimos no console.
+        console.log('IDs dos produtos associados:', associatedIds);
+
+        router.push('/channel/catalog/my/product');
+      } catch (error) {
+        console.error('Erro ao criar produto:', error);
+        alert('Ocorreu um erro ao criar o produto!');
+      }
+    },
+    [
+      catalogId,
+      name,
+      skuCode,
+      salePrice,
+      discountPrice,
+      unitOfMeasure,
+      type,
+      condition,
+      categoryId,
+      subCategoryId,
+      brandId,
+      productionType,
+      freeShipping,
+      netWeight,
+      grossWeight,
+      width,
+      height,
+      depth,
+      volumes,
+      itemsPerBox,
+      gtinEan,
+      gtinEanTax,
+      shortDescription,
+      complementaryDescription,
+      notes,
+      stock,
+      images,
+      associations,
+      router,
+    ]
+  );
 
   return (
     <div className={styles.productPage}>
@@ -144,25 +313,34 @@ const ProductCreatePage: React.FC = () => {
       </Head>
 
       {isMobile && (
-        <MobileHeader title="Produto" buttons={{ close: true }} handleBack={handleBack} />
+        <MobileHeader title="Produto" buttons={{ close: true }} handleBack={() => router.push('/channel/catalog/my/product')} />
       )}
 
       <div className={styles.productContainer}>
         <div className={styles.productHeader}>
-          <SubHeader title="Novo Produto" handleBack={handleBack} />
+          <SubHeader title="Novo Produto" handleBack={() => router.push('/channel/catalog/my/product')} />
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* Imagem principal */}
+          {/* Upload de Imagens */}
           <div className={styles.addChannelImageUpload}>
-            {imagePreview && (
-              <Image
-                src={imagePreview}
-                alt="Preview"
-                className={styles.addChannelImagePreview}
-                width={70}
-                height={70}
-              />
+            {images.length > 0 ? (
+              images.map((image, index) => (
+                <div key={index} className={styles.imageContainer}>
+                  <Image
+                    src={image.preview}
+                    alt={`Preview ${index}`}
+                    className={styles.addChannelImagePreview}
+                    width={70}
+                    height={70}
+                  />
+                  <button type="button" className={styles.removeButton} onClick={() => handleRemoveImage(index)}>
+                    ×
+                  </button>
+                </div>
+              ))
+            ) : (
+              <Image src={defaultImage.src} alt="Preview" className={styles.addChannelImagePreview} width={70} height={70} />
             )}
             <div className={styles.addChannelUploadSection}>
               <label htmlFor="channel-image" className={styles.addChannelUploadButton}>
@@ -174,11 +352,14 @@ const ProductCreatePage: React.FC = () => {
                 name="image"
                 onChange={handleImageChange}
                 accept="image/*"
+                multiple
                 style={{ display: 'none' }}
               />
-              {imageFiles.length > 0 && (
+              {images.length > 0 && (
                 <div className={styles.fileName}>
-                  {imageFiles[0].name}
+                  {images.map((img, index) => (
+                    <div key={index}>{img.file.name}</div>
+                  ))}
                 </div>
               )}
             </div>
@@ -186,56 +367,8 @@ const ProductCreatePage: React.FC = () => {
 
           {/* Dados Básicos */}
           <Card title="Dados Básicos">
-            <CustomSelect
-              title="Catálogo"
-              placeholder="Selecione um catálogo"
-              value={catalogId}
-              name="catalog"
-              onChange={(e) => setCatalogId(e.target.value)}
-              options={catalogOptions}
-            />
-
-            <CustomSelect
-              title="Categoria"
-              placeholder="Selecione uma categoria"
-              value={categoryId}
-              name="category"
-              onChange={(e) => setCategoryId(e.target.value)}
-              options={categoryOptions}
-            />
-
-            <CustomSelect
-              title="SubCategoria"
-              placeholder="Selecione uma subcategoria"
-              value={subCategoryId}
-              name="subcategory"
-              onChange={(e) => setSubCategoryId(e.target.value)}
-              options={subCategoryOptions}
-            />
-
-            <CustomSelect
-              title="Marca"
-              placeholder="Selecione uma marca"
-              value={brandId}
-              name="brand"
-              onChange={(e) => setBrandId(e.target.value)}
-              options={brandOptions}
-            />
-
-            <CustomInput
-              title="Nome do Produto"
-              type="text"
-              name="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-            <CustomInput
-              title="SKU"
-              type="text"
-              name="skuCode"
-              value={skuCode}
-              onChange={(e) => setSkuCode(e.target.value)}
-            />
+            <CustomInput title="Nome do Produto" type="text" name="name" value={name} onChange={(e) => setName(e.target.value)} />
+            <CustomInput title="SKU" type="text" name="skuCode" value={skuCode} onChange={(e) => setSkuCode(e.target.value)} />
             <CustomInput
               title="Preço de Venda"
               type="number"
@@ -258,7 +391,6 @@ const ProductCreatePage: React.FC = () => {
               onChange={(e) => setUnitOfMeasure(e.target.value)}
             />
 
-            {/* Tipo de Produto */}
             <CustomSelect
               title="Tipo de Produto"
               placeholder="Selecione o tipo"
@@ -270,7 +402,6 @@ const ProductCreatePage: React.FC = () => {
               ]}
             />
 
-            {/* Condição */}
             <CustomSelect
               title="Condição"
               placeholder="Selecione a condição"
@@ -283,8 +414,49 @@ const ProductCreatePage: React.FC = () => {
                 { value: ProductCondition.REFURBISHED, label: 'Recondicionado' },
               ]}
             />
+          </Card>
 
-            {/* Tipo de Produção */}
+          {/* Sobre */}
+          <ExpandableCard title="Sobre" defaultExpanded={false}>
+            <CustomInput
+              title="Descrição Curta"
+              type="text"
+              name="shortDescription"
+              value={shortDescription}
+              isTextarea={true}
+              onChange={(e) => setShortDescription(e.target.value)}
+            />
+            <CustomInput
+              title="Descrição Complementar"
+              type="text"
+              name="complementaryDescription"
+              value={complementaryDescription}
+              isTextarea={true}
+              onChange={(e) => setComplementaryDescription(e.target.value)}
+            />
+            <CustomInput
+              title="Notas"
+              type="text"
+              name="notes"
+              value={notes}
+              isTextarea={true}
+              onChange={(e) => setNotes(e.target.value)}
+            />
+          </ExpandableCard>
+
+          {/* Características */}
+          <ExpandableCard title="Características" defaultExpanded={false}>
+            <CustomSelect
+              title="Marca"
+              placeholder="Selecione uma marca"
+              value={brandId}
+              name="brand"
+              onChange={(e) => setBrandId(e.target.value)}
+              options={[
+                { value: 'BRAND_1', label: 'Marca 1' },
+                { value: 'BRAND_2', label: 'Marca 2' },
+              ]}
+            />
             <CustomSelect
               title="Tipo de Produção"
               placeholder="Selecione o tipo"
@@ -296,23 +468,28 @@ const ProductCreatePage: React.FC = () => {
                 { value: ProductionType.THIRD_PARTY, label: 'Terceiros' },
               ]}
             />
-
-            {/* Frete Grátis */}
-            {/* Se 'CustomInput' não suporta 'checked' direto, use 'checkbox' prop ou extenda */}
-            <div style={{ marginTop: '10px' }}>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={freeShipping}
-                  onChange={(e) => setFreeShipping(e.target.checked)}
-                />
-                Frete Grátis
-              </label>
-            </div>
-          </Card>
-
-          {/* Características */}
-          <ExpandableCard title="Características" subtitle="Opcional" defaultExpanded={false}>
+            <CustomSelect
+              title="Categoria"
+              placeholder="Selecione uma categoria"
+              value={categoryId}
+              name="category"
+              onChange={(e) => setCategoryId(e.target.value)}
+              options={[
+                { value: 'CATALOG_1', label: 'Categoria 1' },
+                { value: 'CATALOG_2', label: 'Categoria 2' },
+              ]}
+            />
+            <CustomSelect
+              title="SubCategoria"
+              placeholder="Selecione uma subcategoria"
+              value={subCategoryId}
+              name="subcategory"
+              onChange={(e) => setSubCategoryId(e.target.value)}
+              options={[
+                { value: 'SUB_1', label: 'SubCategoria 1' },
+                { value: 'SUB_2', label: 'SubCategoria 2' },
+              ]}
+            />
             <CustomInput
               title="Peso Líquido"
               type="number"
@@ -348,10 +525,44 @@ const ProductCreatePage: React.FC = () => {
               value={depth}
               onChange={(e) => setDepth(Number(e.target.value))}
             />
+            <CustomInput
+              title="Volumes"
+              type="number"
+              name="volumes"
+              value={volumes}
+              onChange={(e) => setVolumes(Number(e.target.value))}
+            />
+            <CustomInput
+              title="Itens por Caixa"
+              type="number"
+              name="itemsPerBox"
+              value={itemsPerBox}
+              onChange={(e) => setItemsPerBox(Number(e.target.value))}
+            />
+            <CustomInput
+              title="GTIN EAN"
+              type="text"
+              name="gtinEan"
+              value={gtinEan}
+              onChange={(e) => setGtinEan(e.target.value)}
+            />
+            <CustomInput
+              title="GTIN EAN Tax"
+              type="text"
+              name="gtinEanTax"
+              value={gtinEanTax}
+              onChange={(e) => setGtinEanTax(e.target.value)}
+            />
+            <div style={{ marginTop: '10px' }}>
+              <label>
+                <input type="checkbox" checked={freeShipping} onChange={(e) => setFreeShipping(e.target.checked)} />
+                Frete Grátis
+              </label>
+            </div>
           </ExpandableCard>
 
           {/* Estoque */}
-          <ExpandableCard title="Estoque" subtitle="Opcional" defaultExpanded={false}>
+          <ExpandableCard title="Estoque" defaultExpanded={false}>
             <CustomInput
               title="Quantidade em Estoque"
               type="number"
@@ -359,6 +570,69 @@ const ProductCreatePage: React.FC = () => {
               value={stock}
               onChange={(e) => setStock(Number(e.target.value))}
             />
+          </ExpandableCard>
+
+          {/* Associações */}
+          <ExpandableCard title="Associações" defaultExpanded={false}>
+            <button type="button" onClick={handleAddAssociation} className={styles['add-association-btn']}>
+              Adicionar Associação
+            </button>
+            {associations.map((assoc, index) => (
+              !assoc.isRemoved && (
+                <div key={index} className={styles['association-item']}>
+                  <div className={styles['association-item-header']}>
+                    <span className={styles['association-title']}>
+                      {assoc.id ? 'Associação Existente' : `Nova Associação (#${index + 1})`}
+                    </span>
+                    <button type="button" onClick={() => removeAssociation(index)} className={styles['remove-association-button']}>
+                      Remover
+                    </button>
+                  </div>
+                  <div className={styles['association-fields']}>
+                    <CustomInput
+                      title="Nome"
+                      type="text"
+                      name={`assoc-name-${index}`}
+                      value={assoc.name}
+                      onChange={(e) => updateAssociationField(index, 'name', e.target.value)}
+                    />
+                    <CustomInput
+                      title="SKU"
+                      type="text"
+                      name={`assoc-sku-${index}`}
+                      value={assoc.skuCode}
+                      onChange={(e) => updateAssociationField(index, 'skuCode', e.target.value)}
+                    />
+                    <CustomInput
+                      title="Preço de Venda"
+                      type="number"
+                      name={`assoc-salePrice-${index}`}
+                      value={assoc.salePrice}
+                      onChange={(e) => updateAssociationField(index, 'salePrice', Number(e.target.value))}
+                    />
+                    {/* Você pode adicionar mais campos conforme necessário */}
+                    <div>
+                      <label>
+                        {/* Exemplo de upload de imagem para associação */}
+                        <input
+                          type="file"
+                          onChange={(ev) => {
+                            if (ev.target.files) {
+                              updateAssociationField(index, 'uploadedImages', Array.from(ev.target.files));
+                            }
+                          }}
+                          accept="image/*"
+                          multiple
+                          style={{ display: 'none' }}
+                          id={`assoc-images-${index}`}
+                        />
+                        <span className={styles['add-channel-upload-button']}>+ Adicionar Imagem</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )
+            ))}
           </ExpandableCard>
 
           <div className={styles.confirmationButtonSpace}>
