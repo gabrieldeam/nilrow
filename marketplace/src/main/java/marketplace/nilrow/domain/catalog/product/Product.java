@@ -128,14 +128,18 @@ public class Product {
         @Column(nullable = false)
         private boolean active;
 
-        // Variações do produto
-        @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-        private List<ProductVariation> variations;
-
         // Reference to the Catalog
         @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "catalog_id", nullable = false)
         private Catalog catalog;
+
+        @ManyToMany
+        @JoinTable(
+                name = "product_associations",
+                joinColumns = @JoinColumn(name = "product_id"),
+                inverseJoinColumns = @JoinColumn(name = "associated_id")
+        )
+        private List<Product> associated;
 
         @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "template_id")

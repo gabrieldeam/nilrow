@@ -8,8 +8,6 @@ import marketplace.nilrow.domain.catalog.product.Product;
 import marketplace.nilrow.domain.catalog.product.brand.Brand;
 import marketplace.nilrow.domain.catalog.product.template.ProductTemplate;
 import marketplace.nilrow.domain.catalog.product.template.ProductTemplateDTO;
-import marketplace.nilrow.domain.catalog.product.template.ProductTemplateVariation;
-import marketplace.nilrow.domain.catalog.product.template.ProductTemplateVariationDTO;
 import marketplace.nilrow.repositories.BrandRepository;
 import marketplace.nilrow.repositories.CategoryRepository;
 import marketplace.nilrow.repositories.LocationRepository;
@@ -69,24 +67,53 @@ public class ProductTemplateService {
         return updateTemplate(id, dto, null);
     }
 
-
-    // Criar Template com tratamento de imagens
+    // Criar Template com tratamento de imagens e associação entre templates
     public ProductTemplateDTO createTemplate(ProductTemplateDTO dto, List<MultipartFile> images) throws IOException {
-        ProductTemplate template = convertToEntity(dto);
-        List<String> imagePaths = saveImages(images);
-        if (!imagePaths.isEmpty()) {
-            template.setImages(imagePaths);
-        } else {
-            template.setImages(Collections.singletonList(DEFAULT_IMAGE));
+        ProductTemplate template = new ProductTemplate();
+
+        template.setName(dto.getName());
+        template.setNetWeight(dto.getNetWeight());
+        template.setGrossWeight(dto.getGrossWeight());
+        template.setUnitOfMeasure(dto.getUnitOfMeasure());
+        template.setItemsPerBox(dto.getItemsPerBox());
+
+        // Buscar e setar Category
+        Category category = categoryRepository.findById(dto.getCategoryId())
+                .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+        template.setCategory(category);
+
+        // Buscar e setar SubCategory
+        SubCategory subCategory = subCategoryRepository.findById(dto.getSubCategoryId())
+                .orElseThrow(() -> new RuntimeException("Subcategoria não encontrada"));
+        template.setSubCategory(subCategory);
+
+        // Buscar e setar Brand
+        Brand brand = brandRepository.findById(dto.getBrandId())
+                .orElseThrow(() -> new RuntimeException("Marca não encontrada"));
+        template.setBrand(brand);
+
+        // Tratamento das associações: mapeia os IDs dos templates associados para as entidades
+        if (dto.getAssociatedTemplateIds() != null && !dto.getAssociatedTemplateIds().isEmpty()) {
+            List<ProductTemplate> associatedTemplates = dto.getAssociatedTemplateIds().stream()
+                    .map(associatedId -> templateRepository.findById(associatedId)
+                            .orElseThrow(() -> new RuntimeException("Template associado não encontrado: " + associatedId)))
+                    .collect(Collectors.toList());
+            template.setAssociatedTemplates(associatedTemplates);
         }
+
+        // Upload de imagens
+        List<String> imagePaths = saveImages(images);
+        template.setImages(imagePaths.isEmpty() ? Collections.singletonList(DEFAULT_IMAGE) : imagePaths);
+
         ProductTemplate savedTemplate = templateRepository.save(template);
         return convertToDTO(savedTemplate);
     }
 
-    // Atualizar Template com tratamento de imagens
+    // Atualizar Template com tratamento de imagens e associação entre templates
     public ProductTemplateDTO updateTemplate(String id, ProductTemplateDTO dto, List<MultipartFile> images) throws IOException {
         ProductTemplate template = templateRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Template não encontrado"));
+
         // Atualiza os campos básicos
         template.setName(dto.getName());
         template.setNetWeight(dto.getNetWeight());
@@ -94,7 +121,7 @@ public class ProductTemplateService {
         template.setUnitOfMeasure(dto.getUnitOfMeasure());
         template.setItemsPerBox(dto.getItemsPerBox());
 
-        // Atualiza relacionamentos
+        // Atualiza relacionamentos: Category, SubCategory e Brand
         Category category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
         template.setCategory(category);
@@ -107,13 +134,13 @@ public class ProductTemplateService {
                 .orElseThrow(() -> new RuntimeException("Marca não encontrada"));
         template.setBrand(brand);
 
-        // Atualiza variações (neste exemplo, substituímos as variações existentes)
-        if (dto.getVariations() != null) {
-            List<ProductTemplateVariation> variations = dto.getVariations().stream()
-                    .map(this::convertVariationToEntity)
+        // Atualiza as associações com outros templates
+        if (dto.getAssociatedTemplateIds() != null) {
+            List<ProductTemplate> associatedTemplates = dto.getAssociatedTemplateIds().stream()
+                    .map(associatedId -> templateRepository.findById(associatedId)
+                            .orElseThrow(() -> new RuntimeException("Template associado não encontrado: " + associatedId)))
                     .collect(Collectors.toList());
-            variations.forEach(v -> v.setProductTemplate(template));
-            template.setVariations(variations);
+            template.setAssociatedTemplates(associatedTemplates);
         }
 
         // Tratamento de imagens: se novas imagens forem fornecidas, remove as antigas e salva as novas
@@ -270,34 +297,14 @@ public class ProductTemplateService {
         return new PageImpl<>(dtos, pageable, filtered.size());
     }
 
-    // Método para converter o ProductTemplateDTO em ProductTemplate
-    private ProductTemplate convertToEntity(ProductTemplateDTO dto) {
-        ProductTemplate template = new ProductTemplate();
-        template.setId(dto.getId());
-        template.setImages(dto.getImages());
-        template.setName(dto.getName());
-        template.setNetWeight(dto.getNetWeight());
-        template.setGrossWeight(dto.getGrossWeight());
-        template.setUnitOfMeasure(dto.getUnitOfMeasure());
-        template.setItemsPerBox(dto.getItemsPerBox());
-        if (dto.getVariations() != null) {
-            List<ProductTemplateVariation> variations = dto.getVariations().stream()
-                    .map(this::convertVariationToEntity)
-                    .collect(Collectors.toList());
-            variations.forEach(v -> v.setProductTemplate(template));
-            template.setVariations(variations);
-        }
-        return template;
+    public void deleteTemplate(String id) {
+        ProductTemplate template = templateRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Template não encontrado"));
+        deleteImages(template.getImages());
+        templateRepository.delete(template);
     }
 
-    // Renomeado para evitar ambiguidade
-    private ProductTemplateVariation convertVariationToEntity(ProductTemplateVariationDTO dto) {
-        ProductTemplateVariation variation = new ProductTemplateVariation();
-        variation.setId(dto.getId());
-        variation.setAttributeName(dto.getAttributeName());
-        variation.setPossibleValues(dto.getPossibleValues());
-        return variation;
-    }
+
 
     // Método para converter ProductTemplate em ProductTemplateDTO
     private ProductTemplateDTO convertToDTO(ProductTemplate template) {
@@ -312,13 +319,25 @@ public class ProductTemplateService {
         dto.setCategoryId(template.getCategory() != null ? template.getCategory().getId() : null);
         dto.setSubCategoryId(template.getSubCategory() != null ? template.getSubCategory().getId() : null);
         dto.setBrandId(template.getBrand() != null ? template.getBrand().getId() : null);
-        if (template.getVariations() != null) {
-            dto.setVariations(template.getVariations().stream()
-                    .map(v -> new ProductTemplateVariationDTO(v.getId(), v.getAttributeName(), v.getPossibleValues()))
-                    .collect(Collectors.toList()));
+        // Converter a associação para uma lista de IDs
+        if (template.getAssociatedTemplates() != null && !template.getAssociatedTemplates().isEmpty()) {
+            dto.setAssociatedTemplateIds(
+                    template.getAssociatedTemplates().stream()
+                            .map(ProductTemplate::getId)
+                            .collect(Collectors.toList())
+            );
+        }
+        // Converter produtos associados para uma lista de IDs (opcional)
+        if (template.getProducts() != null && !template.getProducts().isEmpty()) {
+            dto.setProductsId(
+                    template.getProducts().stream()
+                            .map(Product::getId)
+                            .collect(Collectors.toList())
+            );
         }
         return dto;
     }
+
 
     // Métodos para tratamento de imagens
     private List<String> saveImages(List<MultipartFile> images) throws IOException {

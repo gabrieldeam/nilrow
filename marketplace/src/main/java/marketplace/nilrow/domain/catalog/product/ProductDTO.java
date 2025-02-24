@@ -43,5 +43,5 @@ public class ProductDTO {
     private String notes;
     private Integer stock;
     private boolean active;
-    private List<ProductVariationDTO> variations;
+    private List<String> associatedIds;
 }

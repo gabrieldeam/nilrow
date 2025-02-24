@@ -11,7 +11,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-// Outros imports necessários
 
 import java.io.IOException;
 import java.util.List;
@@ -24,79 +23,97 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
-    // Criar Produto
-    @PostMapping("/create")
+    // CREATE (multipart/form-data)
+    @PostMapping(value = "/create", consumes = {"multipart/form-data"})
     public ResponseEntity<ProductDTO> createProduct(
             @RequestPart("product") ProductDTO productDTO,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images) throws IOException {
-
-        ProductDTO createdProduct = productService.createProduct(productDTO, images);
-        return ResponseEntity.ok(createdProduct);
+            @RequestPart(value = "images", required = false) List<MultipartFile> images
+    ) {
+        try {
+            ProductDTO created = productService.createProduct(productDTO, images);
+            return ResponseEntity.ok(created);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).build();
+        }
     }
 
-    // Atualizar Produto
-    @PutMapping("/edit/{id}")
+    // UPDATE (multipart/form-data)
+    @PutMapping(value = "/edit/{id}", consumes = {"multipart/form-data"})
     public ResponseEntity<ProductDTO> updateProduct(
             @PathVariable String id,
             @RequestPart("product") ProductDTO productDTO,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images) throws IOException {
-
-        ProductDTO updatedProduct = productService.updateProduct(id, productDTO, images);
-        return ResponseEntity.ok(updatedProduct);
+            @RequestPart(value = "images", required = false) List<MultipartFile> images
+    ) {
+        try {
+            ProductDTO updated = productService.updateProduct(id, productDTO, images);
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(null);
+        }
     }
 
-    // Deletar Produto
+    // DELETE
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable String id) {
         productService.deleteProduct(id);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
-    // Obter Produto por ID
+    // GET BY ID
     @GetMapping("/{id}")
     public ResponseEntity<ProductDTO> getProductById(@PathVariable String id) {
-        ProductDTO productDTO = productService.getProductById(id);
-        return ResponseEntity.ok(productDTO);
+        ProductDTO dto = productService.getProductById(id);
+        return ResponseEntity.ok(dto);
     }
 
-    // Obter Produtos por Catálogo
+    // GET ALL
+    @GetMapping("/all")
+    public ResponseEntity<List<ProductDTO>> getAllProducts() {
+        List<ProductDTO> dtos = productService.getAllProducts();
+        return ResponseEntity.ok(dtos);
+    }
+
+    // GET PRODUCTS BY CATALOG
     @GetMapping("/catalog/{catalogId}")
     public ResponseEntity<List<ProductDTO>> getProductsByCatalog(@PathVariable String catalogId) {
         List<ProductDTO> products = productService.getProductsByCatalog(catalogId);
         return ResponseEntity.ok(products);
     }
 
+    // SEARCH PRODUCTS (sem template) filtrando CEP + nome
     @GetMapping("/search")
     public ResponseEntity<Page<Product>> searchProducts(
             @RequestParam String cep,
             @RequestParam String name,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
+            @RequestParam(defaultValue = "10") int size
+    ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Product> result = productService.searchProductsByCepAndNameAndNoTemplate(cep, name, pageable);
         return ResponseEntity.ok(result);
     }
 
+    // LIST PRODUCTS (sem template) por CEP (paginado)
     @GetMapping("/products")
     public ResponseEntity<Page<Product>> searchProductsByCep(
             @RequestParam String cep,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size
+    ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Product> result = productService.getProductsByCepAndNoTemplatePaginated(cep, pageable);
         return ResponseEntity.ok(result);
     }
 
-    // Pesquisa produtos (sem template associado) filtrando por CEP, horário, categoria e subcategoria – com paginação
+    // FILTRA (sem template) por CEP, categoria, subcategoria
     @GetMapping("/products-by-filters")
     public ResponseEntity<Page<Product>> searchProductsByFilters(
             @RequestParam String cep,
             @RequestParam(required = false) String categoryId,
             @RequestParam(required = false) String subCategoryId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
+            @RequestParam(defaultValue = "10") int size
+    ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Product> result = productService.getProductsByCepCategoryAndNoTemplate(cep, categoryId, subCategoryId, pageable);
         return ResponseEntity.ok(result);

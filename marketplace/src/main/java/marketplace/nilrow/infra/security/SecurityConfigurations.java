@@ -103,14 +103,17 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.DELETE, "/products/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/products/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/products/**").authenticated()
+
                         .requestMatchers(HttpMethod.PUT, "/brands/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/brands/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/brands/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/brands/**").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/product-templates/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/product-templates/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/product-templates/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/product-templates/{id}/products").authenticated()
+
+                        .requestMatchers(HttpMethod.POST, "/product-templates/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/product-templates/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/product-templates/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/product-templates/**").authenticated()
+
                         .requestMatchers("/uploads/**").permitAll()
                         .anyRequest().authenticated()
                 )

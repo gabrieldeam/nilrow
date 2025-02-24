@@ -1,47 +1,24 @@
-// Representa um atributo de variação
-export interface VariationAttributeDTO {
-  id: string;
-  variationId: string;
-  attributeName: string;
-  attributeValue: string;
+// product.ts (arquivo de types do front)
+
+// Enum para tipo de produto
+export enum ProductType {
+  PRODUCT = 'PRODUCT',
+  SERVICE = 'SERVICE',
 }
 
-// Representa uma variação de um produto (para produtos)
-export interface ProductVariationDTO {
-  id: string;
-  productId: string;
-  attributes: VariationAttributeDTO[];
-  price: number;
-  stock: number;
-  active: boolean;
+// Enum para condição do produto
+export enum ProductCondition {
+  NEW = 'NEW',
+  USED = 'USED',
+  REFURBISHED = 'REFURBISHED',
 }
 
-// Representa uma variação de template de produto
-// Caso o DTO seja diferente, ajuste os campos conforme necessário
-export interface ProductTemplateVariationDTO {
-  id: string;
-  attributes: VariationAttributeDTO[];
-  price: number;
-  stock: number;
-  active: boolean;
+// Enum para tipo de produção
+export enum ProductionType {
+  OWN = 'OWN',
+  THIRD_PARTY = 'THIRD_PARTY',
 }
 
-// Representa um template de produto
-export interface ProductTemplateDTO {
-  id: string;
-  images: string[];
-  name: string;
-  categoryId: string;
-  subCategoryId: string;
-  brandId: string;
-  netWeight: number;
-  grossWeight: number;
-  unitOfMeasure: string;
-  itemsPerBox: number;
-  variations: ProductTemplateVariationDTO[];
-}
-
-// Representa um produto
 export interface ProductDTO {
   id: string;
   catalogId: string;
@@ -51,13 +28,13 @@ export interface ProductDTO {
   salePrice: number;
   discountPrice: number;
   unitOfMeasure: string;
-  type: string; // Considere definir um enum se os valores forem limitados
-  condition: string; // Considere definir um enum se os valores forem limitados
+  type: ProductType;           // Agora é do enum
+  condition: ProductCondition; // Enum
   categoryId: string;
   subCategoryId: string;
   brandId: string;
-  productionType: string; // Considere definir um enum se os valores forem limitados
-  expirationDate: string; // Data em formato ISO (pode ser convertida para Date se necessário)
+  productionType: ProductionType; // Enum
+  expirationDate: string | null;  // Permite null ou string de data
   freeShipping: boolean;
   netWeight: number;
   grossWeight: number;
@@ -73,5 +50,5 @@ export interface ProductDTO {
   notes: string;
   stock: number;
   active: boolean;
-  variations: ProductVariationDTO[];
+  associated: string[]; // Se for 'associatedIds' no back, ajuste. 
 }

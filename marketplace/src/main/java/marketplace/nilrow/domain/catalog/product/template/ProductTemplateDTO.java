@@ -19,5 +19,6 @@ public class ProductTemplateDTO {
     private BigDecimal grossWeight;
     private String unitOfMeasure;
     private Integer itemsPerBox;
-    private List<ProductTemplateVariationDTO> variations;
+    private List<String> associatedTemplateIds;
+    private List<String> productsId;
 }

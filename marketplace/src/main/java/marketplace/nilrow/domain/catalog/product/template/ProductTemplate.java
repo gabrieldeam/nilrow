@@ -51,9 +51,14 @@ public class ProductTemplate {
     private String unitOfMeasure;
     private Integer itemsPerBox;
 
-    // Variações do template
-    @OneToMany(mappedBy = "productTemplate", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProductTemplateVariation> variations;
+    @ManyToMany
+    @JoinTable(
+            name = "product_template_associations",
+            joinColumns = @JoinColumn(name = "template_id"),
+            inverseJoinColumns = @JoinColumn(name = "associated_template_id")
+    )
+    private List<ProductTemplate> associatedTemplates;
+
 
     // Produtos associados ao template (opcional, para visualização bidirecional)
     @OneToMany(mappedBy = "productTemplate")

@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
@@ -22,63 +23,62 @@ public class ProductTemplateController {
     @Autowired
     private ProductTemplateService templateService;
 
-    // Criar Template
-    @PostMapping("/create")
-    public ResponseEntity<ProductTemplateDTO> createTemplate(@RequestBody ProductTemplateDTO templateDTO) {
+    // Criar Template com multipart/form-data
+    @PostMapping(value = "/create", consumes = {"multipart/form-data"})
+    public ResponseEntity<ProductTemplateDTO> createTemplate(
+            @RequestPart("template") ProductTemplateDTO templateDTO,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images) {
+
         try {
-            ProductTemplateDTO createdTemplate = templateService.createTemplate(templateDTO);
+            ProductTemplateDTO createdTemplate = templateService.createTemplate(templateDTO, images);
             return ResponseEntity.ok(createdTemplate);
-        } catch (IOException e) {
-            // Você pode logar o erro e retornar um status 500, por exemplo.
+        } catch (Exception e) {
             return ResponseEntity.status(500).build();
         }
     }
 
+    // Atualizar Template com multipart/form-data
+    @PutMapping(value = "/edit/{id}", consumes = {"multipart/form-data"})
+    public ResponseEntity<ProductTemplateDTO> updateTemplate(
+            @PathVariable String id,
+            @RequestPart("template") ProductTemplateDTO templateDTO,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images) {
 
-    // Atualizar Template
-    @PutMapping("/edit/{id}")
-    public ResponseEntity<ProductTemplateDTO> updateTemplate(@PathVariable String id,
-                                                             @RequestBody ProductTemplateDTO templateDTO) {
         try {
-            ProductTemplateDTO updatedTemplate = templateService.updateTemplate(id, templateDTO);
+            ProductTemplateDTO updatedTemplate = templateService.updateTemplate(id, templateDTO, images);
             return ResponseEntity.ok(updatedTemplate);
-        } catch (IOException e) {
-            // Aqui você pode logar o erro e retornar uma resposta apropriada
+        } catch (Exception e) {
             return ResponseEntity.status(500).body(null);
         }
     }
 
 
-    // Deletar Template
+    // Demais endpoints permanecem inalterados
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteTemplate(@PathVariable String id) {
-        // Implementar a deleção se necessário
-        // templateService.deleteTemplate(id);
-        return ResponseEntity.ok().build();
+        templateService.deleteTemplate(id);
+        return ResponseEntity.noContent().build();
     }
 
-    // Buscar Template por ID
+
     @GetMapping("/{id}")
     public ResponseEntity<ProductTemplateDTO> getTemplateById(@PathVariable String id) {
         ProductTemplateDTO templateDTO = templateService.getTemplateById(id);
         return ResponseEntity.ok(templateDTO);
     }
 
-    // Listar todos os Templates
     @GetMapping("/all")
     public ResponseEntity<List<ProductTemplateDTO>> getAllTemplates() {
         List<ProductTemplateDTO> templates = templateService.getAllTemplates();
         return ResponseEntity.ok(templates);
     }
 
-    // Exemplo: Listar produtos associados a um template
     @GetMapping("/{id}/products")
     public ResponseEntity<List<Product>> getProductsByTemplate(@PathVariable String id) {
         List<Product> products = templateService.getProductsByTemplate(id);
         return ResponseEntity.ok(products);
     }
 
-    // Novo endpoint: filtrar produtos do template pelo CEP
     @GetMapping("/{templateId}/products-by-cep")
     public ResponseEntity<List<Product>> getProductsByTemplateAndCep(@PathVariable String templateId,
                                                                      @RequestParam String cep) {
@@ -86,7 +86,6 @@ public class ProductTemplateController {
         return ResponseEntity.ok(products);
     }
 
-    // Novo endpoint: filtrar produtos do template pelo CEP e horário de funcionamento
     @GetMapping("/{templateId}/products-by-cep-and-hours")
     public ResponseEntity<List<Product>> getProductsByTemplateAndCepAndHours(
             @PathVariable String templateId,
@@ -131,5 +130,4 @@ public class ProductTemplateController {
         Page<Product> result = templateService.getProductsByTemplateAndFilters(templateId, cep, categoryId, subCategoryId, pageable);
         return ResponseEntity.ok(result);
     }
-
 }
