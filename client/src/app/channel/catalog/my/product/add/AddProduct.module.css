@@ -1,110 +1,174 @@
 .productPage {
-    display: flex;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #000;
+  color: #fff;
+  padding-top: 150px;
+  padding-bottom: 70px;
+  box-sizing: border-box;
+}
+
+.productContainer {
+  width: 100%;
+  max-width: 419px;
+  padding: 6px;
+  box-sizing: border-box;
+}
+
+.productHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.addChannelImageUpload {
+  background-color: #212121;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  overflow-y: hidden;
+}
+
+/* Estilo para cada imagem adicionada (principal e associações) */
+.imageContainer {
+  position: relative;
+  display: inline-block;
+  margin-right: 10px;
+}
+
+.addChannelImagePreview {
+  width: 83px;
+  height: 83px;
+  border-radius: 5px;
+  object-fit: cover;
+  background-color: #fff;
+}
+
+.flexFormInput {
+  display: flex;
+  gap: 20px;
+}
+
+/* Botão de remoção (pequeno "×" sobre a imagem) */
+.removeButton {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 20px;
+  text-align: center;
+  padding: 0;
+}
+
+.addChannelUploadSection {
+  display: flex;
+  flex-direction: column;
+  margin-left: 20px;
+}
+
+.uploadInstruction {
+  color: #fff;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.addChannelUploadButton {
+  color: #7B33E5;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 15px;
+  margin-top: 10px;
+  display: inline-block;
+}
+
+.addChannelUploadButton:hover {
+  text-decoration: underline;
+}
+
+.fileName {
+  margin-top: 10px;
+  color: white;
+  font-size: 14px;
+}
+
+.confirmationButtonSpace {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+/* Associações */
+
+.addAssociationBtn {
+  background-color: #7b33e5;
+  color: #fff;
+  font-size: 14px;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.addAssociationBtn:hover {
+  background-color: #9c4bff;
+}
+
+.associationItem {
+  border-radius: 5px;
+  padding: 10px;
+  margin-top: 10px;
+  margin-bottom: 5px;
+  background-color: #1c1c1c;
+  border: 1px solid #535353;
+}
+
+.associationItemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.associationTitle {
+  font-weight: bold;
+  font-size: 15px;
+}
+
+.associationFields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.associationImagesPreview {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .productPage {
+    padding-bottom: 110px;
+    padding-top: 109px;
+  }
+
+  .associationFields {
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    background-color: #000;
-    color: #fff;
-    padding-top: 150px;
-    padding-bottom: 70px;
-    box-sizing: border-box;
   }
-  
-  .productContainer {
-    width: 100%;
-    max-width: 419px;
-    padding: 6px;
-    box-sizing: border-box;
-  }
-  
-  .productHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-  }
-  
-  .addChannelImageUpload {
-    background-color: #212121;
-    padding: 20px;
-    border-radius: 5px;
-    margin-bottom: 5px;
-    display: flex;
-    align-items: center;
-  }
-  
-  /* Estilo para cada imagem adicionada */
-  .imageContainer {
-    position: relative;
-    display: inline-block;
-    margin-right: 10px;
-  }
-  
-  .addChannelImagePreview {
-    width: 70px;
-    height: 70px;
-    border-radius: 100px;
-  }
-  
-  /* Botão de remoção (pequeno "×" sobre a imagem) */
-  .removeButton {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    background: rgba(0, 0, 0, 0.6);
-    color: #fff;
-    border: none;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-    font-size: 14px;
-    line-height: 20px;
-    text-align: center;
-    padding: 0;
-  }
-  
-  .addChannelUploadSection {
-    display: flex;
-    flex-direction: column;
-    margin-left: 20px;
-  }
-  
-  .uploadInstruction {
-    color: #fff;
-    font-size: 14px;
-    margin-bottom: 10px;
-  }
-  
-  .addChannelUploadButton {
-    color: #7B33E5;
-    border: none;
-    background: none;
-    cursor: pointer;
-    font-size: 15px;
-  }
-  
-  .addChannelUploadButton:hover {
-    text-decoration: underline;
-  }
-  
-  .fileName {
-    margin-top: 10px;
-    color: white;
-    font-size: 14px;
-  }
-  
-  .confirmationButtonSpace {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-  }
-  
-  @media (max-width: 768px) {
-    .productPage {
-      padding-bottom: 110px;
-      padding-top: 109px;
-    }
-  }
-  
+}
