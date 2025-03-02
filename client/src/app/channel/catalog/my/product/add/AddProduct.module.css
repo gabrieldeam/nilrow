@@ -91,8 +91,9 @@
   background: none;
   cursor: pointer;
   font-size: 15px;
-  margin-top: 10px;
   display: inline-block;
+  white-space: nowrap;
+  margin-right: 20px;
 }
 
 .addChannelUploadButton:hover {
@@ -151,15 +152,30 @@
 .associationFields {
   display: flex;
   flex-direction: column;
-  gap: 10px;
   margin-bottom: 10px;
 }
 
-.associationImagesPreview {
+/* AddProduct.module.css */
+.freeShippingContainer {
   display: flex;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
+  align-items: center;
+  gap: 5px;
 }
+
+.freeShippingCheckbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #7B33E5;
+  transition: transform 0.2s ease;
+}
+
+.freeShippingCheckbox:checked {
+  transform: scale(1.1);
+}
+
+
+
 
 /* Responsividade */
 @media (max-width: 768px) {

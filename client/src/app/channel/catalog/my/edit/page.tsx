@@ -40,6 +40,12 @@ const EditCatalog: React.FC = () => {
   const isMobile = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
   const [catalogId, setCatalogId] = useState<string | null>(null);
 
+  const timeOptions = [
+    { label: '00:00', value: '00:00' },
+    { label: '01:00', value: '01:00' },
+    // ... other time options
+  ];
+
   const handleBack = useCallback(() => {
     router.push('/channel/catalog/my');
   }, [router]);
@@ -542,6 +548,7 @@ const EditCatalog: React.FC = () => {
                               title="Abre"
                               name={`open-${selectedDay}-${timeIndex}`}
                               value={time.open}
+                              options={timeOptions}
                               onChange={(e: ChangeEvent<HTMLSelectElement>) =>
                                 handleInputChange(selectedDay, timeIndex, 'open', e.target.value)
                               }
@@ -550,6 +557,7 @@ const EditCatalog: React.FC = () => {
                               title="Fecha"
                               name={`close-${selectedDay}-${timeIndex}`}
                               value={time.close}
+                              options={timeOptions}
                               onChange={(e: ChangeEvent<HTMLSelectElement>) =>
                                 handleInputChange(selectedDay, timeIndex, 'close', e.target.value)
                               }

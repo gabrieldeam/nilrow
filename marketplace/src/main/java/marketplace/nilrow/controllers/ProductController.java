@@ -1,19 +1,17 @@
 package marketplace.nilrow.controllers;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import marketplace.nilrow.domain.catalog.product.Product;
+import jakarta.validation.Valid;
 import marketplace.nilrow.domain.catalog.product.ProductDTO;
 import marketplace.nilrow.services.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.*;
 
 @RestController
 @RequestMapping("/products")
@@ -23,99 +21,140 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
-    // CREATE (multipart/form-data)
-    @PostMapping(value = "/create", consumes = {"multipart/form-data"})
+    /**
+     * Criar um novo produto completo (incluindo variações e especificações),
+     * recebendo as imagens do produto principal e das variações via FormData.
+     *
+     * Exemplo de envio no Front-end (FormData):
+     * - productImages[]: arquivos do produto principal
+     * - variationImages[0][], variationImages[1][], etc., para cada variação
+     *
+     * @param productDTO Dados do produto
+     * @param productImages Imagens do produto principal (multipart)
+     * @param variationImages Mapa de índices da variação -> lista de imagens (multipart)
+     * @return ResponseEntity com o ProductDTO criado
+     */
+    @PostMapping
     public ResponseEntity<ProductDTO> createProduct(
-            @RequestPart("product") ProductDTO productDTO,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images
-    ) {
-        try {
-            ProductDTO created = productService.createProduct(productDTO, images);
-            return ResponseEntity.ok(created);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).build();
-        }
+            @ModelAttribute @Valid ProductDTO productDTO,
+            @RequestParam(value = "productImages", required = false) List<MultipartFile> productImages,
+            @RequestParam(required = false) Map<String, List<MultipartFile>> variationImages // ex.: variationImages[0]
+    ) throws IOException {
+
+        // Aqui precisamos transformar o map "variationImages" para Map<Integer, List<MultipartFile>>
+        // extraindo o índice de cada chave "variationImages[X]"
+        Map<Integer, List<MultipartFile>> varImagesMap = parseVariationImages(variationImages);
+
+        ProductDTO created = productService.createProduct(productDTO, productImages, varImagesMap);
+        return ResponseEntity.ok(created);
     }
 
-    // UPDATE (multipart/form-data)
-    @PutMapping(value = "/edit/{id}", consumes = {"multipart/form-data"})
+    /**
+     * Atualiza um produto existente, substituindo imagens, especificações e variações.
+     *
+     * @param id Identificador do produto
+     * @param productDTO Dados do produto
+     * @param productImages Novas imagens do produto principal
+     * @param variationImages Novas imagens para cada variação
+     * @return ProductDTO atualizado
+     */
+    @PutMapping("/{id}")
     public ResponseEntity<ProductDTO> updateProduct(
             @PathVariable String id,
-            @RequestPart("product") ProductDTO productDTO,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images
-    ) {
-        try {
-            ProductDTO updated = productService.updateProduct(id, productDTO, images);
-            return ResponseEntity.ok(updated);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(null);
-        }
+            @ModelAttribute @Valid ProductDTO productDTO,
+            @RequestParam(value = "productImages", required = false) List<MultipartFile> productImages,
+            @RequestParam(required = false) Map<String, List<MultipartFile>> variationImages
+    ) throws IOException {
+
+        Map<Integer, List<MultipartFile>> varImagesMap = parseVariationImages(variationImages);
+
+        ProductDTO updated = productService.updateProduct(id, productDTO, productImages, varImagesMap);
+        return ResponseEntity.ok(updated);
     }
 
-    // DELETE
-    @DeleteMapping("/delete/{id}")
+    /**
+     * Exclui um produto pelo ID.
+     *
+     * @param id ID do produto
+     */
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable String id) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
     }
 
-    // GET BY ID
+    /**
+     * Busca um produto pelo ID.
+     *
+     * @param id ID do produto
+     * @return ProductDTO
+     */
     @GetMapping("/{id}")
     public ResponseEntity<ProductDTO> getProductById(@PathVariable String id) {
-        ProductDTO dto = productService.getProductById(id);
-        return ResponseEntity.ok(dto);
+        ProductDTO productDTO = productService.getProductById(id);
+        return ResponseEntity.ok(productDTO);
     }
 
-    // GET ALL
-    @GetMapping("/all")
-    public ResponseEntity<List<ProductDTO>> getAllProducts() {
-        List<ProductDTO> dtos = productService.getAllProducts();
-        return ResponseEntity.ok(dtos);
+    /**
+     * Lista todos os produtos com paginação.
+     * Exemplo de uso: GET /products?page=0&size=10
+     *
+     * @param page Número da página (default = 0)
+     * @param size Tamanho da página (default = 10)
+     * @return Page de ProductDTO
+     */
+    @GetMapping
+    public ResponseEntity<Page<ProductDTO>> listAllProducts(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size
+    ) {
+        Page<ProductDTO> result = productService.listAllProducts(PageRequest.of(page, size));
+        return ResponseEntity.ok(result);
     }
 
-    // GET PRODUCTS BY CATALOG
+    /**
+     * Lista produtos de um catálogo específico, com paginação.
+     * Exemplo de uso: GET /products/catalog/{catalogId}?page=0&size=10
+     *
+     * @param catalogId ID do catálogo
+     * @param page Número da página (default = 0)
+     * @param size Tamanho da página (default = 10)
+     * @return Page de ProductDTO
+     */
     @GetMapping("/catalog/{catalogId}")
-    public ResponseEntity<List<ProductDTO>> getProductsByCatalog(@PathVariable String catalogId) {
-        List<ProductDTO> products = productService.getProductsByCatalog(catalogId);
-        return ResponseEntity.ok(products);
-    }
-
-    // SEARCH PRODUCTS (sem template) filtrando CEP + nome
-    @GetMapping("/search")
-    public ResponseEntity<Page<Product>> searchProducts(
-            @RequestParam String cep,
-            @RequestParam String name,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+    public ResponseEntity<Page<ProductDTO>> listProductsByCatalog(
+            @PathVariable String catalogId,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size
     ) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Product> result = productService.searchProductsByCepAndNameAndNoTemplate(cep, name, pageable);
+        Page<ProductDTO> result = productService.listProductsByCatalog(
+                catalogId,
+                PageRequest.of(page, size)
+        );
         return ResponseEntity.ok(result);
     }
 
-    // LIST PRODUCTS (sem template) por CEP (paginado)
-    @GetMapping("/products")
-    public ResponseEntity<Page<Product>> searchProductsByCep(
-            @RequestParam String cep,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Product> result = productService.getProductsByCepAndNoTemplatePaginated(cep, pageable);
-        return ResponseEntity.ok(result);
+    // -----------------------------------------------------
+    // Método auxiliar para parsear variationImages
+    // -----------------------------------------------------
+    private Map<Integer, List<MultipartFile>> parseVariationImages(Map<String, List<MultipartFile>> variationImages) {
+        Map<Integer, List<MultipartFile>> varImagesMap = new HashMap<>();
+        if (variationImages != null) {
+            // Exemplo de chave: "variationImages[0]" => precisamos extrair o índice 0
+            for (String key : variationImages.keySet()) {
+                if (key.startsWith("variationImages[")) {
+                    int index = extractIndexFromKey(key);
+                    varImagesMap.put(index, variationImages.get(key));
+                }
+            }
+        }
+        return varImagesMap;
     }
 
-    // FILTRA (sem template) por CEP, categoria, subcategoria
-    @GetMapping("/products-by-filters")
-    public ResponseEntity<Page<Product>> searchProductsByFilters(
-            @RequestParam String cep,
-            @RequestParam(required = false) String categoryId,
-            @RequestParam(required = false) String subCategoryId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Product> result = productService.getProductsByCepCategoryAndNoTemplate(cep, categoryId, subCategoryId, pageable);
-        return ResponseEntity.ok(result);
+    private int extractIndexFromKey(String key) {
+        // "variationImages[2]" => extraímos 2
+        int start = key.indexOf('[') + 1;
+        int end = key.indexOf(']');
+        return Integer.parseInt(key.substring(start, end));
     }
 }
