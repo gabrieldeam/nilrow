@@ -35,6 +35,16 @@
   overflow-y: hidden;
 }
 
+.addChannelImageUploadVar {
+  background-color: #000000;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  overflow-y: hidden;
+}
+
 /* Estilo para cada imagem adicionada (principal e associações) */
 .imageContainer {
   position: relative;
@@ -53,6 +63,7 @@
 .flexFormInput {
   display: flex;
   gap: 20px;
+  align-items: center;
 }
 
 /* Botão de remoção (pequeno "×" sobre a imagem) */
@@ -76,7 +87,6 @@
 .addChannelUploadSection {
   display: flex;
   flex-direction: column;
-  margin-left: 20px;
 }
 
 .uploadInstruction {
@@ -94,6 +104,7 @@
   display: inline-block;
   white-space: nowrap;
   margin-right: 20px;
+  margin-left: 10px;
 }
 
 .addChannelUploadButton:hover {
@@ -112,70 +123,23 @@
   margin-top: 20px;
 }
 
-/* Associações */
-
-.addAssociationBtn {
-  background-color: #7b33e5;
-  color: #fff;
-  font-size: 14px;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.addAssociationBtn:hover {
-  background-color: #9c4bff;
-}
-
-.associationItem {
-  border-radius: 5px;
-  padding: 10px;
-  margin-top: 10px;
-  margin-bottom: 5px;
-  background-color: #1c1c1c;
-  border: 1px solid #535353;
-}
-
-.associationItemHeader {
+.variationHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
 }
 
-.associationTitle {
-  font-weight: bold;
-  font-size: 15px;
-}
-
-.associationFields {
+.variationHeader div {
   display: flex;
-  flex-direction: column;
-  margin-bottom: 10px;
-}
-
-/* AddProduct.module.css */
-.freeShippingContainer {
-  display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 5px;
 }
 
-.freeShippingCheckbox {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  accent-color: #7B33E5;
-  transition: transform 0.2s ease;
+.freeShippingContainer {
+  display: flex;
+  gap: 5px;
 }
-
-.freeShippingCheckbox:checked {
-  transform: scale(1.1);
-}
-
-
-
 
 /* Responsividade */
 @media (max-width: 768px) {
@@ -184,7 +148,5 @@
     padding-top: 109px;
   }
 
-  .associationFields {
-    flex-direction: column;
-  }
+ 
 }

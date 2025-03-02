@@ -284,7 +284,7 @@ const AddCatalog: React.FC = () => {
         try {
           await createCatalog(catalogData);
           setMessage('Catálogo criado com sucesso!', 'success');
-          router.push('/catalog');
+          router.push('/channel/catalog');
         } catch (error: any) {
           if (error.response && error.response.data) {
             const errorMessage =
@@ -457,12 +457,22 @@ const AddCatalog: React.FC = () => {
                               name={`open-${selectedDay}-${timeIndex}`}
                               value={time.open}
                               onChange={(e) => handleInputChange(selectedDay, timeIndex, 'open', e)}
+                              options={[
+                                { label: '08:00', value: '08:00' },
+                                { label: '09:00', value: '09:00' },
+                                // outras opções...
+                              ]}
                             />
                             <CustomSelect
                               title="Fecha"
                               name={`close-${selectedDay}-${timeIndex}`}
                               value={time.close}
                               onChange={(e) => handleInputChange(selectedDay, timeIndex, 'close', e)}
+                              options={[
+                                { label: '17:00', value: '17:00' },
+                                { label: '18:00', value: '18:00' },
+                                // Add more time options as needed
+                              ]}
                             />
                             <img
                               src={closeIcon}

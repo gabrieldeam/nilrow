@@ -1,5 +1,3 @@
-// product.ts (arquivo de types do front)
-
 // Enum para tipo de produto
 export enum ProductType {
   PRODUCT = 'PRODUCT',
@@ -19,22 +17,49 @@ export enum ProductionType {
   THIRD_PARTY = 'THIRD_PARTY',
 }
 
+// Interface para Especificação Técnica (Ficha Técnica)
+export interface TechnicalSpecificationDTO {
+  id?: string; // opcional para novos registros
+  title: string;
+  content: string;
+}
+
+// Interface para Atributos das Variações
+export interface VariationAttributeDTO {
+  id?: string;
+  attributeName: string;
+  attributeValue: string;
+}
+
+// Interface para Variação do Produto
+export interface ProductVariationDTO {
+  id?: string;
+  images: string[];
+  price: number;
+  discountPrice: number;
+  stock: number;
+  active: boolean;
+  attributes: VariationAttributeDTO[];
+}
+
+// Interface para o Produto
 export interface ProductDTO {
-  id: string;
+  id?: string;
   catalogId: string;
+  productTemplateId?: string;
   images: string[];
   name: string;
   skuCode: string;
   salePrice: number;
   discountPrice: number;
   unitOfMeasure: string;
-  type: ProductType;           // Agora é do enum
-  condition: ProductCondition; // Enum
+  type: ProductType;
+  condition: ProductCondition;
   categoryId: string;
   subCategoryId: string;
   brandId: string;
-  productionType: ProductionType; // Enum
-  expirationDate: string | null;  // Permite null ou string de data
+  productionType: ProductionType;
+  expirationDate?: string | null;
   freeShipping: boolean;
   netWeight: number;
   grossWeight: number;
@@ -50,5 +75,6 @@ export interface ProductDTO {
   notes: string;
   stock: number;
   active: boolean;
-  associated: string[]; // Se for 'associatedIds' no back, ajuste. 
+  technicalSpecifications: TechnicalSpecificationDTO[];
+  variations: ProductVariationDTO[];
 }

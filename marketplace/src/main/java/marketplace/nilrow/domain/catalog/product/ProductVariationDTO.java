@@ -15,8 +15,7 @@ public class ProductVariationDTO {
     // Lista de atributos que descrevem a variação (ex.: cor, tamanho)
     private List<VariationAttributeDTO> attributes;
 
-    @NotEmpty(message = "Deve ser informado pelo menos uma imagem.")
-    private List<@NotBlank(message = "A URL da imagem não pode ser vazia.") String> images;
+    private List<String> images;
 
     @NotNull(message = "O preço é obrigatório.")
     @DecimalMin(value = "0.0", inclusive = false, message = "O preço deve ser maior que zero.")

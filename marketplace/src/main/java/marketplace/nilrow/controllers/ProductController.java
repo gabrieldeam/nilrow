@@ -21,56 +21,37 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
-    /**
-     * Criar um novo produto completo (incluindo variações e especificações),
-     * recebendo as imagens do produto principal e das variações via FormData.
-     *
-     * Exemplo de envio no Front-end (FormData):
-     * - productImages[]: arquivos do produto principal
-     * - variationImages[0][], variationImages[1][], etc., para cada variação
-     *
-     * @param productDTO Dados do produto
-     * @param productImages Imagens do produto principal (multipart)
-     * @param variationImages Mapa de índices da variação -> lista de imagens (multipart)
-     * @return ResponseEntity com o ProductDTO criado
-     */
     @PostMapping
     public ResponseEntity<ProductDTO> createProduct(
-            @ModelAttribute @Valid ProductDTO productDTO,
-            @RequestParam(value = "productImages", required = false) List<MultipartFile> productImages,
-            @RequestParam(required = false) Map<String, List<MultipartFile>> variationImages // ex.: variationImages[0]
+            // Em vez de @ModelAttribute, use @RequestPart("product")
+            @RequestPart("product") @Valid ProductDTO productDTO,
+            // As imagens do produto principal podem ser @RequestPart ou @RequestParam,
+            // mas se quisermos manter a coerência e enviar tudo como multipart:
+            @RequestPart(value = "productImages", required = false) List<MultipartFile> productImages,
+            // Mapa de variações -> imagens
+            @RequestPart(required = false) Map<String, List<MultipartFile>> variationImages
     ) throws IOException {
 
-        // Aqui precisamos transformar o map "variationImages" para Map<Integer, List<MultipartFile>>
-        // extraindo o índice de cada chave "variationImages[X]"
+        // Precisamos converter "variationImages" para Map<Integer, List<MultipartFile>>:
         Map<Integer, List<MultipartFile>> varImagesMap = parseVariationImages(variationImages);
 
         ProductDTO created = productService.createProduct(productDTO, productImages, varImagesMap);
         return ResponseEntity.ok(created);
     }
 
-    /**
-     * Atualiza um produto existente, substituindo imagens, especificações e variações.
-     *
-     * @param id Identificador do produto
-     * @param productDTO Dados do produto
-     * @param productImages Novas imagens do produto principal
-     * @param variationImages Novas imagens para cada variação
-     * @return ProductDTO atualizado
-     */
     @PutMapping("/{id}")
     public ResponseEntity<ProductDTO> updateProduct(
             @PathVariable String id,
-            @ModelAttribute @Valid ProductDTO productDTO,
-            @RequestParam(value = "productImages", required = false) List<MultipartFile> productImages,
-            @RequestParam(required = false) Map<String, List<MultipartFile>> variationImages
+            @RequestPart("product") @Valid ProductDTO productDTO,
+            @RequestPart(value = "productImages", required = false) List<MultipartFile> productImages,
+            @RequestPart(required = false) Map<String, List<MultipartFile>> variationImages
     ) throws IOException {
 
         Map<Integer, List<MultipartFile>> varImagesMap = parseVariationImages(variationImages);
-
         ProductDTO updated = productService.updateProduct(id, productDTO, productImages, varImagesMap);
         return ResponseEntity.ok(updated);
     }
+
 
     /**
      * Exclui um produto pelo ID.
@@ -134,9 +115,6 @@ public class ProductController {
         return ResponseEntity.ok(result);
     }
 
-    // -----------------------------------------------------
-    // Método auxiliar para parsear variationImages
-    // -----------------------------------------------------
     private Map<Integer, List<MultipartFile>> parseVariationImages(Map<String, List<MultipartFile>> variationImages) {
         Map<Integer, List<MultipartFile>> varImagesMap = new HashMap<>();
         if (variationImages != null) {

@@ -13,8 +13,7 @@ public class ProductDTO {
 
     private String id;
 
-    @NotEmpty(message = "Deve ser informado pelo menos uma imagem.")
-    private List<@NotBlank(message = "A URL da imagem não pode ser vazia.") String> images;
+    private List<String> images;
 
     @NotBlank(message = "O nome é obrigatório.")
     @Size(max = 255, message = "O nome deve ter no máximo 255 caracteres.")
