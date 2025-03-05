@@ -14,7 +14,7 @@ const ToggleButton: React.FC<ToggleButtonProps> = ({ initial = false, onToggle }
   const handleClick = () => {
     const newState = !toggled;
     setToggled(newState);
-    onToggle(newState); // Passa o novo estado para o callback
+    onToggle?.(newState); // Passa o novo estado para o callback
   };
 
   return (

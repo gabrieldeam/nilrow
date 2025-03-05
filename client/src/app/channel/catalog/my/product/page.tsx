@@ -9,10 +9,15 @@ import Card from '@/components/UI/Card/Card';
 import ProductCard from '@/components/UI/ProductCard/ProductCard';
 
 import editWhite from '../../../../../../public/assets/editWhite.svg';
+import verificacao from '../../../../../../public/assets/verificacao.svg';
+import checkWhite from '../../../../../../public/assets/check-white.svg';
 
 import styles from './Product.module.css';
 
-import { getProductsByCatalog } from '@/services/product/productService';
+import { 
+  getProductsByCatalog, 
+  updateProduct 
+} from '@/services/product/productService';
 import { ProductDTO } from '@/types/services/product';
 import defaultImage from '../../../../../../public/assets/user.png';
 
@@ -24,12 +29,10 @@ const Product: React.FC = () => {
     router.push('/channel/catalog/my');
   }, [router]);
 
-  // Estados para armazenar o catalogId, os produtos e o loading
   const [catalogId, setCatalogId] = useState<string | null>(null);
   const [products, setProducts] = useState<ProductDTO[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
-  // Recupera o catalogId do localStorage. Se não existir, redireciona o usuário.
   useEffect(() => {
     const storedCatalogId = localStorage.getItem("selectedCatalogId");
     if (!storedCatalogId) {
@@ -39,15 +42,13 @@ const Product: React.FC = () => {
     }
   }, [router]);
 
-  // Busca os produtos assim que o catalogId estiver definido
   useEffect(() => {
     if (!catalogId) return;
 
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        const response = await getProductsByCatalog(catalogId, 0, 10);
-        // Supondo que a resposta tenha um campo "content" com os produtos
+        const response = await getProductsByCatalog(catalogId, 0, 10);  
         setProducts(response.content);
       } catch (error) {
         console.error('Erro ao carregar produtos:', error);
@@ -59,8 +60,30 @@ const Product: React.FC = () => {
     fetchProducts();
   }, [catalogId]);
 
-  // Define o endereço base da API
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+
+  // Função para alternar o status "active" do produto
+  const handleToggleActive = async (product: ProductDTO) => {
+    try {
+      console.log("Produto antes do toggle:", product);
+      const payload: ProductDTO = {
+        ...product,
+        active: !product.active,
+        technicalSpecifications: product.technicalSpecifications || [],
+        variations: product.variations || []
+      };
+      console.log("Payload enviado para atualização:", payload);
+
+      const updatedProduct = await updateProduct(product.id as string, payload);
+      console.log("Produto atualizado retornado do back:", updatedProduct);
+
+      setProducts(prevProducts =>
+        prevProducts.map(p => (p.id === updatedProduct.id ? updatedProduct : p))
+      );
+    } catch (error) {
+      console.error('Erro ao atualizar o status do produto:', error);
+    }
+  };
 
   return (
     <div className={styles.productPage}>
@@ -95,7 +118,11 @@ const Product: React.FC = () => {
                   price={product.salePrice}
                   freeShipping={product.freeShipping}
                   buttons={[
-                    { image: editWhite.src, link: `/channel/catalog/my/product/edit/${product.id}` }
+                    { image: editWhite.src, link: `/channel/catalog/my/product/edit?productId=${product.id}` },
+                    {
+                      image: product.active ? verificacao.src : checkWhite.src,
+                      onClick: () => handleToggleActive(product)
+                    }
                   ]}
                 />
               ))}

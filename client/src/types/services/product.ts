@@ -27,17 +27,17 @@ export interface TechnicalSpecificationDTO {
 // Interface para Atributos das Variações
 export interface VariationAttributeDTO {
   id?: string;
-  attributeName: string;
-  attributeValue: string;
+  attributeName?: string;
+  attributeValue?: string;
 }
 
 // Interface para Variação do Produto
 export interface ProductVariationDTO {
   id?: string;
-  images: string[];
-  price: number;
-  discountPrice: number;
-  stock: number;
+  images?: string[];
+  price?: number;
+  discountPrice?: number;
+  stock?: number;
   active: boolean;
   attributes: VariationAttributeDTO[];
 }

@@ -16,10 +16,10 @@ import ExpandableCard from '@/components/UI/ExpandableCard/ExpandableCard';
 import HeaderButton from '@/components/UI/HeaderButton/HeaderButton';
 import trashIcon from '../../../../../../../public/assets/trash.svg';
 
-import { createProduct } from '@/services/product/productService';
+import { updateProduct, getProductById, deleteProduct } from '@/services/product/productService';
 import {
   getAllCategoriesAdmin,
-  getSubCategoriesByCategory
+  getSubCategoriesByCategory,
 } from '@/services/categoryService';
 import { getAllBrands } from '@/services/product/brandService';
 
@@ -30,31 +30,32 @@ import {
   ProductionType,
   TechnicalSpecificationDTO,
   ProductVariationDTO,
-  VariationAttributeDTO
 } from '@/types/services/product';
-import { ImageData, ProductAttribute } from '@/types/pages/channel/catalog/my/product/add';
+import {
+  ImageData,
+  ProductAttribute,
+} from '@/types/pages/channel/catalog/my/product/add';
 
 import defaultImage from '../../../../../../../public/assets/user.png';
-import styles from './AddProduct.module.css';
+import styles from './EditProduct.module.css';
 
 import { useNotification } from '@/hooks/useNotification';
 
-const ProductCreatePage: React.FC = () => {
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+
+const ProductEditPage: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
   const { setMessage } = useNotification();
 
-  // ------------------------------------------------------------------
+  const productId = searchParams.get('productId');
+
   // 1) Imagens do PRODUTO PRINCIPAL
-  // ------------------------------------------------------------------
   const [mainImages, setMainImages] = useState<ImageData[]>([]);
-  // Estados para controlar drag & drop das imagens principais
   const [draggingMainIndex, setDraggingMainIndex] = useState<number | null>(null);
 
-  // ------------------------------------------------------------------
-  // 2) Estado dos dados principais do produto
-  // ------------------------------------------------------------------
+  // 2) Dados principais do produto
   const [name, setName] = useState('');
   const [skuCode, setSkuCode] = useState('');
   const [salePrice, setSalePrice] = useState<number>(0);
@@ -79,36 +80,29 @@ const ProductCreatePage: React.FC = () => {
   const [gtinEanTax, setGtinEanTax] = useState('');
   const [expirationDate, setExpirationDate] = useState('');
 
-  // ------------------------------------------------------------------
   // 3) Relacionamentos
-  // ------------------------------------------------------------------
   const [catalogId, setCatalogId] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [subCategoryId, setSubCategoryId] = useState('');
   const [brandId, setBrandId] = useState('');
 
-  // ------------------------------------------------------------------
   // 4) Ficha Técnica
-  // ------------------------------------------------------------------
-  const [technicalSpecifications, setTechnicalSpecifications] = useState<TechnicalSpecificationDTO[]>([]);
+  const [technicalSpecifications, setTechnicalSpecifications] = useState<
+    TechnicalSpecificationDTO[]
+  >([]);
 
-  // ------------------------------------------------------------------
-  // 5) Atributos + Geração Automática de Variações
-  // ------------------------------------------------------------------
+  // 5) Atributos e Variações
   const [productAttributes, setProductAttributes] = useState<ProductAttribute[]>([
-    { attributeName: '', values: [] }
+    { attributeName: '', values: [] },
   ]);
   const [variations, setVariations] = useState<ProductVariationDTO[]>([]);
-
-  // Para armazenar imagens específicas de cada variação
-  // ex.: variationImages[0] = [File1, File2]
   const [variationImages, setVariationImages] = useState<Record<number, ImageData[]>>({});
-  // Estados de drag & drop para imagens de variação
-  const [draggingVarIndex, setDraggingVarIndex] = useState<{ variation: number; index: number } | null>(null);
+  const [draggingVarIndex, setDraggingVarIndex] = useState<{
+    variation: number;
+    index: number;
+  } | null>(null);
 
-  // ------------------------------------------------------------------
   // 6) Categorias, SubCategorias, Marcas e Paginação
-  // ------------------------------------------------------------------
   const [categories, setCategories] = useState<any[]>([]);
   const [subCategories, setSubCategories] = useState<any[]>([]);
   const [brands, setBrands] = useState<any[]>([]);
@@ -119,9 +113,14 @@ const ProductCreatePage: React.FC = () => {
   const [hasMoreBrands, setHasMoreBrands] = useState(true);
   const [brandPage, setBrandPage] = useState(0);
 
-  // =================================================================
-  // useEffect para carregar categorias e marcas
-  // =================================================================
+  useEffect(() => {
+    if (!productId) {
+      router.push('/channel/catalog/my/product');
+    }
+  }, [productId, router]);
+
+  
+  // Carregar categorias e marcas
   useEffect(() => {
     async function fetchInitialData() {
       try {
@@ -139,23 +138,21 @@ const ProductCreatePage: React.FC = () => {
     fetchInitialData();
   }, []);
 
-  // Carregar do localStorage / queryparam
+  // Carregar catalogId do localStorage ou queryParams
   useEffect(() => {
-    const storedCatalogId = localStorage.getItem("selectedCatalogId");
-    const queryCatalogId = searchParams.get("catalogId");
+    const storedCatalogId = localStorage.getItem('selectedCatalogId');
+    const queryCatalogId = searchParams.get('catalogId');
 
     if (queryCatalogId) {
       setCatalogId(queryCatalogId);
     } else if (storedCatalogId) {
       setCatalogId(storedCatalogId);
     } else {
-      router.push("/channel/catalog/my");
+      router.push('/channel/catalog/my');
     }
   }, [searchParams, router]);
 
-  // =================================================================
-  // Carregar SubCategorias
-  // =================================================================
+  // Carregar SubCategorias ao selecionar uma Categoria
   async function fetchSubCategories(catId: string, page = 0) {
     try {
       const subCats = await getSubCategoriesByCategory(catId, page, 10);
@@ -171,9 +168,120 @@ const ProductCreatePage: React.FC = () => {
     }
   }
 
-  // =================================================================
-  // 1) Manipulação de Imagens do PRODUTO PRINCIPAL (drag & drop)
-  // =================================================================
+  // Carregar os dados do produto para edição
+  // Carregar os dados do produto para edição
+useEffect(() => {
+  async function fetchProduct() {
+    if (!productId) return;
+    try {
+      const product: ProductDTO = await getProductById(productId);
+
+      setName(product.name);
+      setSkuCode(product.skuCode);
+      setSalePrice(Number(product.salePrice));
+      setDiscountPrice(Number(product.discountPrice || 0));
+      setUnitOfMeasure(product.unitOfMeasure);
+      setType(product.type);
+      setCondition(product.condition);
+      setProductionType(product.productionType);
+      setFreeShipping(product.freeShipping);
+      setNetWeight(Number(product.netWeight || 0));
+      setGrossWeight(Number(product.grossWeight || 0));
+      setWidth(Number(product.width || 0));
+      setHeight(Number(product.height || 0));
+      setDepth(Number(product.depth || 0));
+      setVolumes(Number(product.volumes || 0));
+      setItemsPerBox(Number(product.itemsPerBox || 0));
+      setStock(Number(product.stock || 0));
+      setShortDescription(product.shortDescription || '');
+      setComplementaryDescription(product.complementaryDescription || '');
+      setNotes(product.notes || '');
+      setGtinEan(product.gtinEan || '');
+      setGtinEanTax(product.gtinEanTax || '');
+      setExpirationDate(product.expirationDate ? product.expirationDate.toString() : '');
+      setCatalogId(product.catalogId);
+      
+      // Ajuste: Após setar a categoria, busca as subcategorias usando o id da categoria
+      setCategoryId(product.categoryId);
+      await fetchSubCategories(product.categoryId, 0);
+      
+      // Define o id da subcategoria que veio do getProductById
+      setSubCategoryId(product.subCategoryId);
+      
+      setBrandId(product.brandId);
+      setTechnicalSpecifications(product.technicalSpecifications || []);
+      setVariations(product.variations || []);
+
+      // Converter imagens existentes do produto em ImageData
+      if (product.images && product.images.length > 0) {
+        const existingImages: ImageData[] = product.images.map((imgUrl: string) => ({
+          file: undefined,
+          preview: apiUrl + imgUrl,
+          isNew: false,
+        }));
+        setMainImages(existingImages);
+      }
+
+      // Dentro da função fetchProduct, após receber o produto
+      if (product.variations && product.variations.length > 0) {
+        const extractedAttributes: ProductAttribute[] = [];
+        product.variations.forEach((variation) => {
+          variation.attributes.forEach((attr) => {
+            const existingAttr = extractedAttributes.find(
+              (a) => a.attributeName === attr.attributeName
+            );
+            if (existingAttr) {
+              if (!existingAttr.values.includes(attr.attributeValue || '')) {
+                existingAttr.values.push(attr.attributeValue || '');
+              }
+            } else {
+              extractedAttributes.push({
+                attributeName: attr.attributeName || '',
+                values: [attr.attributeValue || ''],
+              });
+            }
+          });
+        });
+        setProductAttributes(extractedAttributes);
+      }
+
+
+      // Converter imagens das variações, se existirem
+      if (product.variations && product.variations.length > 0) {
+        const varImagesMap: Record<number, ImageData[]> = {};
+        product.variations.forEach((variation, index) => {
+          if (variation.images && variation.images.length > 0) {
+            varImagesMap[index] = variation.images.map((imgUrl: string) => ({
+              file: undefined,
+              preview: apiUrl + imgUrl,
+              isNew: false,
+            }));
+          }
+        });
+        setVariationImages(varImagesMap);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar produto:', error);
+      setMessage('Erro ao carregar os dados do produto.', 'error');
+      router.push('/channel/catalog/my/product');
+    }
+  }
+  fetchProduct();
+}, [productId, setMessage]);
+
+const handleDelete = async () => {
+  if (!productId) return;
+  try {
+    await deleteProduct(productId);
+    setMessage('Produto deletado com sucesso!', 'success');
+    router.push('/channel/catalog/my/product');
+  } catch (error) {
+    console.error('Erro ao deletar produto:', error);
+    setMessage('Erro ao deletar o produto.', 'error');
+  }
+};
+
+  // Manipulação de imagens do produto principal
   const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
@@ -185,6 +293,7 @@ const ProductCreatePage: React.FC = () => {
       const mapped = newFiles.map((file) => ({
         file,
         preview: URL.createObjectURL(file),
+        isNew: true,
       }));
       setMainImages((prev) => [...prev, ...mapped]);
     }
@@ -194,25 +303,25 @@ const ProductCreatePage: React.FC = () => {
     setMainImages((prev) => {
       const arr = [...prev];
       const removed = arr.splice(index, 1)[0];
-      URL.revokeObjectURL(removed.preview);
+      if (removed.isNew && removed.preview) {
+        URL.revokeObjectURL(removed.preview);
+      }
       return arr;
     });
   };
 
-  // DRAG & DROP - Imagens Principais
+  // Drag & Drop imagens principais
   const onDragStartMain = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     setDraggingMainIndex(index);
   };
 
   const onDragOverMain = (e: React.DragEvent<HTMLDivElement>) => {
-    // Precisamos previnir o comportamento default para permitir o drop
     e.preventDefault();
   };
 
   const onDropMain = (e: React.DragEvent<HTMLDivElement>, dropIndex: number) => {
     e.preventDefault();
     if (draggingMainIndex === null) return;
-
     setMainImages((prev) => {
       const arr = [...prev];
       const [draggedItem] = arr.splice(draggingMainIndex, 1);
@@ -222,15 +331,15 @@ const ProductCreatePage: React.FC = () => {
     setDraggingMainIndex(null);
   };
 
-  // =================================================================
-  // 2) FICHA TÉCNICA
-  // =================================================================
+  // Ficha Técnica
   const handleAddSpec = () => {
-    // Verifica se o último item já está preenchido
     if (technicalSpecifications.length > 0) {
       const lastSpec = technicalSpecifications[technicalSpecifications.length - 1];
       if (!lastSpec.title.trim() || !lastSpec.content.trim()) {
-        setMessage('Preencha título e conteúdo da ficha técnica antes de adicionar outra.', 'error');
+        setMessage(
+          'Preencha título e conteúdo da ficha técnica antes de adicionar outra.',
+          'error'
+        );
         return;
       }
     }
@@ -249,11 +358,9 @@ const ProductCreatePage: React.FC = () => {
     });
   };
 
-  // =================================================================
-  // 3) FUNÇÃO DE GERAÇÃO DE VARIAÇÕES (cartesiana)
-  // =================================================================
+  // Geração de variações (cartesiana)
   const generateVariations = useCallback(() => {
-    // Verifica se todos os atributos estão preenchidos
+    // Verifica se os atributos estão preenchidos corretamente
     for (const attr of productAttributes) {
       if (!attr.attributeName.trim()) {
         setMessage('Preencha o nome de todos os atributos antes de gerar variações.', 'error');
@@ -264,16 +371,11 @@ const ProductCreatePage: React.FC = () => {
         return;
       }
     }
-
-    const listOfValues = productAttributes.map((attr) => attr.values).filter((v) => v.length > 0);
-    const attributeNames = productAttributes.map((attr) => attr.attributeName);
-
-    if (listOfValues.length === 0 || attributeNames.length === 0) {
-      setVariations([]);
-      return;
-    }
-
-    // Produto cartesiano
+  
+    // Gera o produto cartesiano dos valores dos atributos
+    const listOfValues = productAttributes.map(attr => attr.values);
+    const attributeNames = productAttributes.map(attr => attr.attributeName);
+  
     const cartesian = (arrays: string[][]): string[][] => {
       let result: string[][] = [[]];
       for (const arr of arrays) {
@@ -287,37 +389,56 @@ const ProductCreatePage: React.FC = () => {
       }
       return result;
     };
-
+  
     const combos = cartesian(listOfValues);
-
-    const newVariations: ProductVariationDTO[] = combos.map((combo) => {
-      const attrs: VariationAttributeDTO[] = combo.map((val, idx) => ({
-        attributeName: attributeNames[idx],
-        attributeValue: val,
-      }));
-      return {
-        id: undefined,
-        images: [],
-        price: 0,
-        discountPrice: 0,
-        stock: 0,
-        active: true,
-        attributes: attrs,
-      };
+  
+    // Função para criar um "hash" ou chave da combinação, por exemplo, concatenando os valores
+    const getComboKey = (combo: string[]) => combo.join('|');
+  
+    // Cria um mapa das variações existentes usando a chave (pode ser melhorada para considerar ordem ou normalização)
+    const existingMap = new Map(
+      variations.map(variation => [
+        getComboKey(variation.attributes.map(attr => attr.attributeValue || '')),
+        variation,
+      ])
+    );
+  
+    // Para cada combinação, verifica se já existe; se sim, mantém os dados atuais; se não, cria uma nova variação
+    const newVariations = combos.map(combo => {
+      const key = getComboKey(combo);
+      if (existingMap.has(key)) {
+        return existingMap.get(key)!; // mantém variação já existente
+      } else {
+        // Cria uma nova variação com os dados padrões e marca como nova
+        const newAttributes = combo.map((value, idx) => ({
+          attributeName: attributeNames[idx],
+          attributeValue: value,
+        }));
+        return {
+          id: undefined, // ou algum identificador temporário
+          images: [],
+          price: 0,
+          discountPrice: 0,
+          stock: 0,
+          active: true,
+          attributes: newAttributes,
+          isNew: true, // flag opcional para o backend
+        };
+      }
     });
-
+  
+    // Atualiza o estado com a mesclagem das variações
     setVariations(newVariations);
-    // Ao regenerar, também limpamos o map de imagens das variações
+    // Também reinicializa as imagens das variações se necessário
     setVariationImages({});
-  }, [productAttributes, setMessage]);
+  }, [productAttributes, variations, setMessage]);
+  
 
   const handleGenerateVariationsClick = () => {
     generateVariations();
   };
 
-  // =================================================================
-  // 4) ATRIBUTOS PARA GERAÇÃO DE VARIAÇÕES
-  // =================================================================
+  // Atributos para geração de variações
   const handleAddAttribute = () => {
     setProductAttributes((prev) => [...prev, { attributeName: '', values: [] }]);
   };
@@ -327,7 +448,6 @@ const ProductCreatePage: React.FC = () => {
       const newArr = prev.filter((_, i) => i !== idx);
       return newArr;
     });
-    // Regerar variações
     setTimeout(() => generateVariations(), 0);
   };
 
@@ -367,15 +487,11 @@ const ProductCreatePage: React.FC = () => {
     });
   };
 
-  // =================================================================
-  // 5) REMOVER VARIAÇÃO INDIVIDUAL
-  // =================================================================
+  // Remover variação individual
   const handleRemoveVariation = (index: number) => {
     setVariations((prev) => prev.filter((_, i) => i !== index));
-    // Precisamos reindexar as imagens
     setVariationImages((prev) => {
       const newMapping: Record<number, ImageData[]> = {};
-      // Copia tudo, exceto a variação removida
       const oldKeys = Object.keys(prev).sort((a, b) => Number(a) - Number(b));
       let newIndex = 0;
       for (const oldKey of oldKeys) {
@@ -389,39 +505,38 @@ const ProductCreatePage: React.FC = () => {
     });
   };
 
-  // =================================================================
-  // 6) MANIPULAR IMAGENS DE CADA VARIAÇÃO (com drag & drop)
-  // =================================================================
-  const handleVariationImageChange = (variationIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
-    const newFiles = Array.from(e.target.files);
+  // Imagens das variações
+  // Usamos Record<number, ImageData[]>
+const handleVariationImageChange = (variationIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
+  console.log(`handleVariationImageChange chamado para a variação ${variationIndex}`);
+  if (!e.target.files) return;
+  console.log("Arquivos selecionados:", e.target.files);
 
-    // Exemplo: permitir até 4 imagens por variação
-    const existing = variationImages[variationIndex] || [];
-    const availableSlots = 4 - existing.length;
-    if (newFiles.length > availableSlots) {
-      setMessage('Você pode enviar no máximo 4 imagens por variação.', 'error');
-      newFiles.splice(availableSlots);
-    }
+  const newFiles = Array.from(e.target.files);
+  const existing = variationImages[variationIndex] || [];
+  const availableSlots = 4 - existing.length;
+  // ... se quiser filtrar
 
-    const mapped = newFiles.map((file) => ({
-      file,
-      preview: URL.createObjectURL(file),
-    }));
+  const mapped = newFiles.map((file) => ({
+    file,
+    preview: URL.createObjectURL(file),
+    isNew: true,
+  }));
 
-    setVariationImages((prev) => ({
-      ...prev,
-      [variationIndex]: [...existing, ...mapped],
-    }));
-  };
+  setVariationImages((prev) => ({
+    ...prev,
+    [variationIndex]: [...existing, ...mapped],
+  }));
+};
+
+  
 
   const handleRemoveVariationImage = (variationIndex: number, imageIndex: number) => {
     setVariationImages((prev) => {
       const currentList = prev[variationIndex] || [];
-      // Cria uma cópia do array para evitar mutações diretas
       const updatedList = [...currentList];
       const removed = updatedList.splice(imageIndex, 1)[0];
-      if (removed && removed.preview) {
+      if (removed.isNew && removed.preview) {
         URL.revokeObjectURL(removed.preview);
       }
       return {
@@ -430,10 +545,13 @@ const ProductCreatePage: React.FC = () => {
       };
     });
   };
-  
 
-  // DRAG & DROP - Imagens da variação
-  const onDragStartVar = (e: DragEvent<HTMLDivElement>, variationIndex: number, imgIndex: number) => {
+  // Drag & Drop - Imagens de variação
+  const onDragStartVar = (
+    e: DragEvent<HTMLDivElement>,
+    variationIndex: number,
+    imgIndex: number
+  ) => {
     setDraggingVarIndex({ variation: variationIndex, index: imgIndex });
   };
 
@@ -441,19 +559,19 @@ const ProductCreatePage: React.FC = () => {
     e.preventDefault();
   };
 
-  const onDropVar = (e: DragEvent<HTMLDivElement>, variationIndex: number, dropIndex: number) => {
+  const onDropVar = (
+    e: DragEvent<HTMLDivElement>,
+    variationIndex: number,
+    dropIndex: number
+  ) => {
     e.preventDefault();
     if (!draggingVarIndex) return;
-
     const { variation, index: draggedIndex } = draggingVarIndex;
     if (variation !== variationIndex) {
-      // Se o usuário está tentando arrastar imagens entre variações diferentes,
-      // poderíamos impedir ou suportar. Aqui vamos impedir para simplificar.
       setMessage('Não é possível arrastar imagens entre variações diferentes.', 'error');
       setDraggingVarIndex(null);
       return;
     }
-
     setVariationImages((prev) => {
       const arr = [...(prev[variationIndex] || [])];
       const [draggedItem] = arr.splice(draggedIndex, 1);
@@ -463,9 +581,7 @@ const ProductCreatePage: React.FC = () => {
     setDraggingVarIndex(null);
   };
 
-  // =================================================================
-  // 7) MANIPULAR DADOS DA VARIAÇÃO (preço, desconto, estoque etc.)
-  // =================================================================
+  // Manipulação dos campos das variações
   const handleChangeVariationField = (
     variationIndex: number,
     field: keyof ProductVariationDTO,
@@ -478,22 +594,97 @@ const ProductCreatePage: React.FC = () => {
     });
   };
 
-  // =================================================================
-  // 8) SUBMIT
-  // =================================================================
-  const handleSubmit = useCallback(async (event: React.FormEvent) => {
-    event.preventDefault();
+  // Submit: atualizar o produto
+  const handleSubmit = useCallback(
+    async (event: React.FormEvent) => {
+      event.preventDefault();
+      if (
+        !name ||
+        !skuCode ||
+        !salePrice ||
+        !unitOfMeasure ||
+        !catalogId ||
+        !categoryId ||
+        !brandId
+      ) {
+        setMessage('Preencha todos os campos obrigatórios.', 'error');
+        return;
+      }
 
-    // Validação mínima
-    if (!name || !skuCode || !salePrice || !unitOfMeasure || !catalogId || !categoryId || !brandId) {
-      setMessage('Preencha todos os campos obrigatórios.', 'error');
-      return;
-    }
+      // Imagens do produto principal
+      const existingMainImageUrls = mainImages
+        .filter((img) => !img.isNew)
+        .map((img) =>
+          img.preview.startsWith(apiUrl) ? img.preview.slice(apiUrl.length) : img.preview
+        );
 
-    // Montar objeto ProductDTO
-    const newProduct: ProductDTO = {
-      catalogId,
-      images: [], // será gerenciado pelo backend
+      const newMainImageFiles = mainImages
+      .filter((img): img is ImageData & { file: File } => !!img.isNew && !!img.file)
+
+        .map((img) => img.file!);
+
+      const updatedProduct: ProductDTO = {
+        catalogId,
+        images: existingMainImageUrls,
+        name,
+        skuCode,
+        salePrice,
+        discountPrice,
+        unitOfMeasure,
+        type,
+        condition,
+        categoryId,
+        subCategoryId,
+        brandId,
+        productionType,
+        expirationDate: expirationDate || null,
+        freeShipping,
+        netWeight,
+        grossWeight,
+        width,
+        height,
+        depth,
+        volumes,
+        itemsPerBox,
+        gtinEan,
+        gtinEanTax,
+        shortDescription,
+        complementaryDescription,
+        notes,
+        stock,
+        active: true,
+        technicalSpecifications,
+        variations,
+      };
+
+// Para cada variação, enviar imagens novas
+const variationImagesMap: Record<number, File[]> = {};
+
+for (let i = 0; i < variations.length; i++) {
+  const imgs = variationImages[i] || []; // numérico
+  variationImagesMap[i] = imgs
+    .filter((img): img is ImageData & { file: File } => !!img.isNew && !!img.file)
+    .map((img) => img.file!);
+}
+
+
+      try {
+        await updateProduct(productId!, updatedProduct, newMainImageFiles, variationImagesMap);
+        setMessage('Produto atualizado com sucesso!', 'success');
+        router.push('/channel/catalog/my/product');
+      } catch (error: any) {
+        console.error('Erro ao atualizar produto:', error);
+        if (error.response?.data) {
+          const errorsObj = error.response.data as Record<string, string>;
+          Object.entries(errorsObj).forEach(([field, message]) => {
+            setMessage(message, 'error');
+          });
+        } else {
+          setMessage('Ocorreu um erro ao atualizar o produto!', 'error');
+        }
+      }
+    },
+    [
       name,
       skuCode,
       salePrice,
@@ -501,11 +692,7 @@ const ProductCreatePage: React.FC = () => {
       unitOfMeasure,
       type,
       condition,
-      categoryId,
-      subCategoryId,
-      brandId,
       productionType,
-      expirationDate: expirationDate || null,
       freeShipping,
       netWeight,
       grossWeight,
@@ -520,96 +707,58 @@ const ProductCreatePage: React.FC = () => {
       complementaryDescription,
       notes,
       stock,
-      active: true,
+      catalogId,
+      categoryId,
+      subCategoryId,
+      brandId,
       technicalSpecifications,
       variations,
-    };
+      mainImages,
+      variationImages,
+      router,
+      setMessage,
+      productId,
+      expirationDate
+    ]
+  );
 
-    // Precisamos construir o map de imagens das variações => { [index]: File[] }
-    const variationImagesMap: Record<string, File[]> = {};
-    for (let i = 0; i < variations.length; i++) {
-      const imgs = variationImages[i] || [];
-      variationImagesMap[`variationImages${i}`] = imgs.map((img) => img.file!);
-    }
-    
-
-    try {
-      console.log('=== newProduct ===', JSON.stringify(newProduct, null, 2));
-      console.log('=== mainImages ===', mainImages.map((m) => m.file!.name));
-      console.log('=== variationImagesMap ===', variationImagesMap);
-      await createProduct(
-        newProduct,
-        mainImages.map((m) => m.file!), // imagens do produto principal
-        variationImagesMap // imagens de cada variação
-      );
-      setMessage('Produto criado com sucesso!', 'success');
-      router.push('/channel/catalog/my/product');
-    } catch (error: any) {
-      console.error('Erro ao criar produto:', error);
-      if (error.response?.data) {
-        // 'error.response.data' deve ser o objeto com { campo: mensagem }
-        const errorsObj = error.response.data as Record<string, string>;
-    
-        // Iteramos sobre cada key e exibimos a mensagem em um 'setMessage'
-        Object.entries(errorsObj).forEach(([field, message]) => {
-          // Por exemplo: setMessage(`${field} -> ${message}`, 'error');
-          // Se preferir, pode exibir apenas a mensagem sem o nome do campo
-          setMessage(message, 'error');
-        });
-      } else {
-        setMessage('Ocorreu um erro ao criar o produto!', 'error');
-      }
-    }
-  }, [
-    name, skuCode, salePrice, discountPrice, unitOfMeasure, type, condition, productionType,
-    freeShipping, netWeight, grossWeight, width, height, depth, volumes, itemsPerBox, gtinEan,
-    gtinEanTax, shortDescription, complementaryDescription, notes, stock, catalogId, categoryId,
-    subCategoryId, brandId, technicalSpecifications, variations, mainImages, variationImages,
-    router, setMessage
-  ]);
-
-  // =================================================================
-  // Helpers p/ textareas
-  // =================================================================
+  // Limitar textos
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
     const { name, value } = e.target;
     let maxLength = 0;
-  
+
     if (name === 'name') maxLength = 150;
     else if (name === 'shortDescription') maxLength = 255;
     else if (name === 'complementaryDescription' || name === 'notes') maxLength = 2000;
-  
-    let newValue = value;
+
     if (maxLength && value.length > maxLength) {
-      newValue = value.slice(0, maxLength);
+      return;
     }
-  
     switch (name) {
       case 'name':
-        setName(newValue);
+        setName(value);
         break;
       case 'shortDescription':
-        setShortDescription(newValue);
+        setShortDescription(value);
         break;
       case 'complementaryDescription':
-        setComplementaryDescription(newValue);
+        setComplementaryDescription(value);
         break;
       case 'notes':
-        setNotes(newValue);
+        setNotes(value);
         break;
     }
   };
-  
 
   return (
     <div className={styles.productPage}>
       <Head>
-        <title>Criar Produto</title>
+        <title>Editar Produto</title>
       </Head>
 
       {isMobile && (
         <MobileHeader
-          title="Criar Produto"
+          title="Editar Produto"
           buttons={{ close: true }}
           handleBack={() => router.push('/channel/catalog/my/product')}
         />
@@ -618,15 +767,16 @@ const ProductCreatePage: React.FC = () => {
       <div className={styles.productContainer}>
         <div className={styles.productHeader}>
           <SubHeader
-            title="Novo Produto"
+            title="Editar Produto"
             handleBack={() => router.push('/channel/catalog/my/product')}
+            showDeleteButton={true}
+            handleDelete={handleDelete}
           />
         </div>
 
         <form onSubmit={handleSubmit}>
           {/* Upload Imagens do Produto Principal */}
-          <div className={styles.addChannelImageUpload}>          
-
+          <div className={styles.addChannelImageUpload}>
             {mainImages.map((image, index) => (
               <div
                 key={index}
@@ -650,7 +800,7 @@ const ProductCreatePage: React.FC = () => {
                 >
                   ×
                 </button>
-              </div>              
+              </div>
             ))}
 
             {mainImages.length === 0 && (
@@ -662,7 +812,7 @@ const ProductCreatePage: React.FC = () => {
                 height={70}
               />
             )}
-            
+
             {mainImages.length < 5 && (
               <div className={styles.addChannelUploadSection}>
                 <label htmlFor="mainImageUpload" className={styles.addChannelUploadButton}>
@@ -678,7 +828,6 @@ const ProductCreatePage: React.FC = () => {
                 />
               </div>
             )}
-            
           </div>
 
           {/* Dados Básicos */}
@@ -833,7 +982,10 @@ const ProductCreatePage: React.FC = () => {
                   title="SubCategoria"
                   value={subCategoryId}
                   onChange={(e) => setSubCategoryId(e.target.value)}
-                  options={subCategories.map((sub: any) => ({ value: sub.id, label: sub.name }))}
+                  options={subCategories.map((sub: any) => ({
+                    value: sub.id,
+                    label: sub.name,
+                  }))}
                   onLoadMore={() => {
                     const nextPage = subCategoryPage + 1;
                     fetchSubCategories(categoryId, nextPage);
@@ -939,10 +1091,7 @@ const ProductCreatePage: React.FC = () => {
                   value={spec.content}
                   onChange={(e) => handleChangeSpec(index, 'content', e.target.value)}
                 />
-                <HeaderButton
-                  icon={trashIcon}
-                  onClick={() => handleRemoveSpec(index)}
-                />
+                <HeaderButton icon={trashIcon} onClick={() => handleRemoveSpec(index)} />
               </div>
             </Card>
           ))}
@@ -954,7 +1103,7 @@ const ProductCreatePage: React.FC = () => {
             backgroundColor="#7B33E5"
           />
 
-          {/* Atributos => Geração de Variações */}
+          {/* Atributos e geração de variações */}
           <ExpandableCard title="Variações" defaultExpanded={false}>
             {productAttributes.map((attr, idx) => (
               <div key={idx} className={styles.attributeBlock}>
@@ -964,12 +1113,8 @@ const ProductCreatePage: React.FC = () => {
                     value={attr.attributeName}
                     onChange={(e) => handleChangeAttributeName(idx, e.target.value)}
                   />
-                  <HeaderButton
-                    icon={trashIcon}
-                    onClick={() => handleRemoveAttribute(idx)}
-                  />
+                  <HeaderButton icon={trashIcon} onClick={() => handleRemoveAttribute(idx)} />
                 </div>
-                {/* Lista de valores */}
                 {attr.values.map((val, vIdx) => (
                   <div key={vIdx} className={styles.flexFormInput}>
                     <CustomInput
@@ -1007,13 +1152,17 @@ const ProductCreatePage: React.FC = () => {
             </div>
           </ExpandableCard>
 
-          {/* Lista de Variações Geradas */}
+          {/* Lista de variações geradas */}
           {variations.map((variation, index) => {
+            // Converta 'variation.active' para boolean SEMPRE.
+            const isActive: boolean = (variation.active ?? false) as boolean;
+
+
+
             const varImgs = variationImages[index] || [];
             return (
               <Card key={index}>
                 <div className={styles.variationCard}>
-                  {/* Cabeçalho da variação com título e botão de excluir */}
                   <div className={styles.variationHeader}>
                     <h4>
                       {variation.attributes
@@ -1021,21 +1170,17 @@ const ProductCreatePage: React.FC = () => {
                         .join(' | ')}
                     </h4>
                     <div>
-                      <HeaderButton
-                        icon={trashIcon}
-                        onClick={() => handleRemoveVariation(index)}
-                      />
+                      <HeaderButton icon={trashIcon} onClick={() => handleRemoveVariation(index)} />
                       <div className={styles.freeShippingContainer}>
-                        <ToggleButton
-                          initial={variation.active}
-                          onToggle={(newState) => handleChangeVariationField(index, 'active', newState)}
-                        />
-                        <span>{variation.active ? 'Ativo' : 'Desativo'}</span>
+                      <ToggleButton
+                        initial={isActive}
+                        onToggle={(newState) => handleChangeVariationField(index, 'active', newState)}
+                      />
+
+                        <span>{isActive ? 'Ativo' : 'Desativo'}</span>
                       </div>
                     </div>
                   </div>
-
-                  {/* Upload de imagens específicas da variação, com DnD */}
                   <div className={styles.addChannelImageUploadVar}>
                     {varImgs.map((img, i2) => (
                       <div
@@ -1062,7 +1207,6 @@ const ProductCreatePage: React.FC = () => {
                         </button>
                       </div>
                     ))}
-
                     {varImgs.length === 0 && (
                       <Image
                         src={defaultImage.src}
@@ -1072,7 +1216,6 @@ const ProductCreatePage: React.FC = () => {
                         height={60}
                       />
                     )}
-
                     {varImgs.length < 4 && (
                       <div className={styles.addChannelUploadSection}>
                         <label
@@ -1091,10 +1234,7 @@ const ProductCreatePage: React.FC = () => {
                         />
                       </div>
                     )}
-                    
                   </div>
-
-                  {/* Campos de preço, desconto, estoque */}
                   <div className={styles.flexFormInput}>
                     <CustomInput
                       title="Preço"
@@ -1127,7 +1267,7 @@ const ProductCreatePage: React.FC = () => {
           })}
 
           <div className={styles.confirmationButtonSpace}>
-            <StageButton text="Criar Produto" type="submit" backgroundColor="#7B33E5" />
+            <StageButton text="Atualizar Produto" type="submit" backgroundColor="#7B33E5" />
           </div>
         </form>
       </div>
@@ -1135,4 +1275,4 @@ const ProductCreatePage: React.FC = () => {
   );
 };
 
-export default ProductCreatePage;
+export default ProductEditPage;

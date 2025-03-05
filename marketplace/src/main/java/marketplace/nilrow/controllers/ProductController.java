@@ -6,6 +6,7 @@ import marketplace.nilrow.domain.catalog.product.ProductDTO;
 import marketplace.nilrow.services.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -39,14 +40,16 @@ public class ProductController {
         return ResponseEntity.ok(created);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(
+            value = "/{id}",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
     public ResponseEntity<ProductDTO> updateProduct(
             @PathVariable String id,
             @RequestPart("product") @Valid ProductDTO productDTO,
             @RequestPart(value = "productImages", required = false) List<MultipartFile> productImages,
             @RequestPart(required = false) Map<String, List<MultipartFile>> variationImages
     ) throws IOException {
-
         Map<Integer, List<MultipartFile>> varImagesMap = parseVariationImages(variationImages);
         ProductDTO updated = productService.updateProduct(id, productDTO, productImages, varImagesMap);
         return ResponseEntity.ok(updated);
@@ -118,16 +121,20 @@ public class ProductController {
     private Map<Integer, List<MultipartFile>> parseVariationImages(Map<String, List<MultipartFile>> variationImages) {
         Map<Integer, List<MultipartFile>> varImagesMap = new HashMap<>();
         if (variationImages != null) {
-            // Exemplo de chave: "variationImages[0]" => precisamos extrair o índice 0
             for (String key : variationImages.keySet()) {
-                if (key.startsWith("variationImages[")) {
-                    int index = extractIndexFromKey(key);
-                    varImagesMap.put(index, variationImages.get(key));
+                if (key.startsWith("variationImages")) {
+                    int index = Integer.parseInt(key.replace("variationImages", ""));
+                    List<MultipartFile> files = variationImages.get(key);
+                    System.out.println("Chave recebida: " + key + " -> índice: " + index + ", número de arquivos: " + (files != null ? files.size() : 0));
+                    varImagesMap.put(index, files);
                 }
             }
         }
         return varImagesMap;
     }
+
+
+
 
     private int extractIndexFromKey(String key) {
         // "variationImages[2]" => extraímos 2

@@ -1,5 +1,6 @@
 package marketplace.nilrow.domain.catalog.product;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -19,13 +20,14 @@ public class ProductDTO {
     @Size(max = 255, message = "O nome deve ter no máximo 255 caracteres.")
     private String name;
 
-    @NotBlank(message = "O código SKU é obrigatório.")
     private String skuCode;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     @NotNull(message = "O preço de venda é obrigatório.")
     @DecimalMin(value = "0.0", inclusive = false, message = "O preço de venda deve ser maior que zero.")
     private BigDecimal salePrice;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private BigDecimal discountPrice;
 
     @NotBlank(message = "A unidade de medida é obrigatória.")
@@ -49,14 +51,24 @@ public class ProductDTO {
     @NotNull(message = "O tipo de produção é obrigatório.")
     private ProductionType productionType;
 
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate expirationDate;
 
     private boolean freeShipping;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private BigDecimal netWeight;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private BigDecimal grossWeight;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private BigDecimal width;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private BigDecimal height;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private BigDecimal depth;
 
     private Integer volumes;
@@ -74,6 +86,7 @@ public class ProductDTO {
     @Size(max = 2000, message = "As notas devem ter no máximo 2000 caracteres.")
     private String notes;
 
+    @NotNull(message = "O Estoque é obrigatório.")
     private Integer stock;
 
     private boolean active;

@@ -1,7 +1,8 @@
 
 export interface ImageData {
-  file: File;
+  file?: File;
   preview: string;
+  isNew?: boolean; 
 }
 
 export interface ProductAttribute {
