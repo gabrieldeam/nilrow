@@ -1,10 +1,10 @@
 package marketplace.nilrow.services;
 
+import marketplace.nilrow.domain.catalog.Catalog;
 import marketplace.nilrow.domain.catalog.category.Category;
 import marketplace.nilrow.domain.catalog.category.SubCategory;
 import marketplace.nilrow.domain.catalog.product.*;
 import marketplace.nilrow.domain.catalog.product.brand.Brand;
-import marketplace.nilrow.domain.catalog.Catalog;
 import marketplace.nilrow.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -21,10 +21,10 @@ import java.util.stream.Collectors;
 @Service
 public class ProductService {
 
-    // Diretório base onde as imagens do produto/variações serão salvas
+    // Diretório base onde as imagens do produto serão salvas
     private static final String UPLOAD_DIR = System.getProperty("user.dir") + "/uploads/";
 
-    // Caminho default caso o produto/variação não possua imagens
+    // Caminho default caso o produto não possua imagens
     private static final String DEFAULT_IMAGE = "/uploads/25990a43-5546-4b25-aa4d-67da7de149af_defaultImage.png";
 
     @Autowired
@@ -42,15 +42,15 @@ public class ProductService {
     @Autowired
     private CatalogRepository catalogRepository;
 
-
     /**
-     * Cria um produto completo com especificações e variações, incluindo upload de imagens
-     * para o produto e para cada variação.
+     * Cria um produto completo, porém SEM gerenciar imagens de variação.
+     * As variações são criadas somente com atributos básicos (preço, estoque, etc.).
      */
     @Transactional
-    public ProductDTO createProduct(ProductDTO dto,
-                                    List<MultipartFile> productImages,
-                                    Map<Integer, List<MultipartFile>> variationImages) throws IOException {
+    public ProductDTO createProduct(
+            ProductDTO dto,
+            List<MultipartFile> productImages // SOMENTE imagens do produto principal
+    ) throws IOException {
 
         Product product = new Product();
         mapDtoToEntity(dto, product);
@@ -58,7 +58,7 @@ public class ProductService {
         // 1) Salvar imagens do produto principal
         List<String> productImagePaths = saveImages(productImages);
         if (productImagePaths.isEmpty()) {
-            product.setImages(Collections.singletonList(DEFAULT_IMAGE));
+            product.setImages(List.of(DEFAULT_IMAGE));
         } else {
             product.setImages(productImagePaths);
         }
@@ -77,12 +77,10 @@ public class ProductService {
             product.setTechnicalSpecifications(specs);
         }
 
-        // 3) Variações (com imagens e atributos)
+        // 3) Variações (sem imagens!)
         if (dto.getVariations() != null && !dto.getVariations().isEmpty()) {
             List<ProductVariation> variations = new ArrayList<>();
-            for (int i = 0; i < dto.getVariations().size(); i++) {
-                ProductVariationDTO varDTO = dto.getVariations().get(i);
-
+            for (ProductVariationDTO varDTO : dto.getVariations()) {
                 ProductVariation variation = new ProductVariation();
                 variation.setPrice(varDTO.getPrice());
                 variation.setDiscountPrice(varDTO.getDiscountPrice());
@@ -90,17 +88,7 @@ public class ProductService {
                 variation.setActive(varDTO.isActive());
                 variation.setProduct(product);
 
-                // Upload de imagens específicas da variação
-                List<MultipartFile> varImages = variationImages.get(i);
-                List<String> variationImagePaths = saveImages(varImages);
-
-                if (variationImagePaths.isEmpty()) {
-                    variation.setImages(Collections.singletonList(DEFAULT_IMAGE));
-                } else {
-                    variation.setImages(variationImagePaths);
-                }
-
-                // Atributos da variação
+                // Atributos
                 if (varDTO.getAttributes() != null) {
                     List<VariationAttribute> attrs = varDTO.getAttributes().stream()
                             .map(attrDTO -> {
@@ -118,308 +106,90 @@ public class ProductService {
             product.setVariations(variations);
         }
 
-        // 4) Persiste no banco
+        // 4) Salva no banco
         Product saved = productRepository.save(product);
         return convertToDTO(saved);
     }
 
     /**
-     * Atualiza completamente um produto, suas especificações, variações e imagens.
-     * Caso sejam enviadas novas imagens, as antigas são removidas e substituídas.
+     * Atualiza o produto, mas NÃO gerencia imagens de variação.
      */
     @Transactional
-    public ProductDTO updateProduct(String id,
-                                    ProductDTO dto,
-                                    List<MultipartFile> productImages,
-                                    Map<Integer, List<MultipartFile>> variationImages) throws IOException {
+    public ProductDTO updateProduct(
+            String id,
+            ProductDTO dto,
+            List<MultipartFile> productImages // SOMENTE imagens do produto principal
+    ) throws IOException {
 
         // 1) Carrega o produto do banco
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
 
-        // 2) Atualiza campos básicos (nome, preço, etc.), mas NÃO mexe ainda em variações/imagens
+        // 2) Atualiza campos básicos
         mapDtoToEntity(dto, product);
 
-        // 3) ATUALIZA IMAGENS DO PRODUTO PRINCIPAL
+        // 3) Atualiza imagens do produto principal
         updateProductImages(product, dto.getImages(), productImages);
 
-        // 4) ATUALIZA ESPECIFICAÇÕES TÉCNICAS
+        // 4) Atualiza specs
         updateTechnicalSpecifications(product, dto.getTechnicalSpecifications());
 
-        // 5) ATUALIZA VARIAÇÕES (E SUAS IMAGENS E ATRIBUTOS)
-        updateProductVariations(product, dto.getVariations(), variationImages);
+        // 5) Atualiza variações (sem imagens)
+        updateProductVariations(product, dto.getVariations());
 
-        // 6) Persiste e retorna
+        // 6) Salva e retorna
         Product updated = productRepository.save(product);
         return convertToDTO(updated);
     }
 
     /**
-     * Atualiza a lista de imagens do produto principal, mantendo as URLs antigas que o usuário
-     * ainda quer, removendo as que saíram do DTO e adicionando novas que vieram em 'productImages'.
+     * Exclui o produto e suas imagens do disco.
+     * NÃO deleta imagens de variação pois não estamos gerenciando isso aqui.
      */
-    private void updateProductImages(Product product,
-                                     List<String> desiredUrls,
-                                     List<MultipartFile> productImages) throws IOException {
-        List<String> oldUrls = product.getImages() == null
-                ? new ArrayList<>()
-                : new ArrayList<>(product.getImages());
-
-        final List<String> desired = (desiredUrls == null) ? new ArrayList<>() : desiredUrls;
-
-        // Identifica URLs removidas pelo usuário
-        List<String> removedUrls = oldUrls.stream()
-                .filter(url -> !desired.contains(url))
-                .collect(Collectors.toList());
-
-        // Deleta fisicamente as removidas (exceto DEFAULT_IMAGE)
-        removedUrls.forEach(this::deleteImageIfNotDefault);
-
-        // Lista final inicia com as URLs que o usuário deseja manter
-        List<String> finalUrls = new ArrayList<>(desired);
-
-        // Faz upload de novas imagens e adiciona
-        List<String> newUploads = saveImages(productImages);
-        finalUrls.addAll(newUploads);
-
-        if (finalUrls.isEmpty()) {
-            finalUrls = Collections.singletonList(DEFAULT_IMAGE);
-        }
-
-        product.setImages(finalUrls);
-    }
-
-    /**
-     * Atualiza as especificações técnicas do produto, preservando as existentes que não foram removidas.
-     */
-    private void updateTechnicalSpecifications(Product product, List<TechnicalSpecificationDTO> specsDTO) {
-        List<TechnicalSpecification> existingSpecs = product.getTechnicalSpecifications();
-        if (existingSpecs == null) {
-            existingSpecs = new ArrayList<>();
-            product.setTechnicalSpecifications(existingSpecs);
-        }
-
-        // Mapeia por ID para encontrar specs antigas
-        Map<String, TechnicalSpecification> existingMap = existingSpecs.stream()
-                .collect(Collectors.toMap(TechnicalSpecification::getId, s -> s));
-
-        Set<String> specsToKeep = new HashSet<>();
-
-        if (specsDTO != null) {
-            for (TechnicalSpecificationDTO dto : specsDTO) {
-                if (dto.getId() != null && existingMap.containsKey(dto.getId())) {
-                    // atualiza existente
-                    TechnicalSpecification existing = existingMap.get(dto.getId());
-                    existing.setTitle(dto.getTitle());
-                    existing.setContent(dto.getContent());
-                    specsToKeep.add(dto.getId());
-                } else {
-                    // nova spec
-                    TechnicalSpecification newSpec = new TechnicalSpecification();
-                    newSpec.setTitle(dto.getTitle());
-                    newSpec.setContent(dto.getContent());
-                    newSpec.setProduct(product);
-                    existingSpecs.add(newSpec);
-                }
-            }
-        }
-
-        // remove specs que o usuário tirou
-        existingSpecs.removeIf(spec ->
-                spec.getId() != null && !specsToKeep.contains(spec.getId()));
-    }
-
-    /**
-     * MÉTODO CRUCIAL: atualiza variações do produto por índice (0, 1, 2...),
-     * sem trocar a coleção e sem apagar variações apenas por não ter atributos.
-     */
-    private void updateProductVariations(
-            Product product,
-            List<ProductVariationDTO> variationDTOs,
-            Map<Integer, List<MultipartFile>> variationImages
-    ) throws IOException {
-
-        // 1) Se não houver variações no DTO, remove todas as existentes
-        if (variationDTOs == null || variationDTOs.isEmpty()) {
-            if (product.getVariations() != null) {
-                for (ProductVariation oldVar : product.getVariations()) {
-                    deleteImages(oldVar.getImages());
-                }
-                product.getVariations().clear();
-            }
-            return;
-        }
-
-        // 2) Se a lista de variações estiver nula, inicializa
-        if (product.getVariations() == null) {
-            product.setVariations(new ArrayList<>());
-        }
-
-        // 3) Cria lista final, na mesma ordem do front
-        List<ProductVariation> finalVariations = new ArrayList<>();
-
-        for (int i = 0; i < variationDTOs.size(); i++) {
-            ProductVariationDTO varDTO = variationDTOs.get(i);
-
-            // Reaproveita variação se existir no índice i, senão cria nova
-            ProductVariation variation;
-            if (i < product.getVariations().size()) {
-                variation = product.getVariations().get(i);
-            } else {
-                variation = new ProductVariation();
-                variation.setProduct(product);
-            }
-
-            // Campos básicos
-            variation.setPrice(varDTO.getPrice());
-            variation.setDiscountPrice(varDTO.getDiscountPrice());
-            variation.setStock(varDTO.getStock());
-            variation.setActive(varDTO.isActive());
-
-            // Imagens
-            List<MultipartFile> newFiles = variationImages.get(i);
-            List<String> desiredUrls = varDTO.getImages();
-            updateVariationImages(variation, desiredUrls, newFiles);
-
-            // Atributos (se vieram vazios, não removemos a variação)
-            if (varDTO.getAttributes() != null) {
-                if (variation.getAttributes() == null) {
-                    variation.setAttributes(new ArrayList<>());
-                } else {
-                    variation.getAttributes().clear();
-                }
-                for (VariationAttributeDTO attrDTO : varDTO.getAttributes()) {
-                    VariationAttribute attr = new VariationAttribute();
-                    attr.setVariation(variation);
-                    attr.setAttributeName(attrDTO.getAttributeName());
-                    attr.setAttributeValue(attrDTO.getAttributeValue());
-                    variation.getAttributes().add(attr);
-                }
-            } else {
-                // A variação pode ter attributes nulo ou vazio, mas ainda assim manter imagens
-                if (variation.getAttributes() != null) {
-                    variation.getAttributes().clear();
-                }
-            }
-
-            // Adiciona à lista final
-            finalVariations.add(variation);
-        }
-
-        // 4) Se havia mais variações no banco, remove as extras
-        if (product.getVariations().size() > variationDTOs.size()) {
-            for (int i = variationDTOs.size(); i < product.getVariations().size(); i++) {
-                ProductVariation orphanVar = product.getVariations().get(i);
-                deleteImages(orphanVar.getImages());
-            }
-        }
-
-        // 5) Limpamos a lista antiga e adicionamos as novas variações
-        product.getVariations().clear();
-        product.getVariations().addAll(finalVariations);
-    }
-
-    /**
-     * Atualiza imagens de uma variação existente, removendo as que não estão mais no DTO
-     * e adicionando as que vieram em 'newImages'.
-     */
-    private void updateVariationImages(ProductVariation variation,
-                                       List<String> desiredUrls,
-                                       List<MultipartFile> newImages) throws IOException {
-        List<String> oldUrls = (variation.getImages() == null)
-                ? new ArrayList<>()
-                : new ArrayList<>(variation.getImages());
-
-        // se 'desiredUrls' for null, iniciamos vazio
-        final List<String> desired = (desiredUrls == null) ? new ArrayList<>() : desiredUrls;
-
-        // Remove as antigas que não foram desejadas
-        List<String> removedUrls = oldUrls.stream()
-                .filter(url -> !desired.contains(url))
-                .collect(Collectors.toList());
-        removedUrls.forEach(this::deleteImageIfNotDefault);
-
-        // Começa finalUrls com as URLs que ficaram
-        List<String> finalUrls = new ArrayList<>(desired);
-
-        // Upload das novas
-        List<String> uploaded = saveImages(newImages);
-        finalUrls.addAll(uploaded);
-
-        if (finalUrls.isEmpty()) {
-            finalUrls = Collections.singletonList(DEFAULT_IMAGE);
-        }
-
-        variation.setImages(finalUrls);
-    }
-
-    /** Remove fisicamente uma imagem se não for a DEFAULT_IMAGE. */
-    private void deleteImageIfNotDefault(String url) {
-        if (!url.equals(DEFAULT_IMAGE)) {
-            String absoluteImagePath = System.getProperty("user.dir") + url;
-            Path path = Paths.get(absoluteImagePath);
-            try {
-                Files.deleteIfExists(path);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    /** Deleta em disco todas as URLs passadas (exceto default). */
-    private void deleteImages(List<String> imageUrls) {
-        if (imageUrls != null && !imageUrls.isEmpty()) {
-            for (String imageUrl : imageUrls) {
-                if (!imageUrl.equals(DEFAULT_IMAGE)) {
-                    String absolutePath = System.getProperty("user.dir") + imageUrl;
-                    try {
-                        Files.deleteIfExists(Paths.get(absolutePath));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-    }
-
-    /** Exclui um produto (e suas imagens) do banco. */
     @Transactional
     public void deleteProduct(String id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
 
-        // Deleta imagens do produto
+        // Deleta imagens do produto principal
         deleteImages(product.getImages());
-        // Deleta imagens das variações
-        if (product.getVariations() != null) {
-            for (ProductVariation variation : product.getVariations()) {
-                deleteImages(variation.getImages());
-            }
-        }
+
+        // Se quiser, pode remover variações do banco,
+        // mas as imagens da variação são responsabilidade de outra API.
         productRepository.delete(product);
     }
 
-    /** Busca um produto por ID e converte para DTO. */
+    /**
+     * Busca um produto por ID.
+     */
     public ProductDTO getProductById(String id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
         return convertToDTO(product);
     }
 
-    /** Lista todos os produtos com paginação. */
+    /**
+     * Lista todos os produtos com paginação.
+     */
     public Page<ProductDTO> listAllProducts(Pageable pageable) {
         Page<Product> page = productRepository.findAll(pageable);
         return page.map(this::convertToDTO);
     }
 
-    /** Lista produtos de um catálogo específico com paginação. */
+    /**
+     * Lista produtos de um catálogo, com paginação.
+     */
     public Page<ProductDTO> listProductsByCatalog(String catalogId, Pageable pageable) {
         Page<Product> page = productRepository.findByCatalogId(catalogId, pageable);
         return page.map(this::convertToDTO);
     }
 
+    // -----------------------------------------------------------
+    // Métodos auxiliares
+    // -----------------------------------------------------------
+
     /**
-     * Mapeia dados do DTO para a entidade, sem alterar variações/especificações.
+     * Copia campos do DTO para a entidade, sem mexer em specs/variations.
      */
     private void mapDtoToEntity(ProductDTO dto, Product product) {
         product.setName(dto.getName());
@@ -450,36 +220,38 @@ public class ProductService {
         // Relacionamentos
         categoryRepository.findById(dto.getCategoryId())
                 .ifPresentOrElse(product::setCategory,
-                        () -> {throw new RuntimeException("Categoria não encontrada");});
+                        () -> { throw new RuntimeException("Categoria não encontrada"); });
         subCategoryRepository.findById(dto.getSubCategoryId())
                 .ifPresentOrElse(product::setSubCategory,
-                        () -> {throw new RuntimeException("Subcategoria não encontrada");});
+                        () -> { throw new RuntimeException("Subcategoria não encontrada"); });
         brandRepository.findById(dto.getBrandId())
                 .ifPresentOrElse(product::setBrand,
-                        () -> {throw new RuntimeException("Marca não encontrada");});
+                        () -> { throw new RuntimeException("Marca não encontrada"); });
         catalogRepository.findById(dto.getCatalogId())
                 .ifPresentOrElse(product::setCatalog,
-                        () -> {throw new RuntimeException("Catálogo não encontrado");});
+                        () -> { throw new RuntimeException("Catálogo não encontrado"); });
     }
 
     /**
-     * Salva arquivos recebidos em FormData no sistema de arquivos e retorna as rotas.
+     * Salva as imagens do produto principal no disco, retornando a lista de URLs.
      */
     private List<String> saveImages(List<MultipartFile> images) throws IOException {
         List<String> imagePaths = new ArrayList<>();
         if (images != null && !images.isEmpty()) {
             for (MultipartFile image : images) {
                 if (!image.isEmpty()) {
-                    String uniqueFileName = UUID.randomUUID().toString() + "_" + image.getOriginalFilename();
+                    String uniqueFileName = UUID.randomUUID().toString()
+                            + "_" + image.getOriginalFilename();
                     String filePath = UPLOAD_DIR + uniqueFileName;
                     Path path = Paths.get(filePath);
 
                     // Garante que o diretório exista
                     Files.createDirectories(path.getParent());
-                    // Escreve o arquivo em disco
+
+                    // Salva o arquivo
                     Files.write(path, image.getBytes());
 
-                    // Gera a rota final (p. ex. "/uploads/<arquivo>")
+                    // Gera a rota final
                     imagePaths.add("/uploads/" + uniqueFileName);
                 }
             }
@@ -488,7 +260,189 @@ public class ProductService {
     }
 
     /**
-     * Converte a entidade Product (com especificações e variações) para seu respectivo DTO.
+     * Atualiza a lista de imagens do produto principal.
+     * Se remover URLs antigas do DTO, elas são deletadas.
+     * Se não sobrar nenhuma, definimos DEFAULT_IMAGE.
+     */
+    private void updateProductImages(Product product,
+                                     List<String> desiredUrls,
+                                     List<MultipartFile> productImages) throws IOException {
+
+        List<String> oldUrls = (product.getImages() == null)
+                ? new ArrayList<>()
+                : new ArrayList<>(product.getImages());
+
+        // As URLs que o usuário quer manter
+        List<String> desired = (desiredUrls == null) ? new ArrayList<>() : desiredUrls;
+
+        // Acha as URLs removidas
+        List<String> removedUrls = oldUrls.stream()
+                .filter(url -> !desired.contains(url))
+                .toList();
+
+        // Deleta fisicamente
+        for (String removedUrl : removedUrls) {
+            deleteImageIfNotDefault(removedUrl);
+        }
+
+        // Final começa com as URLs desejadas
+        List<String> finalUrls = new ArrayList<>(desired);
+
+        // Upload das novas imagens
+        List<String> newUploads = saveImages(productImages);
+        finalUrls.addAll(newUploads);
+
+        if (finalUrls.isEmpty()) {
+            finalUrls = List.of(DEFAULT_IMAGE);
+        }
+
+        product.setImages(finalUrls);
+    }
+
+    /**
+     * Atualiza a ficha técnica do produto (TechnicalSpecification).
+     */
+    private void updateTechnicalSpecifications(
+            Product product,
+            List<TechnicalSpecificationDTO> specsDTO
+    ) {
+        List<TechnicalSpecification> existingSpecs = product.getTechnicalSpecifications();
+        if (existingSpecs == null) {
+            existingSpecs = new ArrayList<>();
+            product.setTechnicalSpecifications(existingSpecs);
+        }
+
+        // Mapeia as existentes por ID
+        Map<String, TechnicalSpecification> existingMap = existingSpecs.stream()
+                .collect(Collectors.toMap(TechnicalSpecification::getId, s -> s));
+
+        Set<String> specsToKeep = new HashSet<>();
+
+        if (specsDTO != null) {
+            for (TechnicalSpecificationDTO dto : specsDTO) {
+                if (dto.getId() != null && existingMap.containsKey(dto.getId())) {
+                    // Atualiza
+                    TechnicalSpecification existing = existingMap.get(dto.getId());
+                    existing.setTitle(dto.getTitle());
+                    existing.setContent(dto.getContent());
+                    specsToKeep.add(dto.getId());
+                } else {
+                    // Cria nova
+                    TechnicalSpecification newSpec = new TechnicalSpecification();
+                    newSpec.setTitle(dto.getTitle());
+                    newSpec.setContent(dto.getContent());
+                    newSpec.setProduct(product);
+                    existingSpecs.add(newSpec);
+                }
+            }
+        }
+
+        // Remove as specs que não constam mais no DTO
+        existingSpecs.removeIf(spec ->
+                spec.getId() != null && !specsToKeep.contains(spec.getId()));
+    }
+
+    /**
+     * Atualiza variações sem lidar com imagens (já que não é mais responsabilidade daqui).
+     */
+    private void updateProductVariations(
+            Product product,
+            List<ProductVariationDTO> variationDTOs
+    ) {
+        // Se não houver variações, apaga todas
+        if (variationDTOs == null || variationDTOs.isEmpty()) {
+            if (product.getVariations() != null) {
+                product.getVariations().clear();
+            }
+            return;
+        }
+
+        if (product.getVariations() == null) {
+            product.setVariations(new ArrayList<>());
+        }
+
+        // Gera nova lista na ordem do front
+        List<ProductVariation> finalVariations = new ArrayList<>();
+
+        for (int i = 0; i < variationDTOs.size(); i++) {
+            ProductVariationDTO varDTO = variationDTOs.get(i);
+
+            // Tenta reaproveitar
+            ProductVariation variation;
+            if (i < product.getVariations().size()) {
+                variation = product.getVariations().get(i);
+            } else {
+                variation = new ProductVariation();
+                variation.setProduct(product);
+            }
+
+            // Campos principais
+            variation.setPrice(varDTO.getPrice());
+            variation.setDiscountPrice(varDTO.getDiscountPrice());
+            variation.setStock(varDTO.getStock());
+            variation.setActive(varDTO.isActive());
+
+            // Atributos
+            if (varDTO.getAttributes() != null) {
+                if (variation.getAttributes() == null) {
+                    variation.setAttributes(new ArrayList<>());
+                } else {
+                    variation.getAttributes().clear();
+                }
+                for (VariationAttributeDTO attrDTO : varDTO.getAttributes()) {
+                    VariationAttribute attr = new VariationAttribute();
+                    attr.setVariation(variation);
+                    attr.setAttributeName(attrDTO.getAttributeName());
+                    attr.setAttributeValue(attrDTO.getAttributeValue());
+                    variation.getAttributes().add(attr);
+                }
+            } else {
+                if (variation.getAttributes() != null) {
+                    variation.getAttributes().clear();
+                }
+            }
+
+            finalVariations.add(variation);
+        }
+
+        // Se havia mais variações no banco do que no DTO, remove as extras
+        if (product.getVariations().size() > variationDTOs.size()) {
+            // As sobras são removidas
+        }
+
+        // Substitui
+        product.getVariations().clear();
+        product.getVariations().addAll(finalVariations);
+    }
+
+    /**
+     * Deleta um arquivo do disco se não for o DEFAULT_IMAGE.
+     */
+    private void deleteImageIfNotDefault(String url) {
+        if (url != null && !url.equals(DEFAULT_IMAGE)) {
+            String absolutePath = System.getProperty("user.dir") + url;
+            Path path = Paths.get(absolutePath);
+            try {
+                Files.deleteIfExists(path);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Deleta múltiplas URLs do disco (exceto default).
+     */
+    private void deleteImages(List<String> imageUrls) {
+        if (imageUrls != null) {
+            for (String url : imageUrls) {
+                deleteImageIfNotDefault(url);
+            }
+        }
+    }
+
+    /**
+     * Converte a entidade Product para DTO, sem imagens de variação.
      */
     private ProductDTO convertToDTO(Product product) {
         ProductDTO dto = new ProductDTO();
@@ -519,25 +473,31 @@ public class ProductService {
         dto.setStock(product.getStock());
         dto.setActive(product.isActive());
         dto.setCatalogId(product.getCatalog() != null ? product.getCatalog().getId() : null);
-        dto.setProductTemplateId(product.getProductTemplate() != null ? product.getProductTemplate().getId() : null);
 
         // Marca, Categoria e Subcategoria
         dto.setBrandId(product.getBrand() != null ? product.getBrand().getId() : null);
         dto.setCategoryId(product.getCategory() != null ? product.getCategory().getId() : null);
         dto.setSubCategoryId(product.getSubCategory() != null ? product.getSubCategory().getId() : null);
 
-        // Especificações Técnicas
-        if (product.getTechnicalSpecifications() != null) {
-            dto.setTechnicalSpecifications(product.getTechnicalSpecifications().stream().map(spec -> {
-                TechnicalSpecificationDTO specDTO = new TechnicalSpecificationDTO();
-                specDTO.setId(spec.getId());
-                specDTO.setTitle(spec.getTitle());
-                specDTO.setContent(spec.getContent());
-                return specDTO;
-            }).collect(Collectors.toList()));
+        // Se tiver template
+        if (product.getProductTemplate() != null) {
+            dto.setProductTemplateId(product.getProductTemplate().getId());
         }
 
-        // Variações
+        // Especificações Técnicas
+        if (product.getTechnicalSpecifications() != null) {
+            dto.setTechnicalSpecifications(
+                    product.getTechnicalSpecifications().stream().map(spec -> {
+                        TechnicalSpecificationDTO specDTO = new TechnicalSpecificationDTO();
+                        specDTO.setId(spec.getId());
+                        specDTO.setTitle(spec.getTitle());
+                        specDTO.setContent(spec.getContent());
+                        return specDTO;
+                    }).collect(Collectors.toList())
+            );
+        }
+
+        // Variações (SEM imagens)
         if (product.getVariations() != null) {
             List<ProductVariationDTO> variationDTOs = product.getVariations().stream().map(var -> {
                 ProductVariationDTO varDTO = new ProductVariationDTO();
@@ -546,17 +506,16 @@ public class ProductService {
                 varDTO.setDiscountPrice(var.getDiscountPrice());
                 varDTO.setStock(var.getStock());
                 varDTO.setActive(var.isActive());
-                varDTO.setImages(var.getImages());
 
+                // Atributos
                 if (var.getAttributes() != null) {
-                    List<VariationAttributeDTO> attrDTOs = var.getAttributes().stream().map(attr -> {
+                    varDTO.setAttributes(var.getAttributes().stream().map(attr -> {
                         VariationAttributeDTO aDTO = new VariationAttributeDTO();
                         aDTO.setId(attr.getId());
                         aDTO.setAttributeName(attr.getAttributeName());
                         aDTO.setAttributeValue(attr.getAttributeValue());
                         return aDTO;
-                    }).collect(Collectors.toList());
-                    varDTO.setAttributes(attrDTOs);
+                    }).collect(Collectors.toList()));
                 }
 
                 return varDTO;

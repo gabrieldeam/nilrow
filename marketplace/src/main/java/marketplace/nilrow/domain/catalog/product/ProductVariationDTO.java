@@ -16,7 +16,7 @@ public class ProductVariationDTO {
     // Lista de atributos que descrevem a variação (ex.: cor, tamanho)
     private List<VariationAttributeDTO> attributes;
 
-    private List<String> images;
+    private List<VariationImageDTO> images;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     @NotNull(message = "O preço é obrigatório.")

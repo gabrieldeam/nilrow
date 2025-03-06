@@ -1,40 +1,37 @@
-// Enum para tipo de produto
+// Enums do produto
 export enum ProductType {
   PRODUCT = 'PRODUCT',
   SERVICE = 'SERVICE',
 }
 
-// Enum para condição do produto
 export enum ProductCondition {
   NEW = 'NEW',
   USED = 'USED',
   REFURBISHED = 'REFURBISHED',
 }
 
-// Enum para tipo de produção
 export enum ProductionType {
   OWN = 'OWN',
   THIRD_PARTY = 'THIRD_PARTY',
 }
 
-// Interface para Especificação Técnica (Ficha Técnica)
+// Ficha técnica
 export interface TechnicalSpecificationDTO {
-  id?: string; // opcional para novos registros
+  id?: string;
   title: string;
   content: string;
 }
 
-// Interface para Atributos das Variações
+// Atributos da variação
 export interface VariationAttributeDTO {
   id?: string;
   attributeName?: string;
   attributeValue?: string;
 }
 
-// Interface para Variação do Produto
+// Variação do Produto (sem campo de imagens)
 export interface ProductVariationDTO {
   id?: string;
-  images?: string[];
   price?: number;
   discountPrice?: number;
   stock?: number;
@@ -42,7 +39,14 @@ export interface ProductVariationDTO {
   attributes: VariationAttributeDTO[];
 }
 
-// Interface para o Produto
+export interface VariationImageDTO {
+  id?: string;
+  variationId: string;
+  imageUrl: string;
+  orderIndex?: number;
+}
+
+// Produto principal
 export interface ProductDTO {
   id?: string;
   catalogId: string;

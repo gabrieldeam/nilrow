@@ -1,43 +1,34 @@
 import api from '../api';
-import { ProductDTO } from '../../types/services/product';
+import { ProductDTO, VariationImageDTO  } from '../../types/services/product';
 import { PagedResponse } from '../../types/services/common';
 
-// Criar Produto
+/**
+ * Cria um produto (POST /products).
+ * Agora sem envio de imagens de variação.
+ */
 export const createProduct = async (
   product: ProductDTO,
-  productImages?: File[],
-  variationImages?: Record<number, File[]>
+  productImages?: File[]
 ): Promise<ProductDTO> => {
   const formData = new FormData();
 
+  // Adiciona o JSON do produto
   formData.append(
     'product',
     new Blob([JSON.stringify(product)], { type: 'application/json' })
   );
 
+  // Imagens principais do produto
   if (productImages) {
     productImages.forEach((file) => {
       formData.append('productImages', file);
     });
   }
 
-  if (variationImages) {
-    Object.keys(variationImages).forEach((key) => {
-      const files = variationImages[Number(key)];
-      if (files && Array.isArray(files)) {
-        files.forEach((file) => {
-          // Aqui, a chave está sendo formada como "variationImages0", "variationImages1", etc.
-          formData.append(`variationImages${key}`, file);
-        });
-      }
-    });
-  }
-
-  // Log detalhado do FormData
-  console.log('--- FormData Entries ---');
+  console.log('--- FormData Entries (create) ---');
   for (const pair of formData.entries()) {
     if (pair[1] instanceof File) {
-      console.log(`${pair[0]}: ${pair[1].name}`);
+      console.log(`${pair[0]}: ${(pair[1] as File).name}`);
     } else {
       console.log(`${pair[0]}: ${pair[1]}`);
     }
@@ -48,57 +39,36 @@ export const createProduct = async (
   return response.data;
 };
 
-
-
+/**
+ * Atualiza um produto (PUT /products/{id})
+ * Também sem envio de imagens de variação.
+ */
 export const updateProduct = async (
   id: string,
   product: ProductDTO,
-  productImages?: File[],
-  variationImages?: Record<number, File[]>
+  productImages?: File[]
 ): Promise<ProductDTO> => {
-
-  // Logs
-  console.log('Dados do produto:', product);
-  if (productImages) {
-    console.log('Imagens do produto:', productImages.map((file) => file.name));
-  }
-  if (variationImages) {
-    Object.keys(variationImages).forEach((key) => {
-      const files = variationImages[+key]; 
-      console.log(`Variação ${key} - arquivos:`, files?.map((file) => file.name));
-    });
-  }
-
   const formData = new FormData();
-  formData.append('product', new Blob([JSON.stringify(product)], { type: 'application/json' }));
 
-  // produto principal
+  formData.append(
+    'product',
+    new Blob([JSON.stringify(product)], { type: 'application/json' })
+  );
+
+  // Imagens principais do produto
   if (productImages) {
     productImages.forEach((file) => {
       formData.append('productImages', file);
     });
   }
 
-  // variações
-  if (variationImages) {
-    // Aqui cada key é '0', '1', '2'... (string), mas Number(key) dá 0, 1, 2...
-    Object.keys(variationImages).forEach((key) => {
-      const indexNum = +key; // converte "0" em 0, "1" em 1...
-      const files = variationImages[indexNum];
-      if (files && files.length) {
-        // AQUI concatenamos 'variationImages' + índice para o nome do campo
-        files.forEach((file) => {
-          formData.append(`variationImages${indexNum}`, file);
-        });
-      }
-    });
-  }
-
-  // Logs do FormData
-  console.log('--- FormData Entries ---');
+  console.log('--- FormData Entries (update) ---');
   for (const pair of formData.entries()) {
-    const value = pair[1] instanceof File ? (pair[1] as File).name : pair[1];
-    console.log(`${pair[0]}: ${value}`);
+    if (pair[1] instanceof File) {
+      console.log(`${pair[0]}: ${(pair[1] as File).name}`);
+    } else {
+      console.log(`${pair[0]}: ${pair[1]}`);
+    }
   }
   console.log('------------------------');
 
@@ -106,21 +76,18 @@ export const updateProduct = async (
   return response.data;
 };
 
-
-
-
-// Deletar Produto
+/** Deletar um produto */
 export const deleteProduct = async (id: string): Promise<void> => {
   await api.delete(`/products/${id}`);
 };
 
-// Obter Produto por ID
+/** Obter produto por ID */
 export const getProductById = async (id: string): Promise<ProductDTO> => {
   const response = await api.get<ProductDTO>(`/products/${id}`);
   return response.data;
 };
 
-// Obter Produtos por Catálogo (paginado)
+/** Listar produtos de um catálogo, paginado */
 export const getProductsByCatalog = async (
   catalogId: string,
   page = 0,
@@ -132,11 +99,89 @@ export const getProductsByCatalog = async (
   return response.data;
 };
 
-// Listar Todos os Produtos (paginado)
+/** Listar todos os produtos, paginado */
 export const listAllProducts = async (
   page = 0,
   size = 10
 ): Promise<PagedResponse<ProductDTO>> => {
   const response = await api.get<PagedResponse<ProductDTO>>(`/products?page=${page}&size=${size}`);
   return response.data;
+};
+
+
+
+/**
+ * Cria uma nova imagem de variação (POST /variation-images), enviando como multipart/form-data.
+ * 
+ * @param variationId ID da variação.
+ * @param imageFile Arquivo de imagem a enviar.
+ * @param orderIndex (opcional) ordem da imagem.
+ */
+export const createVariationImage = async (
+  variationId: string,
+  imageFile: File,
+  orderIndex?: number
+): Promise<VariationImageDTO> => {
+  const formData = new FormData();
+  formData.append('variationId', variationId);
+  formData.append('imageFile', imageFile);
+  if (orderIndex !== undefined && orderIndex !== null) {
+    formData.append('orderIndex', orderIndex.toString());
+  }
+
+  const response = await api.post<VariationImageDTO>('/variation-images', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
+/**
+ * Atualiza uma imagem de variação (PUT /variation-images/{id}), enviando como multipart/form-data.
+ * 
+ * @param id ID da VariationImage a atualizar.
+ * @param imageFile novo arquivo se quiser trocar a imagem.
+ * @param orderIndex nova ordem da imagem.
+ */
+export const updateVariationImage = async (
+  id: string,
+  imageFile?: File,
+  orderIndex?: number
+): Promise<VariationImageDTO> => {
+  const formData = new FormData();
+  if (imageFile) {
+    formData.append('imageFile', imageFile);
+  }
+  if (orderIndex !== undefined && orderIndex !== null) {
+    formData.append('orderIndex', orderIndex.toString());
+  }
+
+  const response = await api.put<VariationImageDTO>(`/variation-images/${id}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
+/**
+ * Busca uma imagem de variação pelo ID (GET /variation-images/{id}).
+ */
+export const getVariationImageById = async (id: string): Promise<VariationImageDTO> => {
+  const response = await api.get<VariationImageDTO>(`/variation-images/${id}`);
+  return response.data;
+};
+
+/**
+ * Lista todas as imagens de uma variação (GET /variation-images/byVariation/{variationId}).
+ */
+export const listVariationImagesByVariation = async (
+  variationId: string
+): Promise<VariationImageDTO[]> => {
+  const response = await api.get<VariationImageDTO[]>(`/variation-images/byVariation/${variationId}`);
+  return response.data;
+};
+
+/**
+ * Deleta uma imagem de variação (DELETE /variation-images/{id}).
+ */
+export const deleteVariationImage = async (id: string): Promise<void> => {
+  await api.delete(`/variation-images/${id}`);
 };

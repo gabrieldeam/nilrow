@@ -114,6 +114,11 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.DELETE, "/product-templates/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/product-templates/**").authenticated()
 
+                        .requestMatchers(HttpMethod.POST, "/variation-images/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/variation-images/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/variation-images/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/variation-images/**").authenticated()
+
                         .requestMatchers("/uploads/**").permitAll()
                         .anyRequest().authenticated()
                 )

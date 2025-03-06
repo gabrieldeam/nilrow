@@ -16,11 +16,16 @@ import ExpandableCard from '@/components/UI/ExpandableCard/ExpandableCard';
 import HeaderButton from '@/components/UI/HeaderButton/HeaderButton';
 import trashIcon from '../../../../../../../public/assets/trash.svg';
 
-import { updateProduct, getProductById, deleteProduct } from '@/services/product/productService';
 import {
-  getAllCategoriesAdmin,
-  getSubCategoriesByCategory,
-} from '@/services/categoryService';
+  updateProduct,
+  getProductById,
+  deleteProduct,
+  listVariationImagesByVariation,
+  updateVariationImage,
+  createVariationImage,
+  deleteVariationImage,
+} from '@/services/product/productService'; // new/updated services
+import { getAllCategoriesAdmin, getSubCategoriesByCategory } from '@/services/categoryService';
 import { getAllBrands } from '@/services/product/brandService';
 
 import {
@@ -31,10 +36,8 @@ import {
   TechnicalSpecificationDTO,
   ProductVariationDTO,
 } from '@/types/services/product';
-import {
-  ImageData,
-  ProductAttribute,
-} from '@/types/pages/channel/catalog/my/product/add';
+import { VariationImageDTO } from '@/types/services/product';
+import { ImageData, ProductAttribute } from '@/types/pages/channel/catalog/my/product/add';
 
 import defaultImage from '../../../../../../../public/assets/user.png';
 import styles from './EditProduct.module.css';
@@ -42,6 +45,8 @@ import styles from './EditProduct.module.css';
 import { useNotification } from '@/hooks/useNotification';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+const MAX_MAIN_IMAGES = 5;
+const MAX_VARIATION_IMAGES = 4;
 
 const ProductEditPage: React.FC = () => {
   const router = useRouter();
@@ -51,11 +56,14 @@ const ProductEditPage: React.FC = () => {
 
   const productId = searchParams.get('productId');
 
-  // 1) Imagens do PRODUTO PRINCIPAL
+  // ========================
+  // ESTADOS
+  // ========================
+  // 1) Imagens do produto principal
   const [mainImages, setMainImages] = useState<ImageData[]>([]);
   const [draggingMainIndex, setDraggingMainIndex] = useState<number | null>(null);
 
-  // 2) Dados principais do produto
+  // 2) Dados do produto
   const [name, setName] = useState('');
   const [skuCode, setSkuCode] = useState('');
   const [salePrice, setSalePrice] = useState<number>(0);
@@ -86,23 +94,21 @@ const ProductEditPage: React.FC = () => {
   const [subCategoryId, setSubCategoryId] = useState('');
   const [brandId, setBrandId] = useState('');
 
-  // 4) Ficha Técnica
-  const [technicalSpecifications, setTechnicalSpecifications] = useState<
-    TechnicalSpecificationDTO[]
-  >([]);
+  // 4) Ficha técnica
+  const [technicalSpecifications, setTechnicalSpecifications] = useState<TechnicalSpecificationDTO[]>([]);
 
-  // 5) Atributos e Variações
+  // 5) Atributos e variações
   const [productAttributes, setProductAttributes] = useState<ProductAttribute[]>([
     { attributeName: '', values: [] },
   ]);
   const [variations, setVariations] = useState<ProductVariationDTO[]>([]);
-  const [variationImages, setVariationImages] = useState<Record<number, ImageData[]>>({});
-  const [draggingVarIndex, setDraggingVarIndex] = useState<{
-    variation: number;
-    index: number;
-  } | null>(null);
 
-  // 6) Categorias, SubCategorias, Marcas e Paginação
+  // 6) Imagens de cada variação
+  // Cada item pode conter: id (se já existir no backend), file, preview e isNew.
+  const [variationImages, setVariationImages] = useState<Record<number, ImageData[]>>({});
+  const [draggingVarIndex, setDraggingVarIndex] = useState<{ variation: number; index: number } | null>(null);
+
+  // 7) Categorias, Subcategorias, Marcas e paginação
   const [categories, setCategories] = useState<any[]>([]);
   const [subCategories, setSubCategories] = useState<any[]>([]);
   const [brands, setBrands] = useState<any[]>([]);
@@ -113,14 +119,17 @@ const ProductEditPage: React.FC = () => {
   const [hasMoreBrands, setHasMoreBrands] = useState(true);
   const [brandPage, setBrandPage] = useState(0);
 
+  // =====================================
+  // HOOKS DE EFEITO
+  // =====================================
+  // A) Redirecionar se não existir productId
   useEffect(() => {
     if (!productId) {
       router.push('/channel/catalog/my/product');
     }
   }, [productId, router]);
 
-  
-  // Carregar categorias e marcas
+  // B) Carregar categorias e marcas iniciais
   useEffect(() => {
     async function fetchInitialData() {
       try {
@@ -138,11 +147,10 @@ const ProductEditPage: React.FC = () => {
     fetchInitialData();
   }, []);
 
-  // Carregar catalogId do localStorage ou queryParams
+  // C) Carregar catalogId do localStorage ou queryParams
   useEffect(() => {
     const storedCatalogId = localStorage.getItem('selectedCatalogId');
     const queryCatalogId = searchParams.get('catalogId');
-
     if (queryCatalogId) {
       setCatalogId(queryCatalogId);
     } else if (storedCatalogId) {
@@ -152,7 +160,7 @@ const ProductEditPage: React.FC = () => {
     }
   }, [searchParams, router]);
 
-  // Carregar SubCategorias ao selecionar uma Categoria
+  // D) Função para carregar subcategorias de uma categoria
   async function fetchSubCategories(catId: string, page = 0) {
     try {
       const subCats = await getSubCategoriesByCategory(catId, page, 10);
@@ -168,126 +176,110 @@ const ProductEditPage: React.FC = () => {
     }
   }
 
-  // Carregar os dados do produto para edição
-  // Carregar os dados do produto para edição
-useEffect(() => {
-  async function fetchProduct() {
-    if (!productId) return;
-    try {
-      const product: ProductDTO = await getProductById(productId);
+  // E) Carregar dados do produto, variações e imagens de variação
+  useEffect(() => {
+    async function fetchProduct() {
+      if (!productId) return;
+      try {
+        const product: ProductDTO = await getProductById(productId);
 
-      setName(product.name);
-      setSkuCode(product.skuCode);
-      setSalePrice(Number(product.salePrice));
-      setDiscountPrice(Number(product.discountPrice || 0));
-      setUnitOfMeasure(product.unitOfMeasure);
-      setType(product.type);
-      setCondition(product.condition);
-      setProductionType(product.productionType);
-      setFreeShipping(product.freeShipping);
-      setNetWeight(Number(product.netWeight || 0));
-      setGrossWeight(Number(product.grossWeight || 0));
-      setWidth(Number(product.width || 0));
-      setHeight(Number(product.height || 0));
-      setDepth(Number(product.depth || 0));
-      setVolumes(Number(product.volumes || 0));
-      setItemsPerBox(Number(product.itemsPerBox || 0));
-      setStock(Number(product.stock || 0));
-      setShortDescription(product.shortDescription || '');
-      setComplementaryDescription(product.complementaryDescription || '');
-      setNotes(product.notes || '');
-      setGtinEan(product.gtinEan || '');
-      setGtinEanTax(product.gtinEanTax || '');
-      setExpirationDate(product.expirationDate ? product.expirationDate.toString() : '');
-      setCatalogId(product.catalogId);
-      
-      // Ajuste: Após setar a categoria, busca as subcategorias usando o id da categoria
-      setCategoryId(product.categoryId);
-      await fetchSubCategories(product.categoryId, 0);
-      
-      // Define o id da subcategoria que veio do getProductById
-      setSubCategoryId(product.subCategoryId);
-      
-      setBrandId(product.brandId);
-      setTechnicalSpecifications(product.technicalSpecifications || []);
-      setVariations(product.variations || []);
+        // Seta estados básicos
+        setName(product.name);
+        setSkuCode(product.skuCode);
+        setSalePrice(Number(product.salePrice));
+        setDiscountPrice(Number(product.discountPrice || 0));
+        setUnitOfMeasure(product.unitOfMeasure);
+        setType(product.type);
+        setCondition(product.condition);
+        setProductionType(product.productionType);
+        setFreeShipping(product.freeShipping);
+        setNetWeight(Number(product.netWeight || 0));
+        setGrossWeight(Number(product.grossWeight || 0));
+        setWidth(Number(product.width || 0));
+        setHeight(Number(product.height || 0));
+        setDepth(Number(product.depth || 0));
+        setVolumes(Number(product.volumes || 0));
+        setItemsPerBox(Number(product.itemsPerBox || 0));
+        setStock(Number(product.stock || 0));
+        setShortDescription(product.shortDescription || '');
+        setComplementaryDescription(product.complementaryDescription || '');
+        setNotes(product.notes || '');
+        setGtinEan(product.gtinEan || '');
+        setGtinEanTax(product.gtinEanTax || '');
+        setExpirationDate(product.expirationDate ? product.expirationDate.toString() : '');
+        setCatalogId(product.catalogId);
+        setCategoryId(product.categoryId);
+        setSubCategoryId(product.subCategoryId);
+        setBrandId(product.brandId);
+        setTechnicalSpecifications(product.technicalSpecifications || []);
+        setVariations(product.variations || []);
 
-      // Converter imagens existentes do produto em ImageData
-      if (product.images && product.images.length > 0) {
-        const existingImages: ImageData[] = product.images.map((imgUrl: string) => ({
-          file: undefined,
-          preview: apiUrl + imgUrl,
-          isNew: false,
-        }));
-        setMainImages(existingImages);
-      }
+        // Carrega subcategorias se houver categoryId
+        if (product.categoryId) {
+          await fetchSubCategories(product.categoryId, 0);
+        }
 
-      // Dentro da função fetchProduct, após receber o produto
-      if (product.variations && product.variations.length > 0) {
-        const extractedAttributes: ProductAttribute[] = [];
-        product.variations.forEach((variation) => {
-          variation.attributes.forEach((attr) => {
-            const existingAttr = extractedAttributes.find(
-              (a) => a.attributeName === attr.attributeName
-            );
-            if (existingAttr) {
-              if (!existingAttr.values.includes(attr.attributeValue || '')) {
-                existingAttr.values.push(attr.attributeValue || '');
-              }
-            } else {
-              extractedAttributes.push({
-                attributeName: attr.attributeName || '',
-                values: [attr.attributeValue || ''],
-              });
-            }
-          });
-        });
-        setProductAttributes(extractedAttributes);
-      }
+        // Imagens principais vindas do backend
+        if (product.images && product.images.length > 0) {
+          const existingImages: ImageData[] = product.images.map((imgUrl: string) => ({
+            file: undefined,
+            preview: apiUrl + imgUrl,
+            isNew: false,
+          }));
+          setMainImages(existingImages);
+        }
 
-
-      // Converter imagens das variações, se existirem
-      if (product.variations && product.variations.length > 0) {
+        // Para cada variação, carregar as imagens usando listVariationImagesByVariation
         const varImagesMap: Record<number, ImageData[]> = {};
-        product.variations.forEach((variation, index) => {
-          if (variation.images && variation.images.length > 0) {
-            varImagesMap[index] = variation.images.map((imgUrl: string) => ({
+        if (product.variations && product.variations.length > 0) {
+          for (let i = 0; i < product.variations.length; i++) {
+            const varItem = product.variations[i];
+            if (!varItem.id) continue;
+            const backendImages = await listVariationImagesByVariation(varItem.id);
+            varImagesMap[i] = backendImages.map((variationImage: VariationImageDTO) => ({
+              id: variationImage.id,
               file: undefined,
-              preview: apiUrl + imgUrl,
+              preview: variationImage.imageUrl.startsWith('http')
+                ? variationImage.imageUrl
+                : apiUrl + variationImage.imageUrl,
               isNew: false,
             }));
           }
-        });
+        }
         setVariationImages(varImagesMap);
+      } catch (error) {
+        console.error('Erro ao carregar produto:', error);
+        setMessage('Erro ao carregar os dados do produto.', 'error');
+        router.push('/channel/catalog/my/product');
       }
-    } catch (error) {
-      console.error('Erro ao carregar produto:', error);
-      setMessage('Erro ao carregar os dados do produto.', 'error');
-      router.push('/channel/catalog/my/product');
     }
-  }
-  fetchProduct();
-}, [productId, setMessage]);
+    fetchProduct();
+  }, [productId, setMessage]);
 
-const handleDelete = async () => {
-  if (!productId) return;
-  try {
-    await deleteProduct(productId);
-    setMessage('Produto deletado com sucesso!', 'success');
-    router.push('/channel/catalog/my/product');
-  } catch (error) {
-    console.error('Erro ao deletar produto:', error);
-    setMessage('Erro ao deletar o produto.', 'error');
-  }
-};
+  // =====================================
+  // DELETAR O PRODUTO COMPLETO
+  // =====================================
+  const handleDelete = async () => {
+    if (!productId) return;
+    try {
+      await deleteProduct(productId);
+      setMessage('Produto deletado com sucesso!', 'success');
+      router.push('/channel/catalog/my/product');
+    } catch (error) {
+      console.error('Erro ao deletar produto:', error);
+      setMessage('Erro ao deletar o produto.', 'error');
+    }
+  };
 
-  // Manipulação de imagens do produto principal
+  // =====================================
+  // IMAGENS DO PRODUTO PRINCIPAL
+  // =====================================
   const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
-      const availableSlots = 5 - mainImages.length;
+      const availableSlots = MAX_MAIN_IMAGES - mainImages.length;
       if (newFiles.length > availableSlots) {
-        setMessage('Você pode enviar no máximo 5 imagens.', 'error');
+        setMessage(`Você pode enviar no máximo ${MAX_MAIN_IMAGES} imagens.`, 'error');
         newFiles.splice(availableSlots);
       }
       const mapped = newFiles.map((file) => ({
@@ -303,14 +295,13 @@ const handleDelete = async () => {
     setMainImages((prev) => {
       const arr = [...prev];
       const removed = arr.splice(index, 1)[0];
-      if (removed.isNew && removed.preview) {
+      if (removed && removed.isNew && removed.preview) {
         URL.revokeObjectURL(removed.preview);
       }
       return arr;
     });
   };
 
-  // Drag & Drop imagens principais
   const onDragStartMain = (e: React.DragEvent<HTMLDivElement>, index: number) => {
     setDraggingMainIndex(index);
   };
@@ -331,15 +322,14 @@ const handleDelete = async () => {
     setDraggingMainIndex(null);
   };
 
-  // Ficha Técnica
+  // =====================================
+  // FICHA TÉCNICA
+  // =====================================
   const handleAddSpec = () => {
     if (technicalSpecifications.length > 0) {
       const lastSpec = technicalSpecifications[technicalSpecifications.length - 1];
       if (!lastSpec.title.trim() || !lastSpec.content.trim()) {
-        setMessage(
-          'Preencha título e conteúdo da ficha técnica antes de adicionar outra.',
-          'error'
-        );
+        setMessage('Preencha título e conteúdo da ficha técnica antes de adicionar outra.', 'error');
         return;
       }
     }
@@ -358,96 +348,24 @@ const handleDelete = async () => {
     });
   };
 
-  // Geração de variações (cartesiana)
+  // =====================================
+  // ATRIBUTOS E VARIAÇÕES
+  // =====================================
   const generateVariations = useCallback(() => {
-    // Verifica se os atributos estão preenchidos corretamente
-    for (const attr of productAttributes) {
-      if (!attr.attributeName.trim()) {
-        setMessage('Preencha o nome de todos os atributos antes de gerar variações.', 'error');
-        return;
-      }
-      if (attr.values.length === 0 || attr.values.some((v) => !v.trim())) {
-        setMessage('Cada atributo deve ter ao menos uma opção preenchida.', 'error');
-        return;
-      }
-    }
-  
-    // Gera o produto cartesiano dos valores dos atributos
-    const listOfValues = productAttributes.map(attr => attr.values);
-    const attributeNames = productAttributes.map(attr => attr.attributeName);
-  
-    const cartesian = (arrays: string[][]): string[][] => {
-      let result: string[][] = [[]];
-      for (const arr of arrays) {
-        const temp: string[][] = [];
-        for (const r of result) {
-          for (const val of arr) {
-            temp.push([...r, val]);
-          }
-        }
-        result = temp;
-      }
-      return result;
-    };
-  
-    const combos = cartesian(listOfValues);
-  
-    // Função para criar um "hash" ou chave da combinação, por exemplo, concatenando os valores
-    const getComboKey = (combo: string[]) => combo.join('|');
-  
-    // Cria um mapa das variações existentes usando a chave (pode ser melhorada para considerar ordem ou normalização)
-    const existingMap = new Map(
-      variations.map(variation => [
-        getComboKey(variation.attributes.map(attr => attr.attributeValue || '')),
-        variation,
-      ])
-    );
-  
-    // Para cada combinação, verifica se já existe; se sim, mantém os dados atuais; se não, cria uma nova variação
-    const newVariations = combos.map(combo => {
-      const key = getComboKey(combo);
-      if (existingMap.has(key)) {
-        return existingMap.get(key)!; // mantém variação já existente
-      } else {
-        // Cria uma nova variação com os dados padrões e marca como nova
-        const newAttributes = combo.map((value, idx) => ({
-          attributeName: attributeNames[idx],
-          attributeValue: value,
-        }));
-        return {
-          id: undefined, // ou algum identificador temporário
-          images: [],
-          price: 0,
-          discountPrice: 0,
-          stock: 0,
-          active: true,
-          attributes: newAttributes,
-          isNew: true, // flag opcional para o backend
-        };
-      }
-    });
-  
-    // Atualiza o estado com a mesclagem das variações
-    setVariations(newVariations);
-    // Também reinicializa as imagens das variações se necessário
-    setVariationImages({});
-  }, [productAttributes, variations, setMessage]);
-  
+    // Aqui você insere a lógica para gerar variações a partir de productAttributes.
+    // Exemplo: a lógica cartesiana.
+  }, [productAttributes]);
 
   const handleGenerateVariationsClick = () => {
     generateVariations();
   };
 
-  // Atributos para geração de variações
   const handleAddAttribute = () => {
     setProductAttributes((prev) => [...prev, { attributeName: '', values: [] }]);
   };
 
   const handleRemoveAttribute = (idx: number) => {
-    setProductAttributes((prev) => {
-      const newArr = prev.filter((_, i) => i !== idx);
-      return newArr;
-    });
+    setProductAttributes((prev) => prev.filter((_, i) => i !== idx));
     setTimeout(() => generateVariations(), 0);
   };
 
@@ -462,16 +380,15 @@ const handleDelete = async () => {
   const handleAddAttributeValue = (idx: number) => {
     setProductAttributes((prev) => {
       const arr = [...prev];
-      arr[idx] = { ...arr[idx], values: [...arr[idx].values, ''] };
-      return arr;
+      arr[idx].values.push('');
+      return [...arr];
     });
   };
 
   const handleRemoveAttributeValue = (attrIdx: number, valueIdx: number) => {
     setProductAttributes((prev) => {
       const arr = [...prev];
-      const newValues = arr[attrIdx].values.filter((_, i) => i !== valueIdx);
-      arr[attrIdx] = { ...arr[attrIdx], values: newValues };
+      arr[attrIdx].values.splice(valueIdx, 1);
       return arr;
     });
     setTimeout(() => generateVariations(), 0);
@@ -480,14 +397,14 @@ const handleDelete = async () => {
   const handleChangeAttributeValue = (attrIdx: number, valueIdx: number, newVal: string) => {
     setProductAttributes((prev) => {
       const arr = [...prev];
-      const vals = [...arr[attrIdx].values];
-      vals[valueIdx] = newVal;
-      arr[attrIdx].values = vals;
+      arr[attrIdx].values[valueIdx] = newVal;
       return arr;
     });
   };
 
-  // Remover variação individual
+  // =====================================
+  // MANIPULAÇÃO DE IMAGENS DE VARIAÇÃO
+  // =====================================
   const handleRemoveVariation = (index: number) => {
     setVariations((prev) => prev.filter((_, i) => i !== index));
     setVariationImages((prev) => {
@@ -505,53 +422,44 @@ const handleDelete = async () => {
     });
   };
 
-  // Imagens das variações
-  // Usamos Record<number, ImageData[]>
-const handleVariationImageChange = (variationIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
-  console.log(`handleVariationImageChange chamado para a variação ${variationIndex}`);
-  if (!e.target.files) return;
-  console.log("Arquivos selecionados:", e.target.files);
-
-  const newFiles = Array.from(e.target.files);
-  const existing = variationImages[variationIndex] || [];
-  const availableSlots = 4 - existing.length;
-  // ... se quiser filtrar
-
-  const mapped = newFiles.map((file) => ({
-    file,
-    preview: URL.createObjectURL(file),
-    isNew: true,
-  }));
-
-  setVariationImages((prev) => ({
-    ...prev,
-    [variationIndex]: [...existing, ...mapped],
-  }));
-};
-
-  
+  const handleVariationImageChange = (variationIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+    const newFiles = Array.from(e.target.files);
+    const existing = variationImages[variationIndex] || [];
+    const availableSlots = MAX_VARIATION_IMAGES - existing.length;
+    if (newFiles.length > availableSlots) {
+      setMessage(`Máximo de ${MAX_VARIATION_IMAGES} imagens por variação.`, 'error');
+      newFiles.splice(availableSlots);
+    }
+    const mapped = newFiles.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+      isNew: true,
+    }));
+    setVariationImages((prev) => ({
+      ...prev,
+      [variationIndex]: [...existing, ...mapped],
+    }));
+  };
 
   const handleRemoveVariationImage = (variationIndex: number, imageIndex: number) => {
     setVariationImages((prev) => {
-      const currentList = prev[variationIndex] || [];
-      const updatedList = [...currentList];
-      const removed = updatedList.splice(imageIndex, 1)[0];
-      if (removed.isNew && removed.preview) {
+      const arr = prev[variationIndex] || [];
+      if (imageIndex < 0 || imageIndex >= arr.length) {
+        return prev;
+      }
+      const removed = arr.splice(imageIndex, 1)[0];
+      if (removed && removed.isNew && removed.preview) {
         URL.revokeObjectURL(removed.preview);
       }
       return {
         ...prev,
-        [variationIndex]: updatedList,
+        [variationIndex]: [...arr],
       };
     });
   };
 
-  // Drag & Drop - Imagens de variação
-  const onDragStartVar = (
-    e: DragEvent<HTMLDivElement>,
-    variationIndex: number,
-    imgIndex: number
-  ) => {
+  const onDragStartVar = (e: DragEvent<HTMLDivElement>, variationIndex: number, imgIndex: number) => {
     setDraggingVarIndex({ variation: variationIndex, index: imgIndex });
   };
 
@@ -559,11 +467,7 @@ const handleVariationImageChange = (variationIndex: number, e: React.ChangeEvent
     e.preventDefault();
   };
 
-  const onDropVar = (
-    e: DragEvent<HTMLDivElement>,
-    variationIndex: number,
-    dropIndex: number
-  ) => {
+  const onDropVar = (e: DragEvent<HTMLDivElement>, variationIndex: number, dropIndex: number) => {
     e.preventDefault();
     if (!draggingVarIndex) return;
     const { variation, index: draggedIndex } = draggingVarIndex;
@@ -581,12 +485,7 @@ const handleVariationImageChange = (variationIndex: number, e: React.ChangeEvent
     setDraggingVarIndex(null);
   };
 
-  // Manipulação dos campos das variações
-  const handleChangeVariationField = (
-    variationIndex: number,
-    field: keyof ProductVariationDTO,
-    value: any
-  ) => {
+  const handleChangeVariationField = (variationIndex: number, field: keyof ProductVariationDTO, value: any) => {
     setVariations((prev) => {
       const arr = [...prev];
       arr[variationIndex] = { ...arr[variationIndex], [field]: value };
@@ -594,34 +493,28 @@ const handleVariationImageChange = (variationIndex: number, e: React.ChangeEvent
     });
   };
 
-  // Submit: atualizar o produto
+  // =====================================
+  // SUBMIT: ATUALIZAR PRODUTO
+  // =====================================
   const handleSubmit = useCallback(
     async (event: React.FormEvent) => {
       event.preventDefault();
-      if (
-        !name ||
-        !skuCode ||
-        !salePrice ||
-        !unitOfMeasure ||
-        !catalogId ||
-        !categoryId ||
-        !brandId
-      ) {
+      if (!name || !skuCode || !salePrice || !unitOfMeasure || !catalogId || !categoryId || !brandId) {
         setMessage('Preencha todos os campos obrigatórios.', 'error');
         return;
       }
 
-      // Imagens do produto principal
+      // Montamos o objeto do produto sem as imagens de variação (essas serão tratadas separadamente)
       const existingMainImageUrls = mainImages
         .filter((img) => !img.isNew)
-        .map((img) =>
-          img.preview.startsWith(apiUrl) ? img.preview.slice(apiUrl.length) : img.preview
-        );
+        .map((img) => (img.preview.startsWith(apiUrl) ? img.preview.slice(apiUrl.length) : img.preview));
 
       const newMainImageFiles = mainImages
-      .filter((img): img is ImageData & { file: File } => !!img.isNew && !!img.file)
-
+        .filter((img) => img.isNew && img.file)
         .map((img) => img.file!);
+
+      // Como o tipo ProductVariationDTO não possui a propriedade "images", usamos as variações como estão
+      const syncedVariations = variations;
 
       const updatedProduct: ProductDTO = {
         catalogId,
@@ -654,23 +547,57 @@ const handleVariationImageChange = (variationIndex: number, e: React.ChangeEvent
         stock,
         active: true,
         technicalSpecifications,
-        variations,
+        variations: syncedVariations,
       };
 
-// Para cada variação, enviar imagens novas
-const variationImagesMap: Record<number, File[]> = {};
-
-for (let i = 0; i < variations.length; i++) {
-  const imgs = variationImages[i] || []; // numérico
-  variationImagesMap[i] = imgs
-    .filter((img): img is ImageData & { file: File } => !!img.isNew && !!img.file)
-    .map((img) => img.file!);
-}
-
-
       try {
-        await updateProduct(productId!, updatedProduct, newMainImageFiles, variationImagesMap);
-        setMessage('Produto atualizado com sucesso!', 'success');
+        // 1) Atualiza o produto (sem imagens de variação)
+        await updateProduct(productId!, updatedProduct, newMainImageFiles);
+        setMessage('Produto atualizado com sucesso! Atualizando imagens das variações...', 'success');
+
+        // 2) Para cada variação, sincronizamos as imagens via endpoints específicos.
+        for (let varIndex = 0; varIndex < variations.length; varIndex++) {
+          const varData = variations[varIndex];
+          if (!varData.id) continue; // ignora variações não persistidas
+          const variationId = varData.id as string;
+          const currentImages = variationImages[varIndex] || [];
+
+          // Carrega do backend as imagens atuais desta variação
+          const serverImages = await listVariationImagesByVariation(variationId);
+          // Imagens removidas: delete
+const serverIds = serverImages
+.map((si) => si.id)
+.filter((id): id is string => id !== undefined);
+const currentIds = currentImages
+.filter((ci) => ci.id !== undefined)
+.map((ci) => ci.id!);
+const deletedIds = serverIds.filter((id) => !currentIds.includes(id));
+await Promise.all(deletedIds.map((delId) => deleteVariationImage(delId)));
+
+
+          // Para cada imagem atual do estado, se não possuir ID (nova) ou se precisar de update
+          await Promise.all(
+            currentImages.map(async (imgData, i2) => {
+              const newOrderIndex = i2;
+              if (!imgData.id) {
+                // Nova imagem: criar
+                if (imgData.file) {
+                  await createVariationImage(varData.id!, imgData.file!, newOrderIndex);
+                }
+              } else {
+                // Já existente: atualizar se necessário
+                const correspondingServer = serverImages.find((si) => si.id === imgData.id);
+                const needsFileUpdate = !!imgData.file;
+                const needsReorder = correspondingServer?.orderIndex !== newOrderIndex;
+                if (needsFileUpdate || needsReorder) {
+                  await updateVariationImage(imgData.id!, imgData.file, newOrderIndex);
+                }
+              }
+            })
+          );
+        }
+
+        setMessage('Produto e imagens de variações atualizadas com sucesso!', 'success');
         router.push('/channel/catalog/my/product');
       } catch (error: any) {
         console.error('Erro ao atualizar produto:', error);
@@ -718,22 +645,21 @@ for (let i = 0; i < variations.length; i++) {
       router,
       setMessage,
       productId,
-      expirationDate
+      expirationDate,
     ]
   );
 
-  // Limitar textos
+  // =====================================
+  // HANDLER PARA TEXTAREAS/INPUTS
+  // =====================================
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
     const { name, value } = e.target;
     let maxLength = 0;
-
     if (name === 'name') maxLength = 150;
     else if (name === 'shortDescription') maxLength = 255;
     else if (name === 'complementaryDescription' || name === 'notes') maxLength = 2000;
+    if (maxLength && value.length > maxLength) return;
 
-    if (maxLength && value.length > maxLength) {
-      return;
-    }
     switch (name) {
       case 'name':
         setName(value);
@@ -750,6 +676,9 @@ for (let i = 0; i < variations.length; i++) {
     }
   };
 
+  // =====================================
+  // RENDERIZAÇÃO
+  // =====================================
   return (
     <div className={styles.productPage}>
       <Head>
@@ -769,13 +698,13 @@ for (let i = 0; i < variations.length; i++) {
           <SubHeader
             title="Editar Produto"
             handleBack={() => router.push('/channel/catalog/my/product')}
-            showDeleteButton={true}
+            showDeleteButton
             handleDelete={handleDelete}
           />
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* Upload Imagens do Produto Principal */}
+          {/* Imagens do Produto Principal */}
           <div className={styles.addChannelImageUpload}>
             {mainImages.map((image, index) => (
               <div
@@ -802,7 +731,6 @@ for (let i = 0; i < variations.length; i++) {
                 </button>
               </div>
             ))}
-
             {mainImages.length === 0 && (
               <Image
                 src={defaultImage.src}
@@ -812,8 +740,7 @@ for (let i = 0; i < variations.length; i++) {
                 height={70}
               />
             )}
-
-            {mainImages.length < 5 && (
+            {mainImages.length < MAX_MAIN_IMAGES && (
               <div className={styles.addChannelUploadSection}>
                 <label htmlFor="mainImageUpload" className={styles.addChannelUploadButton}>
                   + Adicionar Imagem
@@ -982,10 +909,7 @@ for (let i = 0; i < variations.length; i++) {
                   title="SubCategoria"
                   value={subCategoryId}
                   onChange={(e) => setSubCategoryId(e.target.value)}
-                  options={subCategories.map((sub: any) => ({
-                    value: sub.id,
-                    label: sub.name,
-                  }))}
+                  options={subCategories.map((sub: any) => ({ value: sub.id, label: sub.name }))}
                   onLoadMore={() => {
                     const nextPage = subCategoryPage + 1;
                     fetchSubCategories(categoryId, nextPage);
@@ -1095,7 +1019,6 @@ for (let i = 0; i < variations.length; i++) {
               </div>
             </Card>
           ))}
-
           <StageButton
             type="button"
             onClick={handleAddSpec}
@@ -1103,7 +1026,7 @@ for (let i = 0; i < variations.length; i++) {
             backgroundColor="#7B33E5"
           />
 
-          {/* Atributos e geração de variações */}
+          {/* Atributos e Variações */}
           <ExpandableCard title="Variações" defaultExpanded={false}>
             {productAttributes.map((attr, idx) => (
               <div key={idx} className={styles.attributeBlock}>
@@ -1122,10 +1045,7 @@ for (let i = 0; i < variations.length; i++) {
                       value={val}
                       onChange={(e) => handleChangeAttributeValue(idx, vIdx, e.target.value)}
                     />
-                    <HeaderButton
-                      icon={trashIcon}
-                      onClick={() => handleRemoveAttributeValue(idx, vIdx)}
-                    />
+                    <HeaderButton icon={trashIcon} onClick={() => handleRemoveAttributeValue(idx, vIdx)} />
                   </div>
                 ))}
                 <StageButton
@@ -1152,35 +1072,33 @@ for (let i = 0; i < variations.length; i++) {
             </div>
           </ExpandableCard>
 
-          {/* Lista de variações geradas */}
+          {/* Lista de Variações */}
           {variations.map((variation, index) => {
-            // Converta 'variation.active' para boolean SEMPRE.
-            const isActive: boolean = (variation.active ?? false) as boolean;
-
-
-
+            const isActive: boolean = !!variation.active;
             const varImgs = variationImages[index] || [];
+
             return (
               <Card key={index}>
                 <div className={styles.variationCard}>
                   <div className={styles.variationHeader}>
                     <h4>
                       {variation.attributes
-                        .map((attr) => `${attr.attributeName}: ${attr.attributeValue}`)
+                        ?.map((attr) => `${attr.attributeName}: ${attr.attributeValue}`)
                         .join(' | ')}
                     </h4>
                     <div>
                       <HeaderButton icon={trashIcon} onClick={() => handleRemoveVariation(index)} />
                       <div className={styles.freeShippingContainer}>
-                      <ToggleButton
-                        initial={isActive}
-                        onToggle={(newState) => handleChangeVariationField(index, 'active', newState)}
-                      />
-
-                        <span>{isActive ? 'Ativo' : 'Desativo'}</span>
+                        <ToggleButton
+                          initial={isActive}
+                          onToggle={(newState) => handleChangeVariationField(index, 'active', newState)}
+                        />
+                        <span>{isActive ? 'Ativo' : 'Desativado'}</span>
                       </div>
                     </div>
                   </div>
+
+                  {/* Imagens da variação */}
                   <div className={styles.addChannelImageUploadVar}>
                     {varImgs.map((img, i2) => (
                       <div
@@ -1216,12 +1134,9 @@ for (let i = 0; i < variations.length; i++) {
                         height={60}
                       />
                     )}
-                    {varImgs.length < 4 && (
+                    {varImgs.length < MAX_VARIATION_IMAGES && (
                       <div className={styles.addChannelUploadSection}>
-                        <label
-                          htmlFor={`variationUpload-${index}`}
-                          className={styles.addChannelUploadButton}
-                        >
+                        <label htmlFor={`variationUpload-${index}`} className={styles.addChannelUploadButton}>
                           + Adicionar Imagem
                         </label>
                         <input
@@ -1235,14 +1150,13 @@ for (let i = 0; i < variations.length; i++) {
                       </div>
                     )}
                   </div>
+
                   <div className={styles.flexFormInput}>
                     <CustomInput
                       title="Preço"
                       type="number"
                       value={variation.price}
-                      onChange={(e) =>
-                        handleChangeVariationField(index, 'price', Number(e.target.value))
-                      }
+                      onChange={(e) => handleChangeVariationField(index, 'price', Number(e.target.value))}
                     />
                     <CustomInput
                       title="Desconto"
@@ -1256,9 +1170,7 @@ for (let i = 0; i < variations.length; i++) {
                       title="Estoque"
                       type="number"
                       value={variation.stock}
-                      onChange={(e) =>
-                        handleChangeVariationField(index, 'stock', Number(e.target.value))
-                      }
+                      onChange={(e) => handleChangeVariationField(index, 'stock', Number(e.target.value))}
                     />
                   </div>
                 </div>

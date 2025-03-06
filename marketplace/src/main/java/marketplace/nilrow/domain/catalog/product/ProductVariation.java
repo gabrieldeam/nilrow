@@ -28,12 +28,8 @@ public class ProductVariation {
     @OneToMany(mappedBy = "variation", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<VariationAttribute> attributes;
 
-    // Imagens do produto com ordem definida pelo usuário
-    @ElementCollection
-    @OrderColumn(name = "image_order")
-    @CollectionTable(name = "product_variation_images", joinColumns = @JoinColumn(name = "variation_id"))
-    @Column(name = "image_url")
-    private List<String> images;
+    @OneToMany(mappedBy = "variation", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<VariationImage> variationImages;
 
     // Preço específico da variação (se diferente do produto principal)
     private BigDecimal price;
