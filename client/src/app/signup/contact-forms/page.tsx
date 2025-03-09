@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 
@@ -13,7 +13,7 @@ import Notification from '@/components/UI/Notification/Notification';
 import styles from './ContactForms.module.css';
 
 // Importa o hook do contexto
-import { useSignupContext } from '../layout';
+import { useSignupContext } from '@/context/SignupContext';
 
 const validateEmail = (email: string): boolean => {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -26,13 +26,13 @@ const validatePhone = (phone: string): boolean => {
 };
 
 export default function ContactForms() {
-  const router = useRouter();
+  // Removemos a variável router, pois não é utilizada
 
   // Pega do contexto
   const {
     formData,
     setFormData,
-    handleStepCompletion
+    handleStepCompletion,
   } = useSignupContext();
 
   const [isFormValid, setIsFormValid] = useState(false);
@@ -145,7 +145,7 @@ export default function ContactForms() {
             />
           </div>
           <div className={styles.backLink}>
-            <a href="/signup">Voltar sem salvar</a>
+            <Link href="/signup">Voltar sem salvar</Link>
           </div>
         </form>
       </div>

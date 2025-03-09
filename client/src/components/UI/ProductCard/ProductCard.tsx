@@ -1,23 +1,21 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { ProductCardProps } from '@/types/components/UI/ProductCard';
 import styles from './ProductCard.module.css';
 
-interface ButtonItem {
-  image: string; // URL da imagem do botão
-  link?: string; // link é opcional
-  onClick?: () => void; // função onClick opcional
+interface ExtendedProductCardProps extends ProductCardProps {
+  discount?: string | number | null;
 }
 
-interface ProductCardProps {
-  images: string[];
-  name: string;
-  price: number | string; // Aceita number ou string
-  freeShipping: boolean;
-  buttons?: ButtonItem[];
-}
-
-const ProductCard: React.FC<ProductCardProps> = ({ images, name, price, freeShipping, buttons = [] }) => {
+const ProductCard: React.FC<ExtendedProductCardProps> = ({
+  images,
+  name,
+  price,
+  discount,
+  freeShipping,
+  buttons = [],
+}) => {
   const sliderRef = useRef<HTMLDivElement>(null);
   const [scrollInterval, setScrollInterval] = useState<NodeJS.Timeout | null>(null);
 
@@ -27,7 +25,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ images, name, price, freeShip
 
     const interval = setInterval(() => {
       if (sliderRef.current) {
-        if (sliderRef.current.scrollLeft >= sliderRef.current.scrollWidth - sliderRef.current.clientWidth) {
+        if (
+          sliderRef.current.scrollLeft >=
+          sliderRef.current.scrollWidth - sliderRef.current.clientWidth
+        ) {
           sliderRef.current.scrollLeft = 0;
         } else {
           sliderRef.current.scrollLeft += 2;
@@ -44,12 +45,41 @@ const ProductCard: React.FC<ProductCardProps> = ({ images, name, price, freeShip
     }
   };
 
-  // Converte o price para number caso venha como string
   const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
+  const numericDiscount = discount ? parseFloat(discount.toString()) : 0;
+  const discountedPrice =
+    numericDiscount > 0 ? numericPrice - (numericPrice * numericDiscount) / 100 : numericPrice;
+
+  // Estados para detectar se o componente foi montado e se é mobile.
+  const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    // Função para verificar o tamanho da tela
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768); // ajuste o breakpoint conforme necessário
+    };
+
+    // Inicializa a verificação
+    handleResize();
+
+    // Adiciona o event listener para atualizar o estado em caso de redimensionamento
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Define o limite de caracteres: 30 para mobile, 46 para desktop.
+  // Enquanto não estiver montado (renderização inicial), mantém o nome completo para evitar diferença entre servidor e cliente.
+  const getDisplayName = () => {
+    const limit = isMobile ? 30 : 46;
+    if (!mounted) return name;
+    return name.length > limit ? `${name.substring(0, limit)}...` : name;
+  };
 
   return (
     <div className={styles.card}>
-      <div 
+      <div
         className={styles.imageWrapper}
         onMouseEnter={startScrolling}
         onMouseLeave={stopScrolling}
@@ -63,7 +93,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ images, name, price, freeShip
         </div>
         {buttons.length > 0 && (
           <div className={styles.buttonContainer}>
-            {buttons.map((btn, index) => (
+            {buttons.map((btn, index) =>
               btn.link ? (
                 <Link key={index} href={btn.link}>
                   <div className={styles.buttonItem}>
@@ -75,14 +105,33 @@ const ProductCard: React.FC<ProductCardProps> = ({ images, name, price, freeShip
                   <Image src={btn.image} alt="button icon" width={20} height={20} />
                 </button>
               )
-            ))}
+            )}
           </div>
         )}
       </div>
       <div className={styles.info}>
-        <h3 className={styles.name}>{name}</h3>
-        <p className={styles.price}>R$ {numericPrice.toFixed(2)}</p>
-        {freeShipping && <p className={styles.freeShipping}>Frete Grátis</p>}
+        <h3 className={styles.name}>{getDisplayName()}</h3>
+        <p className={styles.price}>
+          {numericDiscount > 0 ? (
+            <>
+              <span style={{ color: 'black' }}>R$ {discountedPrice.toFixed(2)}</span>
+              <span
+                style={{
+                  textDecoration: 'line-through',
+                  color: '#888',
+                  marginRight: '5px',
+                }}
+              >
+                R$ {numericPrice.toFixed(2)}
+              </span>
+            </>
+          ) : (
+            <>R$ {numericPrice.toFixed(2)}</>
+          )}
+        </p>
+        <p className={styles.freeShipping}>
+          {freeShipping ? 'Frete Grátis' : 'Consultar Frete'}
+        </p>
       </div>
     </div>
   );

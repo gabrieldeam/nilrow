@@ -3,6 +3,7 @@
 import React, { memo, useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Head from 'next/head';
+import Image from 'next/image';
 
 import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';
 import StageButton from '@/components/UI/StageButton/StageButton';
@@ -16,10 +17,10 @@ import {
   isChannelOwner,
 } from '@/services/channel/channelService';
 import {
-    followChannel,
-    unfollowChannel,
-    isFollowing,
-  } from '@/services/channel/followService';
+  followChannel,
+  unfollowChannel,
+  isFollowing,
+} from '@/services/channel/followService';
 import { checkAuth } from '@/services/authService';
 import { startConversation } from '@/services/chatService';
 
@@ -32,12 +33,32 @@ import styles from './about.module.css';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 const frontUrl = process.env.NEXT_PUBLIC_FRONT_URL || '';
 
+// Interfaces para os dados do canal, about e FAQ
+interface ChannelData {
+  id: string;
+  name: string;
+  imageUrl: string;
+  // Adicione outras propriedades conforme necessário
+}
+
+interface AboutData {
+  aboutText?: string;
+  storePolicies?: string;
+  exchangesAndReturns?: string;
+  additionalInfo?: string;
+}
+
+interface FAQData {
+  question: string;
+  answer: string;
+}
+
 function AboutPage() {
   const router = useRouter();
   const params = useParams();
   const nickname = params.nickname as string;
 
-  // Verificar se é mobile
+  // Detectar se é mobile
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -45,18 +66,18 @@ function AboutPage() {
     }
   }, []);
 
-  // Estados do Canal, About, etc.
-  const [channelData, setChannelData] = useState<any>(null);
-  const [aboutData, setAboutData] = useState<any>({});
-  const [faqData, setFaqData] = useState<any[]>([]);
+  // Estados dos dados
+  const [channelData, setChannelData] = useState<ChannelData | null>(null);
+  const [aboutData, setAboutData] = useState<AboutData>({});
+  const [faqData, setFaqData] = useState<FAQData[]>([]);
   const [isFollowingChannel, setIsFollowingChannel] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
 
-  // Buscar dados ao montar
+  // Buscar dados do canal, about e FAQ
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Se quiser retirar arroba do nickname
+        // Remove arroba, se existir
         const formattedNickname = nickname.startsWith('@') ? nickname.slice(1) : nickname;
 
         const channel = await getChannelByNickname(formattedNickname);
@@ -64,7 +85,8 @@ function AboutPage() {
           console.error('Canal não encontrado!');
           return;
         }
-        setChannelData(channel);
+        // Transforma os dados garantindo que imageUrl seja sempre uma string
+        setChannelData({ ...channel, imageUrl: channel.imageUrl || '' });
 
         const about = await getAboutByNickname(formattedNickname);
         const faqs = await getFAQsByNickname(formattedNickname);
@@ -90,7 +112,7 @@ function AboutPage() {
     router.back();
   }, [router]);
 
-  // Seguir
+  // Funções de seguir/deixar de seguir
   const handleFollowClick = useCallback(async () => {
     if (!channelData) return;
     try {
@@ -101,7 +123,6 @@ function AboutPage() {
     }
   }, [channelData]);
 
-  // Deixar de seguir
   const handleUnfollowClick = useCallback(async () => {
     if (!channelData) return;
     try {
@@ -115,7 +136,6 @@ function AboutPage() {
   // Mensagem
   const handleMessageClick = useCallback(async () => {
     if (!channelData) return;
-    // Checar auth
     const authResponse = await checkAuth();
     if (!authResponse.isAuthenticated) {
       router.push('/login');
@@ -123,7 +143,6 @@ function AboutPage() {
     }
     try {
       const conversationId = await startConversation(channelData.id, '');
-      // Se a API retorna string
       if (!conversationId || typeof conversationId !== 'string') {
         console.error('Conversa inválida:', conversationId);
         return;
@@ -138,7 +157,7 @@ function AboutPage() {
     return <div>Carregando...</div>;
   }
 
-  // Se usava "formattedNickname" para links
+  // Remover arroba para links
   const formattedNickname = nickname.startsWith('@') ? nickname.slice(1) : nickname;
 
   // Monta StageButtons
@@ -165,7 +184,6 @@ function AboutPage() {
         <meta name="description" content="Veja na Nilrow." />
       </Head>
 
-      {/* Mobile Header */}
       {isMobile && (
         <MobileHeader
           title="Sobre"
@@ -177,14 +195,12 @@ function AboutPage() {
       <div className={styles.aboutChannelContainer}>
         <div className={styles.aboutChannelHeader}>
           <div className={styles.aboutChannelLeft}>
-            <img
+            <Image
               src={`${apiUrl}${channelData.imageUrl}`}
               alt={`${channelData.name} - Imagem`}
               className={styles.aboutChannelImage}
-              onError={(e) => {
-                // fallback
-                (e.target as HTMLImageElement).src = 'path/to/placeholder/image.png';
-              }}
+              width={130}
+              height={130}
             />
             <div
               className={styles.aboutChannelInfo}
@@ -227,7 +243,6 @@ function AboutPage() {
         </div>
 
         <div className={styles.aboutChannelOutro}>
-          {/* Se tiver aboutText */}
           {aboutData.aboutText && (
             <ExpandableCard title="Sobre" defaultExpanded={true}>
               <p className={`${styles.aboutChannelText} roboto-regular`}>
@@ -236,20 +251,14 @@ function AboutPage() {
             </ExpandableCard>
           )}
 
-          {/* Se tiver FAQ */}
           {faqData.length > 0 && (
             <ExpandableCard title="FAQ">
               {faqData.map((faq, idx) => (
-                <FAQExpandableCard
-                  key={idx}
-                  question={faq.question}
-                  answer={faq.answer}
-                />
+                <FAQExpandableCard key={idx} question={faq.question} answer={faq.answer} />
               ))}
             </ExpandableCard>
           )}
 
-          {/* Políticas */}
           {aboutData.storePolicies && (
             <ExpandableCard title="Políticas">
               <p className={`${styles.aboutChannelText} roboto-regular`}>
@@ -258,7 +267,6 @@ function AboutPage() {
             </ExpandableCard>
           )}
 
-          {/* Trocas e devoluções */}
           {aboutData.exchangesAndReturns && (
             <ExpandableCard title="Trocas e devoluções">
               <p className={`${styles.aboutChannelText} roboto-regular`}>
@@ -267,7 +275,6 @@ function AboutPage() {
             </ExpandableCard>
           )}
 
-          {/* Mais infos */}
           {aboutData.additionalInfo && (
             <ExpandableCard title="Mais informações">
               <p className={`${styles.aboutChannelText} roboto-regular`}>

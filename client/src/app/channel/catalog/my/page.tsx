@@ -1,8 +1,9 @@
 'use client';
 
-import React, { memo, useCallback, useEffect, useState } from 'react';
+import React, { Suspense, memo, useCallback, useEffect, useState } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';
@@ -26,7 +27,7 @@ import { useNotification } from '@/hooks/useNotification';
 
 import styles from './MyCatalog.module.css';
 
-const MyCatalog: React.FC = () => {
+const MyCatalogContent: React.FC = () => {
   const { setMessage } = useNotification();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -51,8 +52,7 @@ const MyCatalog: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Em Next.js (app directory) não há location.state.
-    // Utilize os parâmetros da URL ou o localStorage.
+    // Busca o catalogId via searchParams ou localStorage
     const queryCatalogId = searchParams.get('catalogId');
     if (queryCatalogId) {
       setCatalogId(queryCatalogId);
@@ -79,7 +79,7 @@ const MyCatalog: React.FC = () => {
             setBadgeBackgroundColor('#DF1414');
           }
         })
-        .catch((error: any) => {
+        .catch((error: unknown) => {
           console.error('Erro ao verificar liberação do catálogo:', error);
         });
 
@@ -87,7 +87,7 @@ const MyCatalog: React.FC = () => {
         .then((visible: boolean) => {
           setIsVisible(visible);
         })
-        .catch((error: any) => {
+        .catch((error: unknown) => {
           console.error('Erro ao verificar visibilidade do catálogo:', error);
         });
     }
@@ -100,9 +100,14 @@ const MyCatalog: React.FC = () => {
           setIsVisible(!isVisible);
           setMessage('Visibilidade do catálogo atualizada com sucesso!', 'success');
         })
-        .catch((error: any) => {
-          const errorMessage =
-            error.response?.data?.message || 'Erro ao atualizar a visibilidade do catálogo.';
+        .catch((error: unknown) => {
+          let errorMessage = 'Erro ao atualizar a visibilidade do catálogo.';
+          if (error instanceof Error) {
+            errorMessage = error.message;
+          } else if (typeof error === 'object' && error !== null && 'response' in error) {
+            const err = error as { response?: { data?: { message?: string } } };
+            errorMessage = err.response?.data?.message || errorMessage;
+          }
           setMessage(errorMessage, 'error');
           console.error('Erro ao atualizar a visibilidade do catálogo:', error);
         });
@@ -142,7 +147,9 @@ const MyCatalog: React.FC = () => {
               icon={previewIcon}
               title="Visualização"
               paragraph="Escolha onde seus produtos poderão ser vistos e vendidos"
-              onClick={() => router.push(`/channel/catalog/my/visualization?catalogId=${catalogId || ''}`)}
+              onClick={() =>
+                router.push(`/channel/catalog/my/visualization?catalogId=${catalogId || ''}`)
+              }
             />
             <StepButton
               icon={productsIcon}
@@ -193,11 +200,12 @@ const MyCatalog: React.FC = () => {
                 />
                 <div className={styles.myCtalogElementInfoText}>
                   <p>
-                    Isso irá mostrar seus produtos na plataforma quanto ativo e liberado e irá retirar de tudo se não tiver ativo.
+                    Isso irá mostrar seus produtos na plataforma quanto ativo e liberado e
+                    irá retirar de tudo se não tiver ativo.
                   </p>
-                  <a href="/" className={styles.myCatalogLearnMoreLink}>
+                  <Link href="/" className={styles.myCatalogLearnMoreLink}>
                     Saiba mais sobre
-                  </a>
+                  </Link>
                 </div>
               </div>
               <SeeData
@@ -220,6 +228,14 @@ const MyCatalog: React.FC = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+const MyCatalog: React.FC = () => {
+  return (
+    <Suspense fallback={<div>Carregando...</div>}>
+      <MyCatalogContent />
+    </Suspense>
   );
 };
 

@@ -32,6 +32,12 @@ import { useNotification } from '@/hooks/useNotification';
 
 import styles from './editAddress.module.css';
 
+interface ClassificationData {
+  id: string;
+  name: string;
+  value: string;
+}
+
 function EditAddressPage() {
   const router = useRouter();
   const { id } = useParams() as { id: string };
@@ -52,7 +58,7 @@ function EditAddressPage() {
   });
 
   const [noNumber, setNoNumber] = useState(false);
-  const [classifications, setClassifications] = useState<any[]>([]);
+  const [classifications, setClassifications] = useState<ClassificationData[]>([]);
 
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -78,19 +84,25 @@ function EditAddressPage() {
     }
   }, [id, router, setMessage]);
 
-  const handleChange = useCallback((e: ChangeEvent<HTMLInputElement  | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value || '' }));
-  }, []);
+  const handleChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const { name, value } = e.target;
+      setFormData((prev) => ({ ...prev, [name]: value || '' }));
+    },
+    []
+  );
 
   const handlePhoneChange = useCallback((value: string) => {
     setFormData((prev) => ({ ...prev, recipientPhone: value || '' }));
   }, []);
 
-  const handleNumberChange = useCallback((e: ChangeEvent<HTMLInputElement  | HTMLTextAreaElement>) => {
-    const { value } = e.target;
-    setFormData((prev) => ({ ...prev, number: value || '' }));
-  }, []);
+  const handleNumberChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const { value } = e.target;
+      setFormData((prev) => ({ ...prev, number: value || '' }));
+    },
+    []
+  );
 
   const handleCheckboxChange = useCallback(() => {
     setNoNumber((prev) => !prev);

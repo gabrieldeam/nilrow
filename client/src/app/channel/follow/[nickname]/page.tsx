@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, memo } from "react";
 import Head from "next/head";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import MobileHeader from "@/components/Layout/MobileHeader/MobileHeader";
 import HeaderButton from "@/components/UI/HeaderButton/HeaderButton";
@@ -263,8 +264,7 @@ const ChannelFollow: React.FC = () => {
               <HeaderButton
                 icon={closeIcon}
                 onClick={handleBack}
-                // className precisa ser aceita em HeaderButtonProps
-                // Se ainda não estiver, adicione `className?: string;` na interface
+                // Se a interface HeaderButtonProps não aceitar className, adicione na interface
                 className={styles.channelFollowDesktopOnly}
               />
             )}
@@ -293,14 +293,16 @@ const ChannelFollow: React.FC = () => {
                 className={styles.channelFollowItem}
               >
                 <button className={styles.channelFollowInfo2}>
-                  <img
+                  <Image
                     src={
                       follower.profileImage
                         ? `${apiUrl}${follower.profileImage}`
-                        : userIcon.src
+                        : userIcon
                     }
                     alt={follower.name || follower.nickname}
                     className={styles.channelFollowImage}
+                    width={50}
+                    height={50}
                   />
                   <div className={styles.channelFollowDetails}>
                     <span className={styles.channelFollowName}>
@@ -324,14 +326,16 @@ const ChannelFollow: React.FC = () => {
                   className={styles.channelFollowInfo2}
                   href={`${frontUrl}/${channel.nickname}`}
                 >
-                  <img
+                  <Image
                     src={
                       channel.imageUrl
                         ? `${apiUrl}${channel.imageUrl}`
-                        : userIcon.src
+                        : userIcon
                     }
                     alt={channel.name}
                     className={styles.channelFollowImage}
+                    width={50}
+                    height={50}
                   />
                   <div className={styles.channelFollowDetails}>
                     <span className={styles.channelFollowName}>

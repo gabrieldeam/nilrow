@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Categories from '../../../app/categories/page';
+import Categories from '@/components/UI/Categories/Categories';
 import styles from './ModalCategories.module.css';
 
 const ModalCategories: React.FC<{ onClose: () => void }> = ({ onClose }) => {

@@ -1,5 +1,5 @@
 import api from '../api';
-import {  ChannelDTO,  ChannelData,  FollowerData,  FollowingChannelData,  AboutData,  FAQData,} from '../../types/services/channel';
+import {  ChannelDTO,  ChannelData,  AboutData,  FAQData,} from '../../types/services/channel';
 
 // Obtém todos os canais
 export const getChannels = async () => {

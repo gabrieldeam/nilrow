@@ -3,6 +3,8 @@
 import React, { useEffect, useState, useRef, useCallback, memo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
+import Image from 'next/image';
+import Link from 'next/link';
 import styles from './ModalInfoAddress.module.css';
 
 import { useLocationContext } from '../../../context/LocationContext';
@@ -19,6 +21,7 @@ const CenterMap = memo(({ location }: { location: { latitude: number; longitude:
   }, [location, map]);
   return null;
 });
+CenterMap.displayName = 'CenterMap';
 
 const ModalInfoAddressLeaflet: React.FC<ModalInfoAddressProps> = ({ buttonPosition }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -83,13 +86,20 @@ const ModalInfoAddressLeaflet: React.FC<ModalInfoAddressProps> = ({ buttonPositi
             Inclua seu CEP para uma melhor experiência para você
           </p>
           <div className={styles['modal-buttons']}>
-            <a href="/update-address" className={styles['modal-link']}>
+            <Link href="/update-address" className={styles['modal-link']}>
               Informe um CEP
-            </a>
+            </Link>
           </div>
         </div>
         <button className={styles['modal-close']} onClick={handleClose}>
-          <img src={closeIcon.src} alt="Close" className={styles['close-icon']} loading="lazy" />
+          <Image
+            src={closeIcon.src}
+            alt="Close"
+            className={styles['close-icon']}
+            width={20} // ajuste conforme necessário
+            height={20} // ajuste conforme necessário
+            loading="lazy"
+          />
         </button>
       </div>
     </div>

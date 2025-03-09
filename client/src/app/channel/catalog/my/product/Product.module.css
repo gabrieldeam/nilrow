@@ -19,7 +19,6 @@
 
 .product {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     width: 100%;
 }
@@ -43,7 +42,12 @@
     align-items: center;
     padding: 20px;
     box-sizing: border-box;
-    justify-content: space-between;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+
+  .productSeeDataWrapper > div {
+    flex: 1 1 200px;
   }
 
 @media (max-width: 768px) {

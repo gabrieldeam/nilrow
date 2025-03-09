@@ -1,7 +1,8 @@
 import React, { memo } from 'react';
-import Image from 'next/image'; 
-import styles from './PrivacyNotice.module.css'; 
-import privatIcon from '../../../../public/assets/privat.svg'; 
+import Image from 'next/image';
+import Link from 'next/link';
+import styles from './PrivacyNotice.module.css';
+import privatIcon from '../../../../public/assets/privat.svg';
 
 const PrivacyNotice: React.FC = () => {
   return (
@@ -16,13 +17,13 @@ const PrivacyNotice: React.FC = () => {
       />
       <span>
         Ao continuar, aceito os{' '}
-        <a href="/termos-e-condicoes" className={styles.privacyLink}>
+        <Link href="/termos-e-condicoes" className={styles.privacyLink}>
           Termos e condições
-        </a>{' '}
+        </Link>{' '}
         e autorizo o uso dos meus dados de acordo com a{' '}
-        <a href="/politica-de-privacidade" className={styles.privacyLink}>
+        <Link href="/politica-de-privacidade" className={styles.privacyLink}>
           Política de privacidade
-        </a>.
+        </Link>.
       </span>
     </div>
   );

@@ -15,13 +15,15 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
   readOnly = false,
   options,
   onLoadMore,
-  hasMore
+  hasMore,
 }) => {
   // Handler que intercepta a mudança
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     if (e.target.value === "load-more") {
       // Se selecionou "Ver mais", chama o onLoadMore e não altera o valor selecionado
-      onLoadMore && onLoadMore();
+      if (onLoadMore) {
+        onLoadMore();
+      }
       return;
     }
     onChange(e);
@@ -62,7 +64,11 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
       </div>
       <div className={styles.inputBottomText}>
         {bottomLeftText && <span className={styles.bottomLeft}>{bottomLeftText}</span>}
-        {bottomRightLink && <a href={bottomRightLink.href} className={styles.bottomRight}>{bottomRightLink.text}</a>}
+        {bottomRightLink && (
+          <a href={bottomRightLink.href} className={styles.bottomRight}>
+            {bottomRightLink.text}
+          </a>
+        )}
       </div>
     </div>
   );

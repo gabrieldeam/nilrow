@@ -11,19 +11,18 @@ import { register } from '@/services/authService';
 import styles from './Signup.module.css';
 
 // Importa nosso hook do contexto
-import { useSignupContext } from './layout';
+import { useSignupContext } from '@/context/SignupContext';
 
 const SignupPage = () => {
   const router = useRouter();
 
-  // Agora pegamos tudo do contexto
   const {
     formData,
-    setFormData,
+    // setFormData, // removido pois não é utilizado
     completedSteps,
   } = useSignupContext();
 
-  // Podemos manter estados “locais” que não precisam ficar global
+  // Estados locais
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
@@ -36,7 +35,7 @@ const SignupPage = () => {
       return;
     }
 
-    // Garante que todos os passos foram completos
+    // Garante que todos os passos foram completados
     if (!completedSteps.step1 || !completedSteps.step2 || !completedSteps.step3) {
       setError('Por favor, complete todas as etapas antes de criar a conta.');
       setShowNotification(true);
@@ -45,10 +44,21 @@ const SignupPage = () => {
 
     setLoading(true);
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { confirmPassword, ...dataToSubmit } = formData;
-      await register(dataToSubmit);
+      const registerData = {
+        email: dataToSubmit.email || '',
+        phone: dataToSubmit.phone || '',
+        name: dataToSubmit.name!,       // garantindo que não é undefined
+        cpf: dataToSubmit.cpf!,         // garantindo que não é undefined
+        birthDate: dataToSubmit.birthDate!, // garantindo que não é undefined
+        nickname: dataToSubmit.nickname!,   // garantindo que não é undefined
+        password: dataToSubmit.password,
+        acceptsSms: dataToSubmit.acceptsSms,
+      };
+      await register(registerData);
       router.push('/login');
-    } catch (err) {
+    } catch {
       setError('Erro ao criar a conta. Tente novamente.');
       setShowNotification(true);
     } finally {

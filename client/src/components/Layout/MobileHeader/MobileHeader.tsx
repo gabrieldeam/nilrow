@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { MobileHeaderProps } from '../../../types/components/Layout/MobileHeader';
 import HeaderButton from '../../UI/HeaderButton/HeaderButton';

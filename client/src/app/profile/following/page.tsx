@@ -1,11 +1,12 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, memo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/navigation';
 import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';
 import CustomButton from '@/components/UI/CustomButton/CustomButton';
 import HeaderButton from '@/components/UI/HeaderButton/HeaderButton';
+import Image from 'next/image';
 import closeIcon from '../../../../public/assets/close.svg';
 import { getMyFollowingChannels, unfollowChannel } from '@/services/channel/followService';
 import styles from './MyFollowing.module.css';
@@ -13,8 +14,16 @@ import styles from './MyFollowing.module.css';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
 const frontUrl = process.env.NEXT_PUBLIC_FRONT_URL || "";
 
+// Define a interface para os dados do canal
+interface ChannelData {
+  id: string;
+  name: string;
+  nickname: string;
+  imageUrl: string;
+}
+
 const MyFollowing = () => {
-  const [channels, setChannels] = useState<any[]>([]);
+  const [channels, setChannels] = useState<ChannelData[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -22,7 +31,6 @@ const MyFollowing = () => {
   const [isMobile, setIsMobile] = useState(false);
   const router = useRouter();
 
-  // Define o valor de isMobile após o componente montar
   useEffect(() => {
     setIsMobile(window.innerWidth <= 768);
   }, []);
@@ -30,15 +38,14 @@ const MyFollowing = () => {
   const fetchChannels = useCallback(async (page: number) => {
     setLoading(true);
     try {
-      const response = await getMyFollowingChannels(page, 10); // 10 canais por página
+      const response = (await getMyFollowingChannels(page, 10)) as ChannelData[];
       if (response.length === 0) {
         setHasMore(false);
       } else {
         setChannels(prevChannels => {
-          // Elimina duplicatas verificando os IDs dos canais
-          const newChannels = response.filter(
-            (newChannel: any) =>
-              !prevChannels.some(channel => channel.id === newChannel.id)
+          // Filtra duplicatas verificando os IDs
+          const newChannels = response.filter((newChannel: ChannelData) =>
+            !prevChannels.some(channel => channel.id === newChannel.id)
           );
           return [...prevChannels, ...newChannels];
         });
@@ -123,10 +130,12 @@ const MyFollowing = () => {
                 className={styles.channelInfoMyFollowing} 
                 onClick={() => router.push(`${frontUrl}${channel.nickname}`)}
               >
-                <img 
+                <Image 
                   src={`${apiUrl}${channel.imageUrl}`} 
                   alt={channel.name} 
-                  className={styles.channelImageMyFollowing} 
+                  className={styles.channelImageMyFollowing}
+                  width={60} 
+                  height={60} 
                 />
                 <div className={styles.channelDetailsMyFollowing}>
                   <span className={styles.channelNameMyFollowing}>{channel.name}</span>

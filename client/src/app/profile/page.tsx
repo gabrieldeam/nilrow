@@ -3,7 +3,7 @@
 import React, { useState, useEffect, memo } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { useAuth } from '@/hooks/useAuth'; 
+import { useAuth } from '@/hooks/useAuth';
 
 import HeaderButton from '@/components/UI/HeaderButton/HeaderButton';
 import StepButton from '@/components/UI/StepButton/StepButton';
@@ -28,11 +28,18 @@ import styles from './profile.module.css';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
+// Definindo a interface para os dados do perfil
+interface ProfileData {
+  email: string;
+  phone?: string;
+  // Outras propriedades podem ser adicionadas conforme necessário
+}
+
 function Profile() {
   const router = useRouter();
   const { handleLogout } = useAuth();
   const [isMobile, setIsMobile] = useState(false);
-  const [profile, setProfile] = useState<any>({});
+  const [profile, setProfile] = useState<ProfileData>({ email: '' });
   const [nickname, setNickname] = useState('');
   const [emailValidated, setEmailValidated] = useState(false);
   const [channelImageUrl, setChannelImageUrl] = useState('');
@@ -46,14 +53,12 @@ function Profile() {
       try {
         const profileData = await getUserProfile();
         setProfile(profileData);
-
         const userNickname = await getUserNickname();
         setNickname(userNickname);
-
         const emailValid = await getEmailValidated();
         setEmailValidated(emailValid);
-      } catch (error) {
-        console.error('Erro ao buscar dados do perfil:', error);
+      } catch {
+        console.error('Erro ao buscar dados do perfil.');
       }
     };
 
@@ -61,8 +66,8 @@ function Profile() {
       try {
         const channel = await getMyChannel();
         setChannelImageUrl(channel.imageUrl ?? '');
-      } catch (error) {
-        console.error('Erro ao buscar dados do canal:', error);
+      } catch {
+        console.error('Erro ao buscar dados do canal.');
         setChannelImageUrl('');
       }
     };
@@ -81,23 +86,22 @@ function Profile() {
       } else {
         router.push('/channel');
       }
-    } catch (error) {
+    } catch {
       router.push('/profile/add');
     }
   };
 
   const formattedNickname = `${nickname}`;
-  const formattedPhone = profile.phone?.startsWith('55')
-    ? profile.phone.substring(2)
-    : profile.phone;
+  const formattedPhone = profile.phone
+    ? profile.phone.startsWith('55')
+      ? profile.phone.substring(2)
+      : profile.phone
+    : '';
 
   return (
     <div className={styles.profilePage}>
       {isMobile && (
-        <MobileHeader
-          title="Meu perfil"
-          buttons={{ bag: true }}
-        />
+        <MobileHeader title="Meu perfil" buttons={{ bag: true }} />
       )}
 
       <div className={styles.profileContainer}>
@@ -116,44 +120,43 @@ function Profile() {
             </div>
 
             <div className={`${styles.logoutLink} ${styles.desktopOnly}`}>
-              <button
-                className={styles.logoutButton}
-                onClick={handleLogout}
-              >
+              <button className={styles.logoutButton} onClick={handleLogout}>
                 Sair
               </button>
             </div>
           </div>
 
-            <div className={styles.profileSteps}>
-                <div className={styles.profileStepCardWrapper}>
-                    <StepButton
-                        icon={dataEditIcon}
-                        title="Dados pessoais"
-                        paragraph="Informações do seu documento de identidade e sua atividade econômica."
-                        onClick={() => router.push('/profile/data')}
-                    />
-                    <Card
-                        title="Dados da sua conta"
-                        rightLink={{ href: '/profile/edit', text: 'Alterar' }}
-                    >
-                        <div className={styles.seeDataWrapper}> 
-                            <SeeData
-                                title="E-mail"
-                                content={profile.email}
-                                showIcon={emailValidated}
-                            />
-                            <SeeData title="Telefone" content={formattedPhone} />
-                            <SeeData title="Nome de usuário" content={formattedNickname} />
-                        </div>
-                    </Card>
+          <div className={styles.profileSteps}>
+            <div className={styles.profileStepCardWrapper}>
+              <StepButton
+                icon={dataEditIcon}
+                title="Dados pessoais"
+                paragraph="Informações do seu documento de identidade e sua atividade econômica."
+                onClick={() => router.push('/profile/data')}
+              />
+              <Card
+                title="Dados da sua conta"
+                rightLink={{ href: '/profile/edit', text: 'Alterar' }}
+              >
+                <div className={styles.seeDataWrapper}>
+                  <SeeData
+                    title="E-mail"
+                    content={profile.email}
+                    showIcon={emailValidated}
+                  />
+                  <SeeData title="Telefone" content={formattedPhone} />
+                  <SeeData title="Nome de usuário" content={formattedNickname} />
                 </div>
+              </Card>
             </div>
+          </div>
         </div>
 
         <div className={styles.additionalSteps}>
           <StepButton
-            customIcon={channelImageUrl ? `${apiUrl}${channelImageUrl}` : userIcon}
+            customIcon={
+              channelImageUrl ? `${apiUrl}${channelImageUrl}` : userIcon
+            }
             title="Canal"
             paragraph="Perfil público da sua conta, onde todos os usuários poderão te achar."
             onClick={handleChannelClick}
@@ -179,10 +182,7 @@ function Profile() {
         </div>
 
         <div className={`${styles.logoutLink} ${styles.mobileOnly}`}>
-          <button
-            className={styles.logoutButton}
-            onClick={handleLogout}
-          >
+          <button className={styles.logoutButton} onClick={handleLogout}>
             Sair
           </button>
         </div>

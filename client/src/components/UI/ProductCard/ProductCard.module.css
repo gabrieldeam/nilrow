@@ -2,12 +2,15 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 190px;
+  width: 165px;
+  background-color: #FFFFFF;
+  border: 1px solid #9F9F9F;
+  color: black;
 }
 
 .imageWrapper {
-  width: 190px;
-  height: 190px;
+  width: 165px;
+  height: 165px;
   position: relative;
   overflow: hidden;
 }
@@ -32,34 +35,56 @@
 }
 
 .buttonItem {
-  background: rgba(0, 0, 0, 0.5);
-  padding: 4px;
-  border-radius: 4px;
+  background-color: #212121;
+  padding: 10px;
+  border-radius: 100px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: none;
 }
 
 .info {
-  text-align: center;
-  margin-top: 8px;
+  text-align: start;  
+  width: 100%;
 }
 
 .name {
-  font-size: 16px;
-  font-weight: 600;
-  margin: 4px 0;
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 8px;
+  border-bottom: 1px solid #9F9F9F; 
+  height: 30px; 
 }
 
 .price {
-  font-size: 14px;
-  color: #333;
-  margin: 2px 0;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;  
+  padding: 8px 8px 0px 8px;
+  display: flex;
+  gap: 10px;
 }
 
 .freeShipping {
-  font-size: 12px;
-  color: #28a745;
-  margin: 2px 0;
+  font-size: 11px;
+  color: #656565;
+  font-weight: 600;
+  margin: 0;  
+  padding: 8px 0px 8px 8px;
+}
+
+@media (max-width: 768px) {
+  .card {    
+    width: calc(51.5% - 10px);
+  }
+
+  .imageWrapper {
+    width: 100%;
+  }
+  
 }

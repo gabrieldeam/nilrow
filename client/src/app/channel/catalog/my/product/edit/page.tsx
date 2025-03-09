@@ -1,6 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, DragEvent } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  DragEvent,
+  Suspense,
+} from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Head from 'next/head';
 import Image from 'next/image';
@@ -14,7 +20,9 @@ import ToggleButton from '@/components/UI/ToggleButton/ToggleButton';
 import Card from '@/components/UI/Card/Card';
 import ExpandableCard from '@/components/UI/ExpandableCard/ExpandableCard';
 import HeaderButton from '@/components/UI/HeaderButton/HeaderButton';
+
 import trashIcon from '../../../../../../../public/assets/trash.svg';
+import defaultImage from '../../../../../../../public/assets/user.png';
 
 import {
   updateProduct,
@@ -24,7 +32,7 @@ import {
   updateVariationImage,
   createVariationImage,
   deleteVariationImage,
-} from '@/services/product/productService'; // new/updated services
+} from '@/services/product/productService';
 import { getAllCategoriesAdmin, getSubCategoriesByCategory } from '@/services/categoryService';
 import { getAllBrands } from '@/services/product/brandService';
 
@@ -35,20 +43,42 @@ import {
   ProductionType,
   TechnicalSpecificationDTO,
   ProductVariationDTO,
+  VariationAttributeDTO,
 } from '@/types/services/product';
 import { VariationImageDTO } from '@/types/services/product';
+
 import { ImageData, ProductAttribute } from '@/types/pages/channel/catalog/my/product/add';
 
-import defaultImage from '../../../../../../../public/assets/user.png';
+import { useNotification } from '@/hooks/useNotification';
+
 import styles from './EditProduct.module.css';
 
-import { useNotification } from '@/hooks/useNotification';
+// Interfaces auxiliares para paginação e tipagem de categorias/subcategorias/marcas
+interface PaginatedResponse<T> {
+  content: T[];
+  last: boolean;
+}
+
+interface Category {
+  id: string;
+  name: string;
+}
+
+interface SubCategory {
+  id: string;
+  name: string;
+}
+
+interface Brand {
+  id: string;
+  name: string;
+}
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 const MAX_MAIN_IMAGES = 5;
 const MAX_VARIATION_IMAGES = 4;
 
-const ProductEditPage: React.FC = () => {
+const ProductEdit = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
@@ -87,6 +117,7 @@ const ProductEditPage: React.FC = () => {
   const [gtinEan, setGtinEan] = useState('');
   const [gtinEanTax, setGtinEanTax] = useState('');
   const [expirationDate, setExpirationDate] = useState('');
+  const [initialVariations, setInitialVariations] = useState<ProductVariationDTO[]>([]);
 
   // 3) Relacionamentos
   const [catalogId, setCatalogId] = useState('');
@@ -98,20 +129,17 @@ const ProductEditPage: React.FC = () => {
   const [technicalSpecifications, setTechnicalSpecifications] = useState<TechnicalSpecificationDTO[]>([]);
 
   // 5) Atributos e variações
-  const [productAttributes, setProductAttributes] = useState<ProductAttribute[]>([
-    { attributeName: '', values: [] },
-  ]);
+  const [productAttributes, setProductAttributes] = useState<ProductAttribute[]>([]);
   const [variations, setVariations] = useState<ProductVariationDTO[]>([]);
 
   // 6) Imagens de cada variação
-  // Cada item pode conter: id (se já existir no backend), file, preview e isNew.
   const [variationImages, setVariationImages] = useState<Record<number, ImageData[]>>({});
   const [draggingVarIndex, setDraggingVarIndex] = useState<{ variation: number; index: number } | null>(null);
 
   // 7) Categorias, Subcategorias, Marcas e paginação
-  const [categories, setCategories] = useState<any[]>([]);
-  const [subCategories, setSubCategories] = useState<any[]>([]);
-  const [brands, setBrands] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [hasMoreCategories, setHasMoreCategories] = useState(true);
   const [categoryPage, setCategoryPage] = useState(0);
   const [hasMoreSubCategories, setHasMoreSubCategories] = useState(true);
@@ -133,14 +161,14 @@ const ProductEditPage: React.FC = () => {
   useEffect(() => {
     async function fetchInitialData() {
       try {
-        const cats = await getAllCategoriesAdmin(0, 10);
+        const cats = (await getAllCategoriesAdmin(0, 10)) as PaginatedResponse<Category>;
         setCategories(cats.content);
         setHasMoreCategories(!cats.last);
 
-        const brs = await getAllBrands(0, 10);
+        const brs = (await getAllBrands(0, 10)) as PaginatedResponse<Brand>;
         setBrands(brs.content);
         setHasMoreBrands(!brs.last);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Erro ao buscar dados iniciais:', error);
       }
     }
@@ -163,7 +191,7 @@ const ProductEditPage: React.FC = () => {
   // D) Função para carregar subcategorias de uma categoria
   async function fetchSubCategories(catId: string, page = 0) {
     try {
-      const subCats = await getSubCategoriesByCategory(catId, page, 10);
+      const subCats = (await getSubCategoriesByCategory(catId, page, 10)) as PaginatedResponse<SubCategory>;
       if (page === 0) {
         setSubCategories(subCats.content);
       } else {
@@ -171,19 +199,19 @@ const ProductEditPage: React.FC = () => {
       }
       setHasMoreSubCategories(!subCats.last);
       setSubCategoryPage(page);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erro ao buscar subcategorias:', error);
     }
   }
 
-  // E) Carregar dados do produto, variações e imagens de variação
+  // E) Carregar dados do produto e imagens de variação
   useEffect(() => {
     async function fetchProduct() {
       if (!productId) return;
       try {
         const product: ProductDTO = await getProductById(productId);
 
-        // Seta estados básicos
+        // 1) Seta estados básicos do produto
         setName(product.name);
         setSkuCode(product.skuCode);
         setSalePrice(Number(product.salePrice));
@@ -212,24 +240,50 @@ const ProductEditPage: React.FC = () => {
         setSubCategoryId(product.subCategoryId);
         setBrandId(product.brandId);
         setTechnicalSpecifications(product.technicalSpecifications || []);
-        setVariations(product.variations || []);
 
-        // Carrega subcategorias se houver categoryId
+        // 2) Seta variações
+        setVariations(product.variations || []);
+        setInitialVariations(product.variations || []);
+
+        // 3) Monta `productAttributes` a partir das variações
+        if (product.variations && product.variations.length > 0) {
+          const attributeMap = new Map<string, Set<string>>();
+
+          product.variations.forEach((variation) => {
+            variation.attributes?.forEach((attr) => {
+              if (!attr.attributeName || !attr.attributeValue) return;
+              if (!attributeMap.has(attr.attributeName)) {
+                attributeMap.set(attr.attributeName, new Set());
+              }
+              attributeMap.get(attr.attributeName)?.add(attr.attributeValue);
+            });
+          });
+
+          const mappedAttrs: ProductAttribute[] = Array.from(attributeMap.entries()).map(
+            ([attrName, valuesSet]) => ({
+              attributeName: attrName,
+              values: Array.from(valuesSet),
+            })
+          );
+          setProductAttributes(mappedAttrs);
+        }
+
+        // 4) Carrega subcategorias se houver categoryId
         if (product.categoryId) {
           await fetchSubCategories(product.categoryId, 0);
         }
 
-        // Imagens principais vindas do backend
+        // 5) Imagens principais do produto
         if (product.images && product.images.length > 0) {
           const existingImages: ImageData[] = product.images.map((imgUrl: string) => ({
             file: undefined,
-            preview: apiUrl + imgUrl,
+            preview: imgUrl.startsWith('http') ? imgUrl : apiUrl + imgUrl,
             isNew: false,
           }));
           setMainImages(existingImages);
         }
 
-        // Para cada variação, carregar as imagens usando listVariationImagesByVariation
+        // 6) Imagens de cada variação
         const varImagesMap: Record<number, ImageData[]> = {};
         if (product.variations && product.variations.length > 0) {
           for (let i = 0; i < product.variations.length; i++) {
@@ -247,14 +301,14 @@ const ProductEditPage: React.FC = () => {
           }
         }
         setVariationImages(varImagesMap);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Erro ao carregar produto:', error);
         setMessage('Erro ao carregar os dados do produto.', 'error');
         router.push('/channel/catalog/my/product');
       }
     }
     fetchProduct();
-  }, [productId, setMessage]);
+  }, [productId, setMessage, router]);
 
   // =====================================
   // DELETAR O PRODUTO COMPLETO
@@ -265,7 +319,7 @@ const ProductEditPage: React.FC = () => {
       await deleteProduct(productId);
       setMessage('Produto deletado com sucesso!', 'success');
       router.push('/channel/catalog/my/product');
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erro ao deletar produto:', error);
       setMessage('Erro ao deletar o produto.', 'error');
     }
@@ -349,12 +403,151 @@ const ProductEditPage: React.FC = () => {
   };
 
   // =====================================
-  // ATRIBUTOS E VARIAÇÕES
+  // ATRIBUTOS E Variações
   // =====================================
   const generateVariations = useCallback(() => {
-    // Aqui você insere a lógica para gerar variações a partir de productAttributes.
-    // Exemplo: a lógica cartesiana.
-  }, [productAttributes]);
+    // Validação dos atributos
+    for (const attr of productAttributes) {
+      if (!attr.attributeName?.trim()) {
+        setMessage('Preencha corretamente o nome de todos os atributos.', 'error');
+        return;
+      }
+      if (!attr.values.length || attr.values.some((v) => !v.trim())) {
+        setMessage('Cada atributo precisa ter pelo menos uma opção preenchida.', 'error');
+        return;
+      }
+    }
+
+    // Função para criar uma chave única para um conjunto de atributos
+    const createVariationKey = (attributes: VariationAttributeDTO[]): string => {
+      const sorted = attributes.slice().sort((a, b) =>
+        (a.attributeName || '').localeCompare(b.attributeName || '')
+      );
+      return sorted.map(attr => `${attr.attributeName}:${attr.attributeValue}`).join('|');
+    };
+
+    // Função para comparar atributos de forma "fuzzy"
+    const areAttributesSimilar = (
+      attrs1: VariationAttributeDTO[],
+      attrs2: VariationAttributeDTO[]
+    ): boolean => {
+      if (attrs1.length !== attrs2.length) return false;
+      const sorted1 = attrs1.slice().sort((a, b) =>
+        (a.attributeName || '').localeCompare(b.attributeName || '')
+      );
+      const sorted2 = attrs2.slice().sort((a, b) =>
+        (a.attributeName || '').localeCompare(b.attributeName || '')
+      );
+      for (let i = 0; i < sorted1.length; i++) {
+        if (sorted1[i].attributeName !== sorted2[i].attributeName) return false;
+        const val1 = (sorted1[i].attributeValue || '').toLowerCase();
+        const val2 = (sorted2[i].attributeValue || '').toLowerCase();
+        if (val1 === val2) continue;
+        if (val1.includes(val2) || val2.includes(val1)) continue;
+        return false;
+      }
+      return true;
+    };
+
+    const attributeNames = productAttributes.map(attr => attr.attributeName!);
+    const attributeValues = productAttributes.map(attr => attr.values);
+
+    // Função para gerar o produto cartesiano
+    const cartesian = (arrays: string[][]): string[][] => {
+      return arrays.reduce<string[][]>(
+        (acc, curr) => acc.flatMap(a => curr.map(c => [...a, c])),
+        [[]]
+      );
+    };
+
+    const combos = cartesian(attributeValues);
+
+    // Cria um mapa com as variações já existentes usando chave única
+    const variationMap = new Map<string, ProductVariationDTO>();
+    [...variations, ...initialVariations].forEach(variation => {
+      if (variation.attributes) {
+        const key = createVariationKey(variation.attributes);
+        if (!variationMap.has(key)) {
+          variationMap.set(key, variation);
+        }
+      }
+    });
+
+    // Gerar a nova lista de variações
+    const newVariations: ProductVariationDTO[] = combos.map(combo => {
+      const attributes: VariationAttributeDTO[] = combo.map((val, idx) => ({
+        attributeName: attributeNames[idx],
+        attributeValue: val,
+      }));
+      const key = createVariationKey(attributes);
+      let matchedVariation = variationMap.get(key);
+      if (!matchedVariation) {
+        // Tenta encontrar variação similar se não houver chave exata
+        for (const [, oldVariation] of variationMap.entries()) {
+          if (oldVariation.attributes && areAttributesSimilar(oldVariation.attributes, attributes)) {
+            matchedVariation = oldVariation;
+            break;
+          }
+        }
+      }
+      if (matchedVariation) {
+        return { ...matchedVariation, attributes };
+      }
+      return {
+        id: undefined,
+        price: 0,
+        discountPrice: 0,
+        stock: 0,
+        active: true,
+        images: [],
+        attributes,
+      };
+    });
+
+    setVariations(newVariations);
+
+    // Atualiza as imagens das variações mantendo as já existentes se forem similares
+    setVariationImages((prev) => {
+      const imagesMap = new Map<string, ImageData[]>();
+      Object.keys(prev).forEach((keyStr) => {
+        const idx = Number(keyStr);
+        const varObj = variations[idx];
+        if (varObj && varObj.attributes) {
+          const oldKey = createVariationKey(varObj.attributes);
+          imagesMap.set(oldKey, prev[idx]);
+        }
+      });
+      const newMapping: Record<number, ImageData[]> = {};
+      newVariations.forEach((variation, newIdx) => {
+        const newKey = variation.attributes ? createVariationKey(variation.attributes) : '';
+        if (imagesMap.has(newKey)) {
+          newMapping[newIdx] = imagesMap.get(newKey)!;
+        } else {
+          let found: ImageData[] | undefined;
+          for (const [oldKey, imgs] of imagesMap.entries()) {
+            const oldAttributes = oldKey.split('|').map(pair => pair.split(':')[1]);
+            const newAttributes = newKey.split('|').map(pair => pair.split(':')[1]);
+            if (oldAttributes.length === newAttributes.length) {
+              let similarCount = 0;
+              for (let i = 0; i < newAttributes.length; i++) {
+                const a = newAttributes[i].toLowerCase();
+                const b = oldAttributes[i].toLowerCase();
+                if (a === b || a.includes(b) || b.includes(a)) {
+                  similarCount++;
+                }
+              }
+              if (similarCount === newAttributes.length) {
+                found = imgs;
+                break;
+              }
+            }
+          }
+          newMapping[newIdx] = found || [];
+        }
+      });
+      return newMapping;
+    });
+  }, [productAttributes, variations, initialVariations, setMessage]);
 
   const handleGenerateVariationsClick = () => {
     generateVariations();
@@ -378,20 +571,20 @@ const ProductEditPage: React.FC = () => {
   };
 
   const handleAddAttributeValue = (idx: number) => {
-    setProductAttributes((prev) => {
-      const arr = [...prev];
-      arr[idx].values.push('');
-      return [...arr];
-    });
+    setProductAttributes((prev) =>
+      prev.map((attr, i) =>
+        i === idx ? { ...attr, values: [...attr.values, ''] } : attr
+      )
+    );
   };
 
   const handleRemoveAttributeValue = (attrIdx: number, valueIdx: number) => {
-    setProductAttributes((prev) => {
-      const arr = [...prev];
-      arr[attrIdx].values.splice(valueIdx, 1);
-      return arr;
-    });
-    setTimeout(() => generateVariations(), 0);
+    setProductAttributes((prev) =>
+      prev.map((attr, i) => {
+        if (i !== attrIdx) return attr;
+        return { ...attr, values: attr.values.filter((_, idx) => idx !== valueIdx) };
+      })
+    );
   };
 
   const handleChangeAttributeValue = (attrIdx: number, valueIdx: number, newVal: string) => {
@@ -422,7 +615,10 @@ const ProductEditPage: React.FC = () => {
     });
   };
 
-  const handleVariationImageChange = (variationIndex: number, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVariationImageChange = (
+    variationIndex: number,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     if (!e.target.files) return;
     const newFiles = Array.from(e.target.files);
     const existing = variationImages[variationIndex] || [];
@@ -485,7 +681,12 @@ const ProductEditPage: React.FC = () => {
     setDraggingVarIndex(null);
   };
 
-  const handleChangeVariationField = (variationIndex: number, field: keyof ProductVariationDTO, value: any) => {
+  // Alterado: tipagem do valor para evitar uso de "any"
+  const handleChangeVariationField = (
+    variationIndex: number,
+    field: keyof ProductVariationDTO,
+    value: string | number | boolean
+  ) => {
     setVariations((prev) => {
       const arr = [...prev];
       arr[variationIndex] = { ...arr[variationIndex], [field]: value };
@@ -504,18 +705,18 @@ const ProductEditPage: React.FC = () => {
         return;
       }
 
-      // Montamos o objeto do produto sem as imagens de variação (essas serão tratadas separadamente)
+      // 1) Preparar as imagens principais
       const existingMainImageUrls = mainImages
         .filter((img) => !img.isNew)
-        .map((img) => (img.preview.startsWith(apiUrl) ? img.preview.slice(apiUrl.length) : img.preview));
-
+        .map((img) =>
+          img.preview.startsWith(apiUrl) ? img.preview.slice(apiUrl.length) : img.preview
+        );
       const newMainImageFiles = mainImages
         .filter((img) => img.isNew && img.file)
         .map((img) => img.file!);
 
-      // Como o tipo ProductVariationDTO não possui a propriedade "images", usamos as variações como estão
+      // 2) Montar objeto do produto (sem imagens de variação)
       const syncedVariations = variations;
-
       const updatedProduct: ProductDTO = {
         catalogId,
         images: existingMainImageUrls,
@@ -551,41 +752,35 @@ const ProductEditPage: React.FC = () => {
       };
 
       try {
-        // 1) Atualiza o produto (sem imagens de variação)
+        // 3) Atualiza o produto
         await updateProduct(productId!, updatedProduct, newMainImageFiles);
         setMessage('Produto atualizado com sucesso! Atualizando imagens das variações...', 'success');
 
-        // 2) Para cada variação, sincronizamos as imagens via endpoints específicos.
+        // 4) Sincronizar imagens das variações
         for (let varIndex = 0; varIndex < variations.length; varIndex++) {
           const varData = variations[varIndex];
-          if (!varData.id) continue; // ignora variações não persistidas
+          if (!varData.id) continue;
           const variationId = varData.id as string;
           const currentImages = variationImages[varIndex] || [];
 
-          // Carrega do backend as imagens atuais desta variação
           const serverImages = await listVariationImagesByVariation(variationId);
-          // Imagens removidas: delete
-const serverIds = serverImages
-.map((si) => si.id)
-.filter((id): id is string => id !== undefined);
-const currentIds = currentImages
-.filter((ci) => ci.id !== undefined)
-.map((ci) => ci.id!);
-const deletedIds = serverIds.filter((id) => !currentIds.includes(id));
-await Promise.all(deletedIds.map((delId) => deleteVariationImage(delId)));
+          const serverIds = serverImages
+            .map((si) => si.id)
+            .filter((id): id is string => id !== undefined);
+          const currentIds = currentImages
+            .filter((ci) => ci.id !== undefined)
+            .map((ci) => ci.id!);
+          const deletedIds = serverIds.filter((id) => !currentIds.includes(id));
+          await Promise.all(deletedIds.map((delId) => deleteVariationImage(delId)));
 
-
-          // Para cada imagem atual do estado, se não possuir ID (nova) ou se precisar de update
           await Promise.all(
             currentImages.map(async (imgData, i2) => {
               const newOrderIndex = i2;
               if (!imgData.id) {
-                // Nova imagem: criar
                 if (imgData.file) {
                   await createVariationImage(varData.id!, imgData.file!, newOrderIndex);
                 }
               } else {
-                // Já existente: atualizar se necessário
                 const correspondingServer = serverImages.find((si) => si.id === imgData.id);
                 const needsFileUpdate = !!imgData.file;
                 const needsReorder = correspondingServer?.orderIndex !== newOrderIndex;
@@ -599,11 +794,16 @@ await Promise.all(deletedIds.map((delId) => deleteVariationImage(delId)));
 
         setMessage('Produto e imagens de variações atualizadas com sucesso!', 'success');
         router.push('/channel/catalog/my/product');
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Erro ao atualizar produto:', error);
-        if (error.response?.data) {
-          const errorsObj = error.response.data as Record<string, string>;
-          Object.entries(errorsObj).forEach(([field, message]) => {
+        if (
+          typeof error === 'object' &&
+          error !== null &&
+          'response' in error &&
+          (error as { response?: { data: Record<string, string> } }).response?.data
+        ) {
+          const errorsObj = (error as { response: { data: Record<string, string> } }).response.data;
+          Object.entries(errorsObj).forEach(([, message]: [string, string]) => {
             setMessage(message, 'error');
           });
         } else {
@@ -863,12 +1063,13 @@ await Promise.all(deletedIds.map((delId) => deleteVariationImage(delId)));
                 title="Marca *"
                 value={brandId}
                 onChange={(e) => setBrandId(e.target.value)}
-                options={brands.map((b: any) => ({ value: b.id, label: b.name }))}
+                options={brands.map((b: Category) => ({ value: b.id, label: b.name }))}
                 onLoadMore={() => {
                   const nextPage = brandPage + 1;
                   getAllBrands(nextPage, 10).then((resp) => {
-                    setBrands((prev) => [...prev, ...resp.content]);
-                    setHasMoreBrands(!resp.last);
+                    const data = resp as PaginatedResponse<Brand>;
+                    setBrands((prev) => [...prev, ...data.content]);
+                    setHasMoreBrands(!data.last);
                     setBrandPage(nextPage);
                   });
                 }}
@@ -893,12 +1094,13 @@ await Promise.all(deletedIds.map((delId) => deleteVariationImage(delId)));
                   setSubCategoryId('');
                   fetchSubCategories(e.target.value, 0);
                 }}
-                options={categories.map((c: any) => ({ value: c.id, label: c.name }))}
+                options={categories.map((c: Category) => ({ value: c.id, label: c.name }))}
                 onLoadMore={() => {
                   const nextPage = categoryPage + 1;
                   getAllCategoriesAdmin(nextPage, 10).then((res) => {
-                    setCategories((prev) => [...prev, ...res.content]);
-                    setHasMoreCategories(!res.last);
+                    const data = res as PaginatedResponse<Category>;
+                    setCategories((prev) => [...prev, ...data.content]);
+                    setHasMoreCategories(!data.last);
                     setCategoryPage(nextPage);
                   });
                 }}
@@ -909,7 +1111,7 @@ await Promise.all(deletedIds.map((delId) => deleteVariationImage(delId)));
                   title="SubCategoria"
                   value={subCategoryId}
                   onChange={(e) => setSubCategoryId(e.target.value)}
-                  options={subCategories.map((sub: any) => ({ value: sub.id, label: sub.name }))}
+                  options={subCategories.map((sub: SubCategory) => ({ value: sub.id, label: sub.name }))}
                   onLoadMore={() => {
                     const nextPage = subCategoryPage + 1;
                     fetchSubCategories(categoryId, nextPage);
@@ -1045,7 +1247,10 @@ await Promise.all(deletedIds.map((delId) => deleteVariationImage(delId)));
                       value={val}
                       onChange={(e) => handleChangeAttributeValue(idx, vIdx, e.target.value)}
                     />
-                    <HeaderButton icon={trashIcon} onClick={() => handleRemoveAttributeValue(idx, vIdx)} />
+                    <HeaderButton
+                      icon={trashIcon}
+                      onClick={() => handleRemoveAttributeValue(idx, vIdx)}
+                    />
                   </div>
                 ))}
                 <StageButton
@@ -1056,6 +1261,7 @@ await Promise.all(deletedIds.map((delId) => deleteVariationImage(delId)));
                 />
               </div>
             ))}
+
             <StageButton
               type="button"
               text="+ Atributo"
@@ -1136,7 +1342,10 @@ await Promise.all(deletedIds.map((delId) => deleteVariationImage(delId)));
                     )}
                     {varImgs.length < MAX_VARIATION_IMAGES && (
                       <div className={styles.addChannelUploadSection}>
-                        <label htmlFor={`variationUpload-${index}`} className={styles.addChannelUploadButton}>
+                        <label
+                          htmlFor={`variationUpload-${index}`}
+                          className={styles.addChannelUploadButton}
+                        >
                           + Adicionar Imagem
                         </label>
                         <input
@@ -1184,6 +1393,14 @@ await Promise.all(deletedIds.map((delId) => deleteVariationImage(delId)));
         </form>
       </div>
     </div>
+  );
+};
+
+const ProductEditPage = () => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ProductEdit />
+    </Suspense>
   );
 };
 

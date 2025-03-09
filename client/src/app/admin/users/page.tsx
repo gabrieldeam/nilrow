@@ -1,6 +1,6 @@
 'use client';
 
-import React, { memo, useEffect, useState } from 'react';
+import React, { memo, useEffect, useState, ChangeEvent } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/navigation';
 
@@ -12,11 +12,10 @@ import {
 } from '../../../services/adminService';
 
 import {
-    updateCatalogRelease,
-    isCatalogReleased,
-  } from '../../../services/catalogService';
+  updateCatalogRelease,
+  isCatalogReleased,
+} from '../../../services/catalogService';
 
-// Se você usava getConfig, substitua por variáveis de ambiente:
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 const frontUrl = process.env.NEXT_PUBLIC_FRONT_URL || '';
 
@@ -30,22 +29,68 @@ import closeIcon from '../../../../public/assets/close.svg';
 // CSS modules
 import styles from './users.module.css';
 
+// Renomeia a importação do componente Image para evitar conflitos
+import NextImage from 'next/image';
+
+// Interfaces para os dados retornados pela API
+
+interface User {
+  id: string;
+  cpf: string;
+  nickname?: string;
+  email: string;
+  peopleId?: string;
+  role?: string;
+  name?: string;
+  phone?: string;
+  birthDate?: string;
+}
+
+interface Channel {
+  id: string;
+  name: string;
+  imageUrl?: string;
+  nickname?: string;
+  biography?: string;
+}
+
+// Tipo dos dados recebidos da API para catálogo (sem released)
+interface CatalogData {
+  id: string;
+  name?: string;
+  nameBoss?: string;
+  cnpj?: string;
+  email?: string;
+  phone?: string;
+}
+
+// Interface Catalog que extende CatalogData e inclui released
+interface Catalog extends CatalogData {
+  released: boolean;
+}
+
+// Interface para resposta paginada de usuários
+interface PaginatedUsers {
+  content: User[];
+  totalPages: number;
+}
+
 function UsersPage() {
-  const [users, setUsers] = useState<any[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
-  const [userChannels, setUserChannels] = useState<{ [key: string]: any }>({});
-  const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [selectedChannel, setSelectedChannel] = useState<any>(null);
-  const [catalogs, setCatalogs] = useState<any[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [userChannels, setUserChannels] = useState<{ [key: string]: Channel | null }>({});
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
+  const [catalogs, setCatalogs] = useState<Catalog[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const pageSize = 10;
   const router = useRouter();
 
-  // Carregar usuários ao montar e/ou quando currentPage muda
+  // Carrega os usuários ao montar e/ou quando a página atual mudar
   useEffect(() => {
     fetchUsers(currentPage, pageSize);
   }, [currentPage]);
@@ -53,55 +98,56 @@ function UsersPage() {
   async function fetchUsers(page: number, size: number) {
     try {
       setLoading(true);
-      const response = await getAllUsers(page, size);
-      // Ex: response.content, response.totalPages
-      setUsers(response.content);
-      setFilteredUsers(response.content);
+      const response: PaginatedUsers = await getAllUsers(page, size);
+      // Transforme os dados para garantir que as propriedades existam
+      const transformedUsers = response.content.map((u) => ({
+        ...u,
+        peopleId: u.peopleId || '',
+        role: u.role || '',
+      }));
+      setUsers(transformedUsers);
+      setFilteredUsers(transformedUsers);
       setTotalPages(response.totalPages);
 
-      const channelsStatus: { [key: string]: any } = {};
+      const channelsStatus: { [key: string]: Channel | null } = {};
       await Promise.all(
-        response.content.map(async (user: any) => {
+        transformedUsers.map(async (user) => {
           try {
-            const channel = await getChannelByPersonId(user.peopleId);
+            const channel: Channel = await getChannelByPersonId(user.peopleId);
             channelsStatus[user.peopleId] = channel;
-          } catch (error) {
+          } catch {
             channelsStatus[user.peopleId] = null;
           }
         })
       );
       setUserChannels(channelsStatus);
-    } catch (error) {
-      console.error('Erro ao buscar usuários:', error);
+    } catch {
+      console.error('Erro ao buscar usuários');
     } finally {
       setLoading(false);
     }
   }
 
-  // Filtro pelo searchTerm
+  // Filtro pelo termo de busca
   useEffect(() => {
-    const filtered = users.filter((user) => {
-      const lowerSearch = searchTerm.toLowerCase();
-      return (
-        user.cpf.toLowerCase().includes(lowerSearch) ||
-        user.nickname.toLowerCase().includes(lowerSearch) ||
-        user.email.toLowerCase().includes(lowerSearch)
-      );
-    });
-
+    const lowerSearch = searchTerm.toLowerCase();
+    const filtered = users.filter((user) =>
+      user.cpf.toLowerCase().includes(lowerSearch) ||
+      (user.nickname && user.nickname.toLowerCase().includes(lowerSearch)) ||
+      user.email.toLowerCase().includes(lowerSearch)
+    );
     setFilteredUsers(filtered);
 
     if (filtered.length === 1) {
       const exactMatch = filtered[0];
-      const lowerSearch = searchTerm.toLowerCase();
       if (
         exactMatch.cpf.toLowerCase() === lowerSearch ||
-        exactMatch.nickname.toLowerCase() === lowerSearch ||
+        (exactMatch.nickname && exactMatch.nickname.toLowerCase() === lowerSearch) ||
         exactMatch.email.toLowerCase() === lowerSearch
       ) {
         setSelectedUser(exactMatch);
-        setSelectedChannel(userChannels[exactMatch.peopleId]);
-        fetchCatalogs(userChannels[exactMatch.peopleId]?.id);
+        setSelectedChannel(userChannels[exactMatch.peopleId || '']);
+        fetchCatalogs(userChannels[exactMatch.peopleId || '']?.id);
       } else {
         clearSelection();
       }
@@ -119,32 +165,31 @@ function UsersPage() {
   async function fetchCatalogs(channelId?: string) {
     try {
       if (channelId) {
-        const catalogsData = await getCatalogsByChannelId(channelId);
-        const catalogsWithReleaseStatus = await Promise.all(
-          catalogsData.map(async (catalog: any) => {
-            const released = await isCatalogReleased(catalog.id);
-            return { ...catalog, released };
+        // Supondo que getCatalogsByChannelId retorne CatalogData[]
+        const catalogsData: CatalogData[] = await getCatalogsByChannelId(channelId);
+        const catalogsWithReleaseStatus: Catalog[] = await Promise.all(
+          catalogsData.map(async (catalogData) => {
+            const released = await isCatalogReleased(catalogData.id);
+            return { ...catalogData, released };
           })
         );
         setCatalogs(catalogsWithReleaseStatus);
       }
-    } catch (error) {
-      console.error('Erro ao buscar catálogos:', error);
+    } catch {
+      console.error('Erro ao buscar catálogos');
       setCatalogs([]);
     }
   }
 
-  function handleUserClick(user: any, index: number) {
+  function handleUserClick(user: User) {
     const alreadySelected = selectedUser?.id === user.id;
     if (alreadySelected) {
       clearSelection();
       return;
     }
-
     setSelectedUser(user);
-    const channel = userChannels[user.peopleId];
+    const channel = userChannels[user.peopleId || ''];
     setSelectedChannel(channel);
-
     if (channel) {
       fetchCatalogs(channel.id);
     } else {
@@ -165,11 +210,8 @@ function UsersPage() {
   }
 
   function handleNicknameClick() {
-    // Caso seja um link externo, pode manter window.location.href
-    // ou usar router.push se for interno
     if (selectedChannel) {
-      window.location.href = `${frontUrl}${selectedChannel.nickname}`;
-      // ou router.push(`${frontUrl}${selectedChannel.nickname}`) se for dentro do seu app
+      window.location.href = `${frontUrl}${selectedChannel.nickname || ''}`;
     }
   }
 
@@ -179,8 +221,8 @@ function UsersPage() {
       if (selectedChannel?.id) {
         fetchCatalogs(selectedChannel.id);
       }
-    } catch (error) {
-      console.error('Erro ao atualizar o status de liberação do catálogo:', error);
+    } catch {
+      console.error('Erro ao atualizar o status de liberação do catálogo');
     }
   }
 
@@ -195,28 +237,19 @@ function UsersPage() {
         {loading && <LoadingSpinner />}
 
         <div className={styles['users-search-container']}>
-          <HeaderButton
-            onClick={() => router.back()} // Substitui navigate(-1)
-            icon={closeIcon}
-          />
+          <HeaderButton onClick={() => router.back()} icon={closeIcon} />
           <input
             type="text"
             placeholder="Pesquisar por CPF, nome de usuário ou e-mail"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
             className={styles['users-search-input']}
           />
-          <span className={styles['user-count']}>
-            {filteredUsers.length} usuários
-          </span>
+          <span className={styles['user-count']}>{filteredUsers.length} usuários</span>
         </div>
 
         <div className={styles['users-section']}>
-          <div
-            className={`${styles['users-list']} ${
-              selectedUser ? styles['with-card'] : ''
-            }`}
-          >
+          <div className={`${styles['users-list']} ${selectedUser ? styles['with-card'] : ''}`}>
             <div className={styles['users-header']}>
               <div className={styles['user-columnindex']}>#</div>
               <div className={styles['user-columncpf']}>CPF</div>
@@ -228,20 +261,14 @@ function UsersPage() {
 
             {filteredUsers.map((user, index) => {
               const isSelected = selectedUser?.id === user.id;
-              const backgroundColor = isSelected
-                ? '#414141'
-                : index % 2 === 0
-                ? '#0B0B0B'
-                : 'black';
+              const backgroundColor =
+                isSelected ? '#414141' : index % 2 === 0 ? '#0B0B0B' : 'black';
 
               return (
                 <div
                   key={user.id}
-                  className={`
-                    ${styles['user-row']} 
-                    ${isSelected ? styles['selected'] : ''}
-                  `}
-                  onClick={() => handleUserClick(user, index)}
+                  className={`${styles['user-row']} ${isSelected ? styles['selected'] : ''}`}
+                  onClick={() => handleUserClick(user)}
                   style={{ backgroundColor, height: '57px', cursor: 'pointer' }}
                 >
                   <div className={styles['user-columnindex']}>
@@ -251,13 +278,12 @@ function UsersPage() {
                   <div className={styles['user-columnnickname']}>{user.nickname}</div>
                   <div className={styles['user-columnemail']}>{user.email}</div>
                   <div
-                    className={`
-                      ${styles['user-columnchannel']} 
-                      ${userChannels[user.peopleId] ? styles['channel-yes'] : styles['channel-no']}
-                    `}
+                    className={`${styles['user-columnchannel']} ${
+                      userChannels[user.peopleId || ''] ? styles['channel-yes'] : styles['channel-no']
+                    }`}
                   >
                     <span className={styles['user-columnchannel-name']}>
-                      {userChannels[user.peopleId] ? 'Sim' : 'Não'}
+                      {userChannels[user.peopleId || ''] ? 'Sim' : 'Não'}
                     </span>
                   </div>
                   <div className={styles['user-columnrole']}>{user.role}</div>
@@ -266,10 +292,9 @@ function UsersPage() {
             })}
 
             <div
-              className={`
-                ${styles['pagination-controls']} 
-                ${selectedUser ? styles['pagination-with-card'] : ''}
-              `}
+              className={`${styles['pagination-controls']} ${
+                selectedUser ? styles['pagination-with-card'] : ''
+              }`}
             >
               <button onClick={handlePreviousPage} disabled={currentPage === 0}>
                 Anterior
@@ -277,64 +302,58 @@ function UsersPage() {
               <span>
                 Página {currentPage + 1} de {totalPages}
               </span>
-              <button
-                onClick={handleNextPage}
-                disabled={currentPage >= totalPages - 1}
-              >
+              <button onClick={handleNextPage} disabled={currentPage >= totalPages - 1}>
                 Próxima
               </button>
             </div>
           </div>
 
-          {/* Se tiver um usuário selecionado */}
           {selectedUser && (
             <div className={styles['user-card-container']}>
               <div className={styles['user-card']}>
                 <h3>Informações do Usuário</h3>
                 <p>
-                  <span className={styles['user-card-name']}>Nome de usuário</span>
+                  <span className={styles['user-card-name']}>Nome de usuário: </span>
                   {selectedUser.nickname}
                 </p>
                 <p>
-                  <span className={styles['user-card-name']}>Nome</span>
+                  <span className={styles['user-card-name']}>Nome: </span>
                   {selectedUser.name}
                 </p>
                 <p>
-                  <span className={styles['user-card-name']}>Email</span>
+                  <span className={styles['user-card-name']}>Email: </span>
                   {selectedUser.email}
                 </p>
                 <p>
-                  <span className={styles['user-card-name']}>Telefone</span>
+                  <span className={styles['user-card-name']}>Telefone: </span>
                   {selectedUser.phone}
                 </p>
                 <p>
-                  <span className={styles['user-card-name']}>CPF</span>
+                  <span className={styles['user-card-name']}>CPF: </span>
                   {selectedUser.cpf}
                 </p>
                 <p>
-                  <span className={styles['user-card-name']}>Data de nascimento</span>
+                  <span className={styles['user-card-name']}>Data de nascimento: </span>
                   {selectedUser.birthDate}
                 </p>
                 <p>
-                  <span className={styles['user-card-name']}>Role</span>
+                  <span className={styles['user-card-name']}>Role: </span>
                   {selectedUser.role}
                 </p>
               </div>
 
-              {/* Card de Canal (se existir) */}
               {selectedChannel && (
                 <div className={styles['channel-card']}>
-                  {/* Se quiser otimizar, use next/image */}
-                  <img
-                    src={`${apiUrl}${selectedChannel.imageUrl}`}
+                  <NextImage
+                    src={`${apiUrl}${selectedChannel.imageUrl || ''}`}
                     alt="Canal"
                     className={styles['channel-image']}
+                    width={100}
+                    height={100}
                   />
                   <div className={styles['channel-info']}>
                     <p className={styles['channel-name']}>{selectedChannel.name}</p>
-                    <p className={styles['channel-biography']}>
-                      {selectedChannel.biography}
-                    </p>
+                    <p className={styles['channel-biography']}>{selectedChannel.biography}</p>
                     <button
                       className={styles['channel-nickname-btn']}
                       onClick={handleNicknameClick}
@@ -345,14 +364,13 @@ function UsersPage() {
                 </div>
               )}
 
-              {/* Lista de catálogos (se houver) */}
               {catalogs.length > 0 &&
                 catalogs.map((catalog) => (
                   <div key={catalog.id} className={styles['catalog-card']}>
                     <h3>{catalog.name}</h3>
                     <p>
                       <span className={styles['catalog-card-label']}>
-                        Nome do responsável:
+                        Nome do responsável:{' '}
                       </span>
                       {catalog.nameBoss}
                     </p>
@@ -369,13 +387,10 @@ function UsersPage() {
                       {catalog.phone}
                     </p>
                     <button
-                      className={`
-                        ${styles['catalog-release-btn']} 
-                        ${catalog.released ? styles['btn-deactivate'] : styles['btn-activate']}
-                      `}
-                      onClick={() =>
-                        handleCatalogRelease(catalog.id, !catalog.released)
-                      }
+                      className={`${styles['catalog-release-btn']} ${
+                        catalog.released ? styles['btn-deactivate'] : styles['btn-activate']
+                      }`}
+                      onClick={() => handleCatalogRelease(catalog.id, !catalog.released)}
                     >
                       {catalog.released ? 'Desativar' : 'Ativar'}
                     </button>

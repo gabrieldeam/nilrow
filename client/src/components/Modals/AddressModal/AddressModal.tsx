@@ -11,14 +11,16 @@ import HeaderButton from '../../UI/HeaderButton/HeaderButton';
 import SeeData from '../../UI/SeeData/SeeData';
 import closeIcon from '../../../../public/assets/close.svg';
 import { getAddresses } from '../../../services/profileService';
-import { useRouter } from 'next/navigation';
+// Removemos a importação de useRouter, já que não está sendo utilizada
+// import { useRouter } from 'next/navigation';
 
 import { useAuth } from '../../../hooks/useAuth';
 
 const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose }) => {
   const { location, setLocation } = useContext(LocationContext)!;
   const { setMessage } = useNotification();
-  const router = useRouter();
+  // Removemos a declaração de router
+  // const router = useRouter();
   
   const { isAuthenticated, loading } = useAuth();
 

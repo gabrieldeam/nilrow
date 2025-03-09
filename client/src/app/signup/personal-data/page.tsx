@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-
+import Link from 'next/link';
 import CustomInput from '@/components/UI/CustomInput/CustomInput';
 import DateInput from '@/components/UI/DateInput/DateInput';
 import Card from '@/components/UI/Card/Card';
@@ -10,7 +9,7 @@ import ConfirmationButton from '@/components/UI/ConfirmationButton/ConfirmationB
 import Notification from '@/components/UI/Notification/Notification';
 
 import styles from './PersonalData.module.css';
-import { useSignupContext } from '../layout';
+import { useSignupContext } from '@/context/SignupContext';
 
 const validateCPF = (cpf: string): boolean => {
   const regex = /^\d{11}$/;
@@ -24,8 +23,6 @@ const validateNickname = (nickname: string): boolean => {
 };
 
 export default function PersonalData() {
-  const router = useRouter();
-
   const {
     formData,
     setFormData,
@@ -38,12 +35,14 @@ export default function PersonalData() {
   const [isFormValid, setIsFormValid] = useState(false);
 
   const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement> | { target: { name: string; value: string } }) => {
+    (
+      e: React.ChangeEvent<HTMLInputElement> | { target: { name: string; value: string } }
+    ) => {
       const { name, value } = e.target;
       // Atualiza o formData no contexto
       setFormData((prevData) => ({
         ...prevData,
-        [name]: name === 'nickname' ? value.toLowerCase() : value
+        [name]: name === 'nickname' ? value.toLowerCase() : value,
       }));
 
       // Valida nickname enquanto digita
@@ -57,13 +56,12 @@ export default function PersonalData() {
   // Dispara toda vez que formData muda
   useEffect(() => {
     const { name, cpf, birthDate, nickname } = formData;
-    const allFilled = (
+    const allFilled =
       name?.trim() &&
       cpf?.trim() &&
       birthDate?.trim() &&
       nickname?.trim() &&
-      nicknameValid === true
-    );
+      nicknameValid === true;
     setIsFormValid(!!allFilled);
   }, [formData, nicknameValid]);
 
@@ -154,7 +152,7 @@ export default function PersonalData() {
             />
           </div>
           <div className={styles.backLink}>
-            <a href="/signup">Voltar sem salvar</a>
+            <Link href="/signup">Voltar sem salvar</Link>
           </div>
         </form>
       </div>

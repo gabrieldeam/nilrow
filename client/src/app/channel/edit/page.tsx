@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useContext, memo } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import Head from 'next/head';
 

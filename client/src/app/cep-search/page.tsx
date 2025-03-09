@@ -2,7 +2,6 @@
 
 import React, {
   useState,
-  useContext,
   useCallback,
   memo,
   ChangeEvent,
@@ -23,10 +22,9 @@ interface CepResult {
   bairro: string;
   localidade: string;
   uf: string;
-  [key: string]: any;
 }
 
-const cepSearch: React.FC = () => {
+const CepSearch: React.FC = () => {
   const [uf, setUf] = useState("");
   const isMobile =
     typeof window !== "undefined" ? window.innerWidth <= 768 : false;
@@ -84,7 +82,7 @@ const cepSearch: React.FC = () => {
           // Caso retorne um objeto único, encapsula-o em um array
           setResults(Array.isArray(data) ? data : [data]);
         }
-      } catch (err) {
+      } catch {
         setError("Erro ao buscar resultados. Tente novamente.");
         setResults([]);
       }
@@ -93,17 +91,11 @@ const cepSearch: React.FC = () => {
   );
 
   const handleUseCep = useCallback(
-    (
-      cep: string,
-      localidade: string,
-      uf: string,
-      logradouro: string,
-      bairro: string
-    ) => {
+    (cep: string, localidade: string, uf: string) => {
       setLocation({
         city: localidade,
         state: uf,
-        latitude: 0, 
+        latitude: 0,
         longitude: 0,
         zip: cep,
       });
@@ -171,13 +163,7 @@ const cepSearch: React.FC = () => {
                   link="#"
                   linkText="Usar CEP"
                   onClick={() =>
-                    handleUseCep(
-                      result.cep,
-                      result.localidade,
-                      result.uf,
-                      result.logradouro,
-                      result.bairro
-                    )
+                    handleUseCep(result.cep, result.localidade, result.uf)
                   }
                   stackContent={true}
                 />
@@ -190,4 +176,4 @@ const cepSearch: React.FC = () => {
   );
 };
 
-export default memo(cepSearch);
+export default memo(CepSearch);

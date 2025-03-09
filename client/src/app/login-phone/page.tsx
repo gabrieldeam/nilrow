@@ -2,6 +2,7 @@
 
 import React, { memo, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import CustomInput from '@/components/UI/CustomInput/CustomInput';
@@ -15,18 +16,25 @@ import { useLocationContext } from '@/context/LocationContext';
 import LoadingSpinner from '@/components/UI/LoadingSpinner/LoadingSpinner';
 import styles from './LoginPhone.module.css';
 
+interface LocationType {
+  city: string;
+  state: string;
+  zip: string;
+}
+
 const LoginPhonePage = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { setMessage } = useNotification();
-  const { location } = useLocationContext();
+  const { location } = useLocationContext(); // Certifique-se de que 'location' tem o formato de LocationType
   const router = useRouter();
 
   const getDeviceInfo = () => navigator.userAgent;
 
-  const formatLocationString = (location: any) => `${location.city}/${location.state} - ${location.zip}`;
+  const formatLocationString = (location: LocationType): string =>
+    `${location.city}/${location.state} - ${location.zip}`;
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -42,8 +50,12 @@ const LoginPhonePage = () => {
         await loginWithPhone(phoneNumber, password, locationString, deviceInfo);
         setMessage('Bem-vindo a Nilrow', 'success');
         router.push('/');
-      } catch (err: any) {
-        setError(err.message || 'Erro ao fazer login.');
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError('Erro ao fazer login.');
+        }
       } finally {
         setLoading(false);
       }
@@ -92,7 +104,7 @@ const LoginPhonePage = () => {
           <PrivacyNotice />
           <ConfirmationButton text="Login" backgroundColor="#7B33E5" type="submit" />
           <div className={styles.signupLink}>
-            <a href="/signup">Criar uma conta</a>
+            <Link href="/signup">Criar uma conta</Link>
           </div>
         </form>
       </div>

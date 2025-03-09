@@ -1,9 +1,13 @@
-// app/channel/catalog/my/visualization/page.tsx
+"use client";
 
+export const dynamic = 'force-dynamic';
+import { Suspense } from 'react';
 import VisualizationClient from "./VisualizationClient";
 
 export default function VisualizationPage() {
-  // Este componente roda no servidor (Server Component).
-  // Ele apenas retorna o Client Component.
-  return <VisualizationClient />;
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <VisualizationClient />
+    </Suspense>
+  );
 }

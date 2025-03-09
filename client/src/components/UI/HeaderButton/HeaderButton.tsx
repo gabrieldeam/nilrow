@@ -1,4 +1,3 @@
-// HeaderButton.tsx
 import React, { useCallback, forwardRef, memo } from 'react';
 import Image from 'next/image';
 import styles from './HeaderButton.module.css';
@@ -12,9 +11,17 @@ const HeaderButton = forwardRef<HTMLButtonElement, HeaderButtonProps>(
       } else if (link) {
         const isExternal = link.startsWith('http://') || link.startsWith('https://');
         if (isExternal) {
-          newTab ? window.open(link, '_blank') : (window.location.href = link);
+          if (newTab) {
+            window.open(link, '_blank');
+          } else {
+            window.location.href = link;
+          }
         } else {
-          newTab ? window.open(link, '_blank') : (window.location.href = link);
+          if (newTab) {
+            window.open(link, '_blank');
+          } else {
+            window.location.href = link;
+          }
         }
       }
     }, [link, newTab, onClick]);

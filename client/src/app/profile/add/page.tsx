@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useCallback, useState, useEffect, useContext } from 'react';
+import { memo, useCallback, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';

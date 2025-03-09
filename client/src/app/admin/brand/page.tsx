@@ -20,9 +20,19 @@ import closeIcon from '../../../../public/assets/close.svg';
 
 import styles from './brand.module.css';
 
+interface Brand {
+  id: string;
+  name: string;
+}
+
+interface BrandsResponse {
+  content: Brand[];
+  totalPages: number;
+}
+
 function BrandPage() {
-  const [brands, setBrands] = useState<any[]>([]);
-  const [selectedBrand, setSelectedBrand] = useState<any>(null);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
   const [newBrandName, setNewBrandName] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -37,9 +47,9 @@ function BrandPage() {
 
   async function fetchBrands(page: number, size: number) {
     try {
-      const data = await getAllBrands(page, size);
-      setBrands(data.content); // Alterado aqui
-      setTotalPages(data.totalPages); // Alterado aqui
+      const data: BrandsResponse = await getAllBrands(page, size);
+      setBrands(data.content);
+      setTotalPages(data.totalPages);
     } catch (error) {
       console.error('Error fetching brands:', error);
     }
@@ -57,7 +67,7 @@ function BrandPage() {
     }
   }
 
-  function handleBrandClick(brand: any) {
+  function handleBrandClick(brand: Brand) {
     setSelectedBrand(brand);
     setNewBrandName(brand.name);
     setIsModalOpen(true);
@@ -123,10 +133,7 @@ function BrandPage() {
 
       <div className={styles['category-container']}>
         <div className={styles['category-search-container']}>
-          <HeaderButton
-            onClick={() => router.back()} 
-            icon={closeIcon}
-          />
+          <HeaderButton onClick={() => router.back()} icon={closeIcon} />
           <button onClick={openCreateModal} className={styles['add-category-btn']}>
             + Add Brand
           </button>
@@ -157,9 +164,7 @@ function BrandPage() {
                   <div className={styles['category-columnindex']}>
                     {index + 1 + currentPage * pageSize}
                   </div>
-                  <div className={styles['category-columnname']}>
-                    {brand.name}
-                  </div>
+                  <div className={styles['category-columnname']}>{brand.name}</div>
                 </div>
               );
             })}
@@ -172,10 +177,7 @@ function BrandPage() {
             <span>
               Page {currentPage + 1} of {totalPages}
             </span>
-            <button
-              onClick={handleNextPage}
-              disabled={currentPage >= totalPages - 1}
-            >
+            <button onClick={handleNextPage} disabled={currentPage >= totalPages - 1}>
               Next
             </button>
           </div>

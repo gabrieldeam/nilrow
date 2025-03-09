@@ -10,7 +10,7 @@ import React, {
   KeyboardEvent,
 } from "react";
 import Image from "next/image";
-import { useRouter, useSearchParams, usePathname  } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import MobileHeader from "@/components/Layout/MobileHeader/MobileHeader";
 import ChatModal from "@/components/Modals/ChatModal/ChatModal";
@@ -91,9 +91,6 @@ const ChatPage: React.FC = () => {
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  
 
   // Fecha a notificação (mesma lógica do React)
   const closeNotification = useCallback(() => {
@@ -110,11 +107,6 @@ const ChatPage: React.FC = () => {
     router.replace(`/chat?${params.toString()}`);
   }, [router]);
 
-
-
-
-
-  
   // Seleciona uma conversa e carrega as mensagens
   const handleConversationSelect = useCallback(
     async (conversation: UIBasicConversation) => {
@@ -125,9 +117,9 @@ const ChatPage: React.FC = () => {
       closeConversation();
 
       setSelectedConversation(conversation);
-        const params = new URLSearchParams();
-        params.set("conversationId", conversation.id);
-        router.replace(`/chat?${params.toString()}`);
+      const params = new URLSearchParams();
+      params.set("conversationId", conversation.id);
+      router.replace(`/chat?${params.toString()}`);
 
       try {
         const msgDTOs: MessageDataDTO[] = await getMessagesByConversation(conversation.id);
@@ -145,7 +137,7 @@ const ChatPage: React.FC = () => {
           senderType: m.senderType,
         }));
         setMessages(mapped);
-        console.log('Mensagens recebidas da e mapeada:', mapped);
+        console.log('Mensagens recebidas e mapeadas:', mapped);
 
         // Verifica se está bloqueado
         const blocked = await getBlockStatus(conversation.id);
@@ -228,7 +220,7 @@ const ChatPage: React.FC = () => {
       }
 
       // Combina e ordena
-      let combined = [...userMapped, ...channelMapped];
+      const combined = [...userMapped, ...channelMapped];
 
       // Ordena: não bloqueadas primeiro, e depois por maior newMessagesCount
       combined.sort((a, b) => {
@@ -247,7 +239,7 @@ const ChatPage: React.FC = () => {
       if (!selectedConversation) {
         const params = new URLSearchParams(window.location.search);
         const conversationId = params.get("conversationId");
-        
+
         if (conversationId) {
           const found = combined.find((cv) => cv.id === conversationId);
           if (found) {
@@ -264,10 +256,8 @@ const ChatPage: React.FC = () => {
     const intervalId = setInterval(() => {
       fetchConversations();
     }, 1000);
-    
     return () => clearInterval(intervalId);
   }, [fetchConversations]);
-
 
   // Detecta se é mobile
   useEffect(() => {
@@ -582,7 +572,7 @@ const ChatPage: React.FC = () => {
         className={`${styles.chatContainer} ${
           isMobile && selectedConversation ? styles.mobileChatActive : ""
         }`}
-      >        
+      >
         <div
           className={`${styles.chatSidebar} ${
             isMobile && selectedConversation ? styles.mobileHidden : ""
@@ -617,15 +607,17 @@ const ChatPage: React.FC = () => {
                   height={45}
                   style={{ borderRadius: "50%", marginRight: "10px", cursor: "pointer" }}
                   onClick={(e: MouseEvent) => {
-                    e.stopPropagation(); 
+                    e.stopPropagation();
                     if (conversation.nickname) {
                       handleImageClick(conversation.nickname);
                     }
                   }}
                 />
                 <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', width: 'calc(100% - 60px)' }}>
-                  <span style={{ fontSize: '18px' }}>{conversation.name ?? "Sem Nome"}</span>                  
-                  <span style={{ fontSize: '15px', color: '#aaa', maxWidth: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{conversation.lastMessage?.content || ""}</span>
+                  <span style={{ fontSize: '18px' }}>{conversation.name ?? "Sem Nome"}</span>
+                  <span style={{ fontSize: '15px', color: '#aaa', maxWidth: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {conversation.lastMessage?.content || ""}
+                  </span>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
@@ -715,13 +707,13 @@ const ChatPage: React.FC = () => {
                   width={45}
                   height={45}
                   style={{
-                    minWidth: "45px", 
-                    minHeight: "45px", 
+                    minWidth: "45px",
+                    minHeight: "45px",
                     borderRadius: "50%",
                     marginLeft: "10px",
                     marginRight: "10px",
                     cursor: "pointer",
-                    objectFit: "cover", 
+                    objectFit: "cover",
                   }}
                   onClick={() => {
                     if (selectedConversation.nickname) {
@@ -749,23 +741,21 @@ const ChatPage: React.FC = () => {
                   ref={messagesContainerRef}
                   onScroll={handleMessagesScroll}
                 >
-                  {messages.map((msg) => {
-                    // console.log("Valor de msg.isSender:", msg.isSender, msg);
-                    return (
+                  {messages.map((msg) => (
                     <div
                       key={msg.id}
                       className={`${styles.chatMessage} ${msg.isSender ? styles['chat-message-sender'] : styles['chat-message-receiver']}`}
                       onClick={() => handleMessageClick(msg)}
                     >
-                      <div className={`${styles['message-content']}`}>
+                      <div className={styles['message-content']}>
                         {msg.contentType === "image" ? (
-                            <Image
-                              src={`${apiUrl}/${msg.content}`}
-                              alt="Imagem enviada"
-                              width={300}
-                              height={300}
-                              style={{ maxWidth: '200px', maxHeight: '200px' }}
-                            />
+                          <Image
+                            src={`${apiUrl}/${msg.content}`}
+                            alt="Imagem enviada"
+                            width={300}
+                            height={300}
+                            style={{ maxWidth: '200px', maxHeight: '200px' }}
+                          />
                         ) : (
                           <span>{msg.content}</span>
                         )}
@@ -798,7 +788,7 @@ const ChatPage: React.FC = () => {
                         </div>
                       )}
                     </div>
-                  )})}
+                  ))}
                   {/* ref para rolar até o fim */}
                   <div ref={messagesEndRef} />
                 </div>

@@ -35,14 +35,31 @@ import styles from './templateBrand.module.css';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
 // -------------------------------------------------------
-// Tipo para os templates associados durante criação/edição.
-// Incluímos 'images?' opcional para não quebrar o payload.
+// Tipos para templates associados na criação/edição.
+// 'images' é opcional para compatibilidade com o DTO.
 type AssociatedTemplateInput = Omit<ProductTemplateDTO, 'id' | 'images'> & {
   id?: string;                   // Se já existe no BD
   uploadedImages?: File[];       // Arquivos enviados para upload
   isRemoved?: boolean;           // Marca se o usuário removeu esse associado
   images?: string[];             // Para compatibilidade com o DTO (default: [])
 };
+
+// -------------------------------------------------------
+// Tipos para categorias, subcategorias e marcas
+interface Category {
+  id: string;
+  name: string;
+}
+
+interface SubCategory {
+  id: string;
+  name: string;
+}
+
+interface Brand {
+  id: string;
+  name: string;
+}
 
 // -------------------------------------------------------
 // Função para montar a hierarquia de templates (pai/filhos)
@@ -94,10 +111,10 @@ function ProductTemplatePage() {
   const [newImages, setNewImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
-  // Listas de categorias, subcategorias, marcas
-  const [categories, setCategories] = useState<any[]>([]);
-  const [subCategories, setSubCategories] = useState<any[]>([]);
-  const [brands, setBrands] = useState<any[]>([]);
+  // Listas de categorias, subcategorias, marcas com tipagem adequada
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
 
   // Busca e Paginação
   const [searchTerm, setSearchTerm] = useState('');
@@ -140,8 +157,8 @@ function ProductTemplatePage() {
         const brs = await getAllBrands(0, 10);
         setBrands(brs.content);
         setHasMoreBrands(!brs.last);
-      } catch (error) {
-        console.error('Error fetching initial data:', error);
+      } catch {
+        console.error('Error fetching initial data');
       }
     }
     fetchInitialData();
@@ -152,8 +169,8 @@ function ProductTemplatePage() {
       const data = await getAllProductTemplates();
       setProductTemplates(data);
       setTotalPages(Math.ceil(data.length / pageSize));
-    } catch (error) {
-      console.error('Error fetching templates:', error);
+    } catch {
+      console.error('Error fetching templates');
     }
   }
 
@@ -162,8 +179,8 @@ function ProductTemplatePage() {
       const result = await searchProductTemplates(name, page, size);
       setProductTemplates(result.content);
       setTotalPages(result.totalPages);
-    } catch (error) {
-      console.error('Error searching templates:', error);
+    } catch {
+      console.error('Error searching templates');
     }
   }
 
@@ -181,8 +198,8 @@ function ProductTemplatePage() {
       setCategories((prev) => [...prev, ...cats.content]);
       setHasMoreCategories(!cats.last);
       setCategoryPage(nextPage);
-    } catch (error) {
-      console.error('Error loading more categories:', error);
+    } catch {
+      console.error('Error loading more categories');
     }
   };
 
@@ -193,8 +210,8 @@ function ProductTemplatePage() {
       setBrands((prev) => [...prev, ...brs.content]);
       setHasMoreBrands(!brs.last);
       setBrandPage(nextPage);
-    } catch (error) {
-      console.error('Error loading more brands:', error);
+    } catch {
+      console.error('Error loading more brands');
     }
   };
 
@@ -206,8 +223,8 @@ function ProductTemplatePage() {
       setSubCategories((prev) => [...prev, ...subCats.content]);
       setHasMoreSubCategories(!subCats.last);
       setSubCategoryPage(nextPage);
-    } catch (error) {
-      console.error('Error loading more subcategories:', error);
+    } catch {
+      console.error('Error loading more subcategories');
     }
   };
 
@@ -220,8 +237,8 @@ function ProductTemplatePage() {
         setSubCategories((prev) => [...prev, ...subCats.content]);
       }
       setHasMoreSubCategories(!subCats.last);
-    } catch (error) {
-      console.error('Error fetching subcategories:', error);
+    } catch {
+      console.error('Error fetching subcategories');
     }
   }
 
@@ -336,8 +353,12 @@ function ProductTemplatePage() {
     }
   }
 
-  // Atualiza um campo de um template associado
-  function updateAssociationField(index: number, field: keyof AssociatedTemplateInput, value: any) {
+  // Atualiza um campo de um template associado usando generic para tipagem
+  function updateAssociationField<K extends keyof AssociatedTemplateInput>(
+    index: number,
+    field: K,
+    value: AssociatedTemplateInput[K]
+  ) {
     setAssociatedTemplatesData((prev) => {
       const newArr = [...prev];
       newArr[index] = {
@@ -373,7 +394,7 @@ function ProductTemplatePage() {
       productsId: [],
       uploadedImages: [],
       isRemoved: false,
-      images: [], // Define default como vazio
+      images: [],
     };
     setAssociatedTemplatesData((prev) => [...prev, assocData]);
   }
@@ -437,7 +458,7 @@ function ProductTemplatePage() {
 
       fetchTemplates();
       clearModal();
-    } catch (error) {
+    } catch {
       alert('Erro ao criar template e associações');
     }
   }
@@ -511,7 +532,7 @@ function ProductTemplatePage() {
 
       fetchTemplates();
       clearModal();
-    } catch (error) {
+    } catch {
       alert('Erro ao atualizar template e associações');
     }
   }
@@ -525,7 +546,7 @@ function ProductTemplatePage() {
       await deleteProductTemplate(selectedTemplate.id);
       fetchTemplates();
       clearModal();
-    } catch (error) {
+    } catch {
       alert('Erro ao excluir template. Veja console para detalhes.');
     }
   }
@@ -746,7 +767,9 @@ function ProductTemplatePage() {
                     />
                   </label>
                 )}
-                <p className={styles.infoImagens}>O upload de novas imagens substituirá as existentes.</p>
+                <p className={styles.infoImagens}>
+                  O upload de novas imagens substituirá as existentes.
+                </p>
               </div>
             )}
 
@@ -768,7 +791,7 @@ function ProductTemplatePage() {
                 setSubCategoryPage(0);
                 fetchSubCategories(e.target.value, 0);
               }}
-              options={categories.map((cat: any) => ({ value: cat.id, label: cat.name }))}
+              options={categories.map((cat: Category) => ({ value: cat.id, label: cat.name }))}
               onLoadMore={loadMoreCategories}
               hasMore={hasMoreCategories}
             />
@@ -778,7 +801,7 @@ function ProductTemplatePage() {
               value={subCategoryId}
               name="subcategory"
               onChange={(e) => setSubCategoryId(e.target.value)}
-              options={subCategories.map((sub: any) => ({ value: sub.id, label: sub.name }))}
+              options={subCategories.map((sub: SubCategory) => ({ value: sub.id, label: sub.name }))}
               onLoadMore={loadMoreSubCategories}
               hasMore={hasMoreSubCategories}
             />
@@ -788,7 +811,7 @@ function ProductTemplatePage() {
               value={brandId}
               name="brand"
               onChange={(e) => setBrandId(e.target.value)}
-              options={brands.map((b: any) => ({ value: b.id, label: b.name }))}
+              options={brands.map((b: Brand) => ({ value: b.id, label: b.name }))}
               onLoadMore={loadMoreBrands}
               hasMore={hasMoreBrands}
             />
@@ -821,7 +844,7 @@ function ProductTemplatePage() {
               onChange={(e) => setItemsPerBox(Number(e.target.value))}
             />
 
-            {/* Seção de Templates Associados (exibida tanto na criação quanto na edição) */}
+            {/* Seção de Templates Associados */}
             <div className={styles['association-section']}>
               <h4>Templates Associados</h4>
               <p className={styles['association-helper']}>
@@ -859,24 +882,33 @@ function ProductTemplatePage() {
                         type="number"
                         name={`assoc-netWeight-${index}`}
                         value={assoc.netWeight}
-                        onChange={(e) => updateAssociationField(index, 'netWeight', Number(e.target.value))}
+                        onChange={(e) =>
+                          updateAssociationField(index, 'netWeight', Number(e.target.value))
+                        }
                       />
                       <CustomInput
                         title="Peso Bruto"
                         type="number"
                         name={`assoc-grossWeight-${index}`}
                         value={assoc.grossWeight}
-                        onChange={(e) => updateAssociationField(index, 'grossWeight', Number(e.target.value))}
+                        onChange={(e) =>
+                          updateAssociationField(index, 'grossWeight', Number(e.target.value))
+                        }
                       />
                       <CustomInput
                         title="Itens por Caixa"
                         type="number"
                         name={`assoc-itemsPerBox-${index}`}
                         value={assoc.itemsPerBox}
-                        onChange={(e) => updateAssociationField(index, 'itemsPerBox', Number(e.target.value))}
+                        onChange={(e) =>
+                          updateAssociationField(index, 'itemsPerBox', Number(e.target.value))
+                        }
                       />
                       <div className={styles['association-image-upload']}>
-                        <label htmlFor={`assoc-images-${index}`} className={styles['add-channel-upload-button']}>
+                        <label
+                          htmlFor={`assoc-images-${index}`}
+                          className={styles['add-channel-upload-button']}
+                        >
                           + Adicionar Imagem
                           <input
                             type="file"
@@ -888,7 +920,7 @@ function ProductTemplatePage() {
                             style={{ display: 'none' }}
                           />
                         </label>
-                        {(assoc.uploadedImages && assoc.uploadedImages.length > 0) ? (
+                        {assoc.uploadedImages && assoc.uploadedImages.length > 0 ? (
                           <div className={styles['association-image-preview']}>
                             {assoc.uploadedImages.map((file, idx) => (
                               <Image
@@ -901,7 +933,7 @@ function ProductTemplatePage() {
                               />
                             ))}
                           </div>
-                        ) : (assoc.images && assoc.images.length > 0) ? (
+                        ) : assoc.images && assoc.images.length > 0 ? (
                           <div className={styles['association-image-preview']}>
                             {assoc.images.map((img, idx) => (
                               <Image

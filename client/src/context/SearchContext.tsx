@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 import { SearchContextProps } from '../types/context/SearchContext';
 
 export const SearchContext = createContext<SearchContextProps | undefined>(undefined);

@@ -13,8 +13,20 @@ import { getUserProfile } from '@/services/profileService';
 
 import styles from './data.module.css';
 
+// Interface para tipar os dados do perfil
+interface Profile {
+  name: string;
+  cpf: string;
+  birthDate: string;
+  // Adicione outras propriedades se necessário
+}
+
 function DataPage() {
-  const [profile, setProfile] = useState<any>({});
+  const [profile, setProfile] = useState<Profile>({
+    name: '',
+    cpf: '',
+    birthDate: '',
+  });
   const [isMobile, setIsMobile] = useState(false);
   const router = useRouter();
 

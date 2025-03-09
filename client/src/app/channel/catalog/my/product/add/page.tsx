@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, DragEvent } from 'react';
+import React, { Suspense, useState, useEffect, useCallback, DragEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Head from 'next/head';
 import Image from 'next/image';
@@ -39,7 +39,14 @@ import styles from './AddProduct.module.css';
 
 import { useNotification } from '@/hooks/useNotification';
 
-const ProductCreatePage: React.FC = () => {
+// Interface para tipar as opções de categorias, subcategorias e marcas
+interface Option {
+  id: string;
+  name: string;
+}
+
+// Componente que contém todo o conteúdo da página
+const ProductCreateContent: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
@@ -78,6 +85,7 @@ const ProductCreatePage: React.FC = () => {
   const [gtinEan, setGtinEan] = useState('');
   const [gtinEanTax, setGtinEanTax] = useState('');
   const [expirationDate, setExpirationDate] = useState('');
+  const [variations, setVariations] = useState<ProductVariationDTO[]>([]);
 
   // ------------------------------------------------------------------
   // 3) Relacionamentos
@@ -98,10 +106,8 @@ const ProductCreatePage: React.FC = () => {
   const [productAttributes, setProductAttributes] = useState<ProductAttribute[]>([
     { attributeName: '', values: [] }
   ]);
-  const [variations, setVariations] = useState<ProductVariationDTO[]>([]);
-
+  
   // Para armazenar imagens específicas de cada variação
-  // ex.: variationImages[0] = [File1, File2]
   const [variationImages, setVariationImages] = useState<Record<number, ImageData[]>>({});
   // Estados de drag & drop para imagens de variação
   const [draggingVarIndex, setDraggingVarIndex] = useState<{ variation: number; index: number } | null>(null);
@@ -109,9 +115,9 @@ const ProductCreatePage: React.FC = () => {
   // ------------------------------------------------------------------
   // 6) Categorias, SubCategorias, Marcas e Paginação
   // ------------------------------------------------------------------
-  const [categories, setCategories] = useState<any[]>([]);
-  const [subCategories, setSubCategories] = useState<any[]>([]);
-  const [brands, setBrands] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Option[]>([]);
+  const [subCategories, setSubCategories] = useState<Option[]>([]);
+  const [brands, setBrands] = useState<Option[]>([]);
   const [hasMoreCategories, setHasMoreCategories] = useState(true);
   const [categoryPage, setCategoryPage] = useState(0);
   const [hasMoreSubCategories, setHasMoreSubCategories] = useState(true);
@@ -132,7 +138,7 @@ const ProductCreatePage: React.FC = () => {
         const brs = await getAllBrands(0, 10);
         setBrands(brs.content);
         setHasMoreBrands(!brs.last);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Erro ao buscar dados iniciais:', error);
       }
     }
@@ -166,7 +172,7 @@ const ProductCreatePage: React.FC = () => {
       }
       setHasMoreSubCategories(!subCats.last);
       setSubCategoryPage(page);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erro ao buscar subcategorias:', error);
     }
   }
@@ -239,10 +245,10 @@ const ProductCreatePage: React.FC = () => {
     setTechnicalSpecifications((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  const handleChangeSpec = (idx: number, field: 'title' | 'content', value: string) => {
+  const handleChangeSpec = (idx: number, key: 'title' | 'content', value: string) => {
     setTechnicalSpecifications((prev) => {
       const arr = [...prev];
-      arr[idx] = { ...arr[idx], [field]: value };
+      arr[idx] = { ...arr[idx], [key]: value };
       return arr;
     });
   };
@@ -251,62 +257,141 @@ const ProductCreatePage: React.FC = () => {
   // 3) FUNÇÃO DE GERAÇÃO DE VARIAÇÕES (cartesiana)
   // =================================================================
   const generateVariations = useCallback(() => {
-    // Verifica se todos os atributos estão preenchidos
+    // Validação dos atributos
     for (const attr of productAttributes) {
-      if (!attr.attributeName.trim()) {
-        setMessage('Preencha o nome de todos os atributos antes de gerar variações.', 'error');
+      if (!attr.attributeName?.trim()) {
+        setMessage('Preencha corretamente o nome de todos os atributos.', 'error');
         return;
       }
-      if (attr.values.length === 0 || attr.values.some((v) => !v.trim())) {
-        setMessage('Cada atributo deve ter ao menos uma opção preenchida.', 'error');
+      if (!attr.values.length || attr.values.some((v) => !v.trim())) {
+        setMessage('Cada atributo precisa ter pelo menos uma opção preenchida.', 'error');
         return;
       }
     }
-
-    const listOfValues = productAttributes.map((attr) => attr.values).filter((v) => v.length > 0);
-    const attributeNames = productAttributes.map((attr) => attr.attributeName);
-
-    if (listOfValues.length === 0 || attributeNames.length === 0) {
-      setVariations([]);
-      return;
-    }
-
-    const cartesian = (arrays: string[][]): string[][] => {
-      let result: string[][] = [[]];
-      for (const arr of arrays) {
-        const temp: string[][] = [];
-        for (const r of result) {
-          for (const val of arr) {
-            temp.push([...r, val]);
-          }
-        }
-        result = temp;
-      }
-      return result;
+  
+    const createVariationKey = (attributes: VariationAttributeDTO[]) => {
+      const sorted = attributes.slice().sort((a, b) =>
+        (a.attributeName || '').localeCompare(b.attributeName || '')
+      );
+      return sorted.map(attr => `${attr.attributeName}:${attr.attributeValue}`).join('|');
     };
-
-    const combos = cartesian(listOfValues);
-
-    const newVariations: ProductVariationDTO[] = combos.map((combo) => {
-      const attrs: VariationAttributeDTO[] = combo.map((val, idx) => ({
+  
+    const areAttributesSimilar = (
+      attrs1: VariationAttributeDTO[],
+      attrs2: VariationAttributeDTO[]
+    ) => {
+      if (attrs1.length !== attrs2.length) return false;
+      const sorted1 = attrs1.slice().sort((a, b) =>
+        (a.attributeName || '').localeCompare(b.attributeName || '')
+      );
+      const sorted2 = attrs2.slice().sort((a, b) =>
+        (a.attributeName || '').localeCompare(b.attributeName || '')
+      );
+      for (let i = 0; i < sorted1.length; i++) {
+        if (sorted1[i].attributeName !== sorted2[i].attributeName) return false;
+        const val1 = (sorted1[i].attributeValue || '').toLowerCase();
+        const val2 = (sorted2[i].attributeValue || '').toLowerCase();
+        if (val1 === val2) continue;
+        if (val1.includes(val2) || val2.includes(val1)) continue;
+        return false;
+      }
+      return true;
+    };
+  
+    const attributeNames = productAttributes.map(attr => attr.attributeName!);
+    const attributeValues = productAttributes.map(attr => attr.values);
+  
+    const cartesian = (arrays: string[][]): string[][] => {
+      return arrays.reduce<string[][]>(
+        (acc, curr) => acc.flatMap(a => curr.map(c => [...a, c])),
+        [[]]
+      );
+    };
+  
+    const combos = cartesian(attributeValues);
+  
+    const variationMap = new Map<string, ProductVariationDTO>();
+    variations.forEach(variation => {
+      if (variation.attributes) {
+        const key = createVariationKey(variation.attributes);
+        if (!variationMap.has(key)) {
+          variationMap.set(key, variation);
+        }
+      }
+    });
+  
+    const newVariations: ProductVariationDTO[] = combos.map(combo => {
+      const attributes: VariationAttributeDTO[] = combo.map((val, idx) => ({
         attributeName: attributeNames[idx],
         attributeValue: val,
       }));
+      const key = createVariationKey(attributes);
+      let matchedVariation = variationMap.get(key);
+      if (!matchedVariation) {
+        for (const [, oldVariation] of variationMap) {
+          if (oldVariation.attributes && areAttributesSimilar(oldVariation.attributes, attributes)) {
+            matchedVariation = oldVariation;
+            break;
+          }
+        }
+      }
+      if (matchedVariation) {
+        return { ...matchedVariation, attributes };
+      }
       return {
         id: undefined,
-        images: [], // não vamos mais enviar junto
         price: 0,
         discountPrice: 0,
         stock: 0,
         active: true,
-        attributes: attrs,
+        images: [],
+        attributes,
       };
     });
-
+  
     setVariations(newVariations);
-    // Ao regenerar, também limpamos o map de imagens das variações
-    setVariationImages({});
-  }, [productAttributes, setMessage]);
+  
+    setVariationImages((prev) => {
+      const imagesMap = new Map<string, ImageData[]>();
+      Object.keys(prev).forEach(keyStr => {
+        const idx = Number(keyStr);
+        const varObj = variations[idx];
+        if (varObj && varObj.attributes) {
+          const oldKey = createVariationKey(varObj.attributes);
+          imagesMap.set(oldKey, prev[idx]);
+        }
+      });
+      const newMapping: Record<number, ImageData[]> = {};
+      newVariations.forEach((variation, newIdx) => {
+        const newKey = variation.attributes ? createVariationKey(variation.attributes) : '';
+        if (imagesMap.has(newKey)) {
+          newMapping[newIdx] = imagesMap.get(newKey)!;
+        } else {
+          let found: ImageData[] | undefined;
+          for (const [oldKey, imgs] of imagesMap.entries()) {
+            const oldAttributes = oldKey.split('|').map(pair => pair.split(':')[1]);
+            const newAttributes = newKey.split('|').map(pair => pair.split(':')[1]);
+            if (oldAttributes.length === newAttributes.length) {
+              let similarCount = 0;
+              for (let i = 0; i < newAttributes.length; i++) {
+                const a = newAttributes[i].toLowerCase();
+                const b = oldAttributes[i].toLowerCase();
+                if (a === b || a.includes(b) || b.includes(a)) {
+                  similarCount++;
+                }
+              }
+              if (similarCount === newAttributes.length) {
+                found = imgs;
+                break;
+              }
+            }
+          }
+          newMapping[newIdx] = found || [];
+        }
+      });
+      return newMapping;
+    });
+  }, [productAttributes, variations, setMessage]);
 
   const handleGenerateVariationsClick = () => {
     generateVariations();
@@ -363,7 +448,6 @@ const ProductCreatePage: React.FC = () => {
   // =================================================================
   const handleRemoveVariation = (index: number) => {
     setVariations((prev) => prev.filter((_, i) => i !== index));
-    // Reindexa as imagens
     setVariationImages((prev) => {
       const newMapping: Record<number, ImageData[]> = {};
       const oldKeys = Object.keys(prev).sort((a, b) => Number(a) - Number(b));
@@ -457,8 +541,8 @@ const ProductCreatePage: React.FC = () => {
   // =================================================================
   const handleChangeVariationField = (
     variationIndex: number,
-    field: keyof ProductVariationDTO,
-    value: any
+    field: 'price' | 'discountPrice' | 'stock' | 'active',
+    value: number | boolean
   ) => {
     setVariations((prev) => {
       const arr = [...prev];
@@ -479,10 +563,9 @@ const ProductCreatePage: React.FC = () => {
         return;
       }
 
-      // Montar objeto ProductDTO
       const newProduct: ProductDTO = {
         catalogId,
-        images: [], // apenas para compatibilidade; o backend tratará as imagens
+        images: [],
         name,
         skuCode,
         salePrice,
@@ -511,25 +594,21 @@ const ProductCreatePage: React.FC = () => {
         stock,
         active: true,
         technicalSpecifications,
-        variations, // envia as variações sem imagens
+        variations,
       };
 
       try {
         console.log('=== newProduct ===', JSON.stringify(newProduct, null, 2));
         console.log('=== mainImages ===', mainImages.map((m) => m.file!.name));
         
-        // 1) Cria o produto (e suas variações) SEM as imagens de variação.
         const createdProduct = await createProduct(
           newProduct,
-          mainImages.map((m) => m.file!) // Imagens do produto principal
+          mainImages.map((m) => m.file!)
         );
 
         setMessage('Produto criado com sucesso! Enviando imagens das variações...', 'success');
 
-        // 2) Se o backend retorna as variações recém-criadas com seus IDs,
-        //    podemos agora criar as imagens de cada variação, usando a nova API.
         if (createdProduct?.variations) {
-          // Vamos aguardar todos os uploads de imagens das variações.
           await Promise.all(
             createdProduct.variations.map((createdVar, varIndex) => {
               const imagesForThisVar = variationImages[varIndex] || [];
@@ -544,11 +623,11 @@ const ProductCreatePage: React.FC = () => {
 
         setMessage('Produto e imagens de variações enviados com sucesso!', 'success');
         router.push('/channel/catalog/my/product');
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Erro ao criar produto:', error);
-        if (error.response?.data) {
-          const errorsObj = error.response.data as Record<string, string>;
-          Object.entries(errorsObj).forEach(([field, message]) => {
+        const err = error as { response?: { data: Record<string, string> } };
+        if (err.response?.data) {
+          Object.entries(err.response.data).forEach(([, message]) => {
             setMessage(message, 'error');
           });
         } else {
@@ -557,12 +636,39 @@ const ProductCreatePage: React.FC = () => {
       }
     },
     [
-      name, skuCode, salePrice, discountPrice, unitOfMeasure, type, condition,
-      productionType, freeShipping, netWeight, grossWeight, width, height,
-      depth, volumes, itemsPerBox, gtinEan, gtinEanTax, shortDescription,
-      complementaryDescription, notes, stock, catalogId, categoryId,
-      subCategoryId, brandId, technicalSpecifications, variations,
-      mainImages, variationImages, router, setMessage
+      name,
+      skuCode,
+      salePrice,
+      discountPrice,
+      unitOfMeasure,
+      type,
+      condition,
+      productionType,
+      freeShipping,
+      netWeight,
+      grossWeight,
+      width,
+      height,
+      depth,
+      volumes,
+      itemsPerBox,
+      gtinEan,
+      gtinEanTax,
+      shortDescription,
+      complementaryDescription,
+      notes,
+      stock,
+      catalogId,
+      categoryId,
+      subCategoryId,
+      brandId,
+      technicalSpecifications,
+      variations,
+      mainImages,
+      variationImages,
+      expirationDate,
+      router,
+      setMessage
     ]
   );
 
@@ -782,7 +888,7 @@ const ProductCreatePage: React.FC = () => {
                 title="Marca *"
                 value={brandId}
                 onChange={(e) => setBrandId(e.target.value)}
-                options={brands.map((b: any) => ({ value: b.id, label: b.name }))}
+                options={brands.map(b => ({ value: b.id, label: b.name }))}
                 onLoadMore={() => {
                   const nextPage = brandPage + 1;
                   getAllBrands(nextPage, 10).then((resp) => {
@@ -812,7 +918,7 @@ const ProductCreatePage: React.FC = () => {
                   setSubCategoryId('');
                   fetchSubCategories(e.target.value, 0);
                 }}
-                options={categories.map((c: any) => ({ value: c.id, label: c.name }))}
+                options={categories.map(c => ({ value: c.id, label: c.name }))}
                 onLoadMore={() => {
                   const nextPage = categoryPage + 1;
                   getAllCategoriesAdmin(nextPage, 10).then((res) => {
@@ -828,7 +934,7 @@ const ProductCreatePage: React.FC = () => {
                   title="SubCategoria"
                   value={subCategoryId}
                   onChange={(e) => setSubCategoryId(e.target.value)}
-                  options={subCategories.map((sub: any) => ({ value: sub.id, label: sub.name }))}
+                  options={subCategories.map(sub => ({ value: sub.id, label: sub.name }))}
                   onLoadMore={() => {
                     const nextPage = subCategoryPage + 1;
                     fetchSubCategories(categoryId, nextPage);
@@ -1028,7 +1134,7 @@ const ProductCreatePage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Upload de imagens específicas da variação (não enviadas junto do produto) */}
+                  {/* Upload de imagens específicas da variação */}
                   <div className={styles.addChannelImageUploadVar}>
                     {varImgs.map((img, i2) => (
                       <div
@@ -1126,4 +1232,11 @@ const ProductCreatePage: React.FC = () => {
   );
 };
 
-export default ProductCreatePage;
+// Componente padrão que envolve o conteúdo com Suspense
+export default function ProductCreatePage() {
+  return (
+    <Suspense fallback={<div>Carregando...</div>}>
+      <ProductCreateContent />
+    </Suspense>
+  );
+}

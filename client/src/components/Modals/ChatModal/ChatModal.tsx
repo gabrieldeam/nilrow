@@ -22,8 +22,8 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose }) => {
     if (isOpen) {
       const fetchChannels = async () => {
         try {
-          const response = await listChannels();          
-          const transformedChannels = response.map((channel: any) => ({
+          const response = await listChannels();
+          const transformedChannels = (response as Channel[]).map((channel) => ({
             ...channel,
             nickname: channel.nickname || 'unknown', 
           }));

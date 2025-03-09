@@ -12,18 +12,25 @@ interface SubCategoryListProps {
   categoryName: string | null | undefined;
 }
 
+// Definindo um tipo para as subcategorias
+interface SubCategory {
+  id: string;
+  name: string;
+}
+
 const SubCategoryList: React.FC<SubCategoryListProps> = ({
   categoryId,
   activeSubCategory,
   categoryName, 
 }) => {
-  const [subCategories, setSubCategories] = useState<any[]>([]);
+  const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const router = useRouter();
   
   useEffect(() => {
     const fetchSubCategories = async () => {
       try {
         const response = await getSubCategoriesByCategory(categoryId, 0, 9999);
+        // Supondo que response.content seja um array de objetos compatíveis com SubCategory
         setSubCategories([{ id: 'tudo', name: 'Tudo' }, ...response.content]);
       } catch (error) {
         console.error('Erro ao buscar subcategorias:', error);
@@ -35,7 +42,6 @@ const SubCategoryList: React.FC<SubCategoryListProps> = ({
     }
   }, [categoryId]);
   
-
   const handleSubCategoryClick = (subCategoryName: string) => {
     if (categoryName) {
       router.push(`/category/${categoryName}/${subCategoryName}`);

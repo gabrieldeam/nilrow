@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useContext, memo } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -104,7 +104,7 @@ function PasswordResetPage() {
         setError('');
         setSuccessMessage('Código de redefinição enviado para o seu e-mail.');
         setShowNotification(true);
-      } catch (err) {
+      } catch {
         setSuccessMessage('');
         setError(
           'Erro ao enviar código de redefinição. Verifique o e-mail e tente novamente.'
@@ -140,13 +140,13 @@ function PasswordResetPage() {
         await resetPassword({ email, token: resetCode, newPassword });
         setError('');
         setSuccessMessage('Senha redefinida com sucesso.');
-        setMessage && setMessage('Senha redefinida com sucesso.');
+        if (setMessage) {
+          setMessage('Senha redefinida com sucesso.');
+        }
         router.push('/login');
-      } catch (err) {
+      } catch {
         setSuccessMessage('');
-        setError(
-          'Erro ao redefinir senha. Verifique o código e tente novamente.'
-        );
+        setError('Erro ao redefinir senha. Verifique o código e tente novamente.');
         setShowNotification(true);
       } finally {
         setLoading(false);
@@ -168,7 +168,7 @@ function PasswordResetPage() {
       setError('');
       setSuccessMessage('Novo código de redefinição enviado para o seu e-mail.');
       setShowNotification(true);
-    } catch (err) {
+    } catch {
       setSuccessMessage('');
       setError(
         'Erro ao enviar novo código de redefinição. Verifique o e-mail e tente novamente.'
@@ -179,7 +179,9 @@ function PasswordResetPage() {
     }
   }, [email]);
 
-  const handleNewPasswordChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleNewPasswordChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const newPasswordValue = e.target.value;
     setNewPassword(newPasswordValue);
     setPasswordStrength(calculatePasswordStrength(newPasswordValue));

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import CustomInput from '@/components/UI/CustomInput/CustomInput';
 import Card from '@/components/UI/Card/Card';
@@ -13,6 +14,12 @@ import { login } from '@/services/authService';
 import styles from './Login.module.css';
 import LoadingSpinner from '@/components/UI/LoadingSpinner/LoadingSpinner';
 
+interface LocationType {
+  city: string;
+  state: string;
+  zip: string;
+}
+
 export default function LoginPage() {
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -22,13 +29,16 @@ export default function LoginPage() {
   const { location } = useLocationContext();
   const router = useRouter();
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmailOrUsername(e.target.value.toLowerCase());
-  }, []);
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setEmailOrUsername(e.target.value.toLowerCase());
+    },
+    []
+  );
 
   const getDeviceInfo = () => navigator.userAgent;
 
-  const formatLocationString = (location: any) => {
+  const formatLocationString = (location: LocationType): string => {
     return `${location.city}/${location.state} - ${location.zip}`;
   };
 
@@ -51,8 +61,12 @@ export default function LoginPage() {
         });
         setMessage('Bem-vindo a Nilrow', 'success');
         router.push('/');
-      } catch (err: any) {
-        setError(err.message || 'Erro ao fazer login.');
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError('Erro ao fazer login.');
+        }
       } finally {
         setLoading(false);
       }
@@ -73,7 +87,7 @@ export default function LoginPage() {
           >
             <CustomInput
               title="E-mail ou nome de usuário"
-              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => handleInputChange(e as React.ChangeEvent<HTMLInputElement>)}
+              onChange={handleInputChange}
               value={emailOrUsername}
               type="text"
             />
@@ -81,7 +95,9 @@ export default function LoginPage() {
               title="Senha"
               bottomLeftText="Esqueceu sua senha?"
               bottomRightLink={{ href: '/password-reset', text: 'Redefinir senha' }}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+                setPassword(e.target.value)
+              }
               value={password}
               type="password"
             />
@@ -89,7 +105,7 @@ export default function LoginPage() {
           <PrivacyNotice />
           <ConfirmationButton text="Login" backgroundColor="#7B33E5" type="submit" />
           <div className={styles.signupLink}>
-            <a href="/signup">Criar uma conta</a>
+            <Link href="/signup">Criar uma conta</Link>
           </div>
         </form>
       </div>

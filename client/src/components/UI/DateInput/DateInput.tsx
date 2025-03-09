@@ -1,14 +1,25 @@
 'use client';
 
 import React, { useCallback, memo } from 'react';
-import Select from 'react-select';
+import Select, { StylesConfig, SingleValue } from 'react-select';
 import { DateInputProps } from '../../../types/components/UI/DateInput';
 import styles from './DateInput.module.css';
 
+type Option = {
+  value: string;
+  label: string;
+};
+
 const DateInput: React.FC<DateInputProps> = ({ title, onChange, value, name, bottomLeftText = '' }) => {
-  const options = {
-    month: [...Array(12).keys()].map((i) => ({ value: String(i + 1).padStart(2, '0'), label: String(i + 1).padStart(2, '0') })),
-    day: [...Array(31).keys()].map((i) => ({ value: String(i + 1).padStart(2, '0'), label: String(i + 1).padStart(2, '0') })),
+  const options: { month: Option[]; day: Option[]; year: Option[] } = {
+    month: [...Array(12).keys()].map((i) => ({
+      value: String(i + 1).padStart(2, '0'),
+      label: String(i + 1).padStart(2, '0'),
+    })),
+    day: [...Array(31).keys()].map((i) => ({
+      value: String(i + 1).padStart(2, '0'),
+      label: String(i + 1).padStart(2, '0'),
+    })),
     year: [...Array(100).keys()].map((i) => {
       const year = 2024 - i;
       return { value: String(year), label: String(year) };
@@ -16,52 +27,52 @@ const DateInput: React.FC<DateInputProps> = ({ title, onChange, value, name, bot
   };
 
   const handleMonthChange = useCallback(
-    (selectedOption: any) => {
+    (selectedOption: SingleValue<Option>) => {
       const dateParts = value.split('-');
-      const newDate = `${dateParts[0] || '2024'}-${selectedOption.value}-${dateParts[2] || '01'}`;
+      const newDate = `${dateParts[0] || '2024'}-${selectedOption?.value || '01'}-${dateParts[2] || '01'}`;
       onChange({ target: { name, value: newDate } });
     },
     [value, name, onChange]
   );
 
   const handleDayChange = useCallback(
-    (selectedOption: any) => {
+    (selectedOption: SingleValue<Option>) => {
       const dateParts = value.split('-');
-      const newDate = `${dateParts[0] || '2024'}-${dateParts[1] || '01'}-${selectedOption.value}`;
+      const newDate = `${dateParts[0] || '2024'}-${dateParts[1] || '01'}-${selectedOption?.value || '01'}`;
       onChange({ target: { name, value: newDate } });
     },
     [value, name, onChange]
   );
 
   const handleYearChange = useCallback(
-    (selectedOption: any) => {
+    (selectedOption: SingleValue<Option>) => {
       const dateParts = value.split('-');
-      const newDate = `${selectedOption.value}-${dateParts[1] || '01'}-${dateParts[2] || '01'}`;
+      const newDate = `${selectedOption?.value || '2024'}-${dateParts[1] || '01'}-${dateParts[2] || '01'}`;
       onChange({ target: { name, value: newDate } });
     },
     [value, name, onChange]
   );
 
-  const customStyles = {
-    control: (provided: any) => ({
+  const customStyles: StylesConfig<Option, false> = {
+    control: (provided) => ({
       ...provided,
       backgroundColor: '#000',
       borderColor: '#fff',
       height: '40px',
     }),
-    singleValue: (provided: any) => ({
+    singleValue: (provided) => ({
       ...provided,
       color: '#fff',
     }),
-    dropdownIndicator: (provided: any) => ({
+    dropdownIndicator: (provided) => ({
       ...provided,
       color: '#fff',
     }),
-    menu: (provided: any) => ({
+    menu: (provided) => ({
       ...provided,
       backgroundColor: '#000',
     }),
-    option: (provided: any, state: any) => ({
+    option: (provided, state) => ({
       ...provided,
       backgroundColor: state.isFocused ? '#7B33E5' : '#000',
       color: '#fff',

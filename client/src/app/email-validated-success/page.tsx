@@ -4,7 +4,7 @@ import React, { memo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import styles from './EmailValidatedSuccess.module.css';
-import successImage from '@/public/assets/email-validated-success.png';
+import successImage from '../../../public/assets/email-validated-success.png';
 
 const EmailValidatedSuccess = () => {
   return (

@@ -22,10 +22,24 @@ import ClassificationSelect from '@/components/UI/ClassificationSelect/Classific
 
 import { addAddress, getAddressClassifications, getUserProfile } from '@/services/profileService';
 
-import { useNotification } from '@/hooks/useNotification'; 
+import { useNotification } from '@/hooks/useNotification';
 
 import styles from './addAddress.module.css';
 import 'react-phone-input-2/lib/style.css';
+
+// Interface para os dados de classificação conforme o componente espera
+interface ClassificationData {
+  id: string;
+  name: string;
+  value: string;
+}
+
+// Interface para os dados brutos retornados por getAddressClassifications
+interface RawClassificationData {
+  id: string;
+  name: string;
+  value?: string;
+}
 
 function AddAddressPage() {
   const router = useRouter();
@@ -47,7 +61,7 @@ function AddAddressPage() {
   });
 
   const [noNumber, setNoNumber] = useState(false);
-  const [classifications, setClassifications] = useState<any[]>([]);
+  const [classifications, setClassifications] = useState<ClassificationData[]>([]);
 
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -62,19 +76,25 @@ function AddAddressPage() {
     router.back();
   }, [router]);
 
-  const handleChange = useCallback((e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  }, []);
+  const handleChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const { name, value } = e.target;
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    },
+    []
+  );
 
   const handlePhoneChange = useCallback((value: string) => {
     setFormData((prev) => ({ ...prev, recipientPhone: value }));
   }, []);
 
-  const handleNumberChange = useCallback((e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { value } = e.target;
-    setFormData((prev) => ({ ...prev, number: value }));
-  }, []);
+  const handleNumberChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const { value } = e.target;
+      setFormData((prev) => ({ ...prev, number: value }));
+    },
+    []
+  );
 
   const handleCheckboxChange = useCallback(() => {
     setNoNumber((prev) => !prev);
@@ -89,9 +109,9 @@ function AddAddressPage() {
   }, []);
 
   const fetchAddress = useCallback(
-    async (cep: string) => {
+    async (zipCode: string) => {
       try {
-        const response = await axios.get(`https://viacep.com.br/ws/${cep}/json/`);
+        const response = await axios.get(`https://viacep.com.br/ws/${zipCode}/json/`);
         const { uf, localidade, bairro, logradouro } = response.data;
         setFormData((prev) => ({
           ...prev,
@@ -108,11 +128,11 @@ function AddAddressPage() {
     [setMessage]
   );
 
-  const handleCepChange = useCallback(
+  const handleZipCodeChange = useCallback(
     (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const { value } = e.target;
       const sanitizedValue = value.replace(/\D/g, '');
-      setFormData((prev) => ({ ...prev, cep: sanitizedValue }));
+      setFormData((prev) => ({ ...prev, zipCode: sanitizedValue }));
 
       if (sanitizedValue.length === 8) {
         fetchAddress(sanitizedValue);
@@ -136,17 +156,7 @@ function AddAddressPage() {
   }, [setMessage]);
 
   useEffect(() => {
-    const {
-      recipientName,
-      recipientPhone,
-      zipCode,
-      state,
-      city,
-      neighborhood,
-      street,
-      number,
-      classification,
-    } = formData;
+    const { recipientName, recipientPhone, zipCode, state, city, neighborhood, street, number, classification } = formData;
     setIsFormValid(
       recipientName !== '' &&
         recipientPhone !== '' &&
@@ -164,7 +174,12 @@ function AddAddressPage() {
     const fetchClassifications = async () => {
       try {
         const data = await getAddressClassifications();
-        setClassifications(data);
+        const mappedData: ClassificationData[] = data.map((item: RawClassificationData) => ({
+          id: item.id,
+          name: item.name,
+          value: item.value || item.id, // define um valor padrão se não existir
+        }));
+        setClassifications(mappedData);
       } catch (error) {
         console.error('Erro ao buscar classificações de endereço:', error);
         setMessage('Erro ao buscar classificações de endereço.', 'error');
@@ -202,21 +217,14 @@ function AddAddressPage() {
       </Head>
 
       {isMobile && (
-        <MobileHeader
-          title="Adicionar Endereço"
-          buttons={{ close: true }}
-          handleBack={handleBack}
-        />
+        <MobileHeader title="Adicionar Endereço" buttons={{ close: true }} handleBack={handleBack} />
       )}
 
       <div className={styles['add-address-container']}>
         <SubHeader title="Adicionar Endereço" handleBack={handleBack} />
 
         <form onSubmit={handleSubmit}>
-          <Card
-            title="Quem vai receber?"
-            rightButton={{ text: 'Eu mesmo', onClick: handleFillWithProfile }}
-          >
+          <Card title="Quem vai receber?" rightButton={{ text: 'Eu mesmo', onClick: handleFillWithProfile }}>
             <CustomInput
               title="Nome completo"
               type="text"
@@ -248,41 +256,15 @@ function AddAddressPage() {
             <CustomInput
               title="Código de Endereço Postal"
               type="text"
-              name="cep"
+              name="zipCode"
               value={formData.zipCode}
-              onChange={handleCepChange}
+              onChange={handleZipCodeChange}
               bottomLeftText="Informe seu CEP"
             />
-            <CustomInput
-              title="Estado"
-              type="text"
-              name="state"
-              value={formData.state}
-              onChange={handleChange}
-              readOnly
-            />
-            <CustomInput
-              title="Cidade"
-              type="text"
-              name="city"
-              value={formData.city}
-              onChange={handleChange}
-              readOnly
-            />
-            <CustomInput
-              title="Bairro"
-              type="text"
-              name="neighborhood"
-              value={formData.neighborhood}
-              onChange={handleChange}
-            />
-            <CustomInput
-              title="Rua/Avenida"
-              type="text"
-              name="street"
-              value={formData.street}
-              onChange={handleChange}
-            />
+            <CustomInput title="Estado" type="text" name="state" value={formData.state} onChange={handleChange} readOnly />
+            <CustomInput title="Cidade" type="text" name="city" value={formData.city} onChange={handleChange} readOnly />
+            <CustomInput title="Bairro" type="text" name="neighborhood" value={formData.neighborhood} onChange={handleChange} />
+            <CustomInput title="Rua/Avenida" type="text" name="street" value={formData.street} onChange={handleChange} />
             <CustomInput
               title="Número"
               type="text"

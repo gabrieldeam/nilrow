@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, memo } from 'react';
+import React, { useState, useEffect, memo, ChangeEvent } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -30,11 +30,32 @@ import styles from './category.module.css';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
+// Interfaces para tipagem
+interface Category {
+  id: string;
+  name: string;
+  imageUrl?: string;
+}
+
+interface SubCategory {
+  id: string;
+  name: string;
+  categoryId: string;
+}
+
+interface APIResponse<T> {
+  content: T[];
+  totalPages: number;
+  last?: boolean;
+}
+
 function CategoryPage() {
-  const [categories, setCategories] = useState<any[]>([]);
-  const [subCategoriesByCategory, setSubCategoriesByCategory] = useState<{ [key: string]: any[] }>({});
-  const [selectedCategory, setSelectedCategory] = useState<any>(null);
-  const [selectedSubCategory, setSelectedSubCategory] = useState<any>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [subCategoriesByCategory, setSubCategoriesByCategory] = useState<{
+    [key: string]: SubCategory[];
+  }>({});
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [selectedSubCategory, setSelectedSubCategory] = useState<SubCategory | null>(null);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryImage, setNewCategoryImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -47,12 +68,6 @@ function CategoryPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubCategoryModalOpen, setIsSubCategoryModalOpen] = useState(false);
 
-
-const [categoryId, setCategoryId] = useState<string>('');
-const [subCategories, setSubCategories] = useState<any[]>([]);
-const [hasMoreSubCategories, setHasMoreSubCategories] = useState(true);
-const [subCategoryPage, setSubCategoryPage] = useState(0);
-
   const router = useRouter();
 
   useEffect(() => {
@@ -63,70 +78,36 @@ const [subCategoryPage, setSubCategoryPage] = useState(0);
     }
   }, [searchTerm, currentPage]);
 
-  // In the fetchCategoriesAndSubCategories function
-async function fetchCategoriesAndSubCategories(page: number, size: number) {
-  try {
-    const data = await getAllCategoriesAdmin(page, size);
-    if (data && Array.isArray(data.content)) {
-      setCategories(data.content);
-      setTotalPages(data.totalPages);
+  async function fetchCategoriesAndSubCategories(page: number, size: number) {
+    try {
+      const data: APIResponse<Category> = await getAllCategoriesAdmin(page, size);
+      if (data && Array.isArray(data.content)) {
+        setCategories(data.content);
+        setTotalPages(data.totalPages);
 
-      // Add type annotation here
-      const subCategoriesMap: { [key: string]: any[] } = {}; // <-- Fix
-      for (const category of data.content) {
-        const subData = await getSubCategoriesByCategory(category.id, 0, 10);
-        subCategoriesMap[category.id] = subData.content;
+        const subCategoriesMap: { [key: string]: SubCategory[] } = {};
+        for (const category of data.content) {
+          const subData: APIResponse<SubCategory> = await getSubCategoriesByCategory(category.id, 0, 10);
+          subCategoriesMap[category.id] = subData.content;
+        }
+        setSubCategoriesByCategory(subCategoriesMap);
+      } else {
+        console.error('Unexpected API response format:', data);
+        setCategories([]);
       }
-      setSubCategoriesByCategory(subCategoriesMap);
-    } else {
-      console.error('Unexpected API response format:', data);
-      setCategories([]);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
     }
-  } catch (error) {
-    console.error('Error fetching categories:', error);
   }
-}
-
-const fetchSubCategories = async (catId: string, page: number = 0) => {
-  try {
-    const result = await getSubCategoriesByCategory(catId, page, 4);
-    
-    if (page === 0) {
-      setSubCategories(result.content);
-    } else {
-      setSubCategories((prev: any[]) => [...prev, ...result.content]); // Adicione tipagem aqui
-    }
-    
-    setHasMoreSubCategories(!result.last);
-  } catch (error) {
-    console.error('Error fetching subcategories:', error);
-  }
-};
-  
-useEffect(() => {
-  if (categoryId) {
-    setSubCategoryPage(0);
-    fetchSubCategories(categoryId, 0);
-  }
-}, [categoryId]); // Adicione categoryId como dependência
-  
-
-const handleLoadMoreSubCategories = async () => {
-  if (!categoryId) return;
-  
-  const nextPage = subCategoryPage + 1;
-  setSubCategoryPage(nextPage);
-  await fetchSubCategories(categoryId, nextPage);
-};
 
   async function searchCategories(name: string) {
     try {
-      const result = await searchCategoriesByName(name);
+      const result: Category[] = await searchCategoriesByName(name);
       setCategories(result);
 
-      const subCategoriesMap: { [key: string]: any[] } = {};
+      const subCategoriesMap: { [key: string]: SubCategory[] } = {};
       for (const category of result) {
-        const subData = await getSubCategoriesByCategory(category.id);
+        const subData: APIResponse<SubCategory> = await getSubCategoriesByCategory(category.id);
         subCategoriesMap[category.id] = subData.content;
       }
       setSubCategoriesByCategory(subCategoriesMap);
@@ -147,7 +128,7 @@ const handleLoadMoreSubCategories = async () => {
     }
   }
 
-  function handleCategoryClick(category: any) {
+  function handleCategoryClick(category: Category) {
     setSelectedCategory(category);
     setNewCategoryName(category.name);
     setImagePreview(`${apiUrl}${category.imageUrl}`);
@@ -204,7 +185,7 @@ const handleLoadMoreSubCategories = async () => {
     }
   }
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (file && file.type.startsWith('image/')) {
       setNewCategoryImage(file);
@@ -228,7 +209,7 @@ const handleLoadMoreSubCategories = async () => {
     setIsSubCategoryModalOpen(false);
   }
 
-  function handleSubCategoryClick(subCategory: any) {
+  function handleSubCategoryClick(subCategory: SubCategory) {
     setSelectedSubCategory(subCategory);
     setNewSubCategoryName(subCategory.name);
     setNewSubCategoryCategoryId(subCategory.categoryId);
@@ -276,7 +257,8 @@ const handleLoadMoreSubCategories = async () => {
   }
 
   const isFormValid = newCategoryName.trim() !== '';
-  const isSubCategoryFormValid = newSubCategoryName.trim() !== '' && newSubCategoryCategoryId.trim() !== '';
+  const isSubCategoryFormValid =
+    newSubCategoryName.trim() !== '' && newSubCategoryCategoryId.trim() !== '';
 
   return (
     <div className={styles['category-page']}>
@@ -287,10 +269,7 @@ const handleLoadMoreSubCategories = async () => {
 
       <div className={styles['category-container']}>
         <div className={styles['category-search-container']}>
-          <HeaderButton
-            onClick={() => router.back()} 
-            icon={closeIcon}
-          />
+          <HeaderButton onClick={() => router.back()} icon={closeIcon} />
           <input
             type="text"
             placeholder="Pesquisar por nome de categoria"
@@ -326,10 +305,7 @@ const handleLoadMoreSubCategories = async () => {
               return (
                 <div
                   key={category.id}
-                  className={`
-                    ${styles['category-row']} 
-                    ${isSelected ? styles['selected'] : ''}
-                  `}
+                  className={`${styles['category-row']} ${isSelected ? styles['selected'] : ''}`}
                   onClick={() => handleCategoryClick(category)}
                   style={{ backgroundColor, height: '57px', cursor: 'pointer' }}
                 >
@@ -341,9 +317,11 @@ const handleLoadMoreSubCategories = async () => {
                     <div className={styles['category-image-wrapper']}>
                       <div className={styles['category-image-circle']}>
                         {category.imageUrl && (
-                          <img
+                          <Image
                             src={`${apiUrl}${category.imageUrl}`}
                             alt={category.name}
+                            width={40}
+                            height={40}
                             className={styles['category-image']}
                           />
                         )}
@@ -358,21 +336,23 @@ const handleLoadMoreSubCategories = async () => {
                   <div className={styles['category-columnsubcategories']}>
                     {subCategoriesByCategory[category.id]?.length > 0 ? (
                       <>
-                        {subCategoriesByCategory[category.id].slice(0, 3).map((sub, idx) => (
-                          <span
-                            key={sub.id}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSubCategoryClick(sub);
-                            }}
-                            className={styles['subcategory-link']}
-                          >
-                            {sub.name}
-                            {idx < Math.min(2, subCategoriesByCategory[category.id].length - 1) && (
-                              <span>,&nbsp;</span>
-                            )}
-                          </span>
-                        ))}
+                        {subCategoriesByCategory[category.id]
+                          .slice(0, 3)
+                          .map((sub, idx) => (
+                            <span
+                              key={sub.id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSubCategoryClick(sub);
+                              }}
+                              className={styles['subcategory-link']}
+                            >
+                              {sub.name}
+                              {idx < Math.min(2, subCategoriesByCategory[category.id].length - 1) && (
+                                <span>,&nbsp;</span>
+                              )}
+                            </span>
+                          ))}
                         {subCategoriesByCategory[category.id].length > 3 && (
                           <span className={styles['more-subcategories']}>
                             + {subCategoriesByCategory[category.id].length - 3} mais
@@ -395,10 +375,7 @@ const handleLoadMoreSubCategories = async () => {
             <span>
               Página {currentPage + 1} de {totalPages}
             </span>
-            <button
-              onClick={handleNextPage}
-              disabled={currentPage >= totalPages - 1}
-            >
+            <button onClick={handleNextPage} disabled={currentPage >= totalPages - 1}>
               Próxima
             </button>
           </div>
@@ -420,7 +397,7 @@ const handleLoadMoreSubCategories = async () => {
 
             <div className={styles['add-channel-image-upload']}>
               <div className={styles['category-image-circle']}>
-              {imagePreview ? (
+                {imagePreview ? (
                   <Image
                     src={imagePreview}
                     alt="Preview"
@@ -439,10 +416,7 @@ const handleLoadMoreSubCategories = async () => {
                 )}
               </div>
 
-              <label
-                htmlFor="category-image"
-                className={styles['add-channel-upload-button']}
-              >
+              <label htmlFor="category-image" className={styles['add-channel-upload-button']}>
                 Escolher arquivo
               </label>
               <input
@@ -502,15 +476,10 @@ const handleLoadMoreSubCategories = async () => {
         </Modal>
 
         {/* MODAL DE SUBCATEGORIAS */}
-        <Modal
-          isOpen={isSubCategoryModalOpen}
-          onClose={clearSubCategoryModal}
-        >
+        <Modal isOpen={isSubCategoryModalOpen} onClose={clearSubCategoryModal}>
           <div className={styles['subcategory-form']}>
             <h3 className={styles['subcategory-title-form']}>
-              {selectedSubCategory
-                ? 'Editar Subcategoria'
-                : 'Nova Subcategoria'}
+              {selectedSubCategory ? 'Editar Subcategoria' : 'Nova Subcategoria'}
             </h3>
 
             <CustomInput
@@ -538,9 +507,7 @@ const handleLoadMoreSubCategories = async () => {
                 <>
                   <StageButton
                     text="Atualizar Subcategoria"
-                    backgroundColor={
-                      isSubCategoryFormValid ? '#7B33E5' : '#212121'
-                    }
+                    backgroundColor={isSubCategoryFormValid ? '#7B33E5' : '#212121'}
                     onClick={handleUpdateSubCategory}
                     disabled={!isSubCategoryFormValid}
                   />
@@ -553,9 +520,7 @@ const handleLoadMoreSubCategories = async () => {
               ) : (
                 <StageButton
                   text="Criar Subcategoria"
-                  backgroundColor={
-                    isSubCategoryFormValid ? '#7B33E5' : '#212121'
-                  }
+                  backgroundColor={isSubCategoryFormValid ? '#7B33E5' : '#212121'}
                   onClick={handleCreateSubCategory}
                   disabled={!isSubCategoryFormValid}
                 />

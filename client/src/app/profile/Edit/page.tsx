@@ -20,12 +20,19 @@ import {
   getUserProfile,
   updateUserProfile,
   getUserNickname,
-  updateUserNickname
+  updateUserNickname,
 } from '@/services/profileService';
 
 import { FormDataProps, ProfileUpdateData } from '@/types/services/profile';
 
 import styles from './editProfile.module.css';
+
+// Definindo a interface para o erro proveniente do Axios
+interface AxiosErrorType {
+  response?: {
+    data?: { message?: string } | string;
+  };
+}
 
 const validateNickname = (nickname: string) => {
   const regex = /^[a-z][a-z0-9._]{2,28}[a-z0-9]$/;
@@ -81,7 +88,7 @@ function EditProfile() {
         const userProfile = await getUserProfile();
         const userNickname = await getUserNickname();
 
-        // Se o nickname veio com '@' remove o caractere
+        // Se o nickname veio com '@', remove o caractere
         const nicknameNoAt = userNickname.replace('@', '');
 
         setFormData({
@@ -119,15 +126,12 @@ function EditProfile() {
     []
   );
 
-  const handlePhoneChange = useCallback(
-    (value: string) => {
-      setFormData((prev) => ({
-        ...prev,
-        phone: value,
-      }));
-    },
-    []
-  );
+  const handlePhoneChange = useCallback((value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      phone: value,
+    }));
+  }, []);
 
   useEffect(() => {
     const { email, phone, nickname } = formData;
@@ -168,7 +172,7 @@ function EditProfile() {
       if (formData.phone !== originalData.phone) {
         updatedProfileData.phone = formData.phone;
       }
-      
+
       // Atualiza o nickname se ele foi alterado
       const updatedNickname =
         formData.nickname !== originalData.nickname
@@ -187,11 +191,32 @@ function EditProfile() {
 
         setMessage('Dados atualizados com sucesso!', 'success');
         router.push('/profile');
-      } catch (error: any) {
-        const errorMessage =
-          error?.response?.data || 'Erro ao atualizar dados. Tente novamente.';
+      } catch (error: unknown) {
+        let errorMessage = 'Erro ao atualizar dados. Tente novamente.';
+        if (
+          typeof error === 'object' &&
+          error !== null &&
+          'response' in error
+        ) {
+          const axiosError = error as AxiosErrorType;
+          if (
+            axiosError.response &&
+            typeof axiosError.response.data === 'object' &&
+            axiosError.response.data !== null &&
+            'message' in axiosError.response.data &&
+            typeof axiosError.response.data.message === 'string'
+          ) {
+            errorMessage = axiosError.response.data.message;
+          } else if (
+            axiosError.response &&
+            typeof axiosError.response.data === 'string'
+          ) {
+            errorMessage = axiosError.response.data;
+          }
+        } else if (error instanceof Error) {
+          errorMessage = error.message;
+        }
         console.error('Erro ao atualizar dados:', errorMessage);
-
         setError(errorMessage);
         setShowNotification(true);
       }
@@ -202,7 +227,7 @@ function EditProfile() {
       nicknameValid,
       originalData,
       setMessage,
-      router
+      router,
     ]
   );
 

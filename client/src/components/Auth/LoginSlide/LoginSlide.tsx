@@ -1,14 +1,22 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import CustomInput from '../../UI/CustomInput/CustomInput';
 import Card from '../../UI/Card/Card';
 import ConfirmationButton from '../../UI/ConfirmationButton/ConfirmationButton';
 import LoadingSpinner from '../../UI/LoadingSpinner/LoadingSpinner';
 import { useNotification } from '../../../hooks/useNotification';
 import { useLocationContext } from '../../../context/LocationContext';
-import { login } from '../../../services/authService'; // Importar a função login
+import { login } from '../../../services/authService';
 import styles from './LoginSlide.module.css';
+
+// Definindo interface para a localização
+interface Location {
+  city: string;
+  state: string;
+  zip: string;
+}
 
 const LoginSlide: React.FC = () => {
   const [emailOrUsername, setEmailOrUsername] = useState('');
@@ -17,13 +25,18 @@ const LoginSlide: React.FC = () => {
   const { setMessage } = useNotification();
   const { location } = useLocationContext();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Atualizamos o tipo do parâmetro para aceitar input ou textarea
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setEmailOrUsername(e.target.value.toLowerCase());
   };
 
   const getDeviceInfo = () => navigator.userAgent;
 
-  const formatLocationString = (location: any) => `${location.city}/${location.state} - ${location.zip}`;
+  // Tipamos o parâmetro location com a interface definida
+  const formatLocationString = (location: Location) =>
+    `${location.city}/${location.state} - ${location.zip}`;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +47,7 @@ const LoginSlide: React.FC = () => {
     setLoading(true);
     try {
       const deviceInfo = getDeviceInfo();
-      const locationString = formatLocationString(location);
+      const locationString = formatLocationString(location as Location);
       await login({
         login: emailOrUsername,
         password,
@@ -43,8 +56,12 @@ const LoginSlide: React.FC = () => {
       });
       setMessage('Bem-vindo a Nilrow', 'success');
       setTimeout(() => window.location.reload(), 1000);
-    } catch (err: any) {
-      setMessage(err.message || 'Erro ao fazer login.', 'error');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setMessage(err.message || 'Erro ao fazer login.', 'error');
+      } else {
+        setMessage('Erro ao fazer login.', 'error');
+      }
     } finally {
       setLoading(false);
     }
@@ -81,7 +98,7 @@ const LoginSlide: React.FC = () => {
           <div className={styles.confirmationButtonSpace}>
             <ConfirmationButton text="Login" backgroundColor="#7B33E5" type="submit" />
             <div className={styles.signupSlideLink}>
-              <a href="/signup">Criar uma conta</a>
+              <Link href="/signup">Criar uma conta</Link>
             </div>
           </div>
         </form>

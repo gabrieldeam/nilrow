@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = "force-dynamic";
 
 import React, {
   useState,
@@ -6,48 +7,64 @@ import React, {
   useCallback,
   useRef,
   memo,
+  useMemo,
 } from "react";
-
-// Hooks do Next
+import NextDynamic from "next/dynamic"; // Renomeado para evitar conflito com a exportação "dynamic"
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-
-// Hooks/customs
 import { useNotification } from "@/hooks/useNotification";
-
-// React-Leaflet e estilos
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Popup,
-  Polygon,
-  useMap,
-} from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-
-// Lodash e serviços
 import { debounce } from "lodash";
 import {
   createLocation,
   getLocationsByCatalogId,
   deleteLocation,
 } from "@/services/catalogService";
-
-// Tipos
 import { LocationData } from "@/types/services/catalog";
-
-// Componentes de UI
 import MobileHeader from "@/components/Layout/MobileHeader/MobileHeader";
 import SubHeader from "@/components/Layout/SubHeader/SubHeader";
 import Card from "@/components/UI/Card/Card";
-
-// Ícones e estilos
 import includeIconSrc from "../../../../../../public/assets/include.svg";
 import excludeIconSrc from "../../../../../../public/assets/exclude.svg";
 import styles from "./Visualization.module.css";
 
-// ---------------------------------------------------------------------
-// Componente auxiliar para atualizar referência do mapa
+// Tipagem para sugestões do Nominatim
+interface NominatimSuggestion {
+  display_name: string;
+  lat: string;
+  lon: string;
+  geojson?: {
+    type: string;
+    coordinates: unknown;
+  };
+  [key: string]: unknown;
+}
+
+// Importação dinâmica dos componentes do react-leaflet (ssr desabilitado)
+const MapContainer = NextDynamic(
+  () => import("react-leaflet").then((mod) => mod.MapContainer),
+  { ssr: false }
+);
+const TileLayer = NextDynamic(
+  () => import("react-leaflet").then((mod) => mod.TileLayer),
+  { ssr: false }
+);
+const Marker = NextDynamic(
+  () => import("react-leaflet").then((mod) => mod.Marker),
+  { ssr: false }
+);
+const Popup = NextDynamic(
+  () => import("react-leaflet").then((mod) => mod.Popup),
+  { ssr: false }
+);
+const Polygon = NextDynamic(
+  () => import("react-leaflet").then((mod) => mod.Polygon),
+  { ssr: false }
+);
+
+// Importa useMap normalmente (não usar dynamic para hooks)
+import { useMap } from "react-leaflet";
+
+// Componente auxiliar para atualizar a referência do mapa (usando o hook useMap)
 function MapRefUpdater({
   mapRef,
 }: {
@@ -58,29 +75,27 @@ function MapRefUpdater({
     if (map && !mapRef.current) {
       mapRef.current = map;
     }
-  }, [map]);
+  }, [map, mapRef]);
   return null;
 }
 
-// ---------------------------------------------------------------------
-// Componente principal (Client Component)
 const VisualizationClient: React.FC = () => {
-  // -------------------------------------------------------------------
-  // 1) Chame todos os Hooks no TOPO, sem if/returns antes
-  // -------------------------------------------------------------------
-
-  // Hooks básicos de contexto/navegação
+  // Hooks sempre chamados
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setMessage } = useNotification();
 
-  // Estado para carregar Leaflet dinamicamente
-  const [leafletModule, setLeafletModule] = useState<typeof import("leaflet") | null>(null);
+  // Estados básicos
+  const [isClient, setIsClient] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  // Carregamento dinâmico do módulo do Leaflet para criação de ícones
+  const [leafletModule, setLeafletModule] =
+    useState<typeof import("leaflet") | null>(null);
 
-  // Estados do componente
+  // Outros estados
   const [catalogId, setCatalogId] = useState<string | null>(null);
   const [locations, setLocations] = useState<LocationData[]>([]);
-  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<NominatimSuggestion[]>([]);
   const [query, setQuery] = useState("");
   const [action, setAction] = useState<"include" | "exclude">("include");
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -90,22 +105,23 @@ const VisualizationClient: React.FC = () => {
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
 
-  // -------------------------------------------------------------------
-  // 2) Efeitos e callbacks sempre chamados, sem condicional
-  // -------------------------------------------------------------------
+  // Indica que o componente está no cliente e carrega o CSS do Leaflet
+  useEffect(() => {
+    setIsClient(true);
+    import("leaflet/dist/leaflet.css");
+    setIsMobile(window.innerWidth <= 768);
+  }, []);
 
-  // Efeito: carregar Leaflet no client
+  // Carrega o módulo do Leaflet para criar os ícones
   useEffect(() => {
     import("leaflet").then((module) => {
       setLeafletModule(module);
     });
   }, []);
 
-  // Efeito: obter catalogId de localStorage ou query param
+  // Obtém o catalogId a partir do localStorage ou dos query params
   useEffect(() => {
-    const storedCatalogId = typeof window !== "undefined"
-      ? localStorage.getItem("selectedCatalogId")
-      : null;
+    const storedCatalogId = localStorage.getItem("selectedCatalogId");
     const queryCatalogId = searchParams.get("catalogId");
 
     if (queryCatalogId) {
@@ -117,23 +133,22 @@ const VisualizationClient: React.FC = () => {
     }
   }, [searchParams, router]);
 
-  // Função para buscar locations do backend
+  // Busca as localizações
   const fetchLocations = useCallback(async () => {
     if (!catalogId) return;
     try {
       const fetchedLocations = await getLocationsByCatalogId(catalogId);
       setLocations(fetchedLocations);
-    } catch (error) {
+    } catch {
       setMessage("Erro ao carregar localizações. Tente novamente.");
     }
   }, [catalogId, setMessage]);
 
-  // Efeito: buscar locations quando catalogId mudar
   useEffect(() => {
     fetchLocations();
   }, [catalogId, fetchLocations]);
 
-  // Efeito: fechar dropdown/sugestões ao clicar fora
+  // Fecha dropdown e sugestões ao clicar fora
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -155,12 +170,11 @@ const VisualizationClient: React.FC = () => {
     };
   }, []);
 
-  // Callback: voltar para catálogos
+  // Callbacks
   const handleBack = useCallback(() => {
     router.push("/channel/catalog/my");
   }, [router]);
 
-  // Callback: buscar localização no Nominatim e salvar
   const handleSearch = useCallback(
     async (queryStr: string) => {
       if (!catalogId) return;
@@ -181,13 +195,11 @@ const VisualizationClient: React.FC = () => {
         const latitude = parseFloat(lat);
         const longitude = parseFloat(lon);
 
-        // Valida lat/long
         if (isNaN(latitude) || isNaN(longitude)) {
           setMessage("Coordenadas inválidas recebidas. Tente outra busca.");
           return;
         }
 
-        // Monta objeto
         const newLocation: Partial<LocationData> = {
           name: display_name || queryStr,
           action,
@@ -204,28 +216,29 @@ const VisualizationClient: React.FC = () => {
           },
         };
 
-        // Monta bounds para centralizar
         const newPos: [number, number] = [latitude, longitude];
         const bounds: [number, number][] = [newPos];
 
-        // Se houver polygons no geojson, adiciona
         if (geojson) {
           if (geojson.type === "Polygon") {
-            const coords: [number, number][] =
-              geojson.coordinates[0].map((c: [number, number]) => [c[1], c[0]]);
+            const coords: [number, number][] = (
+              (geojson.coordinates as number[][][])[0]
+            ).map((c: number[]) => [c[1], c[0]]);
             bounds.push(...coords);
-
             if (action === "include") {
               newLocation.includedPolygons?.push(coords);
             } else {
               newLocation.excludedPolygons?.push(coords);
             }
           } else if (geojson.type === "MultiPolygon") {
-            const multiCoords = geojson.coordinates.flatMap((polygon: any) =>
-              polygon[0].map((c: [number, number]) => [c[1], c[0]])
+            const multiCoords: [number, number][] = (
+              (geojson as { type: "MultiPolygon"; coordinates: number[][][][] })
+                .coordinates.flatMap(
+                  (polygon: number[][][]) =>
+                    polygon[0].map((c: number[]) => [c[1], c[0]] as [number, number])
+                )
             );
             bounds.push(...multiCoords);
-
             if (action === "include") {
               newLocation.includedPolygons?.push(multiCoords);
             } else {
@@ -234,11 +247,9 @@ const VisualizationClient: React.FC = () => {
           }
         }
 
-        // Salvar no backend
         await createLocation(catalogId, newLocation as LocationData);
         await fetchLocations();
 
-        // Centralizar mapa
         if (mapRef.current) {
           if (bounds.length > 1) {
             mapRef.current.fitBounds(bounds);
@@ -248,56 +259,51 @@ const VisualizationClient: React.FC = () => {
         }
 
         setSuggestions([]);
-      } catch (error) {
-        console.error(error);
+      } catch {
         setMessage("Erro ao buscar a localização. Tente novamente.");
       }
     },
     [catalogId, action, fetchLocations, setMessage]
   );
 
-  // Callback: autocomplete
-  const debouncedFetchSuggestions = useCallback(
-    debounce(async (q: string) => {
-      if (q.length > 2) {
-        try {
-          const resp = await fetch(
-            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-              q
-            )}&format=json&limit=5&addressdetails=1`
-          );
-          if (!resp.ok) {
-            throw new Error(`HTTP error: ${resp.status}`);
+  const debouncedFetchSuggestions = useMemo(
+    () =>
+      debounce(async (q: string) => {
+        if (q.length > 2) {
+          try {
+            const resp = await fetch(
+              `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+                q
+              )}&format=json&limit=5&addressdetails=1`
+            );
+            if (!resp.ok) {
+              throw new Error(`HTTP error: ${resp.status}`);
+            }
+            const data = await resp.json();
+            setSuggestions(data);
+          } catch {
+            setMessage("Erro ao buscar sugestões. Tente novamente.");
           }
-          const data = await resp.json();
-          setSuggestions(data);
-        } catch (error) {
-          console.error(error);
-          setMessage("Erro ao buscar sugestões. Tente novamente.");
+        } else {
+          setSuggestions([]);
         }
-      } else {
-        setSuggestions([]);
-      }
-    }, 300),
+      }, 300),
     [setMessage]
   );
 
-  // Lida com mudança no input de busca
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setQuery(val);
     debouncedFetchSuggestions(val);
   };
 
-  // Quando clica numa sugestão
   const handleSuggestionClick = useCallback(
-    (sug: any) => {
+    (sug: NominatimSuggestion) => {
       handleSearch(sug.display_name);
     },
     [handleSearch]
   );
 
-  // Função para highlight no texto
   const highlightMatch = (text: string, q: string) => {
     const parts = text.split(new RegExp(`(${q})`, "gi"));
     return (
@@ -315,17 +321,18 @@ const VisualizationClient: React.FC = () => {
     );
   };
 
-  // Trocar entre Incluir/Excluir
-  const handleActionChange = useCallback((newAction: "include" | "exclude") => {
-    setAction(newAction);
-    setDropdownOpen(false);
-  }, []);
+  const handleActionChange = useCallback(
+    (newAction: "include" | "exclude") => {
+      setAction(newAction);
+      setDropdownOpen(false);
+    },
+    []
+  );
 
   const toggleDropdown = useCallback(() => {
     setDropdownOpen((prev) => !prev);
   }, []);
 
-  // Remover uma região
   const handleRemoveRegion = useCallback(
     async (index: number) => {
       const toRemove = locations[index];
@@ -333,65 +340,57 @@ const VisualizationClient: React.FC = () => {
       try {
         await deleteLocation(toRemove.id);
         await fetchLocations();
-      } catch (error) {
-        console.error(error);
+      } catch {
         setMessage("Erro ao remover a localização. Tente novamente.");
       }
     },
     [locations, fetchLocations, setMessage]
   );
 
-  // Centralizar o mapa na região
   const handleFocusRegion = useCallback(
     (index: number) => {
       const loc = locations[index];
       if (!loc || !mapRef.current) return;
 
-      // Checa se lat/lng são válidos
-      const isLatLonValid =
+      const bounds: [number, number][] = [];
+      if (
         typeof loc.latitude === "number" &&
         !isNaN(loc.latitude) &&
         typeof loc.longitude === "number" &&
-        !isNaN(loc.longitude);
-
-      const bounds: [number, number][] = [];
-
-      if (isLatLonValid) {
+        !isNaN(loc.longitude)
+      ) {
         bounds.push([loc.latitude, loc.longitude]);
       }
 
-      // Adiciona polígonos se existirem
       loc.includedPolygons?.forEach((poly) => {
         if (Array.isArray(poly) && poly.length > 0) {
-          bounds.push(...poly);
+          const coords = poly.map(
+            (coord) => [coord[0], coord[1]] as [number, number]
+          );
+          bounds.push(...coords);
         }
       });
+
       loc.excludedPolygons?.forEach((poly) => {
         if (Array.isArray(poly) && poly.length > 0) {
           bounds.push(...poly);
         }
       });
 
-      if (bounds.length > 0) {
+      if (bounds.length > 0 && mapRef.current) {
         mapRef.current.fitBounds(bounds);
       }
     },
     [locations]
   );
 
-  // -------------------------------------------------------------------
-  // 3) Depois de todos os Hooks (sem if/return interrompendo),
-  //    podemos condicionar a renderização
-  // -------------------------------------------------------------------
-
-  // Se o leafletModule ainda não carregou, renderiza um loading
+  // Enquanto o módulo do Leaflet não estiver carregado, mostra fallback
   if (!leafletModule) {
     return <div>Carregando o mapa...</div>;
   }
-  // Agora podemos usar o Leaflet
   const L = leafletModule;
 
-  // Cria ícones (fora dos Hooks)
+  // Criação dos ícones do mapa
   const includeIcon = new L.Icon({
     iconUrl: includeIconSrc.src ?? includeIconSrc,
     iconSize: [32, 32],
@@ -405,14 +404,10 @@ const VisualizationClient: React.FC = () => {
     popupAnchor: [0, -32],
   });
 
-  // -------------------------------------------------------------------
-  // 4) Determinar center do mapa com fallback
-  // -------------------------------------------------------------------
   let mapCenter: [number, number] = [-14.235, -51.9253];
   let mapZoom = 3;
   if (locations.length > 0) {
     const lastLoc = locations[locations.length - 1];
-    // Checa se lat/lng do último item são válidos
     if (
       typeof lastLoc.latitude === "number" &&
       !isNaN(lastLoc.latitude) &&
@@ -424,14 +419,19 @@ const VisualizationClient: React.FC = () => {
     }
   }
 
-  // -------------------------------------------------------------------
-  // 5) Render final do componente
-  // -------------------------------------------------------------------
+  // Se o componente ainda não foi montado no cliente, renderiza fallback
+  if (!isClient) {
+    return <div>Carregando...</div>;
+  }
+
   return (
     <div className={styles.visualizationPage}>
-      {/* Header mobile, se for caso */}
-      {typeof window !== "undefined" && window.innerWidth <= 768 && (
-        <MobileHeader title="Visualização" buttons={{ close: true }} handleBack={handleBack} />
+      {isMobile && (
+        <MobileHeader
+          title="Visualização"
+          buttons={{ close: true }}
+          handleBack={handleBack}
+        />
       )}
 
       <div className={styles.visualizationContainer}>
@@ -440,25 +440,28 @@ const VisualizationClient: React.FC = () => {
         </div>
 
         <Card title="Localizações">
-          {/* Campo de busca + dropdown */}
           <div className={styles.visualizationInputGroup}>
             <div className={styles.dropdownContainer} ref={dropdownRef}>
               <div className={styles.dropdownSelected} onClick={toggleDropdown}>
                 {action === "include" ? (
                   <>
-                    <img
+                    <Image
                       src={includeIconSrc.src ?? includeIconSrc}
                       alt="Include"
                       className={styles.dropdownIcon}
+                      width={32}
+                      height={32}
                     />
                     Incluir
                   </>
                 ) : (
                   <>
-                    <img
+                    <Image
                       src={excludeIconSrc.src ?? excludeIconSrc}
                       alt="Exclude"
                       className={styles.dropdownIcon}
+                      width={32}
+                      height={32}
                     />
                     Excluir
                   </>
@@ -470,10 +473,12 @@ const VisualizationClient: React.FC = () => {
                     onClick={() => handleActionChange("include")}
                     className={styles.dropdownOption}
                   >
-                    <img
+                    <Image
                       src={includeIconSrc.src ?? includeIconSrc}
                       alt="Include"
                       className={styles.dropdownIcon}
+                      width={32}
+                      height={32}
                     />
                     Incluir
                   </div>
@@ -481,10 +486,12 @@ const VisualizationClient: React.FC = () => {
                     onClick={() => handleActionChange("exclude")}
                     className={styles.dropdownOption}
                   >
-                    <img
+                    <Image
                       src={excludeIconSrc.src ?? excludeIconSrc}
                       alt="Exclude"
                       className={styles.dropdownIcon}
+                      width={32}
+                      height={32}
                     />
                     Excluir
                   </div>
@@ -506,7 +513,6 @@ const VisualizationClient: React.FC = () => {
             />
           </div>
 
-          {/* Sugestões de autocomplete */}
           <div className={styles.suggestionsContainer} ref={suggestionsRef}>
             {suggestions.map((sug, i) => (
               <div
@@ -519,7 +525,6 @@ const VisualizationClient: React.FC = () => {
             ))}
           </div>
 
-          {/* Mapa */}
           <div className={styles.visualizationMapContainer}>
             <MapContainer
               center={mapCenter}
@@ -528,14 +533,11 @@ const VisualizationClient: React.FC = () => {
             >
               <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">
-                OpenStreetMap</a> contributors'
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               />
               <MapRefUpdater mapRef={mapRef} />
 
-              {/* Render locations */}
               {locations.map((loc, idx) => {
-                // Validar lat/lng
                 const isLatLonValid =
                   typeof loc.latitude === "number" &&
                   !isNaN(loc.latitude) &&
@@ -544,8 +546,7 @@ const VisualizationClient: React.FC = () => {
 
                 return (
                   <React.Fragment key={loc.id ?? idx}>
-                    {/* Polígonos de inclusão */}
-                    {loc.includedPolygons?.map((poly, i) => (
+                    {loc.includedPolygons?.map((poly, i) =>
                       Array.isArray(poly) && poly.length > 0 ? (
                         <Polygon
                           key={`inc-${loc.id ?? idx}-${i}`}
@@ -553,10 +554,8 @@ const VisualizationClient: React.FC = () => {
                           color="blue"
                         />
                       ) : null
-                    ))}
-
-                    {/* Polígonos de exclusão */}
-                    {loc.excludedPolygons?.map((poly, i) => (
+                    )}
+                    {loc.excludedPolygons?.map((poly, i) =>
                       Array.isArray(poly) && poly.length > 0 ? (
                         <Polygon
                           key={`exc-${loc.id ?? idx}-${i}`}
@@ -564,13 +563,13 @@ const VisualizationClient: React.FC = () => {
                           color="red"
                         />
                       ) : null
-                    ))}
-
-                    {/* Marker (se lat/lng válidos) */}
+                    )}
                     {isLatLonValid && (
                       <Marker
                         position={[loc.latitude, loc.longitude]}
-                        icon={loc.action === "include" ? includeIcon : excludeIcon}
+                        icon={
+                          loc.action === "include" ? includeIcon : excludeIcon
+                        }
                       >
                         <Popup>{loc.name}</Popup>
                       </Marker>
@@ -581,7 +580,6 @@ const VisualizationClient: React.FC = () => {
             </MapContainer>
           </div>
 
-          {/* Lista de localizações adicionadas */}
           <div className={styles.visualizationSearchHistory}>
             {locations.map((loc, idx) => (
               <div
@@ -589,15 +587,17 @@ const VisualizationClient: React.FC = () => {
                 className={styles.visualizationSearchItem}
                 onClick={() => handleFocusRegion(idx)}
               >
-                <img
+                <Image
                   src={
                     loc.action === "include"
                       ? includeIconSrc.src ?? includeIconSrc
                       : excludeIconSrc.src ?? excludeIconSrc
                   }
-                  alt={loc.action}
+                  alt="Ícone"
                   className={styles.searchHistoryIcon}
-                  style={{ marginRight: 8, width: 20, height: 20 }}
+                  width={20}
+                  height={20}
+                  style={{ marginRight: 8 }}
                 />
                 <span>{loc.name}</span>
                 <button

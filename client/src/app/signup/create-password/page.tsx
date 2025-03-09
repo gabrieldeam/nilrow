@@ -1,15 +1,14 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-
+import Link from 'next/link';
 import CustomInput from '@/components/UI/CustomInput/CustomInput';
 import Card from '@/components/UI/Card/Card';
 import ConfirmationButton from '@/components/UI/ConfirmationButton/ConfirmationButton';
 import Notification from '@/components/UI/Notification/Notification';
 
 import styles from './CreatePassword.module.css';
-import { useSignupContext } from '../layout';
+import { useSignupContext } from '@/context/SignupContext';
 
 // Validação local da senha
 const validatePassword = (password: string): string | null => {
@@ -50,13 +49,7 @@ const calculatePasswordStrength = (password: string): number => {
 };
 
 export default function CreatePassword() {
-  const router = useRouter();
-
-  const {
-    formData,
-    setFormData,
-    handleStepCompletion,
-  } = useSignupContext();
+  const { formData, setFormData, handleStepCompletion } = useSignupContext();
 
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [error, setError] = useState('');
@@ -108,7 +101,7 @@ export default function CreatePassword() {
         password: formData.password,
         confirmPassword: formData.confirmPassword,
       });
-      // handleStepCompletion => router.push('/signup');
+      // handleStepCompletion já redireciona para /signup
     },
     [formData, handleStepCompletion]
   );
@@ -170,7 +163,7 @@ export default function CreatePassword() {
             />
           </div>
           <div className={styles.backLink}>
-            <a href="/signup">Voltar sem salvar</a>
+            <Link href="/signup">Voltar sem salvar</Link>
           </div>
         </form>
       </div>

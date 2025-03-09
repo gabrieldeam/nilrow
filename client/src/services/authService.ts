@@ -1,5 +1,5 @@
-import api from './api'; 
-import { LoginData, ResetPasswordData } from '../types/services/auth';
+import api from './api';
+import { LoginData, ResetPasswordData, RegisterData } from '../types/services/auth';
 
 export const sendResetCode = async (email: string) => {
   const response = await api.post('/auth/forgot-password', { email });
@@ -21,7 +21,7 @@ export const loginWithPhone = async (phone: string, password: string, location?:
   return response.data;
 };
 
-export const register = async (data: Record<string, any>) => {
+export const register = async (data: RegisterData) => {
   const response = await api.post('/auth/register', data);
   return response.data;
 };

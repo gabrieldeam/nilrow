@@ -122,7 +122,7 @@ function EditDataPage() {
           birthDate: userProfile.birthDate || '',
         });
         setEmail(userProfile.email);
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Erro ao buscar dados do usuário:', err);
       }
     };
@@ -137,12 +137,12 @@ function EditDataPage() {
 
   // Navigation "voltar"
   const handleBack = useCallback(() => {
-    router.back(); // substitui navigate(-1)
+    router.back();
   }, [router]);
 
   // Handlers de input
   const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const { name, value } = e.target;
       setFormData((prev) => ({
         ...prev,
@@ -152,17 +152,23 @@ function EditDataPage() {
     []
   );
 
-  const handleDateFieldChange = useCallback((event: { target: { name: string; value: string } }) => {
-    const { name, value } = event.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  }, []);
+  const handleDateFieldChange = useCallback(
+    (event: { target: { name: string; value: string } }) => {
+      const { name, value } = event.target;
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    },
+    []
+  );
 
-  const handleEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setEmail(e.target.value);
-  }, []);
+  const handleEmailChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setEmail(e.target.value);
+    },
+    []
+  );
 
   // Submit do formulário de dados pessoais
   const handleSubmit = useCallback(
@@ -180,19 +186,34 @@ function EditDataPage() {
       const updatedProfileData = {
         name: formData.name !== originalData.name ? formData.name : undefined,
         cpf: formData.cpf !== originalData.cpf ? formData.cpf : undefined,
-        birthDate: formData.birthDate !== originalData.birthDate ? formData.birthDate : undefined,
-      };      
+        birthDate:
+          formData.birthDate !== originalData.birthDate
+            ? formData.birthDate
+            : undefined,
+      };
 
       try {
         await updateUserProfile(updatedProfileData);
         setSuccessMessage('Dados atualizados com sucesso!');
         setShowNotification(true);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Erro ao atualizar dados:', err);
-        setError(
-          err.response?.data?.message ||
-            'Erro ao atualizar dados. Tente novamente.'
-        );
+        if (
+          typeof err === 'object' &&
+          err !== null &&
+          'response' in err &&
+          typeof (err as { response?: { data?: { message?: string } } }).response === 'object'
+        ) {
+          const axiosError = err as { response?: { data?: { message?: string } } };
+          setError(
+            axiosError.response?.data?.message ||
+              'Erro ao atualizar dados. Tente novamente.'
+          );
+        } else if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError('Erro ao atualizar dados. Tente novamente.');
+        }
         setShowNotification(true);
       }
     },
@@ -223,11 +244,24 @@ function EditDataPage() {
         await resetPassword({ email, token: resetCode, newPassword });
         setSuccessMessage('Senha redefinida com sucesso.');
         setShowNotification(true);
-      } catch (err) {
-        console.error(err);
-        setError(
-          'Erro ao redefinir senha. Verifique o código e tente novamente.'
-        );
+      } catch (err: unknown) {
+        console.error('Erro ao redefinir senha:', err);
+        if (
+          typeof err === 'object' &&
+          err !== null &&
+          'response' in err &&
+          typeof (err as { response?: { data?: { message?: string } } }).response === 'object'
+        ) {
+          const axiosError = err as { response?: { data?: { message?: string } } };
+          setError(
+            axiosError.response?.data?.message ||
+              'Erro ao redefinir senha. Verifique o código e tente novamente.'
+          );
+        } else if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError('Erro ao redefinir senha. Verifique o código e tente novamente.');
+        }
         setShowNotification(true);
       } finally {
         setLoading(false);
@@ -246,11 +280,24 @@ function EditDataPage() {
         await sendResetCode(email);
         setSuccessMessage('Novo código de redefinição enviado para o seu e-mail.');
         setShowNotification(true);
-      } catch (err) {
-        console.error(err);
-        setError(
-          'Erro ao enviar novo código de redefinição. Verifique o e-mail e tente novamente.'
-        );
+      } catch (err: unknown) {
+        console.error('Erro ao enviar novo código:', err);
+        if (
+          typeof err === 'object' &&
+          err !== null &&
+          'response' in err &&
+          typeof (err as { response?: { data?: { message?: string } } }).response === 'object'
+        ) {
+          const axiosError = err as { response?: { data?: { message?: string } } };
+          setError(
+            axiosError.response?.data?.message ||
+              'Erro ao enviar novo código de redefinição. Verifique o e-mail e tente novamente.'
+          );
+        } else if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError('Erro ao enviar novo código de redefinição. Verifique o e-mail e tente novamente.');
+        }
         setShowNotification(true);
       } finally {
         setLoading(false);
@@ -284,7 +331,6 @@ function EditDataPage() {
       )}
       {loading && <LoadingSpinner />}
 
-      {/* MOBILE HEADER (se for mobile) */}
       {isMobile && (
         <MobileHeader
           title="Editar dados"

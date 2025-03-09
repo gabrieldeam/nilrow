@@ -1,5 +1,5 @@
 import api from './api';
-import { UserData, ChannelData, CatalogData } from '../types/services/admin';
+import { ChannelData, CatalogData } from '../types/services/admin';
 import { PagedUserResponse } from '../types/pages/admin/users/PagedUserResponse';
 
 // Busca todos os usuários

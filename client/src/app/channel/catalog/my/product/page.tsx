@@ -106,26 +106,39 @@ const Product: React.FC = () => {
             <div className={styles.productSeeDatacontainer}>
               {loading && <p>Carregando produtos...</p>}
               {!loading && products.length === 0 && <p>Nenhum produto cadastrado.</p>}
-              {!loading && products.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  images={
-                    product.images && product.images.length > 0
-                      ? product.images.map((img: any) => `${apiUrl}${img}`)
-                      : [defaultImage.src]
-                  }
-                  name={product.name}
-                  price={product.salePrice}
-                  freeShipping={product.freeShipping}
-                  buttons={[
-                    { image: editWhite.src, link: `/channel/catalog/my/product/edit?productId=${product.id}` },
-                    {
-                      image: product.active ? verificacao.src : checkWhite.src,
-                      onClick: () => handleToggleActive(product)
+              {!loading && products.map((product) => {
+                // Trata o desconto como uma porcentagem.
+                // Se houver desconto válido (maior que 0), calcula o preço com desconto.
+                const discountPercentage = product.discountPrice && product.discountPrice > 0 
+                  ? product.discountPrice 
+                  : 0;
+                const numericPrice = product.salePrice;
+                const discountedPrice = discountPercentage > 0 
+                  ? numericPrice * (1 - discountPercentage / 100)
+                  : numericPrice;
+
+                return (
+                  <ProductCard
+                    key={product.id}
+                    images={
+                      product.images && product.images.length > 0
+                        ? product.images.map((img: string) => `${apiUrl}${img}`)
+                        : [defaultImage.src]
                     }
-                  ]}
-                />
-              ))}
+                    name={product.name}
+                    price={numericPrice}
+                    discount={discountPercentage}
+                    freeShipping={product.freeShipping}
+                    buttons={[
+                      { image: editWhite.src, link: `/channel/catalog/my/product/edit?productId=${product.id}` },
+                      {
+                        image: product.active ? verificacao.src : checkWhite.src,
+                        onClick: () => handleToggleActive(product)
+                      }
+                    ]}
+                  />
+                );
+              })}
             </div>            
           </div>  
         </Card>        

@@ -9,10 +9,26 @@ import { getMyFollowingChannels } from '../../../../services/channel/followServi
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 const frontUrl = process.env.NEXT_PUBLIC_FRONT_URL || '';
 
+// Definindo o tipo para os canais que o componente espera
+interface Channel {
+  id: string;
+  nickname: string;
+  name: string;
+  imageUrl: string;
+}
+
+// Definindo o tipo para os dados que vêm da API (onde imageUrl pode ser opcional)
+interface FollowingChannelData {
+  id: string;
+  nickname: string;
+  name: string;
+  imageUrl?: string;
+}
+
 const Following: React.FC = () => {
   const router = useRouter();
   const followingListRef = useRef<HTMLDivElement | null>(null);
-  const [channels, setChannels] = useState<any[]>([]);
+  const [channels, setChannels] = useState<Channel[]>([]);
   const [page, setPage] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -22,10 +38,17 @@ const Following: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await getMyFollowingChannels(currentPage, 10);
+      const response = await getMyFollowingChannels(currentPage, 10) as FollowingChannelData[];
+      // Mapeia a resposta para garantir que imageUrl seja sempre uma string
+      const mappedResponse: Channel[] = response.map((channel: FollowingChannelData) => ({
+        ...channel,
+        imageUrl: channel.imageUrl || '',
+      }));
+
       setChannels((prev) => {
-        const unique = [...prev, ...response].filter(
-          (channel, index, self) => index === self.findIndex((c) => c.id === channel.id)
+        const unique = [...prev, ...mappedResponse].filter(
+          (channel, index, self) =>
+            index === self.findIndex((c) => c.id === channel.id)
         );
         return unique;
       });
