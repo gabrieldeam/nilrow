@@ -3,7 +3,7 @@
 import React, { useState, useContext, useEffect, useCallback } from 'react';
 import styles from './AddressModal.module.css';
 import { AddressModalProps, Address } from '../../../types/components/Modals/AddressModal';
-import { LocationContext } from '../../../context/LocationContext';
+import { LocationContext } from '../../../context/LocationContext'; // Certifique-se do caminho correto
 import { useNotification } from '../../../hooks/useNotification';
 import CustomInput from '../../UI/CustomInput/CustomInput';
 import Card from '../../UI/Card/Card';
@@ -11,17 +11,13 @@ import HeaderButton from '../../UI/HeaderButton/HeaderButton';
 import SeeData from '../../UI/SeeData/SeeData';
 import closeIcon from '../../../../public/assets/close.svg';
 import { getAddresses } from '../../../services/profileService';
-// Removemos a importação de useRouter, já que não está sendo utilizada
-// import { useRouter } from 'next/navigation';
-
 import { useAuth } from '../../../hooks/useAuth';
 
 const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose }) => {
-  const { location, setLocation } = useContext(LocationContext)!;
+  // Acessa location, setLocation, fetchLatLng do contexto
+  const { location, setLocation, fetchLatLng } = useContext(LocationContext)!;
+
   const { setMessage } = useNotification();
-  // Removemos a declaração de router
-  // const router = useRouter();
-  
   const { isAuthenticated, loading } = useAuth();
 
   const [zip, setZip] = useState(location.zip || '');
@@ -32,6 +28,7 @@ const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose }) => {
     setZip(location.zip || '');
   }, [location.zip]);
 
+  // Impede o scroll do body quando o modal está aberto
   useEffect(() => {
     document.body.classList.toggle(styles['body-no-scroll'], isOpen);
     return () => {
@@ -39,6 +36,7 @@ const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose }) => {
     };
   }, [isOpen]);
 
+  // Se estiver autenticado, carrega endereços do usuário quando o modal abre
   useEffect(() => {
     if (!isOpen) return;
     if (!loading && isAuthenticated) {
@@ -55,47 +53,61 @@ const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose }) => {
     }
   }, [isOpen, isAuthenticated, loading, setMessage]);
 
-  // Submete CEP manual
+  // Submete CEP digitado manualmente
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!zip) return;
 
     try {
+      // Busca dados básicos via ViaCEP
       const response = await fetch(`https://viacep.com.br/ws/${zip}/json/`);
       const data = await response.json();
+
       if (data.erro) {
         alert('CEP inválido');
         return;
       }
 
+      // Usa a Geocoding API (via fetchLatLng) para pegar lat/lng
+      const { lat, lng } = await fetchLatLng(`${data.localidade}, ${data.uf}, ${data.cep}`);
+
       setLocation({
         city: data.localidade,
         state: data.uf,
-        latitude: 0,
-        longitude: 0,
+        latitude: lat,
+        longitude: lng,
         zip: data.cep,
       });
-      onClose();
+
+      onClose(); // fecha o modal
     } catch (error) {
-      console.error('Error fetching address:', error);
+      console.error('Erro ao buscar endereço/lat-lng:', error);
     }
   };
 
+  // Exibe todos ou apenas 4 endereços
   const toggleShowAllAddresses = useCallback(() => {
     setShowAllAddresses((prev) => !prev);
   }, []);
 
-  const handleUseZip = (address: Address) => {
-    setLocation({
-      city: address.city,
-      state: address.state,
-      latitude: 0,
-      longitude: 0,
-      zip: address.cep,
-    });
-    onClose();
+  // Usa o CEP de um endereço cadastrado
+  const handleUseZip = async (address: Address) => {
+    try {
+      const { lat, lng } = await fetchLatLng(`${address.city}, ${address.state}, ${address.cep}`);
+      setLocation({
+        city: address.city,
+        state: address.state,
+        latitude: lat,
+        longitude: lng,
+        zip: address.cep,
+      });
+      onClose();
+    } catch (error) {
+      console.error('Erro ao buscar lat/lng para o CEP selecionado:', error);
+    }
   };
 
+  // Fecha o modal ao clicar no overlay
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if ((e.target as HTMLDivElement).classList.contains(styles['address-modal-overlay'])) {
       onClose();
@@ -112,13 +124,12 @@ const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose }) => {
         <div className={styles['address-modal-close-button-wrapper']}>
           <HeaderButton icon={closeIcon} onClick={onClose} />
         </div>
-        
-        <h2 className={`${styles['address-modal-title']} roboto-medium`}>
-          Selecione onde você está
-        </h2>
+
+        <h2 className={`${styles['address-modal-title']} roboto-medium`}>Selecione onde você está</h2>
         <p className={`${styles['address-modal-description']} roboto-regular`}>
           Você poderá ver custos e prazos de entrega precisos em tudo que procurar.
         </p>
+
         {isAuthenticated && (
           <Card
             title="Endereços cadastrados"

@@ -225,3 +225,25 @@ export const searchProductsByCatalog = async (
   return response.data;
 };
 
+/**
+ * Lista produtos de um catálogo filtrados pelo endereço de entrega (latitude e longitude),
+ * considerando a regra de entrega (ponto permitido em pelo menos uma Location) e estoque > 0.
+ *
+ * @param catalogId ID do catálogo.
+ * @param latitude Latitude do endereço de entrega.
+ * @param longitude Longitude do endereço de entrega.
+ * @param page Página (padrão 0).
+ * @param size Quantidade de itens por página (padrão 10).
+ */
+export const filterProductsByCatalogAndDelivery = async (
+  catalogId: string,
+  latitude: number,
+  longitude: number,
+  page = 0,
+  size = 10
+): Promise<PagedResponse<ProductDTO>> => {
+  const response = await api.get<PagedResponse<ProductDTO>>(
+    `/products/catalog/${catalogId}/filter?latitude=${latitude}&longitude=${longitude}&page=${page}&size=${size}`
+  );
+  return response.data;
+};

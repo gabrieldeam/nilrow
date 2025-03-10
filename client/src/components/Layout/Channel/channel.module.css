@@ -1,265 +1,234 @@
 .channelPage {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    box-sizing: border-box;
-    padding-top: 160px;
-    padding-bottom: 30px;
-  }
-  
-  .channelContainer {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    padding: 0 58px;
-    box-sizing: border-box;
-  }
-  
-  .channelBanner,
-  .channelButtonsSection {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    box-sizing: border-box;
-  }
-  
-  .channelButtonsSection {
-    margin-bottom: 3px;
-    margin-top: 30px;
-  }
-  
-  .fixedChannelButtonsSection {
-    position: fixed;
-    top: 89px;
-    left: 0;
-    width: 100%;
-    z-index: 100;
-    background-color: #000000;
-    padding: 10px 58px;
-  }
-  
-  .channelLeft {
-    display: flex;
-    align-items: center;
-  }
-  
-  .channelImage {
-    width: 130px;
-    height: 130px;
-    border-radius: 100px;
-    object-fit: cover;
-    margin-right: 58px;
-  }
-  
-  .channelDetails {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    text-align: left;
-  }
-  
-  .channelName {
-    font-size: 28px;
-    font-weight: bold;
-  }
-  
-  .followInfo {
-    display: flex;
-    gap: 20px;
-    font-size: 14px;
-    color: #fff;
-    margin-bottom: 20px;
-  }
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-sizing: border-box;
+  padding-top: 160px;
+  padding-bottom: 30px;
+}
 
-  .followInfoButton {
-    background: none;
-    border: none;
-    color: #fff; /* Cor branca */
-    cursor: pointer;
-    font-size: 14px;
+.channelContainer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0 58px;
+  box-sizing: border-box;
+}
+
+.channelBanner,
+.channelButtonsSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.channelButtonsSection {
+  margin-bottom: 3px;
+  margin-top: 30px;
+}
+
+.fixedChannelButtonsSection {
+  position: fixed;
+  top: 89px;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  background-color: #000000;
+  padding: 10px 58px;
+}
+
+.channelLeft {
+  display: flex;
+  align-items: center;
+}
+
+.channelImage {
+  width: 130px;
+  height: 130px;
+  border-radius: 100px;
+  object-fit: cover;
+  margin-right: 58px;
+}
+
+.channelDetails {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.channelName {
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.followInfo {
+  display: flex;
+  gap: 20px;
+  font-size: 14px;
+  color: #fff;
+  margin-bottom: 20px;
+}
+
+.followInfoButton {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
 }
 
 .followInfoButton:hover {
-    text-decoration: underline;
+  text-decoration: underline;
 }
-  
-  .biography {
-    font-size: 14px;
-    margin-bottom: 20px;
-    color: #656565;
-    margin-top: -5px;
-    max-width: 400px;
-  }
-  
-  .channelRight {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    text-align: center;
-  }
-  
-  .channelLinkButtonContainer {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-  }
 
-  .centered {
+.biography {
+  font-size: 14px;
+  margin-bottom: 20px;
+  color: #656565;
+  margin-top: -5px;
+  max-width: 400px;
+}
+
+.channelRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: center;
+}
+
+.channelLinkButtonContainer {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.centered {
+  justify-content: center;
+}
+
+.channelLinkButton {
+  display: flex;
+  align-items: center;
+  background-color: #212121;
+  color: #fff;
+  border: none;
+  padding: 5px 10px;
+  font-size: 14px;
+  border-radius: 100px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.channelLinkButtonIcon {
+  width: 15px;
+  height: 15px;
+  margin-right: 5px;
+}
+
+.channelStageButtons {
+  display: flex;
+  gap: 10px;
+  width: 390px;
+}
+
+.buttonsContainer {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+}
+
+.fixedButtonsContainer {
+  display: flex;
+  gap: 60px;
+  padding: 10px;
+  z-index: 100;
+}
+
+.fixedButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.fixedButton img {
+  width: 24px;
+  height: 24px;
+}
+
+.active img {
+  /* Exemplo de cor para o botão ativo */
+  filter: invert(60%) sepia(85%) saturate(5000%) hue-rotate(247deg) brightness(90%) contrast(110%);
+}
+
+.subButtonsContainer {
+  display: flex;
+  gap: 10px;
+  width: 350px;
+  justify-content: center;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .channelPage {
+    padding-bottom: 93px;
+    padding-top: 120px;
+  }
+  .channelContainer {
+    padding: 0 6px;
+  }
+  .channelBanner,
+  .channelButtonsSection {
+    flex-direction: column;
+    align-items: center;
+  }
+  .channelLeft {
+    flex-direction: column;
+    align-items: center;
+  }
+  .channelImage {
+    margin-right: 0px;
+  }
+  .channelRight {
+    align-items: center;
+  }
+  .channelLinkButtonContainer {
     justify-content: center;
   }
-  
-  .channelLinkButton {
-    display: flex;
-    align-items: center;
-    background-color: #212121;
-    color: #fff;
-    border: none;
-    padding: 5px 10px;
-    font-size: 14px;
-    border-radius: 100px;
-    text-decoration: none;
-    cursor: pointer;
+  .fixedChannelButtonsSection {
+    top: 73px;
   }
-
-  .channelLinkButtonIcon {
-    width: 15px;
-    height: 15px;
-    margin-right: 5px;
+  .channelButtonsSection {
+    margin-bottom: 3px;
+    margin-top: 15px;
   }
-  
   .channelStageButtons {
-    display: flex;
+    width: calc(100vw - 40px);
+    justify-content: center;
     gap: 10px;
-    width: 390px;
-  }
-  .buttonsContainer {
-    display: flex;
-    gap: 30px;
-    align-items: center;
   }
   .fixedButtonsContainer {
-    display: flex;
-    gap: 60px;
-    padding: 10px;
-    z-index: 100;
-  }
-  .fixedButton {
-    background: none;
-    border: none;
-    cursor: pointer;
-  }
-  .fixedButton img {
-    width: 24px;
-    height: 24px;
-  }
-  .active img {
-    filter: invert(60%) sepia(85%) saturate(5000%) hue-rotate(247deg) brightness(90%) contrast(110%);
+    justify-content: center;
   }
   .subButtonsContainer {
-    display: flex;
-    gap: 10px;
-    width: 350px;
-    justify-content: center;
-  }
-  .channelContentSection {
-    display: flex;
+    flex-direction: row;
     justify-content: space-between;
-    align-items: center;
     width: 100%;
-    box-sizing: border-box;
-  }
-  .testScrollContainer {
-    margin-top: 20px;
-  }
-  .testImage {
-    width: 100%;
-    max-width: 600px;
-    height: auto;
-  }
-  .emptyPostContainer {
-    width: 100%;
-    background-color: #151515;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 200px;
-    color: #fff;
-    font-size: 18px;
-    text-align: center;
     margin-top: 15px;
-    border-radius: 5px;
   }
-  
-  /* Mobile */
-  @media (max-width: 768px) {
-    .channelPage {
-      padding-bottom: 93px;
-      padding-top: 120px;
-    }
-    .channelContainer {
-      padding: 0 6px;
-    }
-    .channelBanner,
-    .channelButtonsSection,
-    .channelContentSection {
-      flex-direction: column;
-      align-items: center;
-    }
-    .channelLeft {
-      flex-direction: column;
-      align-items: center;
-    }
-    .channelImage {
-      margin-right: 0px;
-    }
-    .channelRight {
-      align-items: center;
-    }
-    .channelLinkButtonContainer {
-      justify-content: center;
-    }
-    .fixedChannelButtonsSection {
-      top: 73px;
-    }
-    .channelButtonsSection {
-      margin-bottom: 3px;
-      margin-top: 15px;
-    }
-    .channelStageButtons {
-      width: calc(100vw - 40px);
-      justify-content: center;
-      gap: 10px;
-    }
-    .fixedButtonsContainer {
-      justify-content: center;
-    }
-    .subButtonsContainer {
-      flex-direction: row;
-      justify-content: space-between;
-      width: 100%;
-      margin-top: 15px;
-    }
-    .channelDetails {
-      align-items: center;
-      text-align: center;
-    }
-    .biography {
-      max-width: 100%;
-      padding: 0 15px;
-    }
-    .followInfo {
-      justify-content: center;
-    }
+  .channelDetails {
+    align-items: center;
+    text-align: center;
   }
-  
-  /* Tablet */
-  @media (min-width: 768px) and (max-width: 1024px) {
-    .channelStageButtons {
-      display: inline;
-      width: 230px;
-    }
+  .biography {
+    max-width: 100%;
+    padding: 0 15px;
   }
-  
+  .followInfo {
+    justify-content: center;
+  }
+}

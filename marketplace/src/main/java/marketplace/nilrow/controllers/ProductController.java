@@ -3,6 +3,7 @@ package marketplace.nilrow.controllers;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import marketplace.nilrow.domain.catalog.product.ProductDTO;
+import marketplace.nilrow.repositories.LocationRepository;
 import marketplace.nilrow.services.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
@@ -21,6 +22,7 @@ public class ProductController {
 
     @Autowired
     private ProductService productService;
+
 
     /**
      * Cria um novo produto (POST) enviando o JSON do produto e as imagens do produto principal
@@ -116,5 +118,21 @@ public class ProductController {
         Page<ProductDTO> result = productService.searchProductsByCatalog(catalogId, term, PageRequest.of(page, size));
         return ResponseEntity.ok(result);
     }
+
+    @GetMapping("/catalog/{catalogId}/filter")
+    public ResponseEntity<Page<ProductDTO>> filterProductsByCatalogAndDeliveryPaged(
+            @PathVariable String catalogId,
+            @RequestParam double latitude,
+            @RequestParam double longitude,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ProductDTO> filteredPage = productService.filterProductsByCatalogAndDelivery(
+                catalogId, latitude, longitude, pageable
+        );
+        return ResponseEntity.ok(filteredPage);
+    }
+
 
 }

@@ -27,8 +27,17 @@ import {
 import { checkAuth } from '../../../services/authService';
 import { startConversation } from '../../../services/chatService';
 
+// Importando as seções
+import StoreSection from './sections/StoreSection/StoreSection';
+import PostSection from './sections/PostSection/PostSection';
+import AssessmentSection from './sections/AssessmentSection/AssessmentSection';
+import PurchaseEventSection from './sections/PurchaseEventSection/PurchaseEventSection';
+
+import { getPublishedCatalogs } from '../../../services/catalogService';
+
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
+// Import de ícones
 import chatIcon from '../../../../public/assets/chat.svg';
 import followIcon from '../../../../public/assets/follow.svg';
 import editChannelIcon from '../../../../public/assets/editChannel.svg';
@@ -42,6 +51,7 @@ import categoriesIcon from '../../../../public/assets/categories.svg';
 import searchIcon from '../../../../public/assets/search.svg';
 import purchaseEventChannelIcon from '../../../../public/assets/purchaseEventChannel.svg';
 
+// Import do CSS principal do Channel
 import styles from './channel.module.css';
 
 // Função para formatar números
@@ -87,12 +97,12 @@ interface ChannelData {
 function Channel({ nickname }: ChannelProps) {
   const router = useRouter();
 
-  // Atualizado: usamos a interface ChannelData em vez de any
   const [channelData, setChannelData] = useState<ChannelData | null>(null);
   const [isOwner, setIsOwner] = useState(false);
   const [isFollowingChannel, setIsFollowingChannel] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
+  const [publishedCatalogIds, setPublishedCatalogIds] = useState<string[]>([]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFixed, setIsFixed] = useState(false);
@@ -109,51 +119,53 @@ function Channel({ nickname }: ChannelProps) {
   }, []);
 
   // Buscar dados iniciais do canal
-  // Buscar dados iniciais do canal
-useEffect(() => {
-  const fetchChannelData = async () => {
-    try {
-      const data = await getChannelByNickname(nickname);
+  useEffect(() => {
+    const fetchChannelData = async () => {
+      try {
+        const data = await getChannelByNickname(nickname);
 
-      if (!data || typeof data !== 'object' || !data.id) {
-        console.error('Erro: A API retornou um valor inválido para o canal.', data);
-        return;
+        if (!data || typeof data !== 'object' || !data.id) {
+          console.error('Erro: A API retornou um valor inválido para o canal.', data);
+          return;
+        }
+
+        const transformedData = { ...data, imageUrl: data.imageUrl || '' };
+        setChannelData(transformedData);
+
+        const [countFollowers, countFollowing] = await Promise.all([
+          getFollowersCount(data.id),
+          getFollowingCount(nickname),
+        ]);
+        setFollowersCount(countFollowers);
+        setFollowingCount(countFollowing);
+
+        const ownerCheck = await isChannelOwner(data.id);
+        setIsOwner(ownerCheck);
+
+        const followingCheck = await isFollowing(data.id);
+        setIsFollowingChannel(followingCheck);
+
+        const [aboutData, faqsData] = await Promise.all([
+          getAboutByNickname(nickname),
+          getFAQsByNickname(nickname),
+        ]);
+
+        if ((aboutData && aboutData.aboutText) || (faqsData && faqsData.length > 0)) {
+          setShowAboutButton(true);
+        }
+
+        // Após ter o channelData, buscar os catálogos publicados
+        const catalogs = await getPublishedCatalogs(data.id);
+        // Supondo que cada catalog tenha a propriedade "id"
+        const catalogIds = catalogs.map((catalog) => catalog.id);
+        setPublishedCatalogIds(catalogIds);
+      } catch (error) {
+        console.error('Erro ao buscar dados do canal:', error);
       }
+    };
 
-      // Transforma os dados garantindo que imageUrl seja uma string
-      const transformedData = { ...data, imageUrl: data.imageUrl || '' };
-
-      setChannelData(transformedData);
-
-      const [countFollowers, countFollowing] = await Promise.all([
-        getFollowersCount(data.id),
-        getFollowingCount(nickname),
-      ]);
-      setFollowersCount(countFollowers);
-      setFollowingCount(countFollowing);
-
-      const ownerCheck = await isChannelOwner(data.id);
-      setIsOwner(ownerCheck);
-
-      const followingCheck = await isFollowing(data.id);
-      setIsFollowingChannel(followingCheck);
-
-      const [aboutData, faqsData] = await Promise.all([
-        getAboutByNickname(nickname),
-        getFAQsByNickname(nickname),
-      ]);
-
-      if ((aboutData && aboutData.aboutText) || (faqsData && faqsData.length > 0)) {
-        setShowAboutButton(true);
-      }
-    } catch (error) {
-      console.error('Erro ao buscar dados do canal:', error);
-    }
-  };
-
-  fetchChannelData();
-}, [nickname]);
-
+    fetchChannelData();
+  }, [nickname]);
 
   // Scroll fixo para os botões
   const handleScroll = useCallback(() => {
@@ -174,7 +186,7 @@ useEffect(() => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
-  // Botão de Voltar (equivalente a navigate(-1))
+  // Botão de Voltar
   const handleBack = useCallback(() => {
     router.back();
   }, [router]);
@@ -197,6 +209,7 @@ useEffect(() => {
   const handleButtonClick = (section: 'post' | 'store' | 'assessment' | 'purchaseEvent') => {
     setActiveSection(section);
   };
+
   const getButtonClass = useCallback(
     (section: string) => {
       return activeSection === section ? `${styles.fixedButton} ${styles.active}` : styles.fixedButton;
@@ -233,6 +246,7 @@ useEffect(() => {
       console.error('Erro ao seguir canal:', error);
     }
   };
+
   const handleUnfollowClick = async () => {
     const authResponse = await checkAuth();
     if (!authResponse.isAuthenticated) {
@@ -265,7 +279,6 @@ useEffect(() => {
     }
   };
 
-  // Caso não tenha carregado channelData
   if (!channelData) {
     return <LoadingSpinner />;
   }
@@ -423,7 +436,11 @@ useEffect(() => {
         </div>
 
         {/* Seção de botões fixos */}
-        <div className={`${styles.channelButtonsSection} ${isFixed ? styles.fixedChannelButtonsSection : ''} channel-buttons-section`}>
+        <div
+          className={`${styles.channelButtonsSection} ${
+            isFixed ? styles.fixedChannelButtonsSection : ''
+          } channel-buttons-section`}
+        >
           <div className={styles.buttonsContainer}>
             <div className={styles.fixedButtonsContainer}>
               <button className={getButtonClass('store')} onClick={() => handleButtonClick('store')}>
@@ -446,6 +463,7 @@ useEffect(() => {
               </button>
             </div>
 
+            {/* SubButtons para a Store (desktop view) */}
             {!isMobile && activeSection === 'store' && (
               <div className={styles.subButtonsContainer}>
                 <SubButton
@@ -466,68 +484,18 @@ useEffect(() => {
 
         {/* Conteúdos por seção */}
         {activeSection === 'store' && (
-          <div className={styles.channelContentSection}>
-            {isMobile && (
-              <div className={styles.subButtonsContainer}>
-                <SubButton text="Categorias" backgroundColor="#212121" imageSrc={categoriesIcon} />
-                <SubButton
-                  text="Pesquisar"
-                  backgroundColor="#212121"
-                  imageSrc={searchIcon}
-                  onClick={handleSearchClick}
-                />
-              </div>
-            )}
-            <div className={styles.testScrollContainer}>
-              <h2>Store Section</h2>
-              <Image
-                src="https://www.showmetech.com.br/wp-content/uploads//2017/05/e-commerce-no-Brasil.jpg"
-                alt="Test Scroll"
-                className={styles.testImage}
-                width={150}
-                height={150}
-              />
-            </div>
-          </div>
+          <StoreSection
+            isMobile={isMobile}
+            handleSearchClick={handleSearchClick}
+            catalogIds={publishedCatalogIds}
+          />
         )}
 
-        {activeSection === 'post' && (
-          <div className={styles.channelContentSection}>
-            <div className={styles.emptyPostContainer}>
-              <p>Este canal ainda não tem publicações</p>
-            </div>
-          </div>
-        )}
+        {activeSection === 'post' && <PostSection />}
 
-        {activeSection === 'assessment' && (
-          <div className={styles.channelContentSection}>
-            <div className={styles.testScrollContainer}>
-              <h2>Assessment Section</h2>
-              <Image
-                src="https://www.showmetech.com.br/wp-content/uploads//2017/05/e-commerce-no-Brasil.jpg"
-                alt="Test Scroll"
-                className={styles.testImage}
-                width={150}
-                height={150}
-              />
-            </div>
-          </div>
-        )}
+        {activeSection === 'assessment' && <AssessmentSection />}
 
-        {activeSection === 'purchaseEvent' && (
-          <div className={styles.channelContentSection}>
-            <div className={styles.testScrollContainer}>
-              <h2>Purchase Event Section</h2>
-              <Image
-                src="https://www.showmetech.com.br/wp-content/uploads//2017/05/e-commerce-no-Brasil.jpg"
-                alt="Test Scroll"
-                className={styles.testImage}
-                width={150}
-                height={150}
-              />
-            </div>
-          </div>
-        )}
+        {activeSection === 'purchaseEvent' && <PurchaseEventSection />}
       </div>
 
       {/* Modal de imagem */}

@@ -1,14 +1,12 @@
 package marketplace.nilrow.services;
 
+import marketplace.nilrow.domain.catalog.location.Location;
 import marketplace.nilrow.domain.catalog.product.*;
-import marketplace.nilrow.repositories.BrandRepository;
-import marketplace.nilrow.repositories.CatalogRepository;
-import marketplace.nilrow.repositories.CategoryRepository;
-import marketplace.nilrow.repositories.ProductRepository;
-import marketplace.nilrow.repositories.ProductTemplateRepository;
-import marketplace.nilrow.repositories.SubCategoryRepository;
+import marketplace.nilrow.repositories.*;
+import marketplace.nilrow.util.GeoUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -39,6 +37,9 @@ public class ProductService {
 
     @Autowired
     private CatalogRepository catalogRepository;
+
+    @Autowired
+    private LocationRepository locationRepository;
 
     // Injetamos o repositório de templates
     @Autowired
@@ -140,6 +141,89 @@ public class ProductService {
         Page<Product> page = productRepository.findByNameContainingIgnoreCaseOrSkuCodeContainingIgnoreCase(term, term, pageable);
         return page.map(this::convertToDTO);
     }
+
+    @Transactional
+    public Page<ProductDTO> filterProductsByCatalogAndDelivery(
+            String catalogId,
+            double latitude,
+            double longitude,
+            Pageable pageable
+    ) {
+        System.out.println("\n=== [LOG] filterProductsByCatalogAndDelivery ===");
+        System.out.println("[LOG] -> CatalogID: " + catalogId + ", Latitude: " + latitude + ", Longitude: " + longitude);
+
+        // 1) Carrega as locations
+        List<Location> locations = locationRepository.findByCatalogId(catalogId);
+        if (locations == null || locations.isEmpty()) {
+            System.out.println("[LOG] -> Nenhuma Location encontrada => nenhum ponto liberado. Retornando vazio.");
+            return Page.empty(pageable);
+        }
+        System.out.println("[LOG] -> Total de Locations encontradas: " + locations.size());
+
+        // 2) Montamos o GeoPoint
+        GeoUtils.GeoPoint point = new GeoUtils.GeoPoint(latitude, longitude);
+
+        // 3) Decide se esse ponto é liberado por ALGUMA location.
+        //    (não paramos aqui, pois precisaremos checar 1 a 1 para saber se alguma devolve true)
+        boolean anyLocationAllows = false;
+        for (Location loc : locations) {
+            boolean allowedHere = GeoUtils.isLocationAllowed(point, loc);
+            System.out.println("[LOG] -> isLocationAllowed() para Location: " + loc.getName() + " => " + allowedHere);
+            if (allowedHere) {
+                anyLocationAllows = true;
+                break;
+            }
+        }
+        if (!anyLocationAllows) {
+            System.out.println("[LOG] -> Nenhuma Location liberou esse ponto => empty");
+            return Page.empty(pageable);
+        }
+
+        // 4) Se o endereço foi liberado, vamos filtrar produtos:
+        //    Carrega todos do catálogo:
+        List<Product> products = productRepository.findByCatalogId(catalogId);
+        System.out.println("[LOG] -> Total de produtos no catálogo: " + (products == null ? 0 : products.size()));
+
+        // 5) Aplica as condições:
+        //    - product.isActive() == true
+        //    - (estoque > 0) => se sem variações, p.getStock()>0; se com variações, qualquer var.>0
+        List<Product> filtered = products.stream()
+                .filter(p -> {
+                    // 5.a) ver se product está ativo
+                    if (!p.isActive()) {
+                        return false;
+                    }
+
+                    // 5.b) ver se há estoque > 0
+                    boolean hasStock;
+                    if (p.getVariations() == null || p.getVariations().isEmpty()) {
+                        // sem variações
+                        hasStock = (p.getStock() != null && p.getStock() > 0);
+                    } else {
+                        // com variações
+                        hasStock = p.getVariations().stream()
+                                .anyMatch(v -> (v.getStock() != null && v.getStock() > 0));
+                    }
+
+                    return hasStock;
+                })
+                .toList();
+
+        System.out.println("[LOG] -> Total de produtos (ativos e com estoque) => " + filtered.size());
+
+        // 6) Converte pra DTO e pagina
+        List<ProductDTO> dtos = filtered.stream().map(this::convertToDTO).toList();
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), dtos.size());
+        List<ProductDTO> pageContent = (start > end) ? List.of() : dtos.subList(start, end);
+
+        System.out.println("[LOG] -> Retornando " + pageContent.size() + " produtos nessa página.\n");
+        return new PageImpl<>(pageContent, pageable, dtos.size());
+    }
+
+
+
+
 
     public Page<ProductDTO> searchProductsByCatalog(String catalogId, String term, Pageable pageable) {
         Page<Product> page = productRepository.searchProductsByCatalog(catalogId, term, pageable);

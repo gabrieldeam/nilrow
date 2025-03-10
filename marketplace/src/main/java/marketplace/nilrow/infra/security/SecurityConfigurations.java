@@ -99,9 +99,10 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.DELETE, "/user-category-order/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/user-category-order/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/user-category-order/**").authenticated()
+
                         .requestMatchers(HttpMethod.PUT, "/products/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/products/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/products/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/products/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/products/**").authenticated()
 
                         .requestMatchers(HttpMethod.PUT, "/brands/**").authenticated()

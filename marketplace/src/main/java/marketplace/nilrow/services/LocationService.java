@@ -1,17 +1,13 @@
 package marketplace.nilrow.services;
 
 import marketplace.nilrow.domain.catalog.Catalog;
-import marketplace.nilrow.domain.catalog.location.Coordinate;
-import marketplace.nilrow.domain.catalog.location.Location;
-import marketplace.nilrow.domain.catalog.location.LocationDTO;
-import marketplace.nilrow.domain.catalog.location.Polygon;
+import marketplace.nilrow.domain.catalog.location.*;
 import marketplace.nilrow.repositories.CatalogRepository;
 import marketplace.nilrow.repositories.LocationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,14 +26,11 @@ public class LocationService {
         }
 
         Catalog catalog = catalogOpt.get();
-        // Corrigido aqui: Passando o catalog ao chamar convertToEntity
         Location location = convertToEntity(locationDTO, catalog);
-        location.setCatalog(catalog);
 
         Location savedLocation = locationRepository.save(location);
         return convertToDTO(savedLocation);
     }
-
 
     public void deleteLocation(String locationId) {
         locationRepository.deleteById(locationId);
@@ -50,6 +43,7 @@ public class LocationService {
                 .collect(Collectors.toList());
     }
 
+    // ----------------------------------------------------
     private Location convertToEntity(LocationDTO locationDTO, Catalog catalog) {
         Location location = new Location();
         location.setName(locationDTO.getName());
@@ -57,53 +51,74 @@ public class LocationService {
         location.setAction(locationDTO.getAction());
         location.setCatalog(catalog);
 
-        // Convert includedPolygons
-        location.setIncludedPolygons(locationDTO.getIncludedPolygons().stream()
-                .map(polygonCoords -> {
-                    Polygon polygon = new Polygon();
-                    polygon.setCoordinates(polygonCoords.stream()
-                            .map(coord -> new Coordinate(null, coord.get(0), coord.get(1)))
-                            .collect(Collectors.toList()));
-                    polygon.setLocation(location);  // Associar a Location ao Polygon
-                    return polygon;
-                }).collect(Collectors.toList()));
+        // Juntaremos tudo em location.polygons
+        List<Polygon> polygons = new ArrayList<>();
 
-        // Convert excludedPolygons
-        location.setExcludedPolygons(locationDTO.getExcludedPolygons().stream()
-                .map(polygonCoords -> {
-                    Polygon polygon = new Polygon();
-                    polygon.setCoordinates(polygonCoords.stream()
-                            .map(coord -> new Coordinate(null, coord.get(0), coord.get(1)))
-                            .collect(Collectors.toList()));
-                    polygon.setLocation(location);  // Associar a Location ao Polygon
-                    return polygon;
-                }).collect(Collectors.toList()));
+        // 1) Montar polygons de INCLUDED, a partir de locationDTO.includedPolygons
+        if (locationDTO.getIncludedPolygons() != null) {
+            for (List<List<Double>> coordsList : locationDTO.getIncludedPolygons()) {
+                Polygon polygon = new Polygon();
+                polygon.setLocation(location);
+                polygon.setPolygonType(PolygonType.INCLUDED);
 
+                List<Coordinate> coords = coordsList.stream()
+                        // coordsList é List<[lat, lon]>
+                        .map(coord -> new Coordinate(null, coord.get(0), coord.get(1)))
+                        .collect(Collectors.toList());
+                polygon.setCoordinates(coords);
+
+                polygons.add(polygon);
+            }
+        }
+
+        // 2) Montar polygons de EXCLUDED, a partir de locationDTO.excludedPolygons
+        if (locationDTO.getExcludedPolygons() != null) {
+            for (List<List<Double>> coordsList : locationDTO.getExcludedPolygons()) {
+                Polygon polygon = new Polygon();
+                polygon.setLocation(location);
+                polygon.setPolygonType(PolygonType.EXCLUDED);
+
+                List<Coordinate> coords = coordsList.stream()
+                        .map(coord -> new Coordinate(null, coord.get(0), coord.get(1)))
+                        .collect(Collectors.toList());
+                polygon.setCoordinates(coords);
+
+                polygons.add(polygon);
+            }
+        }
+
+        // define na location
+        location.setPolygons(polygons);
         return location;
     }
 
-
     private LocationDTO convertToDTO(Location location) {
-        LocationDTO locationDTO = new LocationDTO();
-        locationDTO.setId(location.getId());
-        locationDTO.setName(location.getName());
-        locationDTO.setPosition(location.getPosition());
-        locationDTO.setAction(location.getAction());
+        LocationDTO dto = new LocationDTO();
+        dto.setId(location.getId());
+        dto.setName(location.getName());
+        dto.setPosition(location.getPosition());
+        dto.setAction(location.getAction());
 
-        // Convert includedPolygons
-        locationDTO.setIncludedPolygons(location.getIncludedPolygons().stream()
-                .map(polygon -> polygon.getCoordinates().stream()
+        // Agora precisamos separar polygons de type INCLUDED ou EXCLUDED
+        List<List<List<Double>>> includedPolygons = new ArrayList<>();
+        List<List<List<Double>>> excludedPolygons = new ArrayList<>();
+
+        if (location.getPolygons() != null) {
+            for (Polygon poly : location.getPolygons()) {
+                // Converte polygon de List<Coordinate> => List<[lat, lon]>
+                List<List<Double>> latLonList = poly.getCoordinates().stream()
                         .map(coord -> List.of(coord.getLatitude(), coord.getLongitude()))
-                        .collect(Collectors.toList()))
-                .collect(Collectors.toList()));
+                        .collect(Collectors.toList());
+                if (poly.getPolygonType() == PolygonType.INCLUDED) {
+                    includedPolygons.add(latLonList);
+                } else if (poly.getPolygonType() == PolygonType.EXCLUDED) {
+                    excludedPolygons.add(latLonList);
+                }
+            }
+        }
 
-        // Convert excludedPolygons
-        locationDTO.setExcludedPolygons(location.getExcludedPolygons().stream()
-                .map(polygon -> polygon.getCoordinates().stream()
-                        .map(coord -> List.of(coord.getLatitude(), coord.getLongitude()))
-                        .collect(Collectors.toList()))
-                .collect(Collectors.toList()));
-
-        return locationDTO;
+        dto.setIncludedPolygons(includedPolygons);
+        dto.setExcludedPolygons(excludedPolygons);
+        return dto;
     }
 }

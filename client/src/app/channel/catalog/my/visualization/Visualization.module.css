@@ -79,6 +79,7 @@
   .dropdownContainer {
     position: relative;
     display: inline-block;
+    z-index: 1000;
   }
   
   .dropdownSelected {
@@ -102,6 +103,7 @@
     color: #000;
     z-index: 1001;
     border-radius: 5px;
+    z-index: 9999;
   }
   
   .dropdownContainer:hover .dropdownOptions {

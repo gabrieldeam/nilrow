@@ -78,8 +78,8 @@ export const fetchPlaceDetails = async (placeId: string) => {
 export const createLocation = async (catalogId: string, locationDTO: LocationData) => {
     const response = await api.post(`/locations/create/${catalogId}`, locationDTO);
     return response.data;
-};
-
+  };
+  
 // Deleta uma localização
 export const deleteLocation = async (locationId: string) => {
     await api.delete(`/locations/delete/${locationId}`);
@@ -90,5 +90,12 @@ export const getLocationsByCatalogId = async (catalogId: string) => {
     const response = await api.get<LocationData[]>(`/locations/catalog/${catalogId}`);
     return response.data;
 };
+
+// Busca catálogos publicados (isVisible e isReleased true)
+export const getPublishedCatalogs = async (channelId: string) => {
+    const response = await api.get<CatalogData[]>(`/catalog/published/${channelId}`);
+    return response.data;
+};
+
 
 export default api;

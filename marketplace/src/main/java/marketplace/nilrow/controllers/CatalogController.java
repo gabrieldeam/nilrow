@@ -270,4 +270,19 @@ public class CatalogController {
         return ResponseEntity.ok(catalogDTOs);
     }
 
+    @GetMapping("/published/{channelId}")
+    public ResponseEntity<List<CatalogDTO>> getPublishedCatalogsByChannelId(@PathVariable String channelId) {
+        List<Catalog> catalogs = catalogService.getPublishedCatalogsByChannelId(channelId);
+
+        if (catalogs.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        List<CatalogDTO> catalogDTOs = catalogs.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(catalogDTOs);
+    }
+
 }

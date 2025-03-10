@@ -21,18 +21,17 @@ public class Location {
 
     private String name;
 
+    // Mantém a lista [latitude, longitude] se quiser
     @ElementCollection
     @CollectionTable(name = "location_positions", joinColumns = @JoinColumn(name = "location_id"))
     @Column(name = "position")
     private List<Double> position;
 
+    // Em vez de included/excluded separadas, agora é só:
     @OneToMany(mappedBy = "location", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Polygon> includedPolygons;
+    private List<Polygon> polygons;
 
-    @OneToMany(mappedBy = "location", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Polygon> excludedPolygons;
-
-    private String action;
+    private String action; // se estiver usando
 
     @ManyToOne
     @JoinColumn(name = "catalog_id", nullable = false)

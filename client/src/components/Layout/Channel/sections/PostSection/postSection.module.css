@@ -1,0 +1,19 @@
+.container {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .emptyPostContainer {
+    width: 100%;
+    background-color: #151515;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    color: #fff;
+    font-size: 18px;
+    text-align: center;
+    margin-top: 15px;
+    border-radius: 5px;
+  }
+  

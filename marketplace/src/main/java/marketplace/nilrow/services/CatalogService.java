@@ -178,4 +178,9 @@ public class CatalogService {
     public Optional<Catalog> getCatalogById(String id) {
         return catalogRepository.findById(id);
     }
+
+    public List<Catalog> getPublishedCatalogsByChannelId(String channelId) {
+        return catalogRepository.findAllByChannelIdAndIsVisibleTrueAndIsReleasedTrue(channelId);
+    }
+
 }

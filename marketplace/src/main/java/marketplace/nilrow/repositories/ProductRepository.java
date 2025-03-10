@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 public interface ProductRepository extends JpaRepository<Product, String> {
 
     // Listagem paginada de todos os produtos
@@ -24,5 +26,8 @@ public interface ProductRepository extends JpaRepository<Product, String> {
     Page<Product> searchProductsByCatalog(@Param("catalogId") String catalogId,
                                           @Param("term") String term,
                                           Pageable pageable);
+
+    List<Product> findByCatalogId(String catalogId);
+
 
 }
