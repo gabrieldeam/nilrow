@@ -9,7 +9,6 @@
     justify-content: center;
     align-items: center;
     z-index: 1002;
-    height: 100vh;
 }
 
 .modalContent {
@@ -17,26 +16,12 @@
     padding: 20px;
     border-radius: 5px;
     position: relative;
-    width: 443px;
-    max-height: 80vh;
     overflow-y: auto;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     border: 1px solid #FFFFFF;
     box-sizing: border-box;
-}
-
-.modalCloseBtn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: none;
-    border: none;
-    cursor: pointer;
-}
-
-.closeIcon {
-    width: 20px;
-    height: 20px;
+    display: flex;
+    align-items: center;
 }
 
 .modalBody {
@@ -86,22 +71,6 @@
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 .productPage {
     display: flex;
     flex-direction: column;
@@ -110,11 +79,11 @@
     background-color: #000;
     color: #fff;
     box-sizing: border-box;
+    width: 100%;
 }
 
 .productContainer {
     width: 100%;
-    padding: 0 58px;
     box-sizing: border-box;
 }
 
@@ -157,19 +126,22 @@
     align-items: center;
   }
   
+  
 
 @media (max-width: 768px) {
+
+    .modalContent {
+        border: none;
+        height: 100vh;
+        padding: 0;
+    }
+
     .productPage {
         padding-bottom: 110px;
         padding-top: 109px;
     }
 
     .productContainer {
-        max-width: 419px;
         padding: 0 6px;
-    }
-    
-    .catalogSeeDataWrapper > div {
-        flex: 1 1 100%;
     }
 }

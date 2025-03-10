@@ -3,6 +3,7 @@
   flex-direction: column;
   align-items: center;
   width: 165px;
+  max-width: 165px;
   background-color: #FFFFFF;
   border: 1px solid #9F9F9F;
   color: black;
@@ -10,7 +11,7 @@
 
 .imageWrapper {
   width: 165px;
-  height: 165px;
+  max-height: 165px;
   position: relative;
   overflow: hidden;
   object-fit: contain;
@@ -82,7 +83,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   padding: 8px;  
-  height: 30px;
+  height: 30px;  
 }
 
 .price {

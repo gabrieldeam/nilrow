@@ -6,8 +6,6 @@ import SubHeader from '@/components/Layout/SubHeader/SubHeader';
 import Card from '@/components/UI/Card/Card';
 import ProductCard from '@/components/UI/ProductCard/ProductCard';
 import CustomButton from '@/components/UI/CustomButton/CustomButton';
-
-import closeIcon from "../../../../public/assets/close.svg";
 import defaultImage from '../../../../public/assets/user.png';
 
 import { listAllProductTemplates, searchProductTemplates } from '@/services/product/productTemplateService';
@@ -88,10 +86,7 @@ const ModalTemplate: React.FC<IModalTemplateProps> = ({ isOpen, onClose, onSelec
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-        <button className={styles.modalCloseBtn} onClick={onClose}>
-          <Image src={closeIcon} alt="Close" className={styles.closeIcon} width={20} height={20} />
-        </button>
+      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>     
 
         <div className={styles.productPage}>
           {isMobile && (
@@ -125,20 +120,21 @@ const ModalTemplate: React.FC<IModalTemplateProps> = ({ isOpen, onClose, onSelec
                   {!loading && products.length === 0 && <p>Nenhum template cadastrado.</p>}
 
                   {!loading && products.map(product => (
-                    <div
-                      key={product.id}
-                      onClick={() => {
-                        if (product.id) {
-                          setSelectedTemplateId(product.id);
-                          onSelectTemplate(product.id);
-                          onClose();
-                        }
-                      }}
-                      style={{
-                        cursor: 'pointer',
-                        border: selectedTemplateId === product.id ? '2px solid green' : 'none'
-                      }}
-                    >
+                    // <div
+                    //   key={product.id}
+                    //   onClick={() => {
+                    //     if (product.id) {
+                    //       setSelectedTemplateId(product.id);
+                    //       onSelectTemplate(product.id);
+                    //       onClose();
+                    //     }
+                    //   }}
+                    //   style={{
+                    //     cursor: 'pointer',
+                    //     border: selectedTemplateId === product.id ? '2px solid green' : 'none',
+                    //     width: '100%'
+                    //   }}
+                    // >
                       <ProductCard
                         images={
                           product.images?.length
@@ -148,7 +144,7 @@ const ModalTemplate: React.FC<IModalTemplateProps> = ({ isOpen, onClose, onSelec
                         name={product.name}
                         hideFreeShipping={true}
                       />
-                    </div>
+                    // </div>
                   ))}
                 </div>
               </div>
