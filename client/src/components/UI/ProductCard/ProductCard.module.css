@@ -13,6 +13,29 @@
   height: 165px;
   position: relative;
   overflow: hidden;
+  object-fit: contain;
+}
+
+.indicators {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-top: -10px;
+  margin-bottom: 5px;
+  z-index: 1;
+}
+
+.indicator {
+  width: 20px;
+  height: 4px;
+  background-color: #ccc;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.indicator.active {
+  background-color: #212121;
 }
 
 .imageSlider {
@@ -22,6 +45,8 @@
 
 .imageItem {
   flex-shrink: 0;
+  width: 165px;
+  height: 165px;
 }
 
 .buttonContainer {
@@ -46,7 +71,7 @@
 }
 
 .info {
-  text-align: start;  
+  text-align: start;
   width: 100%;
 }
 
@@ -56,35 +81,34 @@
   margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: 8px;
-  border-bottom: 1px solid #9F9F9F; 
-  height: 30px; 
+  padding: 8px;  
+  height: 30px;
 }
 
 .price {
   font-size: 16px;
   font-weight: 600;
-  margin: 0;  
+  margin: 0;
   padding: 8px 8px 0px 8px;
   display: flex;
   gap: 10px;
+  border-top: 1px solid #9F9F9F;
 }
 
 .freeShipping {
   font-size: 11px;
   color: #656565;
   font-weight: 600;
-  margin: 0;  
+  margin: 0;
   padding: 8px 0px 8px 8px;
 }
 
 @media (max-width: 768px) {
-  .card {    
+  .card {
     width: calc(51.5% - 10px);
   }
 
   .imageWrapper {
     width: 100%;
   }
-  
 }

@@ -5,7 +5,7 @@ import styles from './CustomButton.module.css';
 
 const CustomButton: React.FC<CustomButtonProps> = ({
   title,
-  backgroundColor = '#007BFF',
+  backgroundColor = '#212121',
   onClick,
 }) => {
   return (

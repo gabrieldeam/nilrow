@@ -1,6 +1,6 @@
 import api from '../api';
-import { ProductDTO, VariationImageDTO  } from '../../types/services/product';
-import { PagedResponse } from '../../types/services/common';
+import { ProductDTO, VariationImageDTO  } from '@/types/services/product';
+import { PagedResponse } from '@/types/services/common';
 
 /**
  * Cria um produto (POST /products).
@@ -185,3 +185,43 @@ export const listVariationImagesByVariation = async (
 export const deleteVariationImage = async (id: string): Promise<void> => {
   await api.delete(`/variation-images/${id}`);
 };
+
+/** 
+ * Pesquisa produtos pelo nome ou skuCode, ignorando maiúsculas/minúsculas, paginado.
+ * 
+ * @param term Termo de busca.
+ * @param page Página (padrão 0).
+ * @param size Quantidade de itens por página (padrão 10).
+ */
+export const searchProducts = async (
+  term: string,
+  page = 0,
+  size = 10
+): Promise<PagedResponse<ProductDTO>> => {
+  const response = await api.get<PagedResponse<ProductDTO>>(
+    `/products/search?term=${encodeURIComponent(term)}&page=${page}&size=${size}`
+  );
+  return response.data;
+};
+
+
+/**
+ * Pesquisa produtos pelo nome ou skuCode de um catálogo específico, paginado.
+ *
+ * @param catalogId ID do catálogo
+ * @param term Termo de busca.
+ * @param page Página (padrão 0).
+ * @param size Quantidade de itens por página (padrão 10).
+ */
+export const searchProductsByCatalog = async (
+  catalogId: string,
+  term: string,
+  page = 0,
+  size = 10
+): Promise<PagedResponse<ProductDTO>> => {
+  const response = await api.get<PagedResponse<ProductDTO>>(
+    `/products/catalog/${catalogId}/search?term=${encodeURIComponent(term)}&page=${page}&size=${size}`
+  );
+  return response.data;
+};
+

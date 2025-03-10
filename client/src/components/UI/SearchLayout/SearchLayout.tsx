@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import styles from './SearchLayout.module.css';
-import searchMobileIcon from '../../../../public/assets/setadireito.svg';
+import searchMobileIcon from '../../../../public/assets/search-mobile.svg';
 
 interface SearchLayoutProps {
   placeholder: string;

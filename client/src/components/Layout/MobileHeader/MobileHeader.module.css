@@ -11,7 +11,7 @@
     top: 0;
     left: 0;
     right: 0;
-    z-index: 1000; /* Sempre acima do conteúdo */
+    z-index: 1000;
   }
   
   .mobileHeaderLeft,

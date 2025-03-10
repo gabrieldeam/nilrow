@@ -18,6 +18,9 @@ public class ProductVariationDTO {
 
     private List<VariationImageDTO> images;
 
+    @Size(max = 255, message = "O nome deve ter no máximo 255 caracteres.")
+    private String name;
+
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     @NotNull(message = "O preço é obrigatório.")
     @DecimalMin(value = "0.0", inclusive = false, message = "O preço deve ser maior que zero.")

@@ -4,8 +4,11 @@ import jakarta.persistence.*;
 import lombok.*;
 import marketplace.nilrow.domain.catalog.category.Category;
 import marketplace.nilrow.domain.catalog.category.SubCategory;
-import marketplace.nilrow.domain.catalog.product.brand.Brand;
 import marketplace.nilrow.domain.catalog.product.Product;
+import marketplace.nilrow.domain.catalog.product.ProductType;
+import marketplace.nilrow.domain.catalog.product.ProductVariation;
+import marketplace.nilrow.domain.catalog.product.TechnicalSpecification;
+import marketplace.nilrow.domain.catalog.product.brand.Brand;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -45,20 +48,33 @@ public class ProductTemplate {
     @JoinColumn(name = "brand_id", nullable = false)
     private Brand brand;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ProductType type;
+
     // Informações básicas
     private BigDecimal netWeight;
     private BigDecimal grossWeight;
-    private String unitOfMeasure;
+    private BigDecimal width;
+    private BigDecimal height;
+    private BigDecimal depth;
+    private Integer volumes;
     private Integer itemsPerBox;
 
-    @ManyToMany
-    @JoinTable(
-            name = "product_template_associations",
-            joinColumns = @JoinColumn(name = "template_id"),
-            inverseJoinColumns = @JoinColumn(name = "associated_template_id")
-    )
-    private List<ProductTemplate> associatedTemplates;
+    @Column(length = 255)
+    private String shortDescription;
 
+    @Column(length = 2000)
+    private String complementaryDescription;
+
+    @Column(length = 2000)
+    private String notes;
+
+    @OneToMany(mappedBy = "productTemplate", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TechnicalSpecificationTemplate> technicalSpecifications;
+
+    @OneToMany(mappedBy = "productTemplate", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductTemplateVariation> variations;
 
     // Produtos associados ao template (opcional, para visualização bidirecional)
     @OneToMany(mappedBy = "productTemplate")

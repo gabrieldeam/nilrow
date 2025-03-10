@@ -32,6 +32,7 @@ export interface VariationAttributeDTO {
 // Variação do Produto (sem campo de imagens)
 export interface ProductVariationDTO {
   id?: string;
+  name?: string;
   price?: number;
   discountPrice?: number;
   stock?: number;

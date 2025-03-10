@@ -6,6 +6,7 @@
     overflow: hidden;
     transition: border 0.3s ease;
     height: 44px;
+    margin-top: -10px;
 }
 
 .searchLayoutInput {

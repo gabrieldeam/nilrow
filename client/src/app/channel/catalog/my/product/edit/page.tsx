@@ -495,6 +495,7 @@ const ProductEdit = () => {
       }
       return {
         id: undefined,
+        name: '',
         price: 0,
         discountPrice: 0,
         stock: 0,
@@ -640,20 +641,21 @@ const ProductEdit = () => {
 
   const handleRemoveVariationImage = (variationIndex: number, imageIndex: number) => {
     setVariationImages((prev) => {
-      const arr = prev[variationIndex] || [];
-      if (imageIndex < 0 || imageIndex >= arr.length) {
+      const currentImages = prev[variationIndex] ? [...prev[variationIndex]] : [];
+      if (imageIndex < 0 || imageIndex >= currentImages.length) {
         return prev;
       }
-      const removed = arr.splice(imageIndex, 1)[0];
+      const [removed] = currentImages.splice(imageIndex, 1);
       if (removed && removed.isNew && removed.preview) {
         URL.revokeObjectURL(removed.preview);
       }
       return {
         ...prev,
-        [variationIndex]: [...arr],
+        [variationIndex]: currentImages,
       };
     });
   };
+  
 
   const onDragStartVar = (e: DragEvent<HTMLDivElement>, variationIndex: number, imgIndex: number) => {
     setDraggingVarIndex({ variation: variationIndex, index: imgIndex });
@@ -700,7 +702,7 @@ const ProductEdit = () => {
   const handleSubmit = useCallback(
     async (event: React.FormEvent) => {
       event.preventDefault();
-      if (!name || !skuCode || !salePrice || !unitOfMeasure || !catalogId || !categoryId || !brandId) {
+      if (!name || !stock || !salePrice || !unitOfMeasure || !catalogId || !categoryId || !brandId) {
         setMessage('Preencha todos os campos obrigatórios.', 'error');
         return;
       }
@@ -964,15 +966,16 @@ const ProductEdit = () => {
               name="name"
               value={name}
               onChange={handleTextChange}
-              bottomLeftText={`Máx 150 chars - Restante: ${150 - name.length}`}
+              bottomLeftText={`Caracteres restante: ${150 - name.length} - Obrigatório`}
             />
             <div className={styles.flexFormInput}>
               <CustomInput
-                title="Preço *"
+                title="Preço"
                 type="number"
                 name="salePrice"
                 value={salePrice}
                 onChange={(e) => setSalePrice(Number(e.target.value))}
+                bottomLeftText={`Obrigatório`}
               />
               <CustomInput
                 title="Desconto"
@@ -980,6 +983,7 @@ const ProductEdit = () => {
                 name="discountPrice"
                 value={discountPrice}
                 onChange={(e) => setDiscountPrice(Number(e.target.value))}
+                bottomLeftText={`Porcentagem`}
               />
               <CustomInput
                 title="Estoque"
@@ -987,18 +991,19 @@ const ProductEdit = () => {
                 name="stock"
                 value={stock}
                 onChange={(e) => setStock(Number(e.target.value))}
+                bottomLeftText={`Obrigatório`}
               />
             </div>
             <div className={styles.flexFormInput}>
               <CustomInput
-                title="SKU *"
+                title="SKU"
                 name="skuCode"
                 value={skuCode}
                 onChange={(e) => setSkuCode(e.target.value)}
                 bottomLeftText="Ex: ABC123"
               />
               <CustomInput
-                title="Unidade *"
+                title="Unidade"
                 name="unitOfMeasure"
                 value={unitOfMeasure}
                 onChange={(e) => setUnitOfMeasure(e.target.value)}
@@ -1007,13 +1012,14 @@ const ProductEdit = () => {
             </div>
             <div className={styles.flexFormInput}>
               <CustomSelect
-                title="Tipo de Produto *"
+                title="Tipo de Produto"
                 value={type}
                 onChange={(e) => setType(e.target.value as ProductType)}
                 options={[
                   { value: ProductType.PRODUCT, label: 'Produto' },
                   { value: ProductType.SERVICE, label: 'Serviço' },
                 ]}
+                bottomLeftText={`Obrigatório`}
               />
               <CustomSelect
                 title="Condição *"
@@ -1024,6 +1030,7 @@ const ProductEdit = () => {
                   { value: ProductCondition.USED, label: 'Usado' },
                   { value: ProductCondition.REFURBISHED, label: 'Recondicionado' },
                 ]}
+                bottomLeftText={`Obrigatório`}
               />
             </div>
           </Card>
@@ -1036,7 +1043,7 @@ const ProductEdit = () => {
               isTextarea
               value={shortDescription}
               onChange={handleTextChange}
-              bottomLeftText={`Max 255 chars - restam ${255 - shortDescription.length}`}
+              bottomLeftText={`Caracteres restante: ${255 - shortDescription.length}`}
             />
             <CustomInput
               title="Descrição Complementar"
@@ -1044,7 +1051,7 @@ const ProductEdit = () => {
               isTextarea
               value={complementaryDescription}
               onChange={handleTextChange}
-              bottomLeftText={`Max 2000 chars - restam ${2000 - complementaryDescription.length}`}
+              bottomLeftText={`Caracteres restante: ${2000 - complementaryDescription.length}`}
             />
             <CustomInput
               title="Notas"
@@ -1052,7 +1059,7 @@ const ProductEdit = () => {
               isTextarea
               value={notes}
               onChange={handleTextChange}
-              bottomLeftText={`Max 2000 chars - restam ${2000 - notes.length}`}
+              bottomLeftText={`Caracteres restante: ${2000 - notes.length}`}
             />
           </ExpandableCard>
 
@@ -1074,15 +1081,17 @@ const ProductEdit = () => {
                   });
                 }}
                 hasMore={hasMoreBrands}
+                bottomLeftText={`Obrigatório`}
               />
               <CustomSelect
-                title="Produção *"
+                title="Produção"
                 value={productionType}
                 onChange={(e) => setProductionType(e.target.value as ProductionType)}
                 options={[
                   { value: ProductionType.OWN, label: 'Própria' },
                   { value: ProductionType.THIRD_PARTY, label: 'Terceiros' },
                 ]}
+                bottomLeftText={`Obrigatório`}
               />
             </div>
             <div className={styles.flexFormInput}>
@@ -1105,6 +1114,7 @@ const ProductEdit = () => {
                   });
                 }}
                 hasMore={hasMoreCategories}
+                bottomLeftText={`Obrigatório`}
               />
               {categoryId && (
                 <CustomSelect
@@ -1117,6 +1127,7 @@ const ProductEdit = () => {
                     fetchSubCategories(categoryId, nextPage);
                   }}
                   hasMore={hasMoreSubCategories}
+                  bottomLeftText={`Obrigatório`}
                 />
               )}
             </div>
@@ -1163,6 +1174,7 @@ const ProductEdit = () => {
                 type="number"
                 value={volumes}
                 onChange={(e) => setVolumes(Number(e.target.value))}
+                bottomLeftText={`UN`}
               />
             </div>
             <div className={styles.flexFormInput}>
@@ -1360,6 +1372,13 @@ const ProductEdit = () => {
                     )}
                   </div>
 
+                  <CustomInput
+                    title="Nome"
+                    type="text"
+                    value={variation.name || ''}
+                    onChange={(e) => handleChangeVariationField(index, 'name', e.target.value)}
+                  />        
+    
                   <div className={styles.flexFormInput}>
                     <CustomInput
                       title="Preço"

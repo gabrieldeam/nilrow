@@ -1,93 +1,91 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ProductCardProps } from '@/types/components/UI/ProductCard';
 import styles from './ProductCard.module.css';
 
-interface ExtendedProductCardProps extends ProductCardProps {
-  discount?: string | number | null;
-}
-
-const ProductCard: React.FC<ExtendedProductCardProps> = ({
+const ProductCard: React.FC<ProductCardProps> = ({
   images,
   name,
   price,
   discount,
   freeShipping,
   buttons = [],
+  hideFreeShipping,
 }) => {
-  const sliderRef = useRef<HTMLDivElement>(null);
-  const [scrollInterval, setScrollInterval] = useState<NodeJS.Timeout | null>(null);
-
-  const startScrolling = () => {
-    if (!sliderRef.current) return;
-    if (sliderRef.current.scrollWidth <= sliderRef.current.clientWidth) return;
-
-    const interval = setInterval(() => {
-      if (sliderRef.current) {
-        if (
-          sliderRef.current.scrollLeft >=
-          sliderRef.current.scrollWidth - sliderRef.current.clientWidth
-        ) {
-          sliderRef.current.scrollLeft = 0;
-        } else {
-          sliderRef.current.scrollLeft += 2;
-        }
-      }
-    }, 30);
-    setScrollInterval(interval);
-  };
-
-  const stopScrolling = () => {
-    if (scrollInterval) {
-      clearInterval(scrollInterval);
-      setScrollInterval(null);
-    }
-  };
-
-  const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
-  const numericDiscount = discount ? parseFloat(discount.toString()) : 0;
-  const discountedPrice =
-    numericDiscount > 0 ? numericPrice - (numericPrice * numericDiscount) / 100 : numericPrice;
-
-  // Estados para detectar se o componente foi montado e se é mobile.
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [hoverInterval, setHoverInterval] = useState<NodeJS.Timeout | null>(null);
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    // Função para verificar o tamanho da tela
     const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768); // ajuste o breakpoint conforme necessário
+      setMounted(true);
     };
-
-    // Inicializa a verificação
     handleResize();
-
-    // Adiciona o event listener para atualizar o estado em caso de redimensionamento
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Define o limite de caracteres: 30 para mobile, 46 para desktop.
-  // Enquanto não estiver montado (renderização inicial), mantém o nome completo para evitar diferença entre servidor e cliente.
+  const startScrolling = () => {
+    if (images.length <= 1 || hoverInterval) return;
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % images.length);
+    }, 1000);
+    setHoverInterval(interval);
+  };
+
+  const stopScrolling = () => {
+    if (hoverInterval) clearInterval(hoverInterval);
+    setHoverInterval(null);
+  };
+
+  // Apenas calcula e renderiza o preço se ele for definido
+  let priceElement = null;
+  if (price != null) {
+    const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
+    const numericDiscount = discount ? parseFloat(discount.toString()) : 0;
+    const discountedPrice =
+      numericDiscount > 0 ? numericPrice - (numericPrice * numericDiscount) / 100 : numericPrice;
+    priceElement = (
+      <p className={styles.price}>
+        {numericDiscount > 0 ? (
+          <>
+            <span style={{ color: 'black' }}>R$ {discountedPrice.toFixed(2)}</span>
+            <span
+              style={{
+                textDecoration: 'line-through',
+                color: '#888',
+                marginRight: '5px',
+              }}
+            >
+              R$ {numericPrice.toFixed(2)}
+            </span>
+          </>
+        ) : (
+          <>R$ {numericPrice.toFixed(2)}</>
+        )}
+      </p>
+    );
+  }
+
   const getDisplayName = () => {
-    const limit = isMobile ? 30 : 46;
+    const limit = isMobile ? 30 : 35;
     if (!mounted) return name;
     return name.length > limit ? `${name.substring(0, limit)}...` : name;
   };
 
   return (
     <div className={styles.card}>
-      <div
-        className={styles.imageWrapper}
-        onMouseEnter={startScrolling}
-        onMouseLeave={stopScrolling}
-      >
-        <div className={styles.imageSlider} ref={sliderRef}>
+      <div className={styles.imageWrapper} onMouseEnter={startScrolling} onMouseLeave={stopScrolling}>
+        <div
+          className={styles.imageSlider}
+          style={{ transform: `translateX(-${currentImageIndex * 165}px)` }}
+        >
           {images.map((img, index) => (
             <div key={index} className={styles.imageItem}>
-              <Image src={img} alt={`${name} ${index + 1}`} width={190} height={190} />
+              <Image src={img} alt={`${name} ${index + 1}`} width={165} height={165} />
             </div>
           ))}
         </div>
@@ -109,29 +107,31 @@ const ProductCard: React.FC<ExtendedProductCardProps> = ({
           </div>
         )}
       </div>
+
+      {images.length > 1 && (
+        <div className={styles.indicators}>
+          {images.map((_, index) => (
+            <button
+              key={index}
+              className={`${styles.indicator} ${index === currentImageIndex ? styles.active : ''}`}
+              onClick={() => {
+                setCurrentImageIndex(index);
+                stopScrolling();
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       <div className={styles.info}>
         <h3 className={styles.name}>{getDisplayName()}</h3>
-        <p className={styles.price}>
-          {numericDiscount > 0 ? (
-            <>
-              <span style={{ color: 'black' }}>R$ {discountedPrice.toFixed(2)}</span>
-              <span
-                style={{
-                  textDecoration: 'line-through',
-                  color: '#888',
-                  marginRight: '5px',
-                }}
-              >
-                R$ {numericPrice.toFixed(2)}
-              </span>
-            </>
-          ) : (
-            <>R$ {numericPrice.toFixed(2)}</>
-          )}
-        </p>
-        <p className={styles.freeShipping}>
-          {freeShipping ? 'Frete Grátis' : 'Consultar Frete'}
-        </p>
+        {/* Renderiza o preço somente se existir */}
+        {priceElement}
+        {!hideFreeShipping && (
+          <p className={styles.freeShipping}>
+            {freeShipping ? 'Frete Grátis' : 'Consultar Frete'}
+          </p>
+        )}
       </div>
     </div>
   );

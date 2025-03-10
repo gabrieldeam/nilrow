@@ -31,7 +31,8 @@ public class ProductVariation {
     @OneToMany(mappedBy = "variation", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<VariationImage> variationImages;
 
-    // Preço específico da variação (se diferente do produto principal)
+    private String name;
+
     private BigDecimal price;
 
     private BigDecimal discountPrice;

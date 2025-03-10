@@ -1,0 +1,152 @@
+.productPage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #000;
+  color: #fff;
+  padding-top: 150px;
+  padding-bottom: 70px;
+  box-sizing: border-box;
+}
+
+.productContainer {
+  width: 100%;
+  max-width: 419px;
+  padding: 6px;
+  box-sizing: border-box;
+}
+
+.productHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.addChannelImageUpload {
+  background-color: #212121;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  overflow-y: hidden;
+}
+
+.addChannelImageUploadVar {
+  background-color: #000000;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  overflow-y: hidden;
+}
+
+/* Estilo para cada imagem adicionada (principal e associações) */
+.imageContainer {
+  position: relative;
+  display: inline-block;
+  margin-right: 10px;
+}
+
+.addChannelImagePreview {
+  width: 83px;
+  height: 83px;
+  border-radius: 5px;
+  object-fit: cover;
+  background-color: #fff;
+}
+
+.flexFormInput {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+/* Botão de remoção (pequeno "×" sobre a imagem) */
+.removeButton {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 20px;
+  text-align: center;
+  padding: 0;
+}
+
+.addChannelUploadSection {
+  display: flex;
+  flex-direction: column;
+}
+
+.uploadInstruction {
+  color: #fff;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.addChannelUploadButton {
+  color: #7B33E5;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 15px;
+  display: inline-block;
+  white-space: nowrap;
+  margin-right: 20px;
+  margin-left: 10px;
+}
+
+.addChannelUploadButton:hover {
+  text-decoration: underline;
+}
+
+.fileName {
+  margin-top: 10px;
+  color: white;
+  font-size: 14px;
+}
+
+.confirmationButtonSpace {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.variationHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.variationHeader div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 5px;
+}
+
+.freeShippingContainer {
+  display: flex;
+  gap: 5px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .productPage {
+    padding-bottom: 110px;
+    padding-top: 109px;
+  }
+
+ 
+}

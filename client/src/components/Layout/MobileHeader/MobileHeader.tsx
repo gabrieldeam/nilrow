@@ -26,12 +26,16 @@ import blockedIcon from '../../../../public/assets/blocked.svg';
 import notificationsIcon from '../../../../public/assets/notifications.svg';
 import trashIcon from '../../../../public/assets/trash.svg';
 import ordersIcon from '../../../../public/assets/orders.svg';
+import templateIcon from '../../../../public/assets/template.svg'; // Novo ícone para Template
 import logo from '../../../../public/assets/nilrow.svg';
+import checkWhite from '../../../../public/assets/check-white.svg';
 
 const MobileHeader: React.FC<MobileHeaderProps> = ({
   title,
   buttons,
   handleBack,
+  onFilter, // callback para o botão de filtro
+  handleTemplate, // callback para o novo botão Template
   showLogo = false,
   showSearch = false,
   searchPlaceholder = 'Buscar...',
@@ -72,6 +76,8 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
     notifications: notificationsIcon,
     trash: trashIcon,
     orders: ordersIcon,
+    filter: checkWhite, // ícone para filtro
+    template: templateIcon, // ícone para Template
   };
 
   return (
@@ -105,6 +111,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         <div className={styles.mobileHeaderRight}>
           {buttons.bag && <HeaderButton icon={icons.bag} link="/bag" />}
           {buttons.share && <HeaderButton icon={icons.share} link="/share" />}
+          {buttons.filter && <HeaderButton icon={icons.filter} onClick={onFilter} />}
           {buttons.search && <HeaderButton icon={icons.search} link="/search" />}
           {buttons.back && <HeaderButton icon={icons.back} onClick={handleBack} />}
           {buttons.settings && <HeaderButton icon={icons.settings} link="/settings" />}
@@ -115,6 +122,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
           {buttons.notifications && <HeaderButton icon={icons.notifications} link="/notifications" />}
           {buttons.delete && <HeaderButton icon={icons.trash} onClick={onDelete} />}
           {buttons.orders && <HeaderButton icon={icons.orders} link="/orders" />}
+          {buttons.template && <HeaderButton icon={icons.template} onClick={handleTemplate} />}
         </div>
       </div>
       <AddressModal isOpen={isAddressModalOpen} onClose={closeAddressModal} />

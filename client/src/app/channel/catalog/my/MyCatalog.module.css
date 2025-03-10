@@ -82,7 +82,56 @@
 }
 
 @media (min-width: 768px) and (max-width: 1024px) {
-    .seeDataWrapper {
+  .myCatalogPage {
+    padding-bottom: 100px;
+    padding-top: 160px;
+  }
+
+  .myCatalogContainer {
+    max-width: 100%;
+    padding: 0 50px;
+  }
+
+  .myCatalogAdditionalSteps {      
+    flex-direction: column;
+    margin-top: 0px;
+    gap: 5px;
+  }
+
+  .myCatalogAdditional {
+    flex-direction: column;
+    margin-top: 0px;
+    gap: 5px;
+    margin-bottom: 0;
+  }
+
+  .myCatalogAdditional.step-button {
+    max-width: 100%;
+  }
+
+  .myCatalogElementInfo {
+    max-width: 100%;
+  }
+
+  .myCtalogElementInfoText {
+    display: block;
+    text-align: left;
+  }
+
+  .myCtalogElementInfoText p {
+    font-size: 14px;
+    margin: 0;
+    white-space: normal;
+  }
+
+  .myCatalogLearnMoreLink {
+    font-size: 15px;
+    color: #6225BC;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 5px;
+  }
+  .seeDataWrapper {
         display: flex;
         flex-direction: column;
     }

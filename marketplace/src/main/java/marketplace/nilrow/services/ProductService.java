@@ -82,6 +82,7 @@ public class ProductService {
             List<ProductVariation> variations = new ArrayList<>();
             for (ProductVariationDTO varDTO : dto.getVariations()) {
                 ProductVariation variation = new ProductVariation();
+                variation.setName(varDTO.getName());
                 variation.setPrice(varDTO.getPrice());
                 variation.setDiscountPrice(varDTO.getDiscountPrice());
                 variation.setStock(varDTO.getStock());
@@ -158,6 +159,18 @@ public class ProductService {
         // mas as imagens da variação são responsabilidade de outra API.
         productRepository.delete(product);
     }
+
+    @Transactional
+    public Page<ProductDTO> searchProducts(String term, Pageable pageable) {
+        Page<Product> page = productRepository.findByNameContainingIgnoreCaseOrSkuCodeContainingIgnoreCase(term, term, pageable);
+        return page.map(this::convertToDTO);
+    }
+
+    public Page<ProductDTO> searchProductsByCatalog(String catalogId, String term, Pageable pageable) {
+        Page<Product> page = productRepository.searchProductsByCatalog(catalogId, term, pageable);
+        return page.map(this::convertToDTO);
+    }
+
 
     /**
      * Busca um produto por ID.
@@ -377,6 +390,7 @@ public class ProductService {
             }
 
             // Campos principais
+            variation.setName(varDTO.getName());
             variation.setPrice(varDTO.getPrice());
             variation.setDiscountPrice(varDTO.getDiscountPrice());
             variation.setStock(varDTO.getStock());
@@ -502,6 +516,7 @@ public class ProductService {
             List<ProductVariationDTO> variationDTOs = product.getVariations().stream().map(var -> {
                 ProductVariationDTO varDTO = new ProductVariationDTO();
                 varDTO.setId(var.getId());
+                varDTO.setName(var.getName());
                 varDTO.setPrice(var.getPrice());
                 varDTO.setDiscountPrice(var.getDiscountPrice());
                 varDTO.setStock(var.getStock());

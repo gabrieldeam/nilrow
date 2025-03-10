@@ -27,6 +27,9 @@
     gap: 20px; /* Ajuste o espaçamento conforme necessário */
   }
   
+  .searchWrapper {
+    margin-top: 10px;
+  }
   @media (max-width: 768px) {
     .subHeader {
       display: none;

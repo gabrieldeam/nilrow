@@ -95,4 +95,26 @@ public class ProductController {
         );
         return ResponseEntity.ok(result);
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<ProductDTO>> searchProducts(
+            @RequestParam("term") String term,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size
+    ) {
+        Page<ProductDTO> result = productService.searchProducts(term, PageRequest.of(page, size));
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/catalog/{catalogId}/search")
+    public ResponseEntity<Page<ProductDTO>> searchProductsByCatalog(
+            @PathVariable String catalogId,
+            @RequestParam("term") String term,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size
+    ) {
+        Page<ProductDTO> result = productService.searchProductsByCatalog(catalogId, term, PageRequest.of(page, size));
+        return ResponseEntity.ok(result);
+    }
+
 }

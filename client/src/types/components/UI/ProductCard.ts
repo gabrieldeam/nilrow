@@ -7,7 +7,10 @@ export interface ButtonItem {
   export interface ProductCardProps {
     images: string[];
     name: string;
-    price: number | string; // Aceita number ou string
-    freeShipping: boolean;
+    price?: number | string;
+    hideFreeShipping?: boolean;
+    freeShipping?: boolean;
     buttons?: ButtonItem[];
+    discount?: string | number | null;
+
   }

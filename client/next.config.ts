@@ -24,6 +24,11 @@ const nextConfig: NextConfig = {
         hostname: 'www.showmetech.com.br',
         pathname: '/wp-content/uploads/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'conteudo.imguol.com.br',
+        pathname: '/c/noticias/**', // ou ajuste conforme necessário
+      },
     ],
   },
 };
