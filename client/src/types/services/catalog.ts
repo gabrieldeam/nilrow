@@ -1,5 +1,4 @@
 export interface CatalogDTO {
-    title: string;
     description: string;
     isVisible: boolean;
     name: string;
@@ -58,4 +57,5 @@ export interface CatalogDTO {
     addressId?: string;
     cnpj?: string;
     address?: AddressData | null;
+    name?: string;
 }

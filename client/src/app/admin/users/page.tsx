@@ -388,11 +388,11 @@ function UsersPage() {
                     </p>
                     <button
                       className={`${styles['catalog-release-btn']} ${
-                        catalog.released ? styles['btn-deactivate'] : styles['btn-activate']
+                        catalog.released ? styles['btn-activate'] : styles['btn-deactivate']
                       }`}
                       onClick={() => handleCatalogRelease(catalog.id, !catalog.released)}
                     >
-                      {catalog.released ? 'Desativar' : 'Ativar'}
+                      {catalog.released ? 'Ativar' : 'Desativar'}
                     </button>
                   </div>
                 ))}

@@ -85,7 +85,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
         >
           {images.map((img, index) => (
             <div key={index} className={styles.imageItem}>
-              <Image src={img} alt={`${name} ${index + 1}`} width={165} height={165} />
+              <Image 
+              src={img} 
+              alt={`${name} ${index + 1}`} 
+              width={200} 
+              height={200} />
             </div>
           ))}
         </div>

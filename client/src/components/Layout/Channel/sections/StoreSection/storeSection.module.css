@@ -1,5 +1,4 @@
 .container {
-  /* Você pode ajustar conforme necessário */
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -9,9 +8,22 @@
 .subButtonsContainer {
   display: flex;
   gap: 10px;
-  width: 350px;
   justify-content: center;
   margin-bottom: 20px;
+}
+
+.subButtonsContainerCatalog {
+  display: grid;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 20px;
+  margin-top: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+}
+
+.productContainer {
+  margin-top: 20px;
+  width: 100%;
 }
 
 .testScrollContainer {
@@ -22,4 +34,21 @@
   width: 100%;
   max-width: 600px;
   height: auto;
+}
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0 0 0;  
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .productContainer {
+    margin-top: -20px;
+  }
+  .subButtonsContainerCatalog {
+    margin-bottom: 0px;
+    margin-top: -10px;
+  }
 }

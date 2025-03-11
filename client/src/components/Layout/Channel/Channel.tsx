@@ -94,6 +94,12 @@ interface ChannelData {
   // Adicione outras propriedades conforme necessário
 }
 
+// Definindo a interface para os catálogos publicados
+interface Catalog {
+  id: string;
+  name: string;
+}
+
 function Channel({ nickname }: ChannelProps) {
   const router = useRouter();
 
@@ -102,7 +108,8 @@ function Channel({ nickname }: ChannelProps) {
   const [isFollowingChannel, setIsFollowingChannel] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
-  const [publishedCatalogIds, setPublishedCatalogIds] = useState<string[]>([]);
+  // Agora armazenamos os catálogos com id e name
+  const [publishedCatalogs, setPublishedCatalogs] = useState<Catalog[]>([]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFixed, setIsFixed] = useState(false);
@@ -154,11 +161,13 @@ function Channel({ nickname }: ChannelProps) {
           setShowAboutButton(true);
         }
 
-        // Após ter o channelData, buscar os catálogos publicados
+        // Buscar os catálogos publicados e armazenar id e name
         const catalogs = await getPublishedCatalogs(data.id);
-        // Supondo que cada catalog tenha a propriedade "id"
-        const catalogIds = catalogs.map((catalog) => catalog.id);
-        setPublishedCatalogIds(catalogIds);
+        const mappedCatalogs = catalogs.map((catalog: any) => ({
+          id: catalog.id,
+          name: catalog.name || 'Loja' // ou substitua 'Loja' por outro valor padrão ou mapeamento correto
+        }));
+        setPublishedCatalogs(mappedCatalogs);
       } catch (error) {
         console.error('Erro ao buscar dados do canal:', error);
       }
@@ -267,12 +276,10 @@ function Channel({ nickname }: ChannelProps) {
   const handleMessageClick = async () => {
     try {
       const conversationId = await startConversation(channelData!.id, '');
-
       if (!conversationId || typeof conversationId !== 'string') {
         console.error('Erro: A API retornou um ID inválido.', conversationId);
         return;
       }
-
       router.push(`/chat?conversationId=${conversationId}`);
     } catch (error) {
       console.error('Erro ao iniciar conversa:', error);
@@ -367,7 +374,6 @@ function Channel({ nickname }: ChannelProps) {
             />
             <div className={styles.channelDetails}>
               <h1 className={styles.channelName}>{channelData.name}</h1>
-
               <div className={styles.followInfo}>
                 <button className={styles.followInfoButton} onClick={handleFollowersClick}>
                   <span>{formatNumber(followersCount)}</span> Seguidores
@@ -376,7 +382,6 @@ function Channel({ nickname }: ChannelProps) {
                   <span>{formatNumber(followingCount)}</span> Seguindo
                 </button>
               </div>
-
               {channelData.biography && (
                 <p className={styles.biography}>{channelData.biography}</p>
               )}
@@ -407,10 +412,7 @@ function Channel({ nickname }: ChannelProps) {
               )}
 
               {showAboutButton && (
-                <button
-                  className={styles.channelLinkButton}
-                  onClick={handleAboutChannel}
-                >
+                <button className={styles.channelLinkButton} onClick={handleAboutChannel}>
                   <Image
                     src={infoIcon}
                     alt="Sobre"
@@ -443,9 +445,12 @@ function Channel({ nickname }: ChannelProps) {
         >
           <div className={styles.buttonsContainer}>
             <div className={styles.fixedButtonsContainer}>
-              <button className={getButtonClass('store')} onClick={() => handleButtonClick('store')}>
-                <Image src={storeIcon} alt="Store" />
-              </button>
+              {/* Renderiza o botão "Store" somente se existir pelo menos um catálogo publicado */}
+              {publishedCatalogs.length > 0 && (
+                <button className={getButtonClass('store')} onClick={() => handleButtonClick('store')}>
+                  <Image src={storeIcon} alt="Store" />
+                </button>
+              )}
               <button className={getButtonClass('post')} onClick={() => handleButtonClick('post')}>
                 <Image src={postIcon} alt="Post" />
               </button>
@@ -483,11 +488,11 @@ function Channel({ nickname }: ChannelProps) {
         </div>
 
         {/* Conteúdos por seção */}
-        {activeSection === 'store' && (
+        {activeSection === 'store' && publishedCatalogs.length > 0 && (
           <StoreSection
             isMobile={isMobile}
             handleSearchClick={handleSearchClick}
-            catalogIds={publishedCatalogIds}
+            catalogs={publishedCatalogs}
           />
         )}
 

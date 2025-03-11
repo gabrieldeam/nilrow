@@ -96,21 +96,21 @@ const MyCatalogContent: React.FC = () => {
   const handleToggleVisibility = useCallback(() => {
     if (catalogId) {
       updateCatalogVisibility(catalogId, !isVisible)
-        .then(() => {
-          setIsVisible(!isVisible);
-          setMessage('Visibilidade do catálogo atualizada com sucesso!', 'success');
-        })
-        .catch((error: unknown) => {
-          let errorMessage = 'Erro ao atualizar a visibilidade do catálogo.';
-          if (error instanceof Error) {
-            errorMessage = error.message;
-          } else if (typeof error === 'object' && error !== null && 'response' in error) {
-            const err = error as { response?: { data?: { message?: string } } };
-            errorMessage = err.response?.data?.message || errorMessage;
-          }
-          setMessage(errorMessage, 'error');
-          console.error('Erro ao atualizar a visibilidade do catálogo:', error);
-        });
+      .then(() => {
+        setIsVisible(!isVisible);
+        setMessage('Visibilidade do catálogo atualizada com sucesso!', 'success');
+      })
+      .catch((error: unknown) => {
+        let errorMessage = 'Erro ao atualizar a visibilidade do catálogo.';
+        if (error && typeof error === 'object' && 'response' in error) {
+          const axiosError = error as { response?: { data?: { message?: string } } };
+          errorMessage = axiosError.response?.data?.message || errorMessage;
+        } else if (error instanceof Error) {
+          errorMessage = error.message;
+        }
+        setMessage(errorMessage, 'error');
+        console.error('Erro ao atualizar a visibilidade do catálogo:', error);
+      });
     }
   }, [catalogId, isVisible, setMessage]);
 

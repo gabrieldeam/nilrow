@@ -120,21 +120,21 @@ const ModalTemplate: React.FC<IModalTemplateProps> = ({ isOpen, onClose, onSelec
                   {!loading && products.length === 0 && <p>Nenhum template cadastrado.</p>}
 
                   {!loading && products.map(product => (
-                    // <div
-                    //   key={product.id}
-                    //   onClick={() => {
-                    //     if (product.id) {
-                    //       setSelectedTemplateId(product.id);
-                    //       onSelectTemplate(product.id);
-                    //       onClose();
-                    //     }
-                    //   }}
-                    //   style={{
-                    //     cursor: 'pointer',
-                    //     border: selectedTemplateId === product.id ? '2px solid green' : 'none',
-                    //     width: '100%'
-                    //   }}
-                    // >
+                    <div
+                      key={product.id}
+                      onClick={() => {
+                        if (product.id) {
+                          setSelectedTemplateId(product.id);
+                          onSelectTemplate(product.id);
+                          onClose();
+                        }
+                      }}
+                      style={{
+                        cursor: 'pointer',
+                        border: selectedTemplateId === product.id ? '2px solid green' : 'none',
+                        width: 'auto'           
+                      }}
+                    >
                       <ProductCard
                         images={
                           product.images?.length
@@ -144,7 +144,7 @@ const ModalTemplate: React.FC<IModalTemplateProps> = ({ isOpen, onClose, onSelec
                         name={product.name}
                         hideFreeShipping={true}
                       />
-                    // </div>
+                    </div>
                   ))}
                 </div>
               </div>

@@ -143,7 +143,12 @@ const Product: React.FC = () => {
         </div>
         <Card title="Cadastrados" rightLink={{ href: "/admin/template/add", text: "+ Adicionar produto" }}>
           <div className={styles.productSeeDataWrapper}>
-            <div className={styles.productSeeDatacontainer}>
+            <div className={styles.productSeeDatacontainer}            
+              style={{ 
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(165px, 1fr))', 
+                gap: '5px' }}
+              >
               {loading && <p>Carregando produtos...</p>}
               {!loading && products.filter(p => !showOnlyActive ).length === 0 && (
                 <p>Nenhum tamplate cadastrado.</p>

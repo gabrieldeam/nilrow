@@ -222,9 +222,6 @@ public class ProductService {
     }
 
 
-
-
-
     public Page<ProductDTO> searchProductsByCatalog(String catalogId, String term, Pageable pageable) {
         Page<Product> page = productRepository.searchProductsByCatalog(catalogId, term, pageable);
         return page.map(this::convertToDTO);
@@ -370,50 +367,78 @@ public class ProductService {
                 spec.getId() != null && !specsToKeep.contains(spec.getId()));
     }
 
-    private void updateProductVariations(
-            Product product,
-            List<ProductVariationDTO> variationDTOs
-    ) {
+    private void updateProductVariations(Product product, List<ProductVariationDTO> variationDTOs) {
+        // Se o DTO não enviar variações, limpamos a coleção existente in-place.
         if (variationDTOs == null || variationDTOs.isEmpty()) {
             if (product.getVariations() != null) {
                 product.getVariations().clear();
             }
             return;
         }
-        if (product.getVariations() == null) {
+
+        // Mapeia as variações existentes por ID para facilitar a busca
+        Map<String, ProductVariation> existingVariations = new HashMap<>();
+        if (product.getVariations() != null) {
+            for (ProductVariation variation : product.getVariations()) {
+                if (variation.getId() != null) {
+                    existingVariations.put(variation.getId(), variation);
+                }
+            }
+        } else {
             product.setVariations(new ArrayList<>());
         }
-        List<ProductVariation> finalVariations = new ArrayList<>();
+
+        // Lista que conterá as variações atualizadas
+        List<ProductVariation> updatedVariations = new ArrayList<>();
+
         for (ProductVariationDTO varDTO : variationDTOs) {
             ProductVariation variation;
-            if (!product.getVariations().isEmpty()) {
-                variation = product.getVariations().get(0);
+
+            // Se o DTO tiver um ID e corresponder a uma variação existente, atualize-a.
+            if (varDTO.getId() != null && existingVariations.containsKey(varDTO.getId())) {
+                variation = existingVariations.get(varDTO.getId());
             } else {
+                // Se não, cria uma nova variação
                 variation = new ProductVariation();
                 variation.setProduct(product);
+                // Inicializa a coleção de atributos para evitar null
+                variation.setAttributes(new ArrayList<>());
             }
+
+            // Atualiza os campos da variação
             variation.setName(varDTO.getName());
             variation.setPrice(varDTO.getPrice());
             variation.setDiscountPrice(varDTO.getDiscountPrice());
             variation.setStock(varDTO.getStock());
             variation.setActive(varDTO.isActive());
+
+            // Atualiza os atributos da variação in-place
             if (varDTO.getAttributes() != null) {
-                List<VariationAttribute> attrs = varDTO.getAttributes().stream()
-                        .map(attrDTO -> {
-                            VariationAttribute attr = new VariationAttribute();
-                            attr.setAttributeName(attrDTO.getAttributeName());
-                            attr.setAttributeValue(attrDTO.getAttributeValue());
-                            attr.setVariation(variation);
-                            return attr;
-                        })
-                        .collect(Collectors.toList());
-                variation.setAttributes(attrs);
+                List<VariationAttribute> attributes = variation.getAttributes();
+                if (attributes == null) {
+                    attributes = new ArrayList<>();
+                    variation.setAttributes(attributes);
+                } else {
+                    attributes.clear(); // Remove os atributos antigos sem substituir a instância
+                }
+                for (VariationAttributeDTO attrDTO : varDTO.getAttributes()) {
+                    VariationAttribute attr = new VariationAttribute();
+                    attr.setAttributeName(attrDTO.getAttributeName());
+                    attr.setAttributeValue(attrDTO.getAttributeValue());
+                    attr.setVariation(variation);
+                    attributes.add(attr);
+                }
             }
-            finalVariations.add(variation);
+
+            updatedVariations.add(variation);
         }
+
+        // Atualiza a coleção de variações do produto de forma in-place:
+        // Remove as variações que não estão na lista atualizada e adiciona as novas.
         product.getVariations().clear();
-        product.getVariations().addAll(finalVariations);
+        product.getVariations().addAll(updatedVariations);
     }
+
 
     private void deleteImageIfNotDefault(String url) {
         if (url != null && !url.equals(DEFAULT_IMAGE)) {

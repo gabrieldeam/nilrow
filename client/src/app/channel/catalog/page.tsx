@@ -72,7 +72,7 @@ const Catalog = () => {
   const renderCatalog = (catalog: CatalogDataWithAddress) => (
     <SeeData 
       key={catalog.id}
-      title={catalog.title}
+      title={catalog.name || "sem nome"}
       content={
         catalog.address 
           ? `CEP: ${catalog.address.cep} - ${catalog.address.city}, ${catalog.address.state}`
@@ -113,15 +113,15 @@ const Catalog = () => {
             {hiddenCatalogs.length > 0 
               ? hiddenCatalogs.map(renderCatalog) 
               : renderEmptyMessage("Nenhum catálogo cadastrado.")}
-          </div>
-          <Card title="Visíveis no canal">
+          </div>          
+        </Card>  
+        <Card title="Visíveis no canal">
           <div className={styles.catalogSeeDataWrapper}>
             {visibleCatalogs.length > 0 
               ? visibleCatalogs.map(renderCatalog) 
               : renderEmptyMessage("Nenhum catálogo visível no canal.")}
           </div>
-        </Card>
-        </Card>        
+        </Card>      
       </div>
     </div>
   );

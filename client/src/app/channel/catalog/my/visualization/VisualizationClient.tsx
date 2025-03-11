@@ -18,7 +18,7 @@ import {
   createLocation,
   getLocationsByCatalogId,
   deleteLocation,
-} from "@/services/catalogService"; 
+} from "@/services/catalogService";
 import { LocationData } from "@/types/services/catalog";
 import MobileHeader from "@/components/Layout/MobileHeader/MobileHeader";
 import SubHeader from "@/components/Layout/SubHeader/SubHeader";
@@ -27,7 +27,7 @@ import includeIconSrc from "../../../../../../public/assets/include.svg";
 import excludeIconSrc from "../../../../../../public/assets/exclude.svg";
 import styles from "./Visualization.module.css";
 
-// Tipagem para sugestões do Nominatim
+// Tipagem do Nominatim
 interface NominatimSuggestion {
   display_name: string;
   lat: string;
@@ -39,7 +39,71 @@ interface NominatimSuggestion {
   [key: string]: unknown;
 }
 
-// Importação dinâmica do react-leaflet
+// Cálculo aproximado de área via Shoelace
+function polygonArea(coords: [number, number][]): number {
+  // coords: array de [lat, lon]
+  // Shoelace formula (em "graus", não metros):
+  let area = 0;
+  for (let i = 0; i < coords.length; i++) {
+    const j = (i + 1) % coords.length;
+    // lat -> x, lon -> y (ou vice-versa, mas consistente)
+    const x_i = coords[i][1];
+    const y_i = coords[i][0];
+    const x_j = coords[j][1];
+    const y_j = coords[j][0];
+    area += x_i * y_j - x_j * y_i;
+  }
+  return Math.abs(area) / 2;
+}
+
+/**
+ * Recebe o objeto geojson do Nominatim (Polygon ou MultiPolygon)
+ * e retorna apenas o anel externo de maior área.
+ */
+function getLargestPolygon(
+  geojson: { type: string; coordinates: any }
+): [number, number][] | null {
+  if (!geojson?.coordinates) return null;
+
+  // Caso seja Polygon
+  if (geojson.type === "Polygon") {
+    // Normalmente, coordinates = [ [ [lng, lat], [lng, lat], ... ] ]
+    // outer ring: geojson.coordinates[0]
+    // ignoramos furos (geojson.coordinates[1..n]) se existirem
+    const outerRing = geojson.coordinates[0]?.map((c: number[]) => [c[1], c[0]]);
+    return outerRing && outerRing.length ? outerRing : null;
+  }
+
+  // Caso seja MultiPolygon
+  if (geojson.type === "MultiPolygon") {
+    // É um array de polígonos => coordinates = [ polygon1, polygon2, ...]
+    // Cada polygonN é algo como [ [ [lng, lat], [lng, lat], ... ] , [hole1] ... ]
+    // ou seja, polygonN[0] é o anel externo, polygonN[1..n] são furos
+    const multiCoords = geojson.coordinates as number[][][][];
+    let maxArea = 0;
+    let bestRing: [number, number][] | null = null;
+
+    multiCoords.forEach((polygonCoords) => {
+      // polygonCoords[0] = outer ring
+      if (polygonCoords[0] && polygonCoords[0].length > 0) {
+        const ring = polygonCoords[0].map(
+          (c: number[]) => [c[1], c[0]] as [number, number]
+        );
+        const area = polygonArea(ring);
+        if (area > maxArea) {
+          maxArea = area;
+          bestRing = ring;
+        }
+      }
+    });
+
+    return bestRing;
+  }
+
+  return null;
+}
+
+// ------------------ React-Leaflet (import dinâmico) ------------------
 const MapContainer = NextDynamic(
   () => import("react-leaflet").then((mod) => mod.MapContainer),
   { ssr: false }
@@ -62,7 +126,6 @@ const Polygon = NextDynamic(
 );
 
 import { useMap } from "react-leaflet";
-
 function MapRefUpdater({ mapRef }: { mapRef: React.MutableRefObject<L.Map | null> }) {
   const map = useMap();
   useEffect(() => {
@@ -93,18 +156,19 @@ const VisualizationClient: React.FC = () => {
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
 
+  // Carrega Leaflet (Client side) + detecta mobile
   useEffect(() => {
     setIsClient(true);
     import("leaflet/dist/leaflet.css");
     setIsMobile(window.innerWidth <= 768);
   }, []);
 
+  // Carrega o módulo leaflet dinamicamente
   useEffect(() => {
-    import("leaflet").then((module) => {
-      setLeafletModule(module);
-    });
+    import("leaflet").then((module) => setLeafletModule(module));
   }, []);
 
+  // Pega o catalogId via searchParam ou localStorage
   useEffect(() => {
     const storedCatalogId = localStorage.getItem("selectedCatalogId");
     const queryCatalogId = searchParams.get("catalogId");
@@ -117,6 +181,7 @@ const VisualizationClient: React.FC = () => {
     }
   }, [searchParams, router]);
 
+  // Carrega as localizações salvas
   const fetchLocations = useCallback(async () => {
     if (!catalogId) return;
     try {
@@ -131,6 +196,7 @@ const VisualizationClient: React.FC = () => {
     fetchLocations();
   }, [catalogId, fetchLocations]);
 
+  // Fecha dropdown/sugestões ao clicar fora
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -141,15 +207,14 @@ const VisualizationClient: React.FC = () => {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleBack = useCallback(() => {
     router.push("/channel/catalog/my");
   }, [router]);
 
+  // Principal: busca no Nominatim e salva
   const handleSearch = useCallback(
     async (queryStr: string) => {
       if (!catalogId) return;
@@ -175,6 +240,7 @@ const VisualizationClient: React.FC = () => {
           return;
         }
 
+        // Monta a localização
         const newLocation: Partial<LocationData> = {
           name: display_name || queryStr,
           action,
@@ -191,40 +257,31 @@ const VisualizationClient: React.FC = () => {
           },
         };
 
+        // Sempre adicionamos a pos principal nos bounds
         const newPos: [number, number] = [latitude, longitude];
         const bounds: [number, number][] = [newPos];
 
-        if (geojson) {
-          if (geojson.type === "Polygon") {
-            const coords: [number, number][] = (
-              (geojson.coordinates as number[][][])[0]
-            ).map((c: number[]) => [c[1], c[0]]);
-            bounds.push(...coords);
+        // Se tiver geometria
+        if (geojson?.type) {
+          // Seleciona o maior polígono (ou null)
+          const biggestRing = getLargestPolygon(geojson);
+          if (biggestRing && biggestRing.length) {
+            // Se for include, joga em includedPolygons; se exclude, em excludedPolygons
             if (action === "include") {
-              newLocation.includedPolygons?.push(coords);
+              newLocation.includedPolygons?.push(biggestRing);
             } else {
-              newLocation.excludedPolygons?.push(coords);
+              newLocation.excludedPolygons?.push(biggestRing);
             }
-          } else if (geojson.type === "MultiPolygon") {
-            const multiCoords: [number, number][] = (
-              (geojson as { type: "MultiPolygon"; coordinates: number[][][][] })
-                .coordinates.flatMap(
-                  (polygon: number[][][]) =>
-                    polygon[0].map((c: number[]) => [c[1], c[0]] as [number, number])
-                )
-            );
-            bounds.push(...multiCoords);
-            if (action === "include") {
-              newLocation.includedPolygons?.push(multiCoords);
-            } else {
-              newLocation.excludedPolygons?.push(multiCoords);
-            }
+            bounds.push(...biggestRing);
           }
         }
 
+        // Cria no banco
         await createLocation(catalogId, newLocation as LocationData);
+        // Recarrega
         await fetchLocations();
 
+        // Ajusta zoom
         if (mapRef.current) {
           if (bounds.length > 1) {
             mapRef.current.fitBounds(bounds);
@@ -233,6 +290,7 @@ const VisualizationClient: React.FC = () => {
           }
         }
 
+        // Limpa sugestões
         setSuggestions([]);
       } catch {
         setMessage("Erro ao buscar a localização. Tente novamente.");
@@ -241,13 +299,16 @@ const VisualizationClient: React.FC = () => {
     [catalogId, action, fetchLocations, setMessage]
   );
 
+  // Debounce para sugestões
   const debouncedFetchSuggestions = useMemo(
     () =>
       debounce(async (q: string) => {
         if (q.length > 2) {
           try {
             const resp = await fetch(
-              `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&addressdetails=1`
+              `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+                q
+              )}&format=json&limit=5&addressdetails=1`
             );
             if (!resp.ok) {
               throw new Error(`HTTP error: ${resp.status}`);
@@ -273,6 +334,7 @@ const VisualizationClient: React.FC = () => {
   const handleSuggestionClick = useCallback(
     (sug: NominatimSuggestion) => {
       handleSearch(sug.display_name);
+      setQuery(sug.display_name);
     },
     [handleSearch]
   );
@@ -334,8 +396,7 @@ const VisualizationClient: React.FC = () => {
 
       loc.includedPolygons?.forEach((poly) => {
         if (Array.isArray(poly) && poly.length > 0) {
-          const coords = poly.map((coord) => [coord[0], coord[1]] as [number, number]);
-          bounds.push(...coords);
+          bounds.push(...poly);
         }
       });
 
@@ -357,7 +418,7 @@ const VisualizationClient: React.FC = () => {
   }
   const L = leafletModule;
 
-  // Ícones do mapa
+  // Ícones
   const includeIcon = new L.Icon({
     iconUrl: includeIconSrc.src ?? includeIconSrc,
     iconSize: [32, 32],
@@ -371,8 +432,10 @@ const VisualizationClient: React.FC = () => {
     popupAnchor: [0, -32],
   });
 
+  // Centro inicial no Brasil
   let mapCenter: [number, number] = [-14.235, -51.9253];
   let mapZoom = 3;
+
   if (locations.length > 0) {
     const lastLoc = locations[locations.length - 1];
     if (
@@ -386,6 +449,7 @@ const VisualizationClient: React.FC = () => {
     }
   }
 
+  // Enquanto SSR
   if (!isClient) {
     return <div>Carregando...</div>;
   }
@@ -407,7 +471,7 @@ const VisualizationClient: React.FC = () => {
 
         <Card title="Localizações">
           <div className={styles.visualizationInputGroup}>
-            {/* DROPDOWN ACTION */}
+            {/* BOTÃO DROPDOWN */}
             <div className={styles.dropdownContainer} ref={dropdownRef}>
               <div className={styles.dropdownSelected} onClick={toggleDropdown}>
                 {action === "include" ? (
@@ -435,7 +499,7 @@ const VisualizationClient: React.FC = () => {
                 )}
               </div>
               {dropdownOpen && (
-                <div className={styles.dropdownOptions}>
+                <div className={`${styles.dropdownOptions} ${styles.dropdownOpen}`}>
                   <div
                     onClick={() => handleActionChange("include")}
                     className={styles.dropdownOption}
@@ -481,6 +545,7 @@ const VisualizationClient: React.FC = () => {
             />
           </div>
 
+          {/* SUGESTÕES */}
           <div className={styles.suggestionsContainer} ref={suggestionsRef}>
             {suggestions.map((sug, i) => (
               <div
@@ -493,11 +558,12 @@ const VisualizationClient: React.FC = () => {
             ))}
           </div>
 
+          {/* MAPA */}
           <div className={styles.visualizationMapContainer}>
             <MapContainer
               center={mapCenter}
               zoom={mapZoom}
-              style={{ height: "500px", width: "100%" }}
+              style={{ height: "500px", width: "100%", zIndex: 1 }}
             >
               <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -505,6 +571,7 @@ const VisualizationClient: React.FC = () => {
               />
               <MapRefUpdater mapRef={mapRef} />
 
+              {/* Marcadores e polígonos */}
               {locations.map((loc, idx) => {
                 const isLatLonValid =
                   typeof loc.latitude === "number" &&
@@ -514,7 +581,7 @@ const VisualizationClient: React.FC = () => {
 
                 return (
                   <React.Fragment key={loc.id ?? idx}>
-                    {/* Polígonos de INCLUSÃO em cor verde */}
+                    {/* Polígonos de INCLUSÃO (verde) */}
                     {loc.includedPolygons?.map((poly, i) =>
                       poly.length > 0 ? (
                         <Polygon
@@ -524,7 +591,8 @@ const VisualizationClient: React.FC = () => {
                         />
                       ) : null
                     )}
-                    {/* Polígonos de EXCLUSÃO em cor vermelha */}
+
+                    {/* Polígonos de EXCLUSÃO (vermelho) */}
                     {loc.excludedPolygons?.map((poly, i) =>
                       poly.length > 0 ? (
                         <Polygon
@@ -535,6 +603,7 @@ const VisualizationClient: React.FC = () => {
                       ) : null
                     )}
 
+                    {/* Marcador principal (coordenadas) */}
                     {isLatLonValid && (
                       <Marker
                         position={[loc.latitude, loc.longitude]}
@@ -551,6 +620,7 @@ const VisualizationClient: React.FC = () => {
             </MapContainer>
           </div>
 
+          {/* HISTÓRICO DE LOCAIS SALVOS */}
           <div className={styles.visualizationSearchHistory}>
             {locations.map((loc, idx) => (
               <div
