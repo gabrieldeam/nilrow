@@ -13,79 +13,124 @@ public class GeoUtils {
     public static class GeoPoint {
         private double latitude;  // Y
         private double longitude; // X
+
         public GeoPoint() {}
+
         public GeoPoint(double latitude, double longitude) {
             this.latitude = latitude;
             this.longitude = longitude;
         }
-        public double getLatitude() { return latitude; }
-        public double getLongitude() { return longitude; }
+
+        public double getLatitude() {
+            return latitude;
+        }
+
+        public double getLongitude() {
+            return longitude;
+        }
     }
 
     /**
-     * Regra:
-     * 1) Se a Location tiver pelo menos 1 polígono INCLUDED, o ponto PRECISA estar em pelo menos um deles,
-     *    senão devolve false.
-     * 2) Se a Location não tiver polígono INCLUDED => também devolve false (ou seja, "não libera").
-     * 3) Se passou no included, então verifica se está em algum EXCLUDED. Se estiver, devolve false.
-     * 4) Caso contrário, true.
+     * Método clássico: retorna `true` se o ponto estiver em pelo menos
+     * um polígono INCLUDED e não estiver em nenhum polígono EXCLUDED
+     * **dessa Location**. Útil se quisermos que cada `Location` seja
+     * “autocontida” (inclusões e exclusões).
      */
     public static boolean isLocationAllowed(GeoPoint point, Location location) {
-        System.out.println("   [GeoUtils] isLocationAllowed => Location: " + location.getName());
-
-        if (location.getPolygons() == null || location.getPolygons().isEmpty()) {
-            // Se não existem polygons => não libera nada
-            System.out.println("   [GeoUtils] -> Location não tem polygons => false (nenhuma included).");
+        if (location == null ||
+                location.getPolygons() == null ||
+                location.getPolygons().isEmpty()) {
             return false;
         }
 
-        // Separa included e excluded
+        // Separa polígonos
         List<Polygon> included = location.getPolygons().stream()
                 .filter(p -> p.getPolygonType() == PolygonType.INCLUDED)
                 .collect(Collectors.toList());
+
         List<Polygon> excluded = location.getPolygons().stream()
                 .filter(p -> p.getPolygonType() == PolygonType.EXCLUDED)
                 .collect(Collectors.toList());
 
-        // 1) se não há included => false
+        // Se não há polygons INCLUDED, retorna false
         if (included.isEmpty()) {
-            System.out.println("   [GeoUtils] -> 0 polygons INCLUDED => false (regra de negócio).");
             return false;
         }
 
-        // 2) ponto precisa cair em pelo menos 1 included
+        // Se ponto não está em pelo menos 1 included -> false
         boolean insideIncluded = false;
         for (Polygon poly : included) {
-            boolean inThis = isPointInPolygon(point, poly.getCoordinates());
-            System.out.println("      [GeoUtils] -> isPointInPolygon (INCLUDED) ? " + inThis);
-            if (inThis) {
+            if (isPointInPolygon(point, poly.getCoordinates())) {
                 insideIncluded = true;
                 break;
             }
         }
         if (!insideIncluded) {
-            System.out.println("   [GeoUtils] -> Ponto NÃO caiu em nenhum polígono de inclusão => FALSE");
             return false;
         }
 
-        // 3) se estiver em qualquer excluded => false
+        // Se ponto está em qualquer excluded -> false
         for (Polygon poly : excluded) {
-            boolean inThis = isPointInPolygon(point, poly.getCoordinates());
-            System.out.println("      [GeoUtils] -> isPointInPolygon (EXCLUDED)? " + inThis);
-            if (inThis) {
-                System.out.println("   [GeoUtils] -> Ponto CAIU em polígono EXCLUDED => FALSE");
+            if (isPointInPolygon(point, poly.getCoordinates())) {
                 return false;
             }
         }
 
-        // 4) se passou => true
-        System.out.println("   [GeoUtils] -> Passou pelos included e não está em excluded => TRUE");
+        // Caso contrário, true
         return true;
     }
 
-    // Ray casting
+    /**
+     * Retorna `true` se o ponto estiver em AO MENOS um polígono EXCLUDED
+     * desta Location (independente de existirem incluídos ou não).
+     */
+    public static boolean isPointInAnyExcludedPolygon(GeoPoint point, Location location) {
+        if (location == null || location.getPolygons() == null) {
+            return false;
+        }
+        List<Polygon> excluded = location.getPolygons().stream()
+                .filter(p -> p.getPolygonType() == PolygonType.EXCLUDED)
+                .collect(Collectors.toList());
+
+        for (Polygon poly : excluded) {
+            if (isPointInPolygon(point, poly.getCoordinates())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Retorna `true` se o ponto estiver em AO MENOS um polígono INCLUDED
+     * desta Location.
+     */
+    public static boolean isPointInAnyIncludedPolygon(GeoPoint point, Location location) {
+        if (location == null || location.getPolygons() == null) {
+            return false;
+        }
+        List<Polygon> included = location.getPolygons().stream()
+                .filter(p -> p.getPolygonType() == PolygonType.INCLUDED)
+                .collect(Collectors.toList());
+
+        for (Polygon poly : included) {
+            if (isPointInPolygon(point, poly.getCoordinates())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Método principal de ray casting:
+     * - Lança um raio horizontal a partir do ponto;
+     * - Conta quantas vezes o raio cruza as arestas do polígono;
+     * - Ímpar => dentro; Par => fora.
+     */
     public static boolean isPointInPolygon(GeoPoint point, List<Coordinate> coordinates) {
-        if (coordinates == null || coordinates.isEmpty()) return false;
+        if (coordinates == null || coordinates.isEmpty()) {
+            return false;
+        }
+
         int intersectCount = 0;
         for (int i = 0; i < coordinates.size(); i++) {
             Coordinate a = coordinates.get(i);
@@ -94,9 +139,14 @@ public class GeoUtils {
                 intersectCount++;
             }
         }
+        // Se número de interseções é ímpar => dentro
         return (intersectCount % 2) == 1;
     }
 
+    /**
+     * Checa se o raio “horizontal” a partir do ponto p
+     * cruza o segmento definido por (a,b).
+     */
     private static boolean rayIntersectsSegment(GeoPoint p, Coordinate a, Coordinate b) {
         double px = p.getLongitude(); // X do ponto
         double py = p.getLatitude();  // Y do ponto
@@ -106,21 +156,34 @@ public class GeoUtils {
         double bx = b.getLongitude();
         double by = b.getLatitude();
 
+        // Garante que 'a' seja o vértice de menor latitude
         if (ay > by) {
             double tempX = ax; double tempY = ay;
             ax = bx;           ay = by;
             bx = tempX;        by = tempY;
         }
+
+        // Evita problemas se o ponto estiver exatamente na mesma latitude
+        // de um dos vértices
         if (py == ay || py == by) {
             py += 0.0000001;
         }
+
+        // Se está fora do range vertical do segmento, não cruza
         if (py < ay || py > by) {
             return false;
         }
+
+        // Se o segmento é vertical
         if (ax == bx) {
+            // Se o X do ponto é <= X do segmento, conta como interseção
             return px <= ax;
         }
+
+        // Calcula X onde o raio cruza a linha do segmento
         double intersectX = ax + (py - ay) * (bx - ax) / (by - ay);
+
+        // Se X do ponto é <= esse X, conta como interseção
         return px <= intersectX;
     }
 }

@@ -152,7 +152,7 @@ public class ProductService {
         System.out.println("\n=== [LOG] filterProductsByCatalogAndDelivery ===");
         System.out.println("[LOG] -> CatalogID: " + catalogId + ", Latitude: " + latitude + ", Longitude: " + longitude);
 
-        // 1) Carrega as locations
+        // 1) Carrega as locations desse catálogo
         List<Location> locations = locationRepository.findByCatalogId(catalogId);
         if (locations == null || locations.isEmpty()) {
             System.out.println("[LOG] -> Nenhuma Location encontrada => nenhum ponto liberado. Retornando vazio.");
@@ -163,38 +163,42 @@ public class ProductService {
         // 2) Montamos o GeoPoint
         GeoUtils.GeoPoint point = new GeoUtils.GeoPoint(latitude, longitude);
 
-        // 3) Decide se esse ponto é liberado por ALGUMA location.
-        //    (não paramos aqui, pois precisaremos checar 1 a 1 para saber se alguma devolve true)
-        boolean anyLocationAllows = false;
-        for (Location loc : locations) {
-            boolean allowedHere = GeoUtils.isLocationAllowed(point, loc);
-            System.out.println("[LOG] -> isLocationAllowed() para Location: " + loc.getName() + " => " + allowedHere);
-            if (allowedHere) {
-                anyLocationAllows = true;
-                break;
-            }
-        }
-        if (!anyLocationAllows) {
-            System.out.println("[LOG] -> Nenhuma Location liberou esse ponto => empty");
+        // 3) Verifica primeiro se o ponto está excluído por ALGUMA location
+        if (isPointGloballyExcluded(point, locations)) {
+            System.out.println("[LOG] -> O ponto está em polígono EXCLUDED de pelo menos uma Location => bloqueado.");
             return Page.empty(pageable);
         }
 
-        // 4) Se o endereço foi liberado, vamos filtrar produtos:
-        //    Carrega todos do catálogo:
+        // 4) Se não está excluído, verifica se há pelo menos UMA location que inclua esse ponto
+        boolean includedInAnyLocation = false;
+        for (Location loc : locations) {
+            // Usar ou isLocationAllowed(...) ou apenas checar se
+            // existe polígono de included e o ponto está dentro
+            // (ignorando exclusões, pois já foram tratadas acima).
+            if (GeoUtils.isPointInAnyIncludedPolygon(point, loc)) {
+                includedInAnyLocation = true;
+                break;
+            }
+        }
+
+        if (!includedInAnyLocation) {
+            System.out.println("[LOG] -> Nenhuma Location inclui esse ponto => bloqueado.");
+            return Page.empty(pageable);
+        }
+
+        // 5) Se chegou aqui => ponto não está excluído, e está incluído em pelo menos uma location
+        //    Então vamos carregar os produtos
         List<Product> products = productRepository.findByCatalogId(catalogId);
         System.out.println("[LOG] -> Total de produtos no catálogo: " + (products == null ? 0 : products.size()));
 
-        // 5) Aplica as condições:
-        //    - product.isActive() == true
-        //    - (estoque > 0) => se sem variações, p.getStock()>0; se com variações, qualquer var.>0
+        // 6) Aplica as condições: produto ativo + estoque > 0
         List<Product> filtered = products.stream()
                 .filter(p -> {
-                    // 5.a) ver se product está ativo
+                    // a) ver se product está ativo
                     if (!p.isActive()) {
                         return false;
                     }
-
-                    // 5.b) ver se há estoque > 0
+                    // b) ver se há estoque > 0
                     boolean hasStock;
                     if (p.getVariations() == null || p.getVariations().isEmpty()) {
                         // sem variações
@@ -204,14 +208,13 @@ public class ProductService {
                         hasStock = p.getVariations().stream()
                                 .anyMatch(v -> (v.getStock() != null && v.getStock() > 0));
                     }
-
                     return hasStock;
                 })
                 .toList();
 
         System.out.println("[LOG] -> Total de produtos (ativos e com estoque) => " + filtered.size());
 
-        // 6) Converte pra DTO e pagina
+        // 7) Converte pra DTO e pagina
         List<ProductDTO> dtos = filtered.stream().map(this::convertToDTO).toList();
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), dtos.size());
@@ -220,6 +223,21 @@ public class ProductService {
         System.out.println("[LOG] -> Retornando " + pageContent.size() + " produtos nessa página.\n");
         return new PageImpl<>(pageContent, pageable, dtos.size());
     }
+
+    /**
+     * Retorna `true` se o ponto cair em qualquer polígono EXCLUDED
+     * de qualquer Location. “Exclusão global”.
+     */
+    private boolean isPointGloballyExcluded(GeoUtils.GeoPoint point, List<Location> locations) {
+        for (Location loc : locations) {
+            // Se cair em polígono EXCLUDED dessa location, já era.
+            if (GeoUtils.isPointInAnyExcludedPolygon(point, loc)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
 
     public Page<ProductDTO> searchProductsByCatalog(String catalogId, String term, Pageable pageable) {
