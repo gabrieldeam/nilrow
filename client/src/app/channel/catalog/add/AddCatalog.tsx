@@ -60,6 +60,14 @@ const AddCatalog: React.FC = () => {
     []
   );
 
+  const timeOptions = Array.from({ length: 24 * 2 }, (_, index) => {
+    const totalMinutes = index * 30;
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    const formattedHour = hours.toString().padStart(2, '0') + ':' + minutes.toString().padStart(2, '0');
+    return { label: formattedHour, value: formattedHour };
+  });
+
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [dayData, setDayData] = useState<DayInfo[]>(
     fullDaysOfWeek.map(() => ({
@@ -70,8 +78,7 @@ const AddCatalog: React.FC = () => {
   );
 
   const [selectedOption, setSelectedOption] = useState<OperatingOption>('');
-  const [formData, setFormData] = useState<CatalogDTO>({
-    title: '',
+  const [formData, setFormData] = useState<CatalogDTO>({    
     description: '',
     isVisible: false,
     name: '',
@@ -259,17 +266,18 @@ const AddCatalog: React.FC = () => {
           selectedOption === 'normal'
             ? dayData.map((day, index) => ({
                 dayOfWeek: fullDaysOfWeek[index],
+                is24Hours: day.is24Hours,
+                closed: day.isClosed, // aqui mapeamos 'closed' conforme o esperado
                 timeIntervals:
                   day.is24Hours || day.isClosed
-                    ? []
+                    ? [] // se for 24h ou fechado, não precisa de intervalos
                     : day.openCloseTimes.map((time) => ({
                         openTime: time.open,
                         closeTime: time.close,
                       })),
-                is24Hours: day.is24Hours,
-                closed: day.isClosed,
               }))
             : [];
+
 
         let operatingHoursType = '';
         switch (selectedOption) {
@@ -478,11 +486,7 @@ const AddCatalog: React.FC = () => {
                               onChange={(e) =>
                                 handleInputChange(selectedDay, timeIndex, 'open', e)
                               }
-                              options={[
-                                { label: '08:00', value: '08:00' },
-                                { label: '09:00', value: '09:00' },
-                                // outras opções...
-                              ]}
+                              options={timeOptions}
                             />
                             <CustomSelect
                               title="Fecha"
@@ -491,11 +495,7 @@ const AddCatalog: React.FC = () => {
                               onChange={(e) =>
                                 handleInputChange(selectedDay, timeIndex, 'close', e)
                               }
-                              options={[
-                                { label: '17:00', value: '17:00' },
-                                { label: '18:00', value: '18:00' },
-                                // outras opções...
-                              ]}
+                              options={timeOptions}
                             />
                             <div
                               className={styles.removeTimeButton}

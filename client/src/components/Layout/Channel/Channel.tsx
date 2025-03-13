@@ -127,54 +127,72 @@ function Channel({ nickname }: ChannelProps) {
 
   // Buscar dados iniciais do canal
   useEffect(() => {
-    const fetchChannelData = async () => {
+    const fetchPublicData = async () => {
       try {
-        const data = await getChannelByNickname(nickname);
-
-        if (!data || typeof data !== 'object' || !data.id) {
-          console.error('Erro: A API retornou um valor inválido para o canal.', data);
-          return;
+        // 1) Buscar dados do canal
+        const channel = await getChannelByNickname(nickname);
+        if (!channel || !channel.id) {
+          console.error('Canal inválido', channel);
+          return; // sai daqui, não há canal
         }
+        setChannelData({ ...channel, imageUrl: channel.imageUrl || '' });
 
-        const transformedData = { ...data, imageUrl: data.imageUrl || '' };
-        setChannelData(transformedData);
 
-        const [countFollowers, countFollowing] = await Promise.all([
-          getFollowersCount(data.id),
+        // 2) Buscar tudo que é "público" em paralelo
+        const [
+          countFollowers,
+          countFollowing,
+          aboutData,
+          faqsData,
+          catalogs
+        ] = await Promise.all([
+          getFollowersCount(channel.id),
           getFollowingCount(nickname),
+          getAboutByNickname(nickname),
+          getFAQsByNickname(nickname),
+          getPublishedCatalogs(channel.id), // <- se o canal estiver publicado
         ]);
+
         setFollowersCount(countFollowers);
         setFollowingCount(countFollowing);
 
-        const ownerCheck = await isChannelOwner(data.id);
-        setIsOwner(ownerCheck);
-
-        const followingCheck = await isFollowing(data.id);
-        setIsFollowingChannel(followingCheck);
-
-        const [aboutData, faqsData] = await Promise.all([
-          getAboutByNickname(nickname),
-          getFAQsByNickname(nickname),
-        ]);
-
-        if ((aboutData && aboutData.aboutText) || (faqsData && faqsData.length > 0)) {
+        // Se about ou FAQ tiver conteúdo, habilita o botão "Sobre"
+        if ((aboutData?.aboutText) || (faqsData && faqsData.length > 0)) {
           setShowAboutButton(true);
         }
 
-        // Buscar os catálogos publicados e armazenar id e name
-        const catalogs = await getPublishedCatalogs(data.id);
-        const mappedCatalogs = catalogs.map((catalog: any) => ({
-          id: catalog.id,
-          name: catalog.name || 'Loja' // ou substitua 'Loja' por outro valor padrão ou mapeamento correto
+        // Montar a lista de catálogos publicados
+        const mappedCatalogs = catalogs.map((c: any) => ({
+          id: c.id,
+          name: c.name || 'Loja'
         }));
         setPublishedCatalogs(mappedCatalogs);
+
+        // 3) Agora verificar se o usuário está autenticado
+        //    Se estiver, buscar dados que exigem login (isChannelOwner, isFollowing).
+        const authResponse = await checkAuth();
+        if (authResponse.isAuthenticated) {
+          try {
+            const [ownerCheck, followingCheck] = await Promise.all([
+              isChannelOwner(channel.id),
+              isFollowing(channel.id),
+            ]);
+            setIsOwner(ownerCheck);
+            setIsFollowingChannel(followingCheck);
+          } catch (err) {
+            // Se der 401 aqui, tudo bem, significa que token não válido, etc.
+            console.error('Erro ao buscar info autenticada:', err);
+          }
+        }
+
       } catch (error) {
-        console.error('Erro ao buscar dados do canal:', error);
+        console.error('Erro ao buscar dados do canal (ou dados públicos):', error);
       }
     };
 
-    fetchChannelData();
+    fetchPublicData();
   }, [nickname]);
+  
 
   // Scroll fixo para os botões
   const handleScroll = useCallback(() => {

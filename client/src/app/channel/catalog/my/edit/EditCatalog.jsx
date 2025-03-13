@@ -6,8 +6,6 @@ import React, {
   memo,
   useEffect,
   useMemo,
-  ChangeEvent,
-  FormEvent,
 } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Head from 'next/head';
@@ -41,11 +39,15 @@ const EditCatalog = () => {
   const isMobile = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
   const [catalogId, setCatalogId] = useState(null);
 
-  const timeOptions = [
-    { label: '00:00', value: '00:00' },
-    { label: '01:00', value: '01:00' },
-    // ... outras opções de horário
-  ];
+  const timeOptions = Array.from({ length: 24 * 2 }, (_, index) => {
+    const totalMinutes = index * 30;
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    const formattedHour = hours.toString().padStart(2, '0') + ':' + minutes.toString().padStart(2, '0');
+    return { label: formattedHour, value: formattedHour };
+  });
+  
+  
 
   const handleBack = useCallback(() => {
     router.push('/channel/catalog/my');
@@ -169,17 +171,18 @@ const EditCatalog = () => {
             return dayOp
               ? {
                   openCloseTimes:
-                    dayOp.OpenCloseTimes.length > 0
-                      ? dayOp.OpenCloseTimes.map((time) => ({
+                    dayOp.timeIntervals && dayOp.timeIntervals.length > 0
+                      ? dayOp.timeIntervals.map((time) => ({
                           open: time.openTime,
                           close: time.closeTime,
                         }))
                       : [{ open: '', close: '' }],
                   is24Hours: dayOp.is24Hours,
-                  isClosed: dayOp.closed,
+                  isClosed: dayOp.isClosed, // ou "closed", dependendo do que o back-end envia
                 }
               : { openCloseTimes: [{ open: '', close: '' }], is24Hours: false, isClosed: false };
           });
+                   
 
           setDayInfo(orderedOperatingHours);
 
@@ -337,20 +340,24 @@ const EditCatalog = () => {
       e.preventDefault();
       if (validateForm()) {
         const operatingHours =
-          selectedOption === 'normal'
-            ? dayInfo.map((day, index) => ({
-                dayOfWeek: fullDaysOfWeek[index],
-                OpenCloseTimes:
-                  day.is24Hours || day.isClosed
-                    ? []
-                    : day.openCloseTimes.map((time) => ({
-                        openTime: time.open,
-                        closeTime: time.close,
-                      })),
-                is24Hours: day.is24Hours,
-                closed: day.isClosed,
-              }))
-            : [];
+  selectedOption === 'normal'
+    ? dayInfo.map((day, index) => ({
+        dayOfWeek: fullDaysOfWeek[index],
+        timeIntervals:
+          day.is24Hours || day.isClosed
+            ? []
+            : day.openCloseTimes.map((time) => ({
+                openTime: time.open,
+                closeTime: time.close,
+              })),
+        is24Hours: day.is24Hours,
+        // Mapeie o campo que representa o fechamento conforme o esperado pelo back-end
+        // Se no back-end você estiver utilizando isClosed ou closed, alinhe aqui.
+        isClosed: day.isClosed,
+      }))
+    : [];
+
+
 
         let operatingHoursType = '';
         switch (selectedOption) {
