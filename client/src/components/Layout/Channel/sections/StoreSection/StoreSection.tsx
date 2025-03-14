@@ -1,13 +1,14 @@
 "use client";
 
 import React, { FC, useEffect, useState } from 'react';
+import Link from 'next/link';
 import SubButton from '../../../../UI/SubButton/SubButton';
 import CustomButton from '../../../../UI/CustomButton/CustomButton';
 import categoriesIcon from '../../../../../../public/assets/categories.svg';
 import searchIcon from '../../../../../../public/assets/search.svg';
 import storeImage from '../../../../../../public/assets/store.svg';
 import storeSectionStyles from './storeSection.module.css';
-import { useLocationContext } from '../../../../../context/LocationContext';
+import { useLocationContext } from '@/context/LocationContext';
 import { filterProductsByCatalogAndDelivery } from '@/services/product/productService';
 import ProductCard from '@/components/UI/ProductCard/ProductCard';
 import { ProductDTO } from '@/types/services/product';
@@ -136,18 +137,21 @@ const StoreSection: FC<StoreSectionProps> = ({ isMobile, handleSearchClick, cata
             }}
           >
             {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                images={
-                  product.images?.length
-                    ? product.images.map((img) => `${apiUrl}${img}`)
-                    : [defaultImage.src]
-                }
-                name={product.name}
-                price={product.salePrice}
-                discount={product.discountPrice}
-                freeShipping={product.freeShipping}
-              />
+              <Link key={product.id} href={`/product/${product.id}`}>
+                  <ProductCard
+                  key={product.id}
+                  images={
+                    product.images?.length
+                      ? product.images.map((img) => `${apiUrl}${img}`)
+                      : [defaultImage.src]
+                  }
+                  name={product.name}
+                  price={product.salePrice}
+                  discount={product.discountPrice}
+                  freeShipping={product.freeShipping}
+                />
+              </Link>
+              
             ))}
           </div>
           {totalPages > 1 && (

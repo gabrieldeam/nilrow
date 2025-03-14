@@ -134,5 +134,16 @@ public class ProductController {
         return ResponseEntity.ok(filteredPage);
     }
 
+    @GetMapping("/{id}/delivery")
+    public ResponseEntity<ProductDTO> getProductByIdWithDelivery(
+            @PathVariable String id,
+            @RequestParam double latitude,
+            @RequestParam double longitude
+    ) {
+        ProductDTO dto = productService.getProductByIdWithDeliveryFilters(id, latitude, longitude);
+        return ResponseEntity.ok(dto);
+    }
+
+
 
 }

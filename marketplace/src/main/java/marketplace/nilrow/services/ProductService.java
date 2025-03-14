@@ -144,6 +144,54 @@ public class ProductService {
     }
 
     @Transactional
+    public ProductDTO getProductByIdWithDeliveryFilters(String id, double latitude, double longitude) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
+        ProductDTO dto = convertToDTO(product);
+
+        // Verifica o catálogo
+        Catalog catalog = product.getCatalog();
+        if (catalog == null) {
+            throw new RuntimeException("Catálogo não encontrado para o produto.");
+        }
+
+        // Carrega as locations do catálogo
+        List<Location> locations = locationRepository.findByCatalogId(catalog.getId());
+
+        // Verifica se o ponto (endereço) está incluído na área de entrega
+        GeoUtils.GeoPoint point = new GeoUtils.GeoPoint(latitude, longitude);
+        boolean addressDeliverable = false;
+        if (locations != null && !locations.isEmpty()) {
+            // Se o ponto estiver em qualquer polígono EXCLUDED, ele não é atendido
+            if (!isPointGloballyExcluded(point, locations)) {
+                // Verifica se está incluído em pelo menos um polígono de inclusão
+                for (Location loc : locations) {
+                    if (GeoUtils.isPointInAnyIncludedPolygon(point, loc)) {
+                        addressDeliverable = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Verifica se o catálogo está aberto
+        boolean storeOpen = marketplace.nilrow.utils.OperatingHoursUtils.isCatalogOpen(catalog);
+
+        // Define a mensagem baseada nos testes
+        String message = "";
+        if (!addressDeliverable && storeOpen) {
+            message = "Não entrega nesse endereço.";
+        } else if (addressDeliverable && !storeOpen) {
+            message = "Loja está fechada.";
+        } else if (!addressDeliverable && !storeOpen) {
+            message = "Não entrega nesse endereço e a loja está fechada.";
+        }
+        dto.setDeliveryMessage(message);
+
+        return dto;
+    }
+
+    @Transactional
     public Page<ProductDTO> filterProductsByCatalogAndDelivery(
             String catalogId,
             double latitude,

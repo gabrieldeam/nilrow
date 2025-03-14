@@ -82,4 +82,5 @@ export interface ProductDTO {
   active: boolean;
   technicalSpecifications: TechnicalSpecificationDTO[];
   variations: ProductVariationDTO[];
+  deliveryMessage?: string;
 }

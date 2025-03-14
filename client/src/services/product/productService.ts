@@ -247,3 +247,22 @@ export const filterProductsByCatalogAndDelivery = async (
   );
   return response.data;
 };
+
+/**
+ * Obter produto por ID com verificação de entrega e funcionamento (GET /products/{id}/delivery).
+ * 
+ * @param id ID do produto.
+ * @param latitude Latitude do endereço de entrega.
+ * @param longitude Longitude do endereço de entrega.
+ * @returns Promise<ProductDTO> com o campo `deliveryMessage` preenchido conforme a regra de negócio.
+ */
+export const getProductByIdWithDelivery = async (
+  id: string,
+  latitude: number,
+  longitude: number
+): Promise<ProductDTO> => {
+  const response = await api.get<ProductDTO>(
+    `/products/${id}/delivery?latitude=${latitude}&longitude=${longitude}`
+  );
+  return response.data;
+};

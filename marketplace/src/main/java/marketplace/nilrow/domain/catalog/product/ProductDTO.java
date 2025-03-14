@@ -101,4 +101,6 @@ public class ProductDTO {
 
     // Relação com as variações do produto
     private List<ProductVariationDTO> variations;
+
+    private String deliveryMessage;
 }
