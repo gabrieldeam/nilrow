@@ -140,6 +140,8 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.DELETE, "/variation-template-images/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/variation-template-images/**").authenticated()
 
+                        .requestMatchers("/melhorenvio/**").permitAll()
+
                         .requestMatchers("/uploads/**").permitAll()
                         .anyRequest().authenticated()
                 )

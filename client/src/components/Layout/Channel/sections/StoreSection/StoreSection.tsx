@@ -137,7 +137,7 @@ const StoreSection: FC<StoreSectionProps> = ({ isMobile, handleSearchClick, cata
             }}
           >
             {products.map((product) => (
-              <Link key={product.id} href={`/product/${product.id}`}>
+              <Link key={product.id} href={`/product/${product.id}`} style={{ textDecoration: 'none' }}>
                   <ProductCard
                   key={product.id}
                   images={

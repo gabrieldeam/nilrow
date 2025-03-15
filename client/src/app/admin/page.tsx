@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, memo } from 'react';
-import Head from 'next/head';
 import { useRouter } from 'next/navigation';
 import LoadingSpinner from '../../components/UI/LoadingSpinner/LoadingSpinner';
 import StepButton from '../../components/UI/StepButton/StepButton';
@@ -17,13 +16,6 @@ function Administration() {
 
   return (
     <div className={styles['administration-page']}>
-      <Head>
-        <title>Administration</title>
-        <meta
-          name="description"
-          content="Faça login na Nilrow usando seu email ou nome de usuário."
-        />
-      </Head>
 
       {loading && <LoadingSpinner />}
 
@@ -42,6 +34,8 @@ function Administration() {
             paragraph="Crie e veja as categorias e subcategorias"
             onClick={() => router.push('/admin/category')} 
           />
+          </div>
+          <div className={styles['administration-list']}>
           <StepButton
             icon={iconStep2}
             title="Marcas"

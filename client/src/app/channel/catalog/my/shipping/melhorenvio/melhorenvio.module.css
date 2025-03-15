@@ -1,0 +1,29 @@
+.melhorenvioPage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    color: #fff;
+    padding-top: 115px;
+    box-sizing: border-box;
+  }
+  
+  .melhorenvioContainer {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 0 58px;
+    box-sizing: border-box;
+    position: relative;
+  }
+  
+  @media (max-width: 768px) {
+    .melhorenvioPage {
+      min-height: 0;
+      padding-top: 110px;
+    }
+    .melhorenvioContainer {
+      padding: 0 6px;
+    }
+  }

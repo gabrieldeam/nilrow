@@ -169,7 +169,7 @@ const MyCatalogContent: React.FC = () => {
               icon={addressProfileIcon}
               title="Entrega"
               paragraph="Escolha onde seus produtos poderão ser vistos e vendidos."
-              onClick={() => router.push('/channel/catalog/my/depois-colocar')}
+              onClick={() => router.push('/channel/catalog/my/shipping')}
             />
             <StepButton
               icon={promoterIcon}
