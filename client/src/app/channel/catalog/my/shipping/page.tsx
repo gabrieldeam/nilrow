@@ -50,7 +50,7 @@ function Shipping() {
             icon={deliveryIcon}
             title="Delivery"
             paragraph="Crie e veja as categorias e subcategorias"
-            onClick={() => router.push('/channel/catalog/my/shipping')} 
+            onClick={() => router.push('/channel/catalog/my/shipping/delivery')} 
           />
           </div>
 

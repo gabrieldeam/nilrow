@@ -1,10 +1,12 @@
 package marketplace.nilrow.controllers;
 
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
 import marketplace.nilrow.domain.catalog.shipping.MelhorEnvioTokenEntity;
 import marketplace.nilrow.repositories.MelhorEnvioTokenRepository;
+import marketplace.nilrow.services.OAuthStateService;
 import marketplace.nilrow.services.MelhorEnvioAuthService;
 import marketplace.nilrow.services.MelhorEnvioAuthService.TokenResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -32,14 +35,21 @@ public class MelhorEnvioAuthController {
     @Value("${app.frontend.url}")
     private String frontendBaseUrl;
 
+    @Autowired
+    private OAuthStateService oAuthStateService;
+
+
     /**
      * Endpoint para iniciar o fluxo de autorização.
      * Exemplo de chamada:
      *   GET /api/melhorenvio/authorize?ownerId=CANAL123
      */
+    // Injeção do serviço de state
+    @Autowired
+    private OAuthStateService AuthStateService;
+
     @GetMapping("/authorize")
     public String authorize(@RequestParam(name = "ownerId", required = true) String ownerId) {
-        // Ajuste os scopes de acordo com o que sua integração necessita
         String scopes = String.join(" ",
                 "shipping-calculate",
                 "shipping-cancel",
@@ -53,19 +63,16 @@ public class MelhorEnvioAuthController {
                 "ecommerce-shipping"
         );
 
-        // Use o ownerId como "state" para identificar no callback
-        String state = ownerId;
+        // Gere o state associando ao ownerId usando o OAuthStateService
+        String state = oAuthStateService.generateState(ownerId);
 
-        // Gera a URL de autorização
+        // Constrói a URL de autorização com o state gerado
         String authorizationUrl = authService.buildAuthorizeUrl(scopes, state);
-
-        // Opções:
-        // 1) Retornar a URL para o cliente abrir no navegador
-        // 2) Redirecionar usando "redirect:" + authorizationUrl
-        // Exemplo: return "redirect:" + authorizationUrl;
-        // Mas se não há front, você pode só retornar a URL (para testar via Postman, etc.)
         return "Abra essa URL para autorizar: \n" + authorizationUrl;
     }
+
+
+
 
     /**
      * Endpoint de callback: o Melhor Envio redireciona para cá depois que o usuário
@@ -88,8 +95,13 @@ public class MelhorEnvioAuthController {
             return;
         }
 
-        // Tenta usar o state, mas se estiver ausente, pode recuperar de outro armazenamento (ex.: sessão)
-        String ownerId = (state != null ? state : "desconhecido");
+        // Use o state para recuperar o ownerId
+        String ownerId = (state != null) ? oAuthStateService.consumeState(state) : null;
+        if (ownerId == null) {
+            log.warn("OwnerId não encontrado para o state: {}", state);
+            response.getWriter().write("Falha ao identificar o catálogo (ownerId).");
+            return;
+        }
 
         try {
             TokenResponse tokenResponse = authService.requestAccessToken(code);
@@ -100,19 +112,21 @@ public class MelhorEnvioAuthController {
             tokenEntity.setRefreshToken(tokenResponse.refreshToken);
             tokenEntity.setExpiresIn(tokenResponse.expiresIn);
             tokenEntity.setCreatedAt(Instant.now().getEpochSecond());
+
             tokenRepository.save(tokenEntity);
 
             log.info("Autorização concedida! Owner/Canal: {}", ownerId);
+            String message = "Autorização concedida!\n" +
+                    "Owner/Canal: " + ownerId + "\n" +
+                    "Access Token: " + tokenResponse.accessToken + "\n" +
+                    "Refresh Token: " + tokenResponse.refreshToken + "\n" +
+                    "Expira em (segundos): " + tokenResponse.expiresIn;
+            response.getWriter().write(message);
         } catch (Exception e) {
             log.error("Erro ao obter token do Melhor Envio: ", e);
             response.getWriter().write("Falha ao obter token. Ver logs no servidor.");
-            return;
         }
-
-        // Após salvar o token, redireciona para a rota desejada no front-end
-        response.sendRedirect(appFrontendUrl + "/channel/catalog/my/shipping/melhorenvio");
     }
-
 
 
     // Exemplo adicional no Controller:

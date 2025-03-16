@@ -30,8 +30,6 @@ import 'react-phone-input-2/lib/style.css';
 
 import styles from './EditCatalog.module.css';
 
-// Removemos as interfaces e tipagens para JavaScript puro
-
 const EditCatalog = () => {
   const { setMessage } = useNotification();
   const router = useRouter();
@@ -46,8 +44,6 @@ const EditCatalog = () => {
     const formattedHour = hours.toString().padStart(2, '0') + ':' + minutes.toString().padStart(2, '0');
     return { label: formattedHour, value: formattedHour };
   });
-  
-  
 
   const handleBack = useCallback(() => {
     router.push('/channel/catalog/my');
@@ -100,37 +96,28 @@ const EditCatalog = () => {
   });
   const [isFormValid, setIsFormValid] = useState(false);
 
+  // Ao carregar a página, verifica se há dados de endereço armazenados no localStorage
+  useEffect(() => {
+    const storedCatalogDTO = localStorage.getItem('editCatalogCatalogDTO');
+    if (storedCatalogDTO) {
+      const parsed = JSON.parse(storedCatalogDTO);
+      // Se os dados estiverem presentes, atualiza o estado e remove do localStorage
+      setCatalogDTO((prev) => ({
+        ...prev,
+        ...parsed.data,
+      }));
+      localStorage.removeItem('editCatalogCatalogDTO');
+    }
+  }, []);
+
+  // Primeiro useEffect para buscar o catálogo
   useEffect(() => {
     const catalogIdFromQuery = searchParams.get('catalogId');
     const id = catalogIdFromQuery ? String(catalogIdFromQuery) : localStorage.getItem('selectedCatalogId');
-    const selectedAddressId = searchParams.get('selectedAddressId')
-      ? Number(searchParams.get('selectedAddressId'))
-      : undefined;
-    const selectedAddressStreet = searchParams.get('selectedAddressStreet')
-      ? String(searchParams.get('selectedAddressStreet'))
-      : undefined;
-    const selectedAddressCep = searchParams.get('selectedAddressCep')
-      ? String(searchParams.get('selectedAddressCep'))
-      : undefined;
-    const selectedAddressCity = searchParams.get('selectedAddressCity')
-      ? String(searchParams.get('selectedAddressCity'))
-      : undefined;
-    const selectedAddressState = searchParams.get('selectedAddressState')
-      ? String(searchParams.get('selectedAddressState'))
-      : undefined;
-    const selectedAddressRecipientName = searchParams.get('selectedAddressRecipientName')
-      ? String(searchParams.get('selectedAddressRecipientName'))
-      : undefined;
-    const selectedAddressRecipientPhone = searchParams.get('selectedAddressRecipientPhone')
-      ? String(searchParams.get('selectedAddressRecipientPhone'))
-      : undefined;
-
     if (id) {
       setCatalogId(id);
-      const isAddressSelected = selectedAddressId !== undefined;
       getCatalogByCatalogId(id)
         .then(async (catalog) => {
-          // Convertendo a resposta para um objeto simples
           const catalogResponse = catalog;
           setCatalogDTO((prev) => ({
             ...prev,
@@ -139,16 +126,12 @@ const EditCatalog = () => {
             cnpj: catalogResponse.cnpj,
             email: catalogResponse.email,
             phone: catalogResponse.phone,
-            addressId: isAddressSelected ? selectedAddressId : catalogResponse.addressId,
-            addressStreet: isAddressSelected ? (selectedAddressStreet || '') : prev.addressStreet,
-            addressCep: isAddressSelected ? (selectedAddressCep || '') : prev.addressCep,
-            addressCity: isAddressSelected ? (selectedAddressCity || '') : prev.addressCity,
-            addressState: isAddressSelected ? (selectedAddressState || '') : prev.addressState,
-            addressRecipientName: isAddressSelected ? (selectedAddressRecipientName || '') : prev.addressRecipientName,
-            addressRecipientPhone: isAddressSelected ? (selectedAddressRecipientPhone || '') : prev.addressRecipientPhone,
+            // Se não houver dados de endereço vindo do localStorage, utiliza o addressId do catálogo
+            addressId: catalogResponse.addressId,
           }));
 
-          if (!isAddressSelected && catalogResponse.addressId) {
+          // Se não há dados de endereço armazenados e o catálogo possui addressId, busca os detalhes
+          if (!searchParams.get('selectedAddressId') && catalogResponse.addressId) {
             try {
               const address = await getAddressById(String(catalogResponse.addressId));
               setCatalogDTO((prev) => ({
@@ -166,6 +149,7 @@ const EditCatalog = () => {
             }
           }
 
+          // Configura os horários de funcionamento, se houver
           const orderedOperatingHours = fullDaysOfWeek.map((day) => {
             const dayOp = catalogResponse.operatingHours.find((oh) => oh.dayOfWeek === day);
             return dayOp
@@ -178,11 +162,10 @@ const EditCatalog = () => {
                         }))
                       : [{ open: '', close: '' }],
                   is24Hours: dayOp.is24Hours,
-                  isClosed: dayOp.isClosed, // ou "closed", dependendo do que o back-end envia
+                  isClosed: dayOp.isClosed,
                 }
               : { openCloseTimes: [{ open: '', close: '' }], is24Hours: false, isClosed: false };
           });
-                   
 
           setDayInfo(orderedOperatingHours);
 
@@ -340,24 +323,20 @@ const EditCatalog = () => {
       e.preventDefault();
       if (validateForm()) {
         const operatingHours =
-  selectedOption === 'normal'
-    ? dayInfo.map((day, index) => ({
-        dayOfWeek: fullDaysOfWeek[index],
-        timeIntervals:
-          day.is24Hours || day.isClosed
-            ? []
-            : day.openCloseTimes.map((time) => ({
-                openTime: time.open,
-                closeTime: time.close,
-              })),
-        is24Hours: day.is24Hours,
-        // Mapeie o campo que representa o fechamento conforme o esperado pelo back-end
-        // Se no back-end você estiver utilizando isClosed ou closed, alinhe aqui.
-        isClosed: day.isClosed,
-      }))
-    : [];
-
-
+          selectedOption === 'normal'
+            ? dayInfo.map((day, index) => ({
+                dayOfWeek: fullDaysOfWeek[index],
+                timeIntervals:
+                  day.is24Hours || day.isClosed
+                    ? []
+                    : day.openCloseTimes.map((time) => ({
+                        openTime: time.open,
+                        closeTime: time.close,
+                      })),
+                is24Hours: day.is24Hours,
+                isClosed: day.isClosed,
+              }))
+            : [];
 
         let operatingHoursType = '';
         switch (selectedOption) {
@@ -403,13 +382,14 @@ const EditCatalog = () => {
   );
 
   const handleSelectAddress = () => {
-    const CatalogDTOWithTimestamp = {
-      data: CatalogData,
-      timestamp: new Date().getTime(),
-    };
-    localStorage.setItem('editCatalogCatalogDTO', JSON.stringify(CatalogDTOWithTimestamp));
+    if (!catalogId) {
+      setMessage('O ID do catálogo ainda não foi carregado. Tente novamente em instantes.', 'error');
+      return;
+    }
+    // Armazena os dados atuais para que, ao voltar da seleção, eles sejam preservados
+    localStorage.setItem('editCatalogCatalogDTO', JSON.stringify({ data: CatalogData, timestamp: new Date().getTime() }));
     const returnTo = `/channel/catalog/my/edit/${catalogId}`;
-    router.push(`/profile/address?selectMode=true&returnTo=${encodeURIComponent(returnTo)}`);
+    router.push(`/profile/address?selectMode=1&returnTo=${encodeURIComponent(returnTo)}`);
   };
 
   return (

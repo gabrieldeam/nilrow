@@ -15,18 +15,18 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useNotification } from "@/hooks/useNotification";
 import { debounce } from "lodash";
 import {
-  createLocation,
   getLocationsByCatalogId,
-  deleteLocation,
+  getCatalogByCatalogId,
 } from "@/services/catalogService";
+import { getAddressById } from '@/services/profileService';
 import { LocationData } from "@/types/services/catalog";
 import MobileHeader from "@/components/Layout/MobileHeader/MobileHeader";
 import SubHeader from "@/components/Layout/SubHeader/SubHeader";
 import Card from "@/components/UI/Card/Card";
-import LoadingSpinner from "@/components/UI/LoadingSpinner/LoadingSpinner"; // Importa o LoadingSpinner
-import includeIconSrc from "../../../../../../public/assets/include.svg";
-import excludeIconSrc from "../../../../../../public/assets/exclude.svg";
-import styles from "./Visualization.module.css";
+import LoadingSpinner from "@/components/UI/LoadingSpinner/LoadingSpinner";
+import includeIconSrc from "../../../../../../../public/assets/include.svg";
+import excludeIconSrc from "../../../../../../../public/assets/exclude.svg";
+import styles from "./Delivery.module.css";
 
 // Tipagem do Nominatim
 interface NominatimSuggestion {
@@ -125,18 +125,52 @@ function MapRefUpdater({ mapRef }: { mapRef: React.MutableRefObject<L.Map | null
   return null;
 }
 
-const VisualizationClient: React.FC = () => {
+// Função para buscar lat/lng via Google Geocoding API
+const useFetchLatLng = () => {
+  return useCallback(async (address: string): Promise<{ lat: number; lng: number }> => {
+    try {
+      const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+      if (!API_KEY) {
+        console.error("Google API key não foi encontrada no .env");
+        return { lat: 0, lng: 0 };
+      }
+
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+        address
+      )}&key=${API_KEY}`;
+      const response = await fetch(url);
+      const data = await response.json();
+
+      console.log("Dados do Google Geocoding para o endereço:", address, data);
+
+      if (data.results && data.results.length > 0) {
+        const { lat, lng } = data.results[0].geometry.location;
+        return { lat, lng };
+      } else {
+        console.error("Nenhum resultado encontrado para o endereço:", address);
+        return { lat: 0, lng: 0 };
+      }
+    } catch (error) {
+      console.error("Erro ao buscar latitude/longitude:", error);
+      return { lat: 0, lng: 0 };
+    }
+  }, []);
+};
+
+const DeliveryVisualizationClient: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setMessage } = useNotification();
+  const fetchLatLng = useFetchLatLng();
 
   const [isClient, setIsClient] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [leafletModule, setLeafletModule] = useState<typeof import("leaflet") | null>(null);
-  const [isLoading, setIsLoading] = useState(false); // Estado para loading
+  const [isLoading, setIsLoading] = useState(false);
 
   const [catalogId, setCatalogId] = useState<string | null>(null);
   const [locations, setLocations] = useState<LocationData[]>([]);
+  const [catalogMarker, setCatalogMarker] = useState<{ lat: number; lng: number } | null>(null);
   const [suggestions, setSuggestions] = useState<NominatimSuggestion[]>([]);
   const [query, setQuery] = useState("");
   const [action, setAction] = useState<"include" | "exclude">("include");
@@ -146,7 +180,7 @@ const VisualizationClient: React.FC = () => {
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
 
-  // Carrega Leaflet (Client side) + detecta mobile
+  // Carrega Leaflet (client-side) + detecta mobile
   useEffect(() => {
     setIsClient(true);
     import("leaflet/dist/leaflet.css");
@@ -158,7 +192,7 @@ const VisualizationClient: React.FC = () => {
     import("leaflet").then((module) => setLeafletModule(module));
   }, []);
 
-  // Pega o catalogId via searchParam ou localStorage
+  // Pega o catalogId via searchParams ou localStorage
   useEffect(() => {
     const storedCatalogId = localStorage.getItem("selectedCatalogId");
     const queryCatalogId = searchParams.get("catalogId");
@@ -171,7 +205,7 @@ const VisualizationClient: React.FC = () => {
     }
   }, [searchParams, router]);
 
-  // Carrega as localizações salvas
+  // Busca as localizações salvas
   const fetchLocations = useCallback(async () => {
     if (!catalogId) return;
     setIsLoading(true);
@@ -185,9 +219,34 @@ const VisualizationClient: React.FC = () => {
     }
   }, [catalogId, setMessage]);
 
+  // Busca os dados do catálogo e o endereço associado para obter as coordenadas
+  const fetchCatalogAddress = useCallback(async () => {
+    if (!catalogId) return;
+    try {
+      const catalog = await getCatalogByCatalogId(catalogId);
+      // Supondo que o catálogo retorne o id do endereço como "addressId"
+      const addressId = catalog.addressId;
+      if (!addressId) {
+        console.error("Endereço não encontrado no catálogo");
+        return;
+      }
+      const addressData = await getAddressById(addressId);
+      // Formata o endereço conforme os dados retornados (ajuste conforme o seu DTO)
+      const fullAddress = `${addressData.street}, ${addressData.city}, ${addressData.state}, ${addressData.cep}`;
+      const { lat, lng } = await fetchLatLng(fullAddress);
+      setCatalogMarker({ lat, lng });
+    } catch (error) {
+      console.error("Erro ao buscar catálogo ou endereço:", error);
+    }
+  }, [catalogId, fetchLatLng]);
+
   useEffect(() => {
     fetchLocations();
   }, [catalogId, fetchLocations]);
+
+  useEffect(() => {
+    fetchCatalogAddress();
+  }, [catalogId, fetchCatalogAddress]);
 
   // Fecha dropdown/sugestões ao clicar fora
   useEffect(() => {
@@ -207,7 +266,7 @@ const VisualizationClient: React.FC = () => {
     router.push("/channel/catalog/my");
   }, [router]);
 
-  // Busca no Nominatim e salva
+  // Busca no Nominatim e salva (exemplo para futura funcionalidade)
   const handleSearch = useCallback(
     async (queryStr: string) => {
       if (!catalogId) return;
@@ -265,7 +324,6 @@ const VisualizationClient: React.FC = () => {
           }
         }
 
-        await createLocation(catalogId, newLocation as LocationData);
         await fetchLocations();
 
         if (mapRef.current) {
@@ -348,27 +406,6 @@ const VisualizationClient: React.FC = () => {
     setDropdownOpen(false);
   }, []);
 
-  const toggleDropdown = useCallback(() => {
-    setDropdownOpen((prev) => !prev);
-  }, []);
-
-  const handleRemoveRegion = useCallback(
-    async (index: number) => {
-      const toRemove = locations[index];
-      if (!toRemove?.id) return;
-      setIsLoading(true);
-      try {
-        await deleteLocation(toRemove.id);
-        await fetchLocations();
-      } catch {
-        setMessage("Erro ao remover a localização. Tente novamente.");
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [locations, fetchLocations, setMessage]
-  );
-
   const handleFocusRegion = useCallback(
     (index: number) => {
       const loc = locations[index];
@@ -421,6 +458,7 @@ const VisualizationClient: React.FC = () => {
     popupAnchor: [0, -32],
   });
 
+  // Define o centro do mapa: se houver locais, usa o último; se houver marcador do catálogo, pode ser utilizado
   let mapCenter: [number, number] = [-14.235, -51.9253];
   let mapZoom = 3;
 
@@ -435,6 +473,9 @@ const VisualizationClient: React.FC = () => {
       mapCenter = [lastLoc.latitude, lastLoc.longitude];
       mapZoom = 13;
     }
+  } else if (catalogMarker) {
+    mapCenter = [catalogMarker.lat, catalogMarker.lng];
+    mapZoom = 13;
   }
 
   if (!isClient) {
@@ -461,97 +502,7 @@ const VisualizationClient: React.FC = () => {
         <div className={styles.visualizationHeader}>
           <SubHeader title="Visualização" handleBack={handleBack} />
         </div>
-
         <Card title="Localizações">
-          <div className={styles.visualizationInputGroup}>
-            {/* BOTÃO DROPDOWN */}
-            <div className={styles.dropdownContainer} ref={dropdownRef}>
-              <div className={styles.dropdownSelected} onClick={toggleDropdown}>
-                {action === "include" ? (
-                  <>
-                    <Image
-                      src={includeIconSrc.src ?? includeIconSrc}
-                      alt="Include"
-                      className={styles.dropdownIcon}
-                      width={32}
-                      height={32}
-                    />
-                    Incluir
-                  </>
-                ) : (
-                  <>
-                    <Image
-                      src={excludeIconSrc.src ?? excludeIconSrc}
-                      alt="Exclude"
-                      className={styles.dropdownIcon}
-                      width={32}
-                      height={32}
-                    />
-                    Excluir
-                  </>
-                )}
-              </div>
-              {dropdownOpen && (
-                <div className={`${styles.dropdownOptions} ${styles.dropdownOpen}`}>
-                  <div
-                    onClick={() => handleActionChange("include")}
-                    className={styles.dropdownOption}
-                  >
-                    <Image
-                      src={includeIconSrc.src ?? includeIconSrc}
-                      alt="Include"
-                      className={styles.dropdownIcon}
-                      width={32}
-                      height={32}
-                    />
-                    Incluir
-                  </div>
-                  <div
-                    onClick={() => handleActionChange("exclude")}
-                    className={styles.dropdownOption}
-                  >
-                    <Image
-                      src={excludeIconSrc.src ?? excludeIconSrc}
-                      alt="Exclude"
-                      className={styles.dropdownIcon}
-                      width={32}
-                      height={32}
-                    />
-                    Excluir
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* INPUT DE PESQUISA */}
-            <input
-              type="text"
-              placeholder="Pesquisar..."
-              value={query}
-              onChange={handleInputChange}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleSearch(e.currentTarget.value);
-                }
-              }}
-              className={styles.visualizationSearchInput}
-            />
-          </div>
-
-          {/* SUGESTÕES */}
-          <div className={styles.suggestionsContainer} ref={suggestionsRef}>
-            {suggestions.map((sug, i) => (
-              <div
-                key={i}
-                className={styles.suggestionItem}
-                onClick={() => handleSuggestionClick(sug)}
-              >
-                {highlightMatch(sug.display_name, query)}
-              </div>
-            ))}
-          </div>
-
-          {/* MAPA */}
           <div className={styles.visualizationMapContainer}>
             <MapContainer
               center={mapCenter}
@@ -564,6 +515,7 @@ const VisualizationClient: React.FC = () => {
               />
               <MapRefUpdater mapRef={mapRef} />
 
+              {/* Renderiza os marcadores das localizações cadastradas */}
               {locations.map((loc, idx) => {
                 const isLatLonValid =
                   typeof loc.latitude === "number" &&
@@ -606,6 +558,13 @@ const VisualizationClient: React.FC = () => {
                   </React.Fragment>
                 );
               })}
+
+              {/* Renderiza o marcador do endereço do catálogo, se disponível */}
+              {catalogMarker && (
+                <Marker position={[catalogMarker.lat, catalogMarker.lng]} icon={includeIcon}>
+                  <Popup>Endereço do Catálogo</Popup>
+                </Marker>
+              )}
             </MapContainer>
           </div>
 
@@ -630,15 +589,6 @@ const VisualizationClient: React.FC = () => {
                   style={{ marginRight: 8 }}
                 />
                 <span>{loc.name}</span>
-                <button
-                  className={styles.removeRegionButton}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveRegion(idx);
-                  }}
-                >
-                  X
-                </button>
               </div>
             ))}
           </div>
@@ -648,4 +598,4 @@ const VisualizationClient: React.FC = () => {
   );
 };
 
-export default memo(VisualizationClient);
+export default memo(DeliveryVisualizationClient);

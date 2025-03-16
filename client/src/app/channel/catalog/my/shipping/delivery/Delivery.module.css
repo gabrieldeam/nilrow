@@ -1,0 +1,86 @@
+.visualizationPage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #000;
+    color: #fff;
+    padding-top: 150px;
+    padding-bottom: 70px;
+    box-sizing: border-box;
+  }
+  
+  .visualizationContainer {
+    width: 100%;
+    padding: 0 58px;
+    box-sizing: border-box;
+  }
+  
+  .visualizationHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+  
+  .visualizationSearchHistory {
+    max-height: 100%;
+    overflow-y: auto;
+    padding: 10px;
+    background-color: white;
+    border-radius: 0 0 5px 5px;
+  }
+  
+  .visualizationSearchItem {
+    padding: 10px;
+    color: #000000;
+    background-color: #ececec;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  .visualizationSearchItem span {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: 80%;
+    cursor: pointer;
+  }
+  
+  .removeRegionButton {
+    background: none;
+    border: none;
+    color: #000000;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  
+  .visualizationMapContainer {
+    width: 100%;
+    height: 500px;    
+  }
+  
+  @media (max-width: 768px) {
+    .visualizationPage {
+      padding-bottom: 110px;
+      padding-top: 109px;
+    }
+  
+    .visualizationContainer {
+      max-width: 419px;
+      padding: 0 6px;
+    }
+  
+    .suggestionsContainer {
+      top: 27%;
+      left: 32px;
+      width: 85%;
+      max-height: 400px;
+    }
+
+  }
+  
