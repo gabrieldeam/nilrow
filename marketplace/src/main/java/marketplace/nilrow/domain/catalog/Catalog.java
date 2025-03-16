@@ -39,7 +39,7 @@ public class Catalog {
     @JoinColumn(name = "channel_id", nullable = false)
     private Channel channel;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "address_id", nullable = false)
     private Address address;
 

@@ -116,7 +116,7 @@ const MyCatalogContent: React.FC = () => {
 
   const handleEditCatalog = useCallback(() => {
     if (catalogId) {
-      router.push(`/channel/catalog/my/edit?${catalogId}`);
+      router.push(`/channel/catalog/my/edit/${catalogId}`);
     }
   }, [catalogId, router]);
 

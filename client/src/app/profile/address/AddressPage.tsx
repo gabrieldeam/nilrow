@@ -33,6 +33,7 @@ function AddressPageContent() {
 
   // Recupera parâmetros da URL
   const selectMode = searchParams.get('selectMode') === '1';
+  // Caso não seja definido o returnTo, define uma rota padrão (pode ser ajustado conforme sua necessidade)
   const returnTo = searchParams.get('returnTo') || '/channel/catalog/add';
 
   useEffect(() => {

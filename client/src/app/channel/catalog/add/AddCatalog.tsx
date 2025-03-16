@@ -51,7 +51,7 @@ const AddCatalog: React.FC = () => {
     typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
 
   const handleBack = useCallback(() => {
-    router.push('/catalog');
+    router.push('/channel/catalog');
   }, [router]);
 
   const daysOfWeek = useMemo(() => ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'], []);

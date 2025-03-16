@@ -105,6 +105,13 @@ public class CatalogService {
             catalog.setEmail(catalogDTO.getEmail());
             catalog.setPhone(catalogDTO.getPhone());
 
+            // Atualiza o endereço
+            Optional<Address> addressOpt = addressRepository.findById(catalogDTO.getAddressId());
+            if (addressOpt.isEmpty()) {
+                throw new RuntimeException("Endereço não encontrado");
+            }
+            catalog.setAddress(addressOpt.get());
+
             // Atualiza o tipo de horário de funcionamento
             if (catalogDTO.getOperatingHoursType() != null) {
                 catalog.setOperatingHoursType(catalogDTO.getOperatingHoursType());
@@ -140,6 +147,7 @@ public class CatalogService {
         }
         return Optional.empty();
     }
+
 
     public void deleteCatalog(String catalogId) {
         catalogRepository.deleteById(catalogId);

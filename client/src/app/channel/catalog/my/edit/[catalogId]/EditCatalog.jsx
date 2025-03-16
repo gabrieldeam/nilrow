@@ -7,7 +7,7 @@ import React, {
   useEffect,
   useMemo,
 } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import Head from 'next/head';
 import Image from 'next/image';
 import CustomSelect from '@/components/UI/CustomSelect/CustomSelect';
@@ -23,7 +23,7 @@ import { useNotification } from '@/hooks/useNotification';
 import { getCatalogByCatalogId, editCatalog, deleteCatalog } from '@/services/catalogService';
 import { getAddressById } from '@/services/profileService';
 
-import closeIcon from '../../../../../../public/assets/close.svg';
+import closeIcon from '../../../../../../../public/assets/close.svg';
 
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
@@ -34,6 +34,7 @@ const EditCatalog = () => {
   const { setMessage } = useNotification();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { catalogId: routeCatalogId } = useParams();
   const isMobile = typeof window !== 'undefined' ? window.innerWidth <= 768 : false;
   const [catalogId, setCatalogId] = useState(null);
 
@@ -41,7 +42,10 @@ const EditCatalog = () => {
     const totalMinutes = index * 30;
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
-    const formattedHour = hours.toString().padStart(2, '0') + ':' + minutes.toString().padStart(2, '0');
+    const formattedHour =
+      hours.toString().padStart(2, '0') +
+      ':' +
+      minutes.toString().padStart(2, '0');
     return { label: formattedHour, value: formattedHour };
   });
 
@@ -96,29 +100,41 @@ const EditCatalog = () => {
   });
   const [isFormValid, setIsFormValid] = useState(false);
 
-  // Ao carregar a página, verifica se há dados de endereço armazenados no localStorage
+  // Captura os parâmetros de endereço da URL e atualiza o estado
   useEffect(() => {
-    const storedCatalogDTO = localStorage.getItem('editCatalogCatalogDTO');
-    if (storedCatalogDTO) {
-      const parsed = JSON.parse(storedCatalogDTO);
-      // Se os dados estiverem presentes, atualiza o estado e remove do localStorage
+    const selectedAddressId = searchParams.get('selectedAddressId');
+    const selectedAddressStreet = searchParams.get('selectedAddressStreet');
+    const selectedAddressCep = searchParams.get('selectedAddressCep');
+    const selectedAddressCity = searchParams.get('selectedAddressCity');
+    const selectedAddressState = searchParams.get('selectedAddressState');
+    const selectedAddressRecipientName = searchParams.get('selectedAddressRecipientName');
+    const selectedAddressRecipientPhone = searchParams.get('selectedAddressRecipientPhone');
+
+    if (selectedAddressId) {
+      console.log('Novo ID de endereço selecionado:', selectedAddressId);
       setCatalogDTO((prev) => ({
         ...prev,
-        ...parsed.data,
+        addressId: selectedAddressId,
+        addressStreet: selectedAddressStreet || '',
+        addressCep: selectedAddressCep || '',
+        addressCity: selectedAddressCity || '',
+        addressState: selectedAddressState || '',
+        addressRecipientName: selectedAddressRecipientName || '',
+        addressRecipientPhone: selectedAddressRecipientPhone || '',
       }));
-      localStorage.removeItem('editCatalogCatalogDTO');
     }
-  }, []);
+  }, [searchParams]);
 
-  // Primeiro useEffect para buscar o catálogo
+  // Carrega os dados do catálogo ao iniciar
   useEffect(() => {
     const catalogIdFromQuery = searchParams.get('catalogId');
-    const id = catalogIdFromQuery ? String(catalogIdFromQuery) : localStorage.getItem('selectedCatalogId');
+    const id = routeCatalogId || catalogIdFromQuery || localStorage.getItem('selectedCatalogId');
     if (id) {
       setCatalogId(id);
       getCatalogByCatalogId(id)
         .then(async (catalog) => {
           const catalogResponse = catalog;
+          const newAddressId = searchParams.get('selectedAddressId');
           setCatalogDTO((prev) => ({
             ...prev,
             name: catalogResponse.name,
@@ -126,11 +142,15 @@ const EditCatalog = () => {
             cnpj: catalogResponse.cnpj,
             email: catalogResponse.email,
             phone: catalogResponse.phone,
-            // Se não houver dados de endereço vindo do localStorage, utiliza o addressId do catálogo
-            addressId: catalogResponse.addressId,
+            addressId: newAddressId ? newAddressId : catalogResponse.addressId, // Preserva o addressId da URL, se existir
           }));
 
-          // Se não há dados de endereço armazenados e o catálogo possui addressId, busca os detalhes
+          console.log(
+            'Endereço enviado para edição (do catálogo):',
+            newAddressId ? newAddressId : catalogResponse.addressId
+          );
+
+          // Se não há parâmetros de endereço na URL, busca os dados do endereço existente
           if (!searchParams.get('selectedAddressId') && catalogResponse.addressId) {
             try {
               const address = await getAddressById(String(catalogResponse.addressId));
@@ -149,7 +169,6 @@ const EditCatalog = () => {
             }
           }
 
-          // Configura os horários de funcionamento, se houver
           const orderedOperatingHours = fullDaysOfWeek.map((day) => {
             const dayOp = catalogResponse.operatingHours.find((oh) => oh.dayOfWeek === day);
             return dayOp
@@ -203,7 +222,7 @@ const EditCatalog = () => {
     } else {
       router.push('/channel/catalog/my');
     }
-  }, [searchParams, fullDaysOfWeek, setMessage, router]);
+  }, [routeCatalogId, searchParams, fullDaysOfWeek, setMessage, router]);
 
   useEffect(() => {
     const { name, nameBoss, cnpj, email, phone } = CatalogData;
@@ -306,7 +325,10 @@ const EditCatalog = () => {
 
     if (selectedOption === 'normal') {
       const isAllDaysConfigured = dayInfo.every(
-        (day) => day.is24Hours || day.isClosed || day.openCloseTimes.every((time) => time.open && time.close)
+        (day) =>
+          day.is24Hours ||
+          day.isClosed ||
+          day.openCloseTimes.every((time) => time.open && time.close)
       );
 
       if (!isAllDaysConfigured) {
@@ -363,6 +385,8 @@ const EditCatalog = () => {
           operatingHours,
         };
 
+        console.log('ID do endereço na edição:', catalogData.addressId);
+
         try {
           if (!catalogId) return;
           await editCatalog(catalogId, catalogData);
@@ -386,8 +410,6 @@ const EditCatalog = () => {
       setMessage('O ID do catálogo ainda não foi carregado. Tente novamente em instantes.', 'error');
       return;
     }
-    // Armazena os dados atuais para que, ao voltar da seleção, eles sejam preservados
-    localStorage.setItem('editCatalogCatalogDTO', JSON.stringify({ data: CatalogData, timestamp: new Date().getTime() }));
     const returnTo = `/channel/catalog/my/edit/${catalogId}`;
     router.push(`/profile/address?selectMode=1&returnTo=${encodeURIComponent(returnTo)}`);
   };
@@ -430,7 +452,13 @@ const EditCatalog = () => {
               value={CatalogData.nameBoss}
               onChange={handleFormChange}
             />
-            <CustomInput title="CNPJ" type="text" name="cnpj" value={CatalogData.cnpj} onChange={handleFormChange} />
+            <CustomInput
+              title="CNPJ"
+              type="text"
+              name="cnpj"
+              value={CatalogData.cnpj}
+              onChange={handleFormChange}
+            />
             <CustomInput
               title="E-mail"
               type="text"
@@ -444,7 +472,9 @@ const EditCatalog = () => {
               <PhoneInput
                 country={'br'}
                 value={CatalogData.phone}
-                onChange={(phone) => setCatalogDTO((prev) => ({ ...prev, phone }))}
+                onChange={(phone) =>
+                  setCatalogDTO((prev) => ({ ...prev, phone }))
+                }
                 inputProps={{
                   name: 'phone',
                   required: true,
@@ -456,7 +486,9 @@ const EditCatalog = () => {
                 containerClass="phone-input-container"
               />
               <div className={styles.inputBottomText}>
-                <span className={styles.bottomLeftPhone}>Vamos te enviar informações por WhatsApp</span>
+                <span className={styles.bottomLeftPhone}>
+                  Vamos te enviar informações por WhatsApp
+                </span>
               </div>
             </div>
           </Card>
@@ -490,12 +522,16 @@ const EditCatalog = () => {
               />
               {selectedOption === 'normal' && (
                 <>
-                  <label className={styles.daysSelectionLabel}>Selecionar dias</label>
+                  <label className={styles.daysSelectionLabel}>
+                    Selecionar dias
+                  </label>
                   <div className={styles.daysSelection}>
                     {daysOfWeek.map((day, index) => (
                       <div
                         key={index}
-                        className={`${styles.dayBox} ${selectedDay === index ? styles.selected : ''}`}
+                        className={`${styles.dayBox} ${
+                          selectedDay === index ? styles.selected : ''
+                        }`}
                         onClick={() => handleDayClick(index)}
                       >
                         {day}
@@ -533,14 +569,18 @@ const EditCatalog = () => {
                               name={`open-${selectedDay}-${timeIndex}`}
                               value={time.open}
                               options={timeOptions}
-                              onChange={(e) => handleInputChange(selectedDay, timeIndex, 'open', e.target.value)}
+                              onChange={(e) =>
+                                handleInputChange(selectedDay, timeIndex, 'open', e.target.value)
+                              }
                             />
                             <CustomSelect
                               title="Fecha"
                               name={`close-${selectedDay}-${timeIndex}`}
                               value={time.close}
                               options={timeOptions}
-                              onChange={(e) => handleInputChange(selectedDay, timeIndex, 'close', e.target.value)}
+                              onChange={(e) =>
+                                handleInputChange(selectedDay, timeIndex, 'close', e.target.value)
+                              }
                             />
                             <Image
                               src={closeIcon}
@@ -566,7 +606,7 @@ const EditCatalog = () => {
               )}
               <SeeData
                 title="Aberto sem horário normal"
-                content="Não mostrar o horário de funcionemento"
+                content="Não mostrar o horário de funcionamento"
                 stackContent={true}
                 showToggleButton={true}
                 toggled={selectedOption === 'noHours'}
@@ -591,7 +631,11 @@ const EditCatalog = () => {
             </div>
           </Card>
           <div className={styles.confirmationButtonSpace}>
-            <StageButton text="Salvar" backgroundColor={isFormValid ? '#7B33E5' : '#212121'} type="submit" />
+            <StageButton
+              text="Salvar"
+              backgroundColor={isFormValid ? '#7B33E5' : '#212121'}
+              type="submit"
+            />
           </div>
         </form>
       </div>
