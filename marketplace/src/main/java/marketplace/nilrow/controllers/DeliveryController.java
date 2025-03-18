@@ -1,6 +1,7 @@
 package marketplace.nilrow.controllers;
 
 import marketplace.nilrow.domain.catalog.shipping.delivery.DeliveryDTO;
+import marketplace.nilrow.domain.catalog.shipping.delivery.DeliveryRadiusDTO;
 import marketplace.nilrow.services.DeliveryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -40,9 +41,27 @@ public class DeliveryController {
         return ResponseEntity.ok(deliveries);
     }
 
+    @GetMapping("/catalog/{catalogId}")
+    public ResponseEntity<DeliveryDTO> getDeliveryByCatalog(@PathVariable String catalogId) {
+        DeliveryDTO dto = deliveryService.getDeliveryByCatalogId(catalogId);
+        if (dto == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(dto);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteDelivery(@PathVariable String id) {
         deliveryService.deleteDelivery(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{deliveryId}/radii")
+    public ResponseEntity<DeliveryDTO> updateDeliveryRadii(@PathVariable String deliveryId,
+                                                           @RequestBody List<DeliveryRadiusDTO> radiiDTOs) {
+        DeliveryDTO updatedDelivery = deliveryService.updateDeliveryRadii(deliveryId, radiiDTOs);
+        return ResponseEntity.ok(updatedDelivery);
+    }
+
+
 }

@@ -83,6 +83,16 @@
     margin-left: 11px;
 }
 
+.channelLink {
+    display: inline-block;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border 0.2s ease;
+  }
+  
 /* Estilos para tablet e mobile */
 @media (max-width: 1024px) {
     .mainheader {

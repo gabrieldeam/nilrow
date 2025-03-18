@@ -2,6 +2,7 @@ package marketplace.nilrow.services;
 
 import marketplace.nilrow.domain.address.Address;
 import marketplace.nilrow.domain.catalog.*;
+import marketplace.nilrow.domain.catalog.shipping.delivery.Delivery;
 import marketplace.nilrow.domain.channel.Channel;
 import marketplace.nilrow.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,9 @@ public class CatalogService {
 
     @Autowired
     private AddressRepository addressRepository;
+
+    @Autowired
+    private DeliveryRepository deliveryRepository;
 
     public Catalog createCatalog(CatalogDTO catalogDTO, String channelId) {
         // Verifica se o canal existe
@@ -105,19 +109,28 @@ public class CatalogService {
             catalog.setEmail(catalogDTO.getEmail());
             catalog.setPhone(catalogDTO.getPhone());
 
-            // Atualiza o endereço
-            Optional<Address> addressOpt = addressRepository.findById(catalogDTO.getAddressId());
-            if (addressOpt.isEmpty()) {
-                throw new RuntimeException("Endereço não encontrado");
+            // Verifica se o endereço está sendo alterado
+            if (!catalog.getAddress().getId().equals(catalogDTO.getAddressId())) {
+                // Se o endereço está sendo alterado, verifica se já existe método de envio Delivery para este catálogo
+                Optional<Delivery> deliveryOpt = deliveryRepository.findByCatalogId(catalogId);
+                if (deliveryOpt.isPresent()) {
+                    throw new RuntimeException("O endereço não pode ser editado, pois está sendo utilizado no método de envio Delivery. Para editar, exclua o modelo de envio Delivery e cadastre novamente.");
+                }
+                // Se não existir Delivery, atualiza o endereço
+                Optional<Address> addressOpt = addressRepository.findById(catalogDTO.getAddressId());
+                if (addressOpt.isEmpty()) {
+                    throw new RuntimeException("Endereço não encontrado");
+                }
+                catalog.setAddress(addressOpt.get());
             }
-            catalog.setAddress(addressOpt.get());
 
-            // Atualiza o tipo de horário de funcionamento
+            // Atualiza o tipo de horário de funcionamento, se informado
             if (catalogDTO.getOperatingHoursType() != null) {
                 catalog.setOperatingHoursType(catalogDTO.getOperatingHoursType());
             }
 
-            // Processa os horários de funcionamento
+            // Processa os horários de funcionamento:
+            // Limpa a lista atual e recria a partir dos dados do DTO
             catalog.getOperatingHours().clear();
             if (catalogDTO.getOperatingHours() != null) {
                 for (OperatingHoursDTO ohDTO : catalogDTO.getOperatingHours()) {
@@ -147,6 +160,7 @@ public class CatalogService {
         }
         return Optional.empty();
     }
+
 
 
     public void deleteCatalog(String catalogId) {

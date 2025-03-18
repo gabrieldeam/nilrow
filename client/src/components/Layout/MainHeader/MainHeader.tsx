@@ -19,6 +19,8 @@ import chatIcon from '../../../../public/assets/chat.svg';
 import profileIcon from '../../../../public/assets/profile.svg';
 import scanIcon from '../../../../public/assets/scan.svg';
 import adminIcon from '../../../../public/assets/admin.svg';
+// Ícone default para o canal (pode ser substituído por um ícone específico)
+import userIcon from '../../../../public/assets/user.png';
 
 import { useLocationContext } from '../../../context/LocationContext';
 import { useSearch } from '../../../hooks/useSearch';
@@ -27,6 +29,12 @@ import { isAdmin } from '../../../services/authService';
 import ModalInfoAddress from '../../Modals/ModalInfoAddress/ModalInfoAddress';
 import AddressModal from '../../Modals/AddressModal/AddressModal';
 import { useAuth } from '../../../hooks/useAuth';
+
+// Importando funções para verificar o canal
+import { getMyChannel, isChannelActive } from '@/services/channel/channelService';
+import { getUserNickname } from '@/services/profileService';
+
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
 const MainHeader: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -39,6 +47,11 @@ const MainHeader: React.FC = () => {
   const pathname = usePathname();
   const divRef = useRef<HTMLDivElement | null>(null);
   const [buttonPosition, setButtonPosition] = useState({ top: 0, left: 0 });
+
+  // Estados para o canal
+  const [hasChannel, setHasChannel] = useState(false);
+  const [channelImageUrl, setChannelImageUrl] = useState('');
+  const [nickname, setNickname] = useState('');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -61,6 +74,29 @@ const MainHeader: React.FC = () => {
       setButtonPosition({ top: rect.bottom + window.scrollY, left: rect.left + window.scrollX });
     }
   }, []);
+
+  // Novo useEffect para buscar dados do canal
+  useEffect(() => {
+    if (isAuthenticated) {
+      const fetchChannelData = async () => {
+        try {
+          const channel = await getMyChannel();
+          if (channel && channel.id) {
+            setHasChannel(true);
+            setChannelImageUrl(channel.imageUrl ?? '');
+            const userNickname = await getUserNickname();
+            setNickname(userNickname);
+          } else {
+            setHasChannel(false);
+          }
+        } catch (error) {
+          console.error('Erro ao buscar dados do canal:', error);
+          setHasChannel(false);
+        }
+      };
+      fetchChannelData();
+    }
+  }, [isAuthenticated]);
 
   const handleSearchSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -87,6 +123,19 @@ const MainHeader: React.FC = () => {
 
   const closeAddressModal = () => {
     setIsAddressModalOpen(false);
+  };
+
+  // Função para tratar o clique no botão do canal
+  const handleChannelClick = async () => {
+    try {
+      const channel = await getMyChannel();
+      const activeStatus = await isChannelActive(channel.id);
+      if (activeStatus) {
+        router.push('/channel');
+      }
+    } catch {
+      router.push('/profile/add');
+    }
   };
 
   return (
@@ -138,6 +187,18 @@ const MainHeader: React.FC = () => {
           <>
             <HeaderButton icon={chatIcon} link="/chat" isActive={getIsActive('/chat')} />
             <HeaderButton icon={profileIcon} link="/profile" isActive={getIsActive('/profile')} />
+            {/* Novo botão para o canal, exibido se o usuário possuir canal */}
+            {hasChannel && (
+              <a onClick={handleChannelClick} className={styles.channelLink}>
+              <Image
+                src={channelImageUrl ? `${apiUrl}${channelImageUrl}` : userIcon}
+                alt="Canal"
+                width={46}
+                height={44}
+                className={styles.channelImage}
+              />
+            </a>
+            )}
             {isAdminUser && <HeaderButton icon={adminIcon} link="/admin" isActive={getIsActive('/admin')} />}
           </>
         )}
