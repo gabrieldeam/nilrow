@@ -29,6 +29,9 @@ public class DeliveryRadius {
     @Column(nullable = false)
     private BigDecimal price; // Valor do delivery para esse raio
 
+    @Column(nullable = false)
+    private int averageDeliveryTime;
+
     @OneToMany(mappedBy = "deliveryRadius", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DeliveryCoordinate> coordinates;
 }

@@ -1,12 +1,14 @@
 package marketplace.nilrow.controllers;
 
 import marketplace.nilrow.domain.catalog.shipping.delivery.DeliveryDTO;
+import marketplace.nilrow.domain.catalog.shipping.delivery.DeliveryPriceDTO;
 import marketplace.nilrow.domain.catalog.shipping.delivery.DeliveryRadiusDTO;
 import marketplace.nilrow.services.DeliveryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -56,12 +58,40 @@ public class DeliveryController {
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/{deliveryId}/radii")
-    public ResponseEntity<DeliveryDTO> updateDeliveryRadii(@PathVariable String deliveryId,
-                                                           @RequestBody List<DeliveryRadiusDTO> radiiDTOs) {
-        DeliveryDTO updatedDelivery = deliveryService.updateDeliveryRadii(deliveryId, radiiDTOs);
+    @PostMapping("/{deliveryId}/radii")
+    public ResponseEntity<DeliveryDTO> addDeliveryRadius(@PathVariable String deliveryId,
+                                                         @RequestBody DeliveryRadiusDTO radiusDTO) {
+        DeliveryDTO updatedDelivery = deliveryService.addDeliveryRadius(deliveryId, radiusDTO);
         return ResponseEntity.ok(updatedDelivery);
     }
 
+    @PutMapping("/{deliveryId}/radii/{radiusId}")
+    public ResponseEntity<DeliveryDTO> updateDeliveryRadius(@PathVariable String deliveryId,
+                                                            @PathVariable String radiusId,
+                                                            @RequestBody DeliveryRadiusDTO radiusDTO) {
+        // Garante que o DTO tenha o mesmo id do path
+        radiusDTO.setId(radiusId);
+        DeliveryDTO updatedDelivery = deliveryService.updateDeliveryRadius(deliveryId, radiusDTO);
+        return ResponseEntity.ok(updatedDelivery);
+    }
+
+    @DeleteMapping("/{deliveryId}/radii/{radiusId}")
+    public ResponseEntity<DeliveryDTO> deleteDeliveryRadius(@PathVariable String deliveryId,
+                                                            @PathVariable String radiusId) {
+        DeliveryDTO updatedDelivery = deliveryService.deleteDeliveryRadius(deliveryId, radiusId);
+        return ResponseEntity.ok(updatedDelivery);
+    }
+
+    @GetMapping("/{catalogId}/price")
+    public ResponseEntity<DeliveryPriceDTO> getDeliveryPrice(
+            @PathVariable String catalogId,
+            @RequestParam double lat,
+            @RequestParam double lon) {
+        DeliveryPriceDTO priceDto = deliveryService.getDeliveryPrice(catalogId, lat, lon);
+        if (priceDto == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(priceDto);
+    }
 
 }

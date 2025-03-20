@@ -3,7 +3,9 @@
 import React, { use, useEffect, useState } from 'react';
 import { useLocationContext } from '@/context/LocationContext';
 import { getProductByIdWithDelivery } from '@/services/product/productService';
+import { getDeliveryPrice } from '@/services/deliveryService';
 import { ProductDTO } from '@/types/services/product';
+import { DeliveryPriceDTO } from '@/types/services/delivery';
 
 interface ProductPageProps {
   params: Promise<{ id: string }>;
@@ -16,12 +18,14 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
 
   const { location } = useLocationContext();
   const [product, setProduct] = useState<ProductDTO | null>(null);
+  const [deliveryData, setDeliveryData] = useState<DeliveryPriceDTO | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (location) {
       setLoading(true);
+      // Busca o produto, que já traz informações do delivery
       getProductByIdWithDelivery(id, location.latitude, location.longitude)
         .then((data) => {
           setProduct(data);
@@ -33,6 +37,20 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
         .finally(() => setLoading(false));
     }
   }, [id, location]);
+
+  // Depois que o produto for carregado e se houver localização, busca o preço do delivery e tempo médio
+  useEffect(() => {
+    if (product && location) {
+      getDeliveryPrice(product.catalogId, location.latitude, location.longitude)
+        .then((data) => {
+          setDeliveryData(data);
+        })
+        .catch((err) => {
+          console.error(err);
+          setDeliveryData(null);
+        });
+    }
+  }, [product, location]);
 
   if (loading) return <p>Carregando produto...</p>;
   if (error) return <p>{error}</p>;
@@ -72,6 +90,12 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
         <li><strong>Estoque:</strong> {product.stock}</li>
         <li><strong>Ativo:</strong> {product.active ? 'Sim' : 'Não'}</li>
         <li><strong>Mensagem de Entrega:</strong> {product.deliveryMessage}</li>
+        <li>
+          <strong>Preço de Delivery:</strong> {deliveryData ? deliveryData.price : 'N/A'}
+        </li>
+        <li>
+          <strong>Tempo Médio de Entrega:</strong> {deliveryData ? `${deliveryData.averageDeliveryTime} min` : 'N/A'}
+        </li>
       </ul>
 
       {/* Exibindo a Ficha Técnica */}

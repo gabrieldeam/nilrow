@@ -27,7 +27,11 @@ import LoadingSpinner from "@/components/UI/LoadingSpinner/LoadingSpinner";
 import includeIconSrc from "../../../../../../../public/assets/include.svg";
 import excludeIconSrc from "../../../../../../../public/assets/exclude.svg";
 import styles from "./Delivery.module.css";
-import { DeliveryDTO, DeliveryRadiusDTO, DeliveryCoordinateDTO } from "@/types/services/delivery";
+import {
+  DeliveryDTO,
+  DeliveryRadiusDTO,
+  DeliveryCoordinateDTO,
+} from "@/types/services/delivery";
 
 // ================ IMPORTS DO DELIVERY SERVICE ==================
 import {
@@ -35,7 +39,9 @@ import {
   createDelivery,
   updateDelivery,
   deleteDelivery,
-  updateDeliveryRadii,
+  addDeliveryRadius,
+  updateDeliveryRadius,
+  deleteDeliveryRadius,
 } from "@/services/deliveryService";
 
 // Tipagem do Nominatim
@@ -50,7 +56,7 @@ interface NominatimSuggestion {
   [key: string]: unknown;
 }
 
-// Cálculo aproximado de área via Shoelace (mantém o que você já tinha)
+// Cálculo aproximado de área via Shoelace
 function polygonArea(coords: [number, number][]): number {
   let area = 0;
   for (let i = 0; i < coords.length; i++) {
@@ -144,7 +150,7 @@ function MapRefUpdater({
   return null;
 }
 
-// Função para buscar lat/lng via Google Geocoding API (mantém o que você tinha)
+// Função para buscar lat/lng via Google Geocoding API
 const useFetchLatLng = () => {
   return useCallback(async (address: string): Promise<{ lat: number; lng: number }> => {
     try {
@@ -215,17 +221,12 @@ const DeliveryVisualizationClient: React.FC = () => {
 
   const [isClient, setIsClient] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [leafletModule, setLeafletModule] = useState<
-    typeof import("leaflet") | null
-  >(null);
+  const [leafletModule, setLeafletModule] = useState<typeof import("leaflet") | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const [catalogId, setCatalogId] = useState<string | null>(null);
   const [locations, setLocations] = useState<LocationData[]>([]);
-  const [catalogMarker, setCatalogMarker] = useState<{
-    lat: number;
-    lng: number;
-  } | null>(null);
+  const [catalogMarker, setCatalogMarker] = useState<{ lat: number; lng: number } | null>(null);
   const [suggestions, setSuggestions] = useState<NominatimSuggestion[]>([]);
   const [query, setQuery] = useState("");
   const [action, setAction] = useState<"include" | "exclude">("include");
@@ -268,7 +269,7 @@ const DeliveryVisualizationClient: React.FC = () => {
     }
   }, [searchParams, router]);
 
-  // Busca as localizações salvas (código que já existia)
+  // Busca as localizações salvas
   const fetchLocations = useCallback(async () => {
     if (!catalogId) return;
     setIsLoading(true);
@@ -294,7 +295,7 @@ const DeliveryVisualizationClient: React.FC = () => {
         return;
       }
       const addressData = await getAddressById(addressId);
-      // Formata o endereço conforme os dados retornados (ajuste conforme o seu DTO)
+      // Formata o endereço conforme os dados retornados
       const fullAddress = `${addressData.street}, ${addressData.city}, ${addressData.state}, ${addressData.cep}`;
       const { lat, lng } = await fetchLatLng(fullAddress);
       setCatalogMarker({ lat, lng });
@@ -332,7 +333,7 @@ const DeliveryVisualizationClient: React.FC = () => {
     fetchOrCreateDelivery();
   }, [catalogId, fetchLocations, fetchCatalogAddress, fetchOrCreateDelivery]);
 
-  // Fecha dropdown/sugestões ao clicar fora (código que você já tinha)
+  // Fecha dropdown/sugestões ao clicar fora
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -353,10 +354,10 @@ const DeliveryVisualizationClient: React.FC = () => {
   }, []);
 
   const handleBack = useCallback(() => {
-    router.push("/channel/catalog/my");
+    router.push("/channel/catalog/my/shipping");
   }, [router]);
 
-  // =================== BUSCA NO NOMINATIM (já tinha) ===================
+  // =================== BUSCA NO NOMINATIM ===================
   const handleSearch = useCallback(
     async (queryStr: string) => {
       if (!catalogId) return;
@@ -434,7 +435,7 @@ const DeliveryVisualizationClient: React.FC = () => {
     [catalogId, action, fetchLocations, setMessage]
   );
 
-  // Debounce para sugestões (código que você já tinha)
+  // Debounce para sugestões
   const debouncedFetchSuggestions = useMemo(
     () =>
       debounce(async (q: string) => {
@@ -554,7 +555,7 @@ const DeliveryVisualizationClient: React.FC = () => {
     }
   }, [delivery, setMessage]);
 
-  // Criar um novo raio utilizando o endpoint updateDeliveryRadii
+  // Adicionar um novo raio utilizando o endpoint addDeliveryRadius
   const handleAddRadius = useCallback(async () => {
     if (!delivery) return;
 
@@ -574,6 +575,14 @@ const DeliveryVisualizationClient: React.FC = () => {
       return;
     }
 
+    const timeStr = prompt("Informe o tempo médio de entrega (em minutos):", "30");
+    if (!timeStr) return;
+    const averageDeliveryTime = parseInt(timeStr, 10);
+    if (isNaN(averageDeliveryTime) || averageDeliveryTime < 0) {
+      setMessage("Tempo médio inválido.");
+      return;
+    }
+
     if (!catalogMarker) {
       setMessage("Endereço do catálogo não encontrado.");
       return;
@@ -582,20 +591,17 @@ const DeliveryVisualizationClient: React.FC = () => {
     // Gera as coordenadas do círculo com centro no endereço do catálogo
     const newCoordinates = generateCircleCoordinates(catalogMarker, km, 36);
 
-    // Cria o novo objeto de raio
+    // Cria o novo objeto de raio, incluindo o novo campo
     const newRadius: DeliveryRadiusDTO = {
       radius: km,
       price,
+      averageDeliveryTime,
       coordinates: newCoordinates,
     };
 
-    // Junta o novo raio com os já existentes
-    const updatedRadii = [...(delivery.radii || []), newRadius];
-
     try {
       setIsLoading(true);
-      // Chama o endpoint updateDeliveryRadii passando a lista atualizada de raios
-      const updatedDelivery = await updateDeliveryRadii(delivery.id!, updatedRadii);
+      const updatedDelivery = await addDeliveryRadius(delivery.id!, newRadius);
       setDelivery(updatedDelivery);
       setMessage("Raio adicionado com sucesso!");
     } catch (error) {
@@ -606,17 +612,14 @@ const DeliveryVisualizationClient: React.FC = () => {
     }
   }, [delivery, catalogMarker, setMessage]);
 
-  // Editar raio
+  // Editar raio utilizando o endpoint updateDeliveryRadius
   const handleEditRadius = useCallback(
     async (index: number) => {
       if (!delivery) return;
       const radiusItem = delivery.radii[index];
-      if (!radiusItem) return;
+      if (!radiusItem || !radiusItem.id) return;
 
-      const newKmStr = prompt(
-        "Novo valor de raio (km):",
-        String(radiusItem.radius)
-      );
+      const newKmStr = prompt("Novo valor de raio (km):", String(radiusItem.radius));
       if (!newKmStr) return;
       const newKm = parseFloat(newKmStr);
       if (isNaN(newKm) || newKm <= 0) {
@@ -624,10 +627,7 @@ const DeliveryVisualizationClient: React.FC = () => {
         return;
       }
 
-      const newPriceStr = prompt(
-        "Novo valor de preço:",
-        String(radiusItem.price)
-      );
+      const newPriceStr = prompt("Novo valor de preço:", String(radiusItem.price));
       if (!newPriceStr) return;
       const newPrice = parseFloat(newPriceStr);
       if (isNaN(newPrice) || newPrice < 0) {
@@ -635,18 +635,25 @@ const DeliveryVisualizationClient: React.FC = () => {
         return;
       }
 
-      const updatedRadii = [...delivery.radii];
-      updatedRadii[index] = { ...updatedRadii[index], radius: newKm, price: newPrice };
+      const newTimeStr = prompt("Novo tempo médio de entrega (em minutos):", String(radiusItem.averageDeliveryTime));
+      if (!newTimeStr) return;
+      const newAverageDeliveryTime = parseInt(newTimeStr, 10);
+      if (isNaN(newAverageDeliveryTime) || newAverageDeliveryTime < 0) {
+        setMessage("Tempo médio inválido.");
+        return;
+      }
 
-      const updatedDelivery = { ...delivery, radii: updatedRadii };
+      const updatedRadius: DeliveryRadiusDTO = {
+        id: radiusItem.id,
+        radius: newKm,
+        price: newPrice,
+        averageDeliveryTime: newAverageDeliveryTime,
+        coordinates: radiusItem.coordinates,
+      };
+
       try {
         setIsLoading(true);
-        let finalDelivery: DeliveryDTO;
-        if (updatedDelivery.id) {
-          finalDelivery = await updateDelivery(updatedDelivery.id, updatedDelivery);
-        } else {
-          finalDelivery = await createDelivery(updatedDelivery);
-        }
+        const finalDelivery = await updateDeliveryRadius(delivery.id!, radiusItem.id, updatedRadius);
         setDelivery(finalDelivery);
         setMessage("Raio atualizado com sucesso!");
       } catch (error) {
@@ -659,24 +666,16 @@ const DeliveryVisualizationClient: React.FC = () => {
     [delivery, setMessage]
   );
 
-  // Excluir raio
+  // Excluir raio utilizando o endpoint deleteDeliveryRadius
   const handleDeleteRadius = useCallback(
     async (index: number) => {
       if (!delivery) return;
+      const radiusItem = delivery.radii[index];
+      if (!radiusItem || !radiusItem.id) return;
       if (!window.confirm("Deseja realmente excluir este raio?")) return;
-
-      const updatedRadii = [...delivery.radii];
-      updatedRadii.splice(index, 1);
-
-      const updatedDelivery = { ...delivery, radii: updatedRadii };
       try {
         setIsLoading(true);
-        let finalDelivery: DeliveryDTO;
-        if (updatedDelivery.id) {
-          finalDelivery = await updateDelivery(updatedDelivery.id, updatedDelivery);
-        } else {
-          finalDelivery = await createDelivery(updatedDelivery);
-        }
+        const finalDelivery = await deleteDeliveryRadius(delivery.id!, radiusItem.id);
         setDelivery(finalDelivery);
         setMessage("Raio excluído com sucesso!");
       } catch (error) {
@@ -803,7 +802,7 @@ const DeliveryVisualizationClient: React.FC = () => {
                   {delivery.radii.map((r, idx) => (
                     <li key={r.id ?? idx} style={{ marginBottom: 8 }}>
                       <strong>
-                        Raio: {r.radius} km | Preço: R$ {r.price.toFixed(2)}
+                        Raio: {r.radius} km | Preço: R$ {r.price.toFixed(2)} | Tempo Médio: {r.averageDeliveryTime} min
                       </strong>{" "}
                       <button onClick={() => handleEditRadius(idx)}>
                         Editar
@@ -877,7 +876,7 @@ const DeliveryVisualizationClient: React.FC = () => {
                           <Popup>{loc.name}</Popup>
                         </Marker>
 
-                        {/* Círculo em torno do local (fixo 5 km, como antes) */}
+                        {/* Círculo em torno do local (fixo 5 km) */}
                         <Circle
                           center={[loc.latitude, loc.longitude]}
                           radius={5000} // 5 km
@@ -915,14 +914,13 @@ const DeliveryVisualizationClient: React.FC = () => {
               {/* =========== CÍRCULOS PARA OS RAIO(S) DO DELIVERY =========== */}
               {catalogMarker &&
                 delivery?.radii?.map((r, i) => {
-                  // Gera cor aleatória ou pega do array
                   const color =
                     colorPalette[i % colorPalette.length] || "#666666";
                   return (
                     <Circle
                       key={r.id ?? `radius-${i}`}
                       center={[catalogMarker.lat, catalogMarker.lng]}
-                      radius={r.radius * 1000} // convertendo km -> metros
+                      radius={r.radius * 1000} // km para metros
                       pathOptions={{
                         color: color,
                         fillColor: color,
@@ -931,7 +929,8 @@ const DeliveryVisualizationClient: React.FC = () => {
                     >
                       <Popup>
                         Raio: {r.radius} km <br />
-                        Preço: R$ {r.price.toFixed(2)}
+                        Preço: R$ {r.price.toFixed(2)} <br />
+                        Tempo Médio: {r.averageDeliveryTime} min
                       </Popup>
                     </Circle>
                   );
@@ -939,7 +938,7 @@ const DeliveryVisualizationClient: React.FC = () => {
             </MapContainer>
           </div>
 
-          {/* HISTÓRICO DE LOCAIS SALVOS (já existia) */}
+          {/* HISTÓRICO DE LOCAIS SALVOS */}
           <div className={styles.visualizationSearchHistory}>
             {locations.map((loc, idx) => (
               <div

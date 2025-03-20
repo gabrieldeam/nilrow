@@ -4,16 +4,16 @@ import marketplace.nilrow.domain.catalog.Catalog;
 import marketplace.nilrow.domain.catalog.shipping.delivery.*;
 import marketplace.nilrow.repositories.CatalogRepository;
 import marketplace.nilrow.repositories.DeliveryRepository;
+import marketplace.nilrow.util.PolygonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.Comparator;
 
 @Service
 public class DeliveryServiceImpl implements DeliveryService {
@@ -44,79 +44,118 @@ public class DeliveryServiceImpl implements DeliveryService {
         return mapToDTO(updatedDelivery);
     }
 
-
     @Transactional
-    public DeliveryDTO updateDeliveryRadii(String deliveryId, List<DeliveryRadiusDTO> newRadiiDTOs) {
+    @Override
+    public DeliveryDTO addDeliveryRadius(String deliveryId, DeliveryRadiusDTO radiusDTO) {
         Delivery delivery = deliveryRepository.findById(deliveryId)
                 .orElseThrow(() -> new RuntimeException("Delivery não encontrada"));
-
-        // Garante que não seja null
         if (delivery.getRadii() == null) {
             delivery.setRadii(new ArrayList<>());
         }
 
-        // Mapeia os raios já existentes por ID, para acessar rapidamente
-        Map<String, DeliveryRadius> existingById = delivery.getRadii().stream()
-                .filter(r -> r.getId() != null)       // só pega quem já tem ID
-                .collect(Collectors.toMap(DeliveryRadius::getId, r -> r));
+        DeliveryRadius radius = new DeliveryRadius();
+        radius.setDelivery(delivery);
+        radius.setRadius(radiusDTO.getRadius());
+        radius.setPrice(radiusDTO.getPrice());
+        // Novo campo: define o tempo médio de entrega
+        radius.setAverageDeliveryTime(radiusDTO.getAverageDeliveryTime());
+        radius.setCoordinates(updateCoordinates(radius, radiusDTO.getCoordinates()));
 
-        // Nova lista que iremos popular
-        List<DeliveryRadius> updatedRadii = new ArrayList<>();
+        delivery.getRadii().add(radius);
+        Delivery saved = deliveryRepository.save(delivery);
+        return mapToDTO(saved);
+    }
 
-        // Percorre a lista de DTOs recebida
-        for (DeliveryRadiusDTO radiusDTO : newRadiiDTOs) {
-            DeliveryRadius radiusEntity;
-            // Se existe ID e já consta no mapa, atualizamos em vez de criar
-            if (radiusDTO.getId() != null && existingById.containsKey(radiusDTO.getId())) {
-                radiusEntity = existingById.get(radiusDTO.getId());
-            } else {
-                // Senao, criamos um novo
-                radiusEntity = new DeliveryRadius();
-                radiusEntity.setDelivery(delivery);
-            }
+    @Transactional
+    @Override
+    public DeliveryDTO updateDeliveryRadius(String deliveryId, DeliveryRadiusDTO radiusDTO) {
+        Delivery delivery = deliveryRepository.findById(deliveryId)
+                .orElseThrow(() -> new RuntimeException("Delivery não encontrada"));
 
-            // Atualiza campos básicos
-            radiusEntity.setRadius(radiusDTO.getRadius());
-            radiusEntity.setPrice(radiusDTO.getPrice());
+        DeliveryRadius radius = delivery.getRadii().stream()
+                .filter(r -> r.getId().equals(radiusDTO.getId()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Raio de delivery não encontrado"));
 
-            // Atualiza as coordenadas
-            radiusEntity.setCoordinates(updateCoordinates(radiusEntity, radiusDTO.getCoordinates()));
+        // Atualiza os campos básicos do raio
+        radius.setRadius(radiusDTO.getRadius());
+        radius.setPrice(radiusDTO.getPrice());
+        // Atualiza o novo campo: tempo médio de entrega
+        radius.setAverageDeliveryTime(radiusDTO.getAverageDeliveryTime());
 
-            // Adiciona na lista final
-            updatedRadii.add(radiusEntity);
+        // Atualiza as coordenadas mantendo a mesma referência da coleção
+        List<DeliveryCoordinate> newCoords = updateCoordinates(radius, radiusDTO.getCoordinates());
+        if (radius.getCoordinates() != null) {
+            radius.getCoordinates().clear();
+            radius.getCoordinates().addAll(newCoords);
+        } else {
+            radius.setCoordinates(newCoords);
         }
-
-        // Limpa a lista original e coloca só o que queremos manter
-        delivery.getRadii().clear();
-        delivery.getRadii().addAll(updatedRadii);
 
         Delivery saved = deliveryRepository.save(delivery);
         return mapToDTO(saved);
     }
 
-    // Exemplo de método auxiliar para coordenadas
-    private List<DeliveryCoordinate> updateCoordinates(
-            DeliveryRadius radiusEntity,
-            List<DeliveryCoordinateDTO> coordDTOs
-    ) {
-        if (coordDTOs == null) {
-            return new ArrayList<>();
+    @Transactional
+    @Override
+    public DeliveryDTO deleteDeliveryRadius(String deliveryId, String radiusId) {
+        Delivery delivery = deliveryRepository.findById(deliveryId)
+                .orElseThrow(() -> new RuntimeException("Delivery não encontrada"));
+
+        boolean removed = delivery.getRadii().removeIf(r -> r.getId().equals(radiusId));
+        if (!removed) {
+            throw new RuntimeException("Raio de delivery não encontrado");
         }
 
-        // Mesmo princípio se quiser evitar problemas de orphanRemoval:
-        // Carregar as coordenadas atuais e tratar em lugar
-        // Mas se for sempre sobrescrever, pode fazer mais simples:
+        Delivery saved = deliveryRepository.save(delivery);
+        return mapToDTO(saved);
+    }
 
+    /**
+     * Método auxiliar para atualizar coordenadas (mantendo a referência da coleção)
+     */
+    private List<DeliveryCoordinate> updateCoordinates(DeliveryRadius radiusEntity, List<DeliveryCoordinateDTO> coordDTOs) {
         List<DeliveryCoordinate> coords = new ArrayList<>();
-        for (DeliveryCoordinateDTO dto : coordDTOs) {
-            DeliveryCoordinate coord = new DeliveryCoordinate();
-            coord.setDeliveryRadius(radiusEntity);
-            coord.setLatitude(dto.getLatitude());
-            coord.setLongitude(dto.getLongitude());
-            coords.add(coord);
+        if (coordDTOs != null) {
+            for (DeliveryCoordinateDTO dto : coordDTOs) {
+                DeliveryCoordinate coord = new DeliveryCoordinate();
+                coord.setDeliveryRadius(radiusEntity);
+                coord.setLatitude(dto.getLatitude());
+                coord.setLongitude(dto.getLongitude());
+                coords.add(coord);
+            }
         }
         return coords;
     }
+
+    /**
+     * Método para obter o preço do delivery com base em um ponto (lat, lon).
+     * Verifica se o ponto está dentro de algum dos raios cadastrados (utilizando as coordenadas do polígono)
+     * e retorna o preço e o tempo médio de entrega do menor raio (mais restritivo) que contenha o ponto.
+     */
+    @Override
+    public DeliveryPriceDTO getDeliveryPrice(String catalogId, double lat, double lon) {
+        Delivery delivery = deliveryRepository.findByCatalogId(catalogId)
+                .orElseThrow(() -> new RuntimeException("Delivery não encontrado para o catálogo: " + catalogId));
+
+        // Verifica se o delivery está ativo
+        if (!delivery.isActive()) {
+            return null;
+        }
+
+        // Filtra os raios cujo polígono contenha o ponto e seleciona o de menor raio
+        DeliveryRadius matched = delivery.getRadii().stream()
+                .filter(r -> r.getCoordinates() != null && !r.getCoordinates().isEmpty() &&
+                        PolygonUtils.isPointInPolygon(lat, lon, r.getCoordinates()))
+                .min(Comparator.comparingDouble(DeliveryRadius::getRadius))
+                .orElse(null);
+
+        if (matched == null) {
+            return null;
+        }
+        return new DeliveryPriceDTO(matched.getPrice(), matched.getAverageDeliveryTime());
+    }
+
 
     public DeliveryDTO getDeliveryByCatalogId(String catalogId) {
         Optional<Delivery> deliveryOpt = deliveryRepository.findByCatalogId(catalogId);
@@ -125,7 +164,6 @@ public class DeliveryServiceImpl implements DeliveryService {
         }
         return mapToDTO(deliveryOpt.get());
     }
-
 
     @Override
     public DeliveryDTO getDeliveryById(String id) {
@@ -148,14 +186,12 @@ public class DeliveryServiceImpl implements DeliveryService {
         deliveryRepository.delete(delivery);
     }
 
-    // Mapeamento simples entre DTO e entidade (ajuste conforme necessário)
+    // Métodos de mapeamento entre entidades e DTOs
     private DeliveryDTO mapToDTO(Delivery delivery) {
         DeliveryDTO dto = new DeliveryDTO();
         dto.setId(delivery.getId());
         dto.setCatalogId(delivery.getCatalog() != null ? delivery.getCatalog().getId() : null);
         dto.setActive(delivery.isActive());
-
-        // Preenche radii
         if (delivery.getRadii() != null) {
             List<DeliveryRadiusDTO> radiusDTOs = delivery.getRadii().stream()
                     .map(this::mapRadiusToDTO)
@@ -170,6 +206,8 @@ public class DeliveryServiceImpl implements DeliveryService {
         dto.setId(radius.getId());
         dto.setRadius(radius.getRadius());
         dto.setPrice(radius.getPrice());
+        // Novo campo: tempo médio de entrega
+        dto.setAverageDeliveryTime(radius.getAverageDeliveryTime());
         if (radius.getCoordinates() != null) {
             List<DeliveryCoordinateDTO> coordDTOs = radius.getCoordinates().stream()
                     .map(this::mapCoordinateToDTO)
@@ -211,6 +249,8 @@ public class DeliveryServiceImpl implements DeliveryService {
         radius.setDelivery(delivery);
         radius.setRadius(radiusDTO.getRadius());
         radius.setPrice(radiusDTO.getPrice());
+        // Novo campo: tempo médio de entrega
+        radius.setAverageDeliveryTime(radiusDTO.getAverageDeliveryTime());
         if (radiusDTO.getCoordinates() != null) {
             List<DeliveryCoordinate> coords = radiusDTO.getCoordinates().stream()
                     .map(c -> mapCoordinateToEntity(c, radius))

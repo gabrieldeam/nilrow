@@ -1,8 +1,10 @@
 package marketplace.nilrow.services;
 
 import marketplace.nilrow.domain.catalog.shipping.delivery.DeliveryDTO;
+import marketplace.nilrow.domain.catalog.shipping.delivery.DeliveryPriceDTO;
 import marketplace.nilrow.domain.catalog.shipping.delivery.DeliveryRadiusDTO;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface DeliveryService {
@@ -12,5 +14,8 @@ public interface DeliveryService {
     DeliveryDTO getDeliveryByCatalogId(String catalogId);
     List<DeliveryDTO> getAllDeliveries();
     void deleteDelivery(String id);
-    DeliveryDTO updateDeliveryRadii(String deliveryId, List<DeliveryRadiusDTO> radiiDTOs);
+    DeliveryDTO addDeliveryRadius(String deliveryId, DeliveryRadiusDTO radiusDTO);
+    DeliveryDTO updateDeliveryRadius(String deliveryId, DeliveryRadiusDTO radiusDTO);
+    DeliveryDTO deleteDeliveryRadius(String deliveryId, String radiusId);
+    DeliveryPriceDTO getDeliveryPrice(String catalogId, double lat, double lon);
 }
