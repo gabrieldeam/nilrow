@@ -44,7 +44,6 @@ import {
   deleteDeliveryRadius,
 } from "@/services/deliveryService";
 
-// Tipagem do Nominatim
 interface NominatimSuggestion {
   display_name: string;
   lat: string;
@@ -531,9 +530,8 @@ const DeliveryVisualizationClient: React.FC = () => {
     [locations]
   );
 
-  // ================= FUNÇÕES PARA DELIVERY =================
+  // =============== FUNÇÕES PARA DELIVERY ===============
 
-  // Trocar ativo/inativo
   const handleToggleDelivery = useCallback(async () => {
     if (!delivery) return;
     try {
@@ -555,7 +553,7 @@ const DeliveryVisualizationClient: React.FC = () => {
     }
   }, [delivery, setMessage]);
 
-  // Adicionar um novo raio utilizando o endpoint addDeliveryRadius
+  // Adicionar um novo raio
   const handleAddRadius = useCallback(async () => {
     if (!delivery) return;
 
@@ -591,7 +589,7 @@ const DeliveryVisualizationClient: React.FC = () => {
     // Gera as coordenadas do círculo com centro no endereço do catálogo
     const newCoordinates = generateCircleCoordinates(catalogMarker, km, 36);
 
-    // Cria o novo objeto de raio, incluindo o novo campo
+    // Cria o novo objeto de raio
     const newRadius: DeliveryRadiusDTO = {
       radius: km,
       price,
@@ -612,7 +610,7 @@ const DeliveryVisualizationClient: React.FC = () => {
     }
   }, [delivery, catalogMarker, setMessage]);
 
-  // Editar raio utilizando o endpoint updateDeliveryRadius
+  // Editar raio
   const handleEditRadius = useCallback(
     async (index: number) => {
       if (!delivery) return;
@@ -666,7 +664,7 @@ const DeliveryVisualizationClient: React.FC = () => {
     [delivery, setMessage]
   );
 
-  // Excluir raio utilizando o endpoint deleteDeliveryRadius
+  // Excluir raio
   const handleDeleteRadius = useCallback(
     async (index: number) => {
       if (!delivery) return;
@@ -708,6 +706,24 @@ const DeliveryVisualizationClient: React.FC = () => {
     }
   }, [delivery, setMessage]);
 
+  // =========== Centralizar o mapa no círculo (raio) =============
+  const handleFocusRadius = useCallback(
+    (index: number) => {
+      if (!delivery) return;
+      const r = delivery.radii[index];
+      if (!r || !r.coordinates || r.coordinates.length === 0) return;
+
+      // Transformar as coordenadas do raio em um array de [lat, lng]
+      const circlePoints = r.coordinates.map((c) => [c.latitude, c.longitude]) as [number, number][];
+
+      if (mapRef.current) {
+        // Ajusta o mapa para exibir todos os pontos do círculo
+        mapRef.current.fitBounds(circlePoints);
+      }
+    },
+    [delivery]
+  );
+
   if (!leafletModule) {
     return <div>Carregando o mapa...</div>;
   }
@@ -726,7 +742,7 @@ const DeliveryVisualizationClient: React.FC = () => {
     popupAnchor: [0, -32],
   });
 
-  // Define o centro do mapa: se houver locais, usa o último; se houver marcador do catálogo, pode ser utilizado
+  // Define o centro do mapa
   let mapCenter: [number, number] = [-14.235, -51.9253];
   let mapZoom = 3;
 
@@ -802,13 +818,18 @@ const DeliveryVisualizationClient: React.FC = () => {
                   {delivery.radii.map((r, idx) => (
                     <li key={r.id ?? idx} style={{ marginBottom: 8 }}>
                       <strong>
-                        Raio: {r.radius} km | Preço: R$ {r.price.toFixed(2)} | Tempo Médio: {r.averageDeliveryTime} min
+                        Raio: {r.radius} km | Preço: R$ {r.price.toFixed(2)} | Tempo Médio:{" "}
+                        {r.averageDeliveryTime} min
                       </strong>{" "}
                       <button onClick={() => handleEditRadius(idx)}>
                         Editar
                       </button>
                       <button onClick={() => handleDeleteRadius(idx)}>
                         Excluir
+                      </button>
+                      {/* Botão para centralizar o círculo no mapa */}
+                      <button onClick={() => handleFocusRadius(idx)}>
+                        Centralizar
                       </button>
                     </li>
                   ))}
@@ -901,7 +922,7 @@ const DeliveryVisualizationClient: React.FC = () => {
                 );
               })}
 
-              {/* Renderiza o marcador do endereço do catálogo, se disponível */}
+              {/* Marcador do endereço do catálogo, se disponível */}
               {catalogMarker && (
                 <Marker
                   position={[catalogMarker.lat, catalogMarker.lng]}
