@@ -94,4 +94,13 @@ public class DeliveryController {
         return ResponseEntity.ok(priceDto);
     }
 
+    @GetMapping("/catalog/{catalogId}/active")
+    public ResponseEntity<Boolean> getDeliveryActiveByCatalog(@PathVariable String catalogId) {
+        DeliveryDTO dto = deliveryService.getDeliveryByCatalogId(catalogId);
+        if (dto == null) {
+            return ResponseEntity.ok(null);
+        }
+        return ResponseEntity.ok(dto.isActive());
+    }
+
 }

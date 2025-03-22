@@ -79,3 +79,13 @@ export const getDeliveryPrice = async (
   const response = await api.get<DeliveryPriceDTO>(`/deliveries/${catalogId}/price?lat=${lat}&lon=${lon}`);
   return response.data;
 };
+
+export async function getDeliveryActiveByCatalogId(catalogId: string): Promise<boolean | null> {
+  try {
+    const response = await api.get<boolean>(`/deliveries/catalog/${catalogId}/active`);
+    return response.data;
+  } catch (error) {
+    // Caso o delivery não exista, retorna null
+    return null;
+  }
+}

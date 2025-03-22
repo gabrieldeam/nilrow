@@ -4,8 +4,10 @@ import React, { use, useEffect, useState } from 'react';
 import { useLocationContext } from '@/context/LocationContext';
 import { getProductByIdWithDelivery } from '@/services/product/productService';
 import { getDeliveryPrice } from '@/services/deliveryService';
+import { getActivePickupDetailsByCatalogId } from '@/services/pickupService';
 import { ProductDTO } from '@/types/services/product';
 import { DeliveryPriceDTO } from '@/types/services/delivery';
+import { PickupActiveDetailsDTO } from '@/types/services/pickup';
 
 interface ProductPageProps {
   params: Promise<{ id: string }>;
@@ -19,13 +21,14 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   const { location } = useLocationContext();
   const [product, setProduct] = useState<ProductDTO | null>(null);
   const [deliveryData, setDeliveryData] = useState<DeliveryPriceDTO | null>(null);
+  const [pickupDetails, setPickupDetails] = useState<PickupActiveDetailsDTO | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Busca os dados do produto com informações de delivery
   useEffect(() => {
     if (location) {
       setLoading(true);
-      // Busca o produto, que já traz informações do delivery
       getProductByIdWithDelivery(id, location.latitude, location.longitude)
         .then((data) => {
           setProduct(data);
@@ -38,7 +41,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
     }
   }, [id, location]);
 
-  // Depois que o produto for carregado e se houver localização, busca o preço do delivery e tempo médio
+  // Busca o preço do delivery e tempo médio após o produto ser carregado
   useEffect(() => {
     if (product && location) {
       getDeliveryPrice(product.catalogId, location.latitude, location.longitude)
@@ -51,6 +54,20 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
         });
     }
   }, [product, location]);
+
+  // Busca os detalhes de retirada (pickup) ativo do catálogo, se houver
+  useEffect(() => {
+    if (product) {
+      getActivePickupDetailsByCatalogId(product.catalogId)
+        .then((data) => {
+          setPickupDetails(data);
+        })
+        .catch((err) => {
+          console.error('Erro ao carregar dados de retirada:', err);
+          setPickupDetails(null);
+        });
+    }
+  }, [product]);
 
   if (loading) return <p>Carregando produto...</p>;
   if (error) return <p>{error}</p>;
@@ -97,6 +114,34 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
           <strong>Tempo Médio de Entrega:</strong> {deliveryData ? `${deliveryData.averageDeliveryTime} min` : 'N/A'}
         </li>
       </ul>
+
+      {/* Seção de Pickup/Retirada */}
+      {pickupDetails && (
+        <div>
+          <h2>Opção de Retirada</h2>
+          <p>
+            <strong>Preço de Retirada:</strong>{' '}
+            {pickupDetails.precoRetirada === 0 ? 'Grátis' : pickupDetails.precoRetirada}
+          </p>
+          <p>
+            <strong>Prazo de Retirada:</strong> {pickupDetails.prazoRetirada} dias
+          </p>
+          <h3>Endereço do Catálogo</h3>
+          <ul>
+            <li><strong>Destinatário:</strong> {pickupDetails.address.recipientName}</li>
+            <li><strong>Telefone:</strong> {pickupDetails.address.recipientPhone}</li>
+            <li><strong>CEP:</strong> {pickupDetails.address.cep}</li>
+            <li><strong>Estado:</strong> {pickupDetails.address.state}</li>
+            <li><strong>Cidade:</strong> {pickupDetails.address.city}</li>
+            <li><strong>Bairro:</strong> {pickupDetails.address.neighborhood}</li>
+            <li><strong>Rua:</strong> {pickupDetails.address.street}</li>
+            <li><strong>Número:</strong> {pickupDetails.address.number}</li>
+            {pickupDetails.address.complement && (
+              <li><strong>Complemento:</strong> {pickupDetails.address.complement}</li>
+            )}
+          </ul>
+        </div>
+      )}
 
       {/* Exibindo a Ficha Técnica */}
       <h2>Ficha Técnica</h2>

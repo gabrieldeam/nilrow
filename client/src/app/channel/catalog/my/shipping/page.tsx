@@ -59,13 +59,13 @@ function Shipping() {
             icon={removeIcon}
             title="Retirar"
             paragraph="Crie e veja as Marcas"
-            onClick={() => router.push('/channel/catalog/my/shipping')} 
+            onClick={() => router.push('/channel/catalog/my/shipping/pickup')} 
           />
           <StepButton
             icon={schedulingIcon}
             title="Agendar"
             paragraph="Crie e veja os Tamplates de Produtos"
-            onClick={() => router.push('/channel/catalog/my/shipping')} 
+            onClick={() => router.push('/channel/catalog/my/shipping/scheduling')} 
           />
         </div>
       </div>

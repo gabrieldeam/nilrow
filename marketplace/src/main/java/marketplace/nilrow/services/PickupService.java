@@ -1,7 +1,11 @@
 package marketplace.nilrow.services;
 
+import marketplace.nilrow.domain.address.AddressDTO;
+import marketplace.nilrow.domain.catalog.Catalog;
 import marketplace.nilrow.domain.catalog.shipping.pickup.Pickup;
+import marketplace.nilrow.domain.catalog.shipping.pickup.PickupActiveDetailsDTO;
 import marketplace.nilrow.domain.catalog.shipping.pickup.PickupDTO;
+import marketplace.nilrow.repositories.CatalogRepository;
 import marketplace.nilrow.repositories.PickupRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,6 +20,9 @@ public class PickupService {
     @Autowired
     private PickupRepository pickupRepository;
 
+    @Autowired
+    private CatalogRepository catalogRepository;
+
     // Converte a entidade para DTO
     private PickupDTO convertToDTO(Pickup pickup) {
         PickupDTO dto = new PickupDTO();
@@ -28,11 +35,11 @@ public class PickupService {
     }
 
     // Converte o DTO para entidade
-    // Obs.: É necessário buscar o objeto Catalog correspondente ao catalogId (não incluído neste exemplo)
     private Pickup convertToEntity(PickupDTO dto) {
         Pickup pickup = new Pickup();
-        // Supondo que a busca do Catalog já esteja implementada ou o objeto seja setado de outra forma
-        // Exemplo: pickup.setCatalog(catalogService.findById(Long.parseLong(dto.getCatalogId())));
+        Catalog catalog = catalogRepository.findById(dto.getCatalogId())
+                .orElseThrow(() -> new RuntimeException("Catálogo não encontrado com id: " + dto.getCatalogId()));
+        pickup.setCatalog(catalog);
         pickup.setActive(dto.isActive());
         pickup.setPrazoRetirada(dto.getPrazoRetirada());
         pickup.setPrecoRetirada(dto.getPrecoRetirada());
@@ -52,22 +59,46 @@ public class PickupService {
         throw new RuntimeException("Pickup não encontrada com id: " + id);
     }
 
+    // Novo método que retorna o campo 'active' para um catalogId ou null se não existir
+    public Boolean getActiveByCatalogId(String catalogId) {
+        Optional<Pickup> pickupOpt = pickupRepository.findByCatalog_Id(catalogId);
+        return pickupOpt.map(Pickup::isActive).orElse(null);
+    }
+
+
+    // Busca pickup pelo catalogId
+    public PickupDTO findByCatalogId(String catalogId) {
+        Optional<Pickup> opt = pickupRepository.findByCatalog_Id(catalogId);
+        if(opt.isPresent()){
+            return convertToDTO(opt.get());
+        }
+        throw new RuntimeException("Pickup não encontrada para catalogId: " + catalogId);
+    }
+
+    // Cria ou atualiza pickup caso já exista para o catálogo
     public PickupDTO create(PickupDTO dto) {
-        Pickup pickup = convertToEntity(dto);
-        // Aqui você pode buscar e setar o Catalog a partir do catalogId do DTO
-        Pickup saved = pickupRepository.save(pickup);
-        return convertToDTO(saved);
+        Optional<Pickup> existingPickup = pickupRepository.findByCatalog_Id(dto.getCatalogId());
+        if(existingPickup.isPresent()){
+            Pickup pickup = existingPickup.get();
+            pickup.setActive(dto.isActive());
+            pickup.setPrazoRetirada(dto.getPrazoRetirada());
+            pickup.setPrecoRetirada(dto.getPrecoRetirada());
+            Pickup updated = pickupRepository.save(pickup);
+            return convertToDTO(updated);
+        } else {
+            Pickup pickup = convertToEntity(dto);
+            Pickup saved = pickupRepository.save(pickup);
+            return convertToDTO(saved);
+        }
     }
 
     public PickupDTO update(String id, PickupDTO dto) {
         Optional<Pickup> opt = pickupRepository.findById(id);
         if(opt.isPresent()){
             Pickup pickup = opt.get();
-            // Atualiza os campos desejados
             pickup.setActive(dto.isActive());
             pickup.setPrazoRetirada(dto.getPrazoRetirada());
             pickup.setPrecoRetirada(dto.getPrecoRetirada());
-            // Se necessário, atualize também o Catalog (buscando pelo dto.getCatalogId())
             Pickup updated = pickupRepository.save(pickup);
             return convertToDTO(updated);
         }
@@ -80,5 +111,26 @@ public class PickupService {
         } else {
             throw new RuntimeException("Pickup não encontrada com id: " + id);
         }
+    }
+
+    // Novo método: busca detalhes do pickup ativo e do endereço do catálogo
+    public PickupActiveDetailsDTO findActivePickupDetailsByCatalogId(String catalogId) {
+        Optional<Pickup> opt = pickupRepository.findByCatalog_Id(catalogId);
+        if(opt.isPresent()){
+            Pickup pickup = opt.get();
+            if(pickup.isActive()){
+                // Cria um DTO de endereço a partir da entidade do catálogo
+                AddressDTO addressDTO = new AddressDTO(pickup.getCatalog().getAddress());
+                PickupActiveDetailsDTO details = new PickupActiveDetailsDTO();
+                details.setActive(pickup.isActive());
+                details.setPrazoRetirada(pickup.getPrazoRetirada());
+                details.setPrecoRetirada(pickup.getPrecoRetirada());
+                details.setAddress(addressDTO);
+                return details;
+            } else {
+                throw new RuntimeException("Pickup não está ativo para o catálogo com id: " + catalogId);
+            }
+        }
+        throw new RuntimeException("Pickup não encontrada para catalogId: " + catalogId);
     }
 }
