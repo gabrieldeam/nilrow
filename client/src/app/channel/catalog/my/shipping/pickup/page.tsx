@@ -1,13 +1,27 @@
-'use client';
+"use client";
 
-import React, { useState, memo, useCallback, useEffect, ChangeEvent } from 'react';
-import { useRouter } from 'next/navigation';
-import LoadingSpinner from '@/components/UI/LoadingSpinner/LoadingSpinner';
-import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';
-import SubHeader from '@/components/Layout/SubHeader/SubHeader';
-import styles from './pickup.module.css';
-import { getPickupByCatalogId, createPickup, updatePickup, deletePickup } from '@/services/pickupService';
-import { PickupDTO } from '@/types/services/pickup';
+import React, {
+  useState,
+  memo,
+  useCallback,
+  useEffect,
+  ChangeEvent,
+} from "react";
+import { useRouter } from "next/navigation";
+import LoadingSpinner from "@/components/UI/LoadingSpinner/LoadingSpinner";
+import MobileHeader from "@/components/Layout/MobileHeader/MobileHeader";
+import SubHeader from "@/components/Layout/SubHeader/SubHeader";
+import CustomInput from '@/components/UI/CustomInput/CustomInput';
+import StageButton from '@/components/UI/StageButton/StageButton';
+import Card from "@/components/UI/Card/Card";
+import styles from "./pickup.module.css";
+import {
+  getPickupByCatalogId,
+  createPickup,
+  updatePickup,
+  deletePickup,
+} from "@/services/pickupService";
+import { PickupDTO } from "@/types/services/pickup";
 
 function Pickup() {
   const router = useRouter();
@@ -15,7 +29,7 @@ function Pickup() {
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [catalogId, setCatalogId] = useState<string | null>(null);
   const [pickup, setPickup] = useState<PickupDTO | null>(null);
-  
+
   // Estado para os valores do formulário
   const [formValues, setFormValues] = useState({
     active: false,
@@ -25,9 +39,9 @@ function Pickup() {
 
   // Busca o catalogId do localStorage e, se não existir, redireciona
   useEffect(() => {
-    const storedCatalogId = localStorage.getItem('selectedCatalogId');
+    const storedCatalogId = localStorage.getItem("selectedCatalogId");
     if (!storedCatalogId) {
-      router.push('/channel/catalog/my');
+      router.push("/channel/catalog/my");
     } else {
       setCatalogId(storedCatalogId);
     }
@@ -35,19 +49,19 @@ function Pickup() {
 
   // Função para voltar à tela anterior
   const handleBack = useCallback(() => {
-    router.push('/channel/catalog/my/shipping');
+    router.push("/channel/catalog/my/shipping");
   }, [router]);
 
   // Detecta se o dispositivo é mobile
   useEffect(() => {
     const checkIsMobile = () => setIsMobile(window.innerWidth <= 768);
     checkIsMobile();
-    // Se desejar atualizar quando houver resize, descomente:
-    // window.addEventListener('resize', checkIsMobile);
-    // return () => window.removeEventListener('resize', checkIsMobile);
+    // Se desejar atualizar em resize, descomente:
+    // window.addEventListener("resize", checkIsMobile);
+    // return () => window.removeEventListener("resize", checkIsMobile);
   }, []);
 
-  // Busca ou cria um pickup com base no catalogId utilizando o endpoint getPickupByCatalogId
+  // Busca ou cria um pickup com base no catalogId
   useEffect(() => {
     if (!catalogId) return;
 
@@ -63,7 +77,7 @@ function Pickup() {
           precoRetirada: existingPickup.precoRetirada,
         });
       } catch (error: any) {
-        console.error('Pickup não encontrada, criando novo. Erro:', error);
+        console.error("Pickup não encontrada, criando novo. Erro:", error);
         // Se não encontrar, cria um novo pickup com valores padrão
         try {
           const newPickupData = {
@@ -80,7 +94,7 @@ function Pickup() {
             precoRetirada: createdPickup.precoRetirada,
           });
         } catch (createError) {
-          console.error('Erro ao criar pickup:', createError);
+          console.error("Erro ao criar pickup:", createError);
         }
       } finally {
         setLoading(false);
@@ -93,13 +107,45 @@ function Pickup() {
   // Atualiza os valores do formulário conforme o usuário interage
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setFormValues(prev => ({
+    setFormValues((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : Number(value),
+      [name]: type === "checkbox" ? checked : Number(value),
     }));
   };
 
-  // Atualiza o pickup via API
+  // Função que alterna o campo "active" e chama o updatePickup para atualizar somente esse campo
+  const toggleActiveAndUpdate = useCallback(async () => {
+    if (!pickup) return;
+    const newActive = !formValues.active;
+    setFormValues((prev) => ({ ...prev, active: newActive }));
+    setLoading(true);
+    try {
+      // Atualiza o pickup passando os valores atuais, mas alterando somente o "active"
+      const updated = await updatePickup(pickup.id, {
+        catalogId: pickup.catalogId,
+        active: newActive,
+        prazoRetirada: formValues.prazoRetirada,
+        precoRetirada: formValues.precoRetirada,
+      });
+      setPickup(updated);
+      // Opcional: exibir uma notificação de sucesso
+      // alert("Pickup atualizado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao atualizar pickup:", error);
+      alert("Erro ao atualizar pickup.");
+      // Caso ocorra erro, reverte o toggle
+      setFormValues((prev) => ({ ...prev, active: !newActive }));
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    pickup,
+    formValues.active,
+    formValues.prazoRetirada,
+    formValues.precoRetirada,
+  ]);
+
+  // Atualiza o pickup via API para outras alterações (salvar dados do formulário)
   const handleUpdate = async () => {
     if (!pickup) return;
     setLoading(true);
@@ -111,10 +157,10 @@ function Pickup() {
         precoRetirada: formValues.precoRetirada,
       });
       setPickup(updated);
-      alert('Pickup atualizado com sucesso!');
+      alert("Pickup atualizado com sucesso!");
     } catch (error) {
-      console.error('Erro ao atualizar pickup:', error);
-      alert('Erro ao atualizar pickup.');
+      console.error("Erro ao atualizar pickup:", error);
+      alert("Erro ao atualizar pickup.");
     } finally {
       setLoading(false);
     }
@@ -123,19 +169,21 @@ function Pickup() {
   // Exclui o pickup via API
   const handleDelete = async () => {
     if (!pickup) return;
-    const confirmDelete = window.confirm('Tem certeza que deseja excluir este pickup?');
+    const confirmDelete = window.confirm(
+      "Tem certeza que deseja excluir este pickup?"
+    );
     if (!confirmDelete) return;
 
     setLoading(true);
     try {
       await deletePickup(pickup.id);
-      alert('Pickup excluído com sucesso!');
+      alert("Pickup excluído com sucesso!");
       setPickup(null);
       // Opcional: redirecionar após exclusão:
-      // router.push('/channel/catalog/my/shipping');
+      // router.push("/channel/catalog/my/shipping");
     } catch (error) {
-      console.error('Erro ao excluir pickup:', error);
-      alert('Erro ao excluir pickup.');
+      console.error("Erro ao excluir pickup:", error);
+      alert("Erro ao excluir pickup.");
     } finally {
       setLoading(false);
     }
@@ -143,64 +191,47 @@ function Pickup() {
 
   return (
     <div className={styles.pickupPage}>
-      {isMobile && (
-        <MobileHeader 
-          title="Retirar" 
-          buttons={{ close: true }} 
-          handleBack={handleBack} 
-        />
+      {pickup && (
+        <>
+          {/* Versão Mobile */}
+          {isMobile && (
+            <MobileHeader
+              title={`Delivery ${pickup.active ? "Ativo" : "Inativo"}`}
+              buttons={{ close: true, filter: true }}
+              handleBack={handleBack}
+              // Passa a função que alterna o active e atualiza via API
+              onFilter={toggleActiveAndUpdate}
+            />
+          )}
+        </>
       )}
 
       {loading && <LoadingSpinner />}
 
       <div className={styles.pickupContainer}>
-        <SubHeader title="Retirar" handleBack={handleBack} />
-        <div className={styles.pickup}>
-          {pickup ? (
-            <div>
-              <div>
-                <label>
-                  Ativo:
-                  <input
-                    type="checkbox"
-                    name="active"
-                    checked={formValues.active}
-                    onChange={handleChange}
-                  />
-                </label>
-              </div>
-              <div>
-                <label>
-                  Prazo de Retirada:
-                  <input
-                    type="number"
-                    name="prazoRetirada"
-                    value={formValues.prazoRetirada}
-                    onChange={handleChange}
-                  />
-                </label>
-              </div>
-              <div>
-                <label>
-                  Preço de Retirada:
-                  <input
-                    type="number"
-                    name="precoRetirada"
-                    value={formValues.precoRetirada}
-                    onChange={handleChange}
-                    step="0.01"
-                  />
-                </label>
-              </div>
-              <div className={styles.buttons}>
-                <button onClick={handleUpdate}>Salvar</button>
-                <button onClick={handleDelete}>Excluir</button>
-              </div>
-            </div>
+        {pickup && (
+          <div className={styles.visualizationHeader}>
+            <SubHeader
+              title={`Delivery ${pickup.active ? "Ativo" : "Inativo"}`}
+              handleBack={handleBack}
+              showActiveFilterButton
+              // Passa a função que alterna o active e atualiza via API
+              handleActiveFilter={toggleActiveAndUpdate}
+            />
+          </div>
+        )}
+
+        <Card title="Editar">
+          {pickup ? (   
+              <CustomInput title="Prazo" name="Prazo" value={formValues.prazoRetirada} onChange={handleChange} bottomLeftText={`Defina o tempo até está pronto para ser retirado`}/>            
+              <CustomInput title="Preço" name="Preço para retirada" value={formValues.precoRetirada} onChange={handleChange} bottomLeftText={`Caso queira de gráça deixe 0`}/>        
+                <div className={styles.deliveryConfirmationButtonSpace}>
+                  <StageButton text="Salvar" backgroundColor="#7B33E5" type="submit" onClick={handleUpdate} />
+                </div>  
           ) : (
             <p>Nenhum pickup encontrado.</p>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   );

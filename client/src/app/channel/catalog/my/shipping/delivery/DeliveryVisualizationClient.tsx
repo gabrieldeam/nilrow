@@ -13,7 +13,6 @@ import NextDynamic from "next/dynamic";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useNotification } from "@/hooks/useNotification";
-import { debounce } from "lodash";
 import {
   getLocationsByCatalogId,
   getCatalogByCatalogId,
@@ -22,10 +21,16 @@ import { getAddressById } from "@/services/profileService";
 import { LocationData } from "@/types/services/catalog";
 import MobileHeader from "@/components/Layout/MobileHeader/MobileHeader";
 import SubHeader from "@/components/Layout/SubHeader/SubHeader";
+import CustomInput from '@/components/UI/CustomInput/CustomInput';
+import Modal from "@/components/Modals/Modal/Modal";
 import Card from "@/components/UI/Card/Card";
+import StageButton from '@/components/UI/StageButton/StageButton';
 import LoadingSpinner from "@/components/UI/LoadingSpinner/LoadingSpinner";
 import includeIconSrc from "../../../../../../../public/assets/include.svg";
-import excludeIconSrc from "../../../../../../../public/assets/exclude.svg";
+import excludeIconSrc from "../../../../../../../public/assets/close.svg";
+import editWhiteIconSrc from "../../../../../../../public/assets/editWhite.svg";
+import buttomIconSrc from "../../../../../../../public/assets/buttom.svg";
+import buttomCheioIconSrc from "../../../../../../../public/assets/buttomCheio.svg";
 import styles from "./Delivery.module.css";
 import {
   DeliveryDTO,
@@ -38,11 +43,11 @@ import {
   getDeliveryByCatalogId,
   createDelivery,
   updateDelivery,
-  deleteDelivery,
   addDeliveryRadius,
   updateDeliveryRadius,
   deleteDeliveryRadius,
 } from "@/services/deliveryService";
+
 
 interface NominatimSuggestion {
   display_name: string;
@@ -149,6 +154,7 @@ function MapRefUpdater({
   return null;
 }
 
+
 // Função para buscar lat/lng via Google Geocoding API
 const useFetchLatLng = () => {
   return useCallback(async (address: string): Promise<{ lat: number; lng: number }> => {
@@ -226,14 +232,146 @@ const DeliveryVisualizationClient: React.FC = () => {
   const [catalogId, setCatalogId] = useState<string | null>(null);
   const [locations, setLocations] = useState<LocationData[]>([]);
   const [catalogMarker, setCatalogMarker] = useState<{ lat: number; lng: number } | null>(null);
-  const [suggestions, setSuggestions] = useState<NominatimSuggestion[]>([]);
-  const [query, setQuery] = useState("");
-  const [action, setAction] = useState<"include" | "exclude">("include");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
+
+  const [centeredRadiusIndex, setCenteredRadiusIndex] = useState<number | null>(null);
+  const isCentered = (idx: number) => centeredRadiusIndex === idx;
+
+  // No início do componente DeliveryVisualizationClient (logo após os hooks já existentes)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [modalFormData, setModalFormData] = useState({
+    km: "",
+    price: "",
+    averageDeliveryTime: "",
+  });
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+
+
+  const openAddModal = () => {
+    setModalFormData({ km: "", price: "", averageDeliveryTime: "" });
+    setIsAddModalOpen(true);
+  };
+
+  const openEditModal = (index: number) => {
+    const radiusItem = delivery?.radii[index];
+    if (!radiusItem) return;
+    setModalFormData({
+      km: String(radiusItem.radius),
+      price: String(radiusItem.price),
+      averageDeliveryTime: String(radiusItem.averageDeliveryTime),
+    });
+    setEditingIndex(index);
+    setIsEditModalOpen(true);
+  };
+
+
+  // Submit para adicionar novo raio
+  const handleAddModalSubmit = async () => {
+    const km = parseFloat(modalFormData.km);
+    const price = parseFloat(modalFormData.price);
+    const averageDeliveryTime = parseInt(modalFormData.averageDeliveryTime, 10);
+  
+    if (!catalogMarker) {
+      setMessage("Endereço do catálogo não encontrado.", "error");
+      return;
+    }
+    if (isNaN(km) || km <= 0) {
+      setMessage("Raio inválido.", "error");
+      return;
+    }
+    if (isNaN(price) || price < 0) {
+      setMessage("Preço inválido.", "error");
+      return;
+    }
+    if (isNaN(averageDeliveryTime) || averageDeliveryTime < 0) {
+      setMessage("Tempo médio inválido.", "error");
+      return;
+    }
+  
+    // Verifica se já existe um raio com valor similar (diferença menor que 1 km)
+    if (delivery && delivery.radii.some(existing => Math.abs(existing.radius - km) < 1)) {
+      setMessage(
+        "Já existe um raio com valor similar. O novo raio deve ter pelo menos 1 km de diferença dos já existentes.",
+        "error"
+      );
+      return;
+    }
+  
+    // Gera as coordenadas do círculo com centro no endereço do catálogo
+    const newCoordinates = generateCircleCoordinates(catalogMarker, km, 36);
+    const newRadius: DeliveryRadiusDTO = {
+      radius: km,
+      price,
+      averageDeliveryTime,
+      coordinates: newCoordinates,
+    };
+  
+    try {
+      setIsLoading(true);
+      const updatedDelivery = await addDeliveryRadius(delivery!.id!, newRadius);
+      setDelivery(updatedDelivery);
+      setMessage("Raio adicionado com sucesso!");
+    } catch (error) {
+      console.error(error);
+      setMessage("Erro ao adicionar raio.", "error");
+    } finally {
+      setIsLoading(false);
+      setIsAddModalOpen(false);
+    }
+  };
+  
+
+// Submit para editar um raio existente
+const handleEditModalSubmit = async () => {
+  if (editingIndex === null || !delivery) return;
+  
+  const radiusItem = delivery.radii[editingIndex];
+  if (!radiusItem || !radiusItem.id) return;
+  
+  const newKm = parseFloat(modalFormData.km);
+  const newPrice = parseFloat(modalFormData.price);
+  const newAverageDeliveryTime = parseInt(modalFormData.averageDeliveryTime, 10);
+  
+  if (isNaN(newKm) || newKm <= 0) {
+    setMessage("Raio inválido.");
+    return;
+  }
+  if (isNaN(newPrice) || newPrice < 0) {
+    setMessage("Preço inválido.");
+    return;
+  }
+  if (isNaN(newAverageDeliveryTime) || newAverageDeliveryTime < 0) {
+    setMessage("Tempo médio inválido.");
+    return;
+  }
+  
+  const updatedRadius: DeliveryRadiusDTO = {
+    id: radiusItem.id,
+    radius: newKm,
+    price: newPrice,
+    averageDeliveryTime: newAverageDeliveryTime,
+    coordinates: radiusItem.coordinates,
+  };
+
+  try {
+    setIsLoading(true);
+    const finalDelivery = await updateDeliveryRadius(delivery.id!, radiusItem.id, updatedRadius);
+    setDelivery(finalDelivery);
+    setMessage("Raio atualizado com sucesso!");
+  } catch (error) {
+    console.error(error);
+    setMessage("Erro ao atualizar raio.", 'error');
+  } finally {
+    setIsLoading(false);
+    setIsEditModalOpen(false);
+    setEditingIndex(null);
+  }
+};
+
 
   // =============== ESTADO PARA DELIVERY ===============
   const [delivery, setDelivery] = useState<DeliveryDTO | null>(null);
@@ -338,14 +476,11 @@ const DeliveryVisualizationClient: React.FC = () => {
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setDropdownOpen(false);
-      }
+      ) 
       if (
         suggestionsRef.current &&
         !suggestionsRef.current.contains(event.target as Node)
       ) {
-        setSuggestions([]);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -356,145 +491,6 @@ const DeliveryVisualizationClient: React.FC = () => {
     router.push("/channel/catalog/my/shipping");
   }, [router]);
 
-  // =================== BUSCA NO NOMINATIM ===================
-  const handleSearch = useCallback(
-    async (queryStr: string) => {
-      if (!catalogId) return;
-      setIsLoading(true);
-      try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-            queryStr
-          )}&format=json&limit=1&polygon_geojson=1`
-        );
-        const data = await response.json();
-
-        if (!data || data.length === 0) {
-          setMessage("Nenhuma localização encontrada. Tente novamente.");
-          return;
-        }
-
-        const { lat, lon, geojson, display_name } = data[0];
-        const latitude = parseFloat(lat);
-        const longitude = parseFloat(lon);
-
-        if (isNaN(latitude) || isNaN(longitude)) {
-          setMessage("Coordenadas inválidas recebidas. Tente outra busca.");
-          return;
-        }
-
-        const newLocation: Partial<LocationData> = {
-          name: display_name || queryStr,
-          action,
-          latitude,
-          longitude,
-          includedPolygons: [],
-          excludedPolygons: [],
-          address: {
-            id: "",
-            street: "",
-            city: "",
-            state: "",
-            cep: "",
-          },
-        };
-
-        const newPos: [number, number] = [latitude, longitude];
-        const bounds: [number, number][] = [newPos];
-
-        if (geojson?.type) {
-          const biggestRing = getLargestPolygon(geojson);
-          if (biggestRing && biggestRing.length) {
-            if (action === "include") {
-              newLocation.includedPolygons?.push(biggestRing);
-            } else {
-              newLocation.excludedPolygons?.push(biggestRing);
-            }
-            bounds.push(...biggestRing);
-          }
-        }
-
-        await fetchLocations();
-
-        if (mapRef.current) {
-          if (bounds.length > 1) {
-            mapRef.current.fitBounds(bounds);
-          } else {
-            mapRef.current.setView(newPos, 13);
-          }
-        }
-
-        setSuggestions([]);
-      } catch {
-        setMessage("Erro ao buscar a localização. Tente novamente.");
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [catalogId, action, fetchLocations, setMessage]
-  );
-
-  // Debounce para sugestões
-  const debouncedFetchSuggestions = useMemo(
-    () =>
-      debounce(async (q: string) => {
-        if (q.length > 2) {
-          try {
-            const resp = await fetch(
-              `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-                q
-              )}&format=json&limit=5&addressdetails=1`
-            );
-            if (!resp.ok) {
-              throw new Error(`HTTP error: ${resp.status}`);
-            }
-            const data = await resp.json();
-            setSuggestions(data);
-          } catch {
-            setMessage("Erro ao buscar sugestões. Tente novamente.");
-          }
-        } else {
-          setSuggestions([]);
-        }
-      }, 300),
-    [setMessage]
-  );
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setQuery(val);
-    debouncedFetchSuggestions(val);
-  };
-
-  const handleSuggestionClick = useCallback(
-    (sug: NominatimSuggestion) => {
-      handleSearch(sug.display_name);
-      setQuery(sug.display_name);
-    },
-    [handleSearch]
-  );
-
-  const highlightMatch = (text: string, q: string) => {
-    const parts = text.split(new RegExp(`(${q})`, "gi"));
-    return (
-      <>
-        {parts.map((part, i) =>
-          part.toLowerCase() === q.toLowerCase() ? (
-            <span key={i} className={styles.highlight}>
-              {part}
-            </span>
-          ) : (
-            <span key={i}>{part}</span>
-          )
-        )}
-      </>
-    );
-  };
-
-  const handleActionChange = useCallback((newAction: "include" | "exclude") => {
-    setAction(newAction);
-    setDropdownOpen(false);
-  }, []);
 
   const handleFocusRegion = useCallback(
     (index: number) => {
@@ -551,118 +547,7 @@ const DeliveryVisualizationClient: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [delivery, setMessage]);
-
-  // Adicionar um novo raio
-  const handleAddRadius = useCallback(async () => {
-    if (!delivery) return;
-
-    const kmStr = prompt("Informe o raio em km:", "10");
-    if (!kmStr) return;
-    const km = parseFloat(kmStr);
-    if (isNaN(km) || km <= 0) {
-      setMessage("Raio inválido.");
-      return;
-    }
-
-    const priceStr = prompt("Informe o preço para esse raio:", "15.00");
-    if (!priceStr) return;
-    const price = parseFloat(priceStr);
-    if (isNaN(price) || price < 0) {
-      setMessage("Preço inválido.");
-      return;
-    }
-
-    const timeStr = prompt("Informe o tempo médio de entrega (em minutos):", "30");
-    if (!timeStr) return;
-    const averageDeliveryTime = parseInt(timeStr, 10);
-    if (isNaN(averageDeliveryTime) || averageDeliveryTime < 0) {
-      setMessage("Tempo médio inválido.");
-      return;
-    }
-
-    if (!catalogMarker) {
-      setMessage("Endereço do catálogo não encontrado.");
-      return;
-    }
-
-    // Gera as coordenadas do círculo com centro no endereço do catálogo
-    const newCoordinates = generateCircleCoordinates(catalogMarker, km, 36);
-
-    // Cria o novo objeto de raio
-    const newRadius: DeliveryRadiusDTO = {
-      radius: km,
-      price,
-      averageDeliveryTime,
-      coordinates: newCoordinates,
-    };
-
-    try {
-      setIsLoading(true);
-      const updatedDelivery = await addDeliveryRadius(delivery.id!, newRadius);
-      setDelivery(updatedDelivery);
-      setMessage("Raio adicionado com sucesso!");
-    } catch (error) {
-      console.error(error);
-      setMessage("Erro ao adicionar raio.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [delivery, catalogMarker, setMessage]);
-
-  // Editar raio
-  const handleEditRadius = useCallback(
-    async (index: number) => {
-      if (!delivery) return;
-      const radiusItem = delivery.radii[index];
-      if (!radiusItem || !radiusItem.id) return;
-
-      const newKmStr = prompt("Novo valor de raio (km):", String(radiusItem.radius));
-      if (!newKmStr) return;
-      const newKm = parseFloat(newKmStr);
-      if (isNaN(newKm) || newKm <= 0) {
-        setMessage("Raio inválido.");
-        return;
-      }
-
-      const newPriceStr = prompt("Novo valor de preço:", String(radiusItem.price));
-      if (!newPriceStr) return;
-      const newPrice = parseFloat(newPriceStr);
-      if (isNaN(newPrice) || newPrice < 0) {
-        setMessage("Preço inválido.");
-        return;
-      }
-
-      const newTimeStr = prompt("Novo tempo médio de entrega (em minutos):", String(radiusItem.averageDeliveryTime));
-      if (!newTimeStr) return;
-      const newAverageDeliveryTime = parseInt(newTimeStr, 10);
-      if (isNaN(newAverageDeliveryTime) || newAverageDeliveryTime < 0) {
-        setMessage("Tempo médio inválido.");
-        return;
-      }
-
-      const updatedRadius: DeliveryRadiusDTO = {
-        id: radiusItem.id,
-        radius: newKm,
-        price: newPrice,
-        averageDeliveryTime: newAverageDeliveryTime,
-        coordinates: radiusItem.coordinates,
-      };
-
-      try {
-        setIsLoading(true);
-        const finalDelivery = await updateDeliveryRadius(delivery.id!, radiusItem.id, updatedRadius);
-        setDelivery(finalDelivery);
-        setMessage("Raio atualizado com sucesso!");
-      } catch (error) {
-        console.error(error);
-        setMessage("Erro ao atualizar raio.");
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [delivery, setMessage]
-  );
+  }, [delivery, setMessage]);  
 
   // Excluir raio
   const handleDeleteRadius = useCallback(
@@ -685,41 +570,20 @@ const DeliveryVisualizationClient: React.FC = () => {
     },
     [delivery, setMessage]
   );
-
-  // Excluir todo o Delivery (opcional)
-  const handleDeleteDelivery = useCallback(async () => {
-    if (!delivery || !delivery.id) {
-      setMessage("Delivery não encontrado ou ainda não foi criado.");
-      return;
-    }
-    if (!window.confirm("Deseja excluir completamente o Delivery?")) return;
-    try {
-      setIsLoading(true);
-      await deleteDelivery(delivery.id);
-      setDelivery(null);
-      setMessage("Delivery excluído com sucesso!");
-    } catch (error) {
-      console.error(error);
-      setMessage("Erro ao excluir Delivery.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [delivery, setMessage]);
-
+  
   // =========== Centralizar o mapa no círculo (raio) =============
   const handleFocusRadius = useCallback(
     (index: number) => {
       if (!delivery) return;
       const r = delivery.radii[index];
       if (!r || !r.coordinates || r.coordinates.length === 0) return;
-
-      // Transformar as coordenadas do raio em um array de [lat, lng]
+  
       const circlePoints = r.coordinates.map((c) => [c.latitude, c.longitude]) as [number, number][];
-
       if (mapRef.current) {
-        // Ajusta o mapa para exibir todos os pontos do círculo
         mapRef.current.fitBounds(circlePoints);
       }
+      // Atualiza o estado para indicar qual raio está centralizado
+      setCenteredRadiusIndex(index);
     },
     [delivery]
   );
@@ -774,70 +638,72 @@ const DeliveryVisualizationClient: React.FC = () => {
         </div>
       )}
 
-      {isMobile && (
-        <MobileHeader
-          title="Visualização"
-          buttons={{ close: true }}
-          handleBack={handleBack}
-        />
+
+      {delivery && (
+        <>
+          {isMobile && (
+            <MobileHeader
+              title={`Delivery ${delivery.active ? "Ativo" : "Inativo"}`}
+              buttons={{ close: true, filter: true }}
+              handleBack={handleBack}              
+              onFilter={handleToggleDelivery}
+              
+            />
+          )}
+        </>
       )}
 
       <div className={styles.visualizationContainer}>
+
+      {delivery && (
+        <>
         <div className={styles.visualizationHeader}>
-          <SubHeader title="Visualização" handleBack={handleBack} />
+          <SubHeader 
+          title={`Delivery ${delivery.active ? "Ativo" : "Inativo"}`} 
+          handleBack={handleBack}          
+          showActiveFilterButton          
+          handleActiveFilter={handleToggleDelivery} />
         </div>
+        </>
+      )}
 
         {/* =================== NOVO CARD: CONFIGURAR DELIVERY =================== */}
-        <Card title="Configurar Delivery">
-          {delivery && (
-            <div style={{ marginBottom: "1rem" }}>
-              <p>
-                Status do Delivery:{" "}
-                <strong>{delivery.active ? "Ativo" : "Inativo"}</strong>
-              </p>
-              <button onClick={handleToggleDelivery}>
-                {delivery.active ? "Desativar" : "Ativar"}
-              </button>
-              <button
-                style={{ marginLeft: "1rem" }}
-                onClick={handleDeleteDelivery}
-              >
-                Excluir Delivery
-              </button>
-            </div>
-          )}
-
-          {/* Listagem de raios */}
-          {delivery && (
-            <>
-              <div>
-                <button onClick={handleAddRadius}>Adicionar Raio</button>
-              </div>
-              {delivery.radii.length > 0 && (
-                <ul style={{ marginTop: "1rem" }}>
-                  {delivery.radii.map((r, idx) => (
-                    <li key={r.id ?? idx} style={{ marginBottom: 8 }}>
+        <Card title="Raios" rightButton={{ onClick: openAddModal, text: "+ Adicionar raio" }}>
+        {delivery && (
+          <>
+            {delivery.radii.length > 0 && (
+              <div className={styles.DeliveryRaios}>
+                {delivery.radii.map((r, idx) => (
+                  <li key={r.id ?? idx}>
+                    <div>
                       <strong>
-                        Raio: {r.radius} km | Preço: R$ {r.price.toFixed(2)} | Tempo Médio:{" "}
-                        {r.averageDeliveryTime} min
-                      </strong>{" "}
-                      <button onClick={() => handleEditRadius(idx)}>
-                        Editar
+                        Raio: {r.radius} km | Preço: R$ {r.price.toFixed(2)} | Tempo Médio: {r.averageDeliveryTime} min
+                      </strong>
+                    </div>
+                    <div className={styles.buttons}>
+                      <button onClick={() => openEditModal(idx)}>
+                        <Image src={editWhiteIconSrc} width={20} height={20} alt="Editar" />
                       </button>
                       <button onClick={() => handleDeleteRadius(idx)}>
-                        Excluir
+                        <Image src={excludeIconSrc} width={20} height={20} alt="Excluir" />
                       </button>
-                      {/* Botão para centralizar o círculo no mapa */}
-                      <button onClick={() => handleFocusRadius(idx)}>
-                        Centralizar
+                      <button onClick={() => handleFocusRadius(idx)} className={styles.centerButton}>
+                        <Image
+                          src={isCentered(idx) ? buttomIconSrc : buttomCheioIconSrc}
+                          width={20}
+                          height={20}
+                          alt="Centralizar"
+                        />
                       </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </>
-          )}
-        </Card>
+                    </div>
+                  </li>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </Card>
+
         {/* =============================================================== */}
 
         <Card title="Localizações">
@@ -985,6 +851,54 @@ const DeliveryVisualizationClient: React.FC = () => {
           </div>
         </Card>
       </div>
+      {isAddModalOpen && (
+  <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)}>
+    <div>
+      <h3>Adicionar</h3>
+
+      <CustomInput title="Raio (km)" name="km" value={modalFormData.km} onChange={(e) =>
+        setModalFormData({ ...modalFormData, km: e.target.value })
+      } bottomLeftText={`Raio em Km para definir a linha de entrega`}/>
+      <CustomInput title="Preço" name="Preço" value={modalFormData.price} onChange={(e) =>
+        setModalFormData({ ...modalFormData, price: e.target.value })
+      } bottomLeftText={`Preço que o cliente irá pagar`}/>
+      <CustomInput title="Tempo médio (min)" name="Raio (km)" value={modalFormData.averageDeliveryTime} onChange={(e) =>
+        setModalFormData({
+          ...modalFormData,
+          averageDeliveryTime: e.target.value,
+        })
+      } bottomLeftText={`Tempo de entrega para o raio definido`}/> 
+      <div className={styles.deliveryConfirmationButtonSpace}>
+        <StageButton text="Adicionar" backgroundColor="#7B33E5" type="submit" onClick={handleAddModalSubmit} />
+      </div>
+      
+    </div>
+    </Modal>
+    )}
+
+    {isEditModalOpen && (
+      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
+        <div>
+          <h3>Editar</h3>
+            <CustomInput title="km do raio" name="Raio (km)" value={modalFormData.km} onChange={(e) =>
+              setModalFormData({ ...modalFormData, km: e.target.value })
+            } bottomLeftText={`Raio em Km para definir a linha de entrega`}/>
+            <CustomInput title="Preço" name="Preço" value={modalFormData.price} onChange={(e) =>
+              setModalFormData({ ...modalFormData, price: e.target.value })
+            } bottomLeftText={`Preço que o cliente irá pagar`}/>
+            <CustomInput title="Tempo médio (min)" name="Raio (km)" value={modalFormData.averageDeliveryTime} onChange={(e) =>
+              setModalFormData({
+                ...modalFormData,
+                averageDeliveryTime: e.target.value,
+              })
+            } bottomLeftText={`Tempo de entrega para o raio definido`}/>        
+            <div className={styles.deliveryConfirmationButtonSpace}>
+              <StageButton text="Salvar" backgroundColor="#7B33E5" type="submit" onClick={handleEditModalSubmit} />
+            </div>          
+        </div>
+      </Modal>
+    )}
+
     </div>
   );
 };

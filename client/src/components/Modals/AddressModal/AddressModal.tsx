@@ -141,7 +141,8 @@ const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose }) => {
               </div>
             ) : (
               displayedAddresses.map((address) => (
-                <SeeData
+                <div style={{ marginTop: '5px' }}>
+                  <SeeData
                   key={address.id}
                   title={address.street}
                   content={`${address.cep} - ${address.city}/${address.state}`}
@@ -149,6 +150,7 @@ const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose }) => {
                   onClick={() => handleUseZip(address)}
                   stackContent={true}
                 />
+                </div>
               ))
             )}
             {addresses.length > 4 && (
