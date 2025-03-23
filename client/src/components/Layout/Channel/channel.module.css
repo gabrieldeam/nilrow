@@ -172,6 +172,15 @@
   justify-content: center;
 }
 
+@media (min-width: 768px) and (max-width: 1024px) {
+  .channelStageButtons {
+    width: calc(30vw - 40px);
+    justify-content: center;
+    gap: 0px;
+    flex-direction: column;
+  }
+}
+
 /* Mobile */
 @media (max-width: 768px) {
   .channelPage {

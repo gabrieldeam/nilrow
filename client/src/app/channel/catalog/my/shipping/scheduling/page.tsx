@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, memo, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 import LoadingSpinner from "@/components/UI/LoadingSpinner/LoadingSpinner";
 import MobileHeader from "@/components/Layout/MobileHeader/MobileHeader";
@@ -16,6 +17,11 @@ import styles from "./scheduling.module.css";
 // Serviços para verificar se Delivery/Pickup estão ativos
 import { getActiveByCatalog } from "@/services/pickupService";
 import { getDeliveryActiveByCatalogId } from "@/services/deliveryService";
+
+import { useNotification } from "@/hooks/useNotification";
+
+import excludeIconSrc from "../../../../../../../public/assets/close.svg";
+import editWhiteIconSrc from "../../../../../../../public/assets/editWhite.svg";
 
 // Serviços para Scheduling
 import {
@@ -48,6 +54,7 @@ function Scheduling() {
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [catalogId, setCatalogId] = useState<string | null>(null);
 
+  const { setMessage } = useNotification();
   // Estados de "ativo" para cada modo
   const [deliveryActive, setDeliveryActive] = useState<boolean | null>(null);
   const [pickupActive, setPickupActive] = useState<boolean | null>(null);
@@ -158,6 +165,7 @@ function Scheduling() {
         }
       } catch (err) {
         console.error("Erro ao buscar dados de Scheduling:", err);
+        setMessage("Scheduling", "error");
       } finally {
         setLoading(false);
       }
@@ -238,7 +246,7 @@ function Scheduling() {
       }));
     } catch (error) {
       console.error("Erro ao criar intervalo:", error);
-      alert("Erro ao criar intervalo.");
+      setMessage("Erro ao criar intervalo.", "error");
     } finally {
       setLoading(false);
     }
@@ -256,10 +264,10 @@ function Scheduling() {
         ...prev,
         [schedulingId]: prev[schedulingId].filter((intv) => intv.id !== intervalId),
       }));
-      alert("Intervalo excluído com sucesso.");
+      setMessage("Intervalo excluído com sucesso.");
     } catch (error) {
-      console.error("Erro ao excluir intervalo:", error);
-      alert("Erro ao excluir intervalo.");
+      console.error("Erro ao excluir intervalo:", error);      
+      setMessage("Erro ao excluir intervalo.", "error");
     } finally {
       setLoading(false);
     }
@@ -274,7 +282,7 @@ function Scheduling() {
         shippingMode: scheduling.shippingMode,
         active: !scheduling.active,
       });
-      alert(`Scheduling atualizado para Ativo = ${updated.active}`);
+      setMessage("Scheduling atualizado para Ativo");
 
       if (scheduling.shippingMode === ShippingMode.DELIVERY) {
         setDeliverySchedulings((prev) =>
@@ -287,7 +295,7 @@ function Scheduling() {
       }
     } catch (error) {
       console.error("Erro ao atualizar scheduling:", error);
-      alert("Erro ao atualizar scheduling.");
+      setMessage("Erro ao atualizar scheduling.", "error");
     } finally {
       setLoading(false);
     }
@@ -340,7 +348,7 @@ function Scheduling() {
       });
     } catch (error) {
       console.error("Erro ao salvar intervalo:", error);
-      alert("Erro ao salvar intervalo.");
+      setMessage("Erro ao salvar intervalo.", "error");
     } finally {
       setLoading(false);
     }
@@ -368,7 +376,7 @@ function Scheduling() {
 
         {/* Seção Delivery */}
         {deliveryActive !== null && (
-          <div className={styles.section}>
+          <div>
             {deliveryActive ? (
               <>
                 {deliverySchedulings.length > 0 ? (
@@ -380,7 +388,6 @@ function Scheduling() {
                               text: sched.active ? "Desativar" : "Ativar",
                             }}
                     >
-                        <h4>Intervals:</h4>
                         {intervalsByScheduling[sched.id]?.length ? (
                           intervalsByScheduling[sched.id].map((intv) => {
                             const isEditing = editingIntervals[intv.id] != null;
@@ -388,7 +395,8 @@ function Scheduling() {
                               <div key={intv.id} className={styles.intervalItem}>
                                 {isEditing ? (
                                   <>
-                                    <CustomInput
+                                  <div className={styles.createItem}>
+                                  <CustomInput
                                       title="Início"
                                       name="startTime"
                                       type="time"
@@ -403,12 +411,14 @@ function Scheduling() {
                                       onChange={(e) => handleChangeEditInterval(e, intv.id)}
                                     />
                                     <CustomInput
-                                      title="Máx. Agendamentos"
+                                      title="Entregas"
                                       name="maxAppointments"
                                       type="number"
                                       value={editingIntervals[intv.id].maxAppointments}
                                       onChange={(e) => handleChangeEditInterval(e, intv.id)}
                                     />
+                                  </div>  
+                                  <div className={styles.createItem}>
                                     <StageButton
                                       text="Salvar"
                                       onClick={() => handleSaveEditInterval(intv.id, sched.id)}
@@ -416,33 +426,39 @@ function Scheduling() {
                                     <StageButton
                                       text="Cancelar"
                                       onClick={() => handleCancelEditInterval(intv.id)}
+                                      backgroundColor = '#9F9F9F'
                                     />
+                                  </div>                              
                                   </>
                                 ) : (
                                   <>
-                                    <p>
-                                      Horário: {intv.startTime} - {intv.endTime} | Máx.:{" "}
-                                      {intv.maxAppointments}
-                                    </p>
-                                    <StageButton
-                                      text="Editar"
-                                      onClick={() => handleEditInterval(intv)}
-                                    />
-                                    <StageButton
-                                      text="Excluir"
-                                      onClick={() => handleDeleteInterval(intv.id, sched.id)}
-                                    />
+                                    <div className={styles.pickupSchedulings}>
+                                      <p>
+                                        Horário: {intv.startTime} - {intv.endTime} | Máx.:{" "}
+                                        {intv.maxAppointments}
+                                      </p>
+                                      <div className={styles.buttons}>
+                                        <button onClick={() => handleEditInterval(intv)}>
+                                          <Image src={editWhiteIconSrc} width={20} height={20} alt="Editar" />
+                                        </button>
+                                        <button onClick={() => handleDeleteInterval(intv.id, sched.id)}>
+                                          <Image src={excludeIconSrc} width={20} height={20} alt="Excluir" />
+                                        </button>
+                                      </div>
+                                    </div>                                  
                                   </>
                                 )}
                               </div>
                             );
                           })
                         ) : (
-                          <p>Nenhum intervalo criado.</p>
+                          <div className={styles.pickupSchedulings}>
+                            <p>Nenhum intervalo criado.</p>
+                          </div>
                         )}
 
                         {/* Formulário para criar novo intervalo */}
-                        <Card title="Novo Intervalo">
+                        <div className={styles.createItem}>
                           <CustomInput
                             title="Início"
                             name="startTime"
@@ -458,32 +474,36 @@ function Scheduling() {
                             onChange={(e) => handleChangeNewIntervalData(e, sched.id)}
                           />
                           <CustomInput
-                            title="Máx. Agendamentos"
+                            title="Entregas"
                             name="maxAppointments"
                             type="number"
                             value={newIntervalData[sched.id]?.maxAppointments || 0}
                             onChange={(e) => handleChangeNewIntervalData(e, sched.id)}
                           />
+                        </div>
                           <StageButton
                             text="Criar Intervalo"
                             onClick={() => handleCreateInterval(sched.id)}
-                          />
-                        </Card>
+                          />                        
                     </Card>
                   ))
                 ) : (
-                  <p>Nenhum scheduling criado ainda para delivery.</p>
+                  <div className={styles.pickupSchedulings}>
+                    <p>Nenhum scheduling criado ainda para delivery.</p>
+                  </div>
                 )}
               </>
             ) : (
-              <p>Para editar e criar intervalos, o delivery precisa estar ativo.</p>
+              <div className={styles.pickupSchedulings}>
+                <p>Para editar e criar intervalos, o delivery precisa estar ativo.</p>
+              </div>
             )}
           </div>
         )}
 
         {/* Seção Pickup */}
         {pickupActive !== null && (
-          <div className={styles.section}>
+          <div>
             {pickupActive ? (
               <>
                 {pickupSchedulings.length > 0 ? (
@@ -495,7 +515,6 @@ function Scheduling() {
                               text: sched.active ? "Desativar" : "Ativar",
                             }}
                     >
-                        <h4>Intervals:</h4>
                         {intervalsByScheduling[sched.id]?.length ? (
                           intervalsByScheduling[sched.id].map((intv) => {
                             const isEditing = editingIntervals[intv.id] != null;
@@ -503,7 +522,8 @@ function Scheduling() {
                               <div key={intv.id} className={styles.intervalItem}>
                                 {isEditing ? (
                                   <>
-                                    <CustomInput
+                                  <div className={styles.createItem}>
+                                  <CustomInput
                                       title="Início"
                                       name="startTime"
                                       type="time"
@@ -518,12 +538,14 @@ function Scheduling() {
                                       onChange={(e) => handleChangeEditInterval(e, intv.id)}
                                     />
                                     <CustomInput
-                                      title="Máx. Agendamentos"
+                                      title="Entregas"
                                       name="maxAppointments"
                                       type="number"
                                       value={editingIntervals[intv.id].maxAppointments}
                                       onChange={(e) => handleChangeEditInterval(e, intv.id)}
                                     />
+                                  </div>
+                                  <div className={styles.createItem}>
                                     <StageButton
                                       text="Salvar"
                                       onClick={() => handleSaveEditInterval(intv.id, sched.id)}
@@ -531,32 +553,38 @@ function Scheduling() {
                                     <StageButton
                                       text="Cancelar"
                                       onClick={() => handleCancelEditInterval(intv.id)}
+                                      backgroundColor = '#9F9F9F'
                                     />
+                                  </div>                                      
                                   </>
                                 ) : (
                                   <>
-                                    <p>
-                                      Horário: {intv.startTime} - {intv.endTime} | Máx.:{" "}
-                                      {intv.maxAppointments}
-                                    </p>
-                                    <StageButton
-                                      text="Editar"
-                                      onClick={() => handleEditInterval(intv)}
-                                    />
-                                    <StageButton
-                                      text="Excluir"
-                                      onClick={() => handleDeleteInterval(intv.id, sched.id)}
-                                    />
+                                    <div className={styles.pickupSchedulings}>
+                                      <p>
+                                        Horário: {intv.startTime} - {intv.endTime} | Máx.:{" "}
+                                        {intv.maxAppointments}
+                                      </p>
+                                      <div className={styles.buttons}>
+                                        <button onClick={() => handleEditInterval(intv)}>
+                                          <Image src={editWhiteIconSrc} width={20} height={20} alt="Editar" />
+                                        </button>
+                                        <button onClick={() => handleDeleteInterval(intv.id, sched.id)}>
+                                          <Image src={excludeIconSrc} width={20} height={20} alt="Excluir" />
+                                        </button>
+                                      </div>
+                                    </div>                                    
                                   </>
                                 )}
                               </div>
                             );
                           })
                         ) : (
-                          <p>Nenhum intervalo criado.</p>
+                          <div className={styles.pickupSchedulings}>
+                            <p>Nenhum intervalo criado.</p>
+                          </div>
                         )}
 
-                        <Card title="Novo Intervalo">
+                        <div className={styles.createItem}>
                           <CustomInput
                             title="Início"
                             name="startTime"
@@ -572,25 +600,29 @@ function Scheduling() {
                             onChange={(e) => handleChangeNewIntervalData(e, sched.id)}
                           />
                           <CustomInput
-                            title="Máx. Agendamentos"
+                            title="Entregas"
                             name="maxAppointments"
                             type="number"
                             value={newIntervalData[sched.id]?.maxAppointments || 0}
                             onChange={(e) => handleChangeNewIntervalData(e, sched.id)}
                           />
+                        </div>
                           <StageButton
                             text="Criar Intervalo"
                             onClick={() => handleCreateInterval(sched.id)}
                           />
-                        </Card>
                     </Card>
                   ))
                 ) : (
-                  <p>Nenhum scheduling criado ainda para pickup.</p>
+                  <div className={styles.pickupSchedulings}>
+                    <p>Nenhum scheduling criado ainda para pickup.</p>
+                  </div>
                 )}
               </>
             ) : (
-              <p>Para editar e criar intervalos, o pickup precisa estar ativo.</p>
+              <div className={styles.pickupSchedulings}>
+                <p>Para editar e criar intervalos, o pickup precisa estar ativo.</p>
+              </div>
             )}
           </div>
         )}

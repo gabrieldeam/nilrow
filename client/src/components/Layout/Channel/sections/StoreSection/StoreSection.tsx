@@ -22,10 +22,11 @@ interface Catalog {
 interface StoreSectionProps {
   isMobile: boolean;
   handleSearchClick: () => void;
-  catalogs: Catalog[]; // Agora recebemos os catálogos com id e name
+  catalogs: Catalog[];  
+  nickname: string;
 }
 
-const StoreSection: FC<StoreSectionProps> = ({ isMobile, handleSearchClick, catalogs }) => {
+const StoreSection: FC<StoreSectionProps> = ({ isMobile, handleSearchClick, catalogs, nickname  }) => {
   const { location } = useLocationContext();
   const [products, setProducts] = useState<ProductDTO[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -137,7 +138,7 @@ const StoreSection: FC<StoreSectionProps> = ({ isMobile, handleSearchClick, cata
             }}
           >
             {products.map((product) => (
-              <Link key={product.id} href={`/product/${product.id}`} style={{ textDecoration: 'none' }}>
+              <Link key={product.id} href={`/product/${product.id}?nickname=${nickname}`} style={{ textDecoration: 'none' }}>
                   <ProductCard
                   key={product.id}
                   images={

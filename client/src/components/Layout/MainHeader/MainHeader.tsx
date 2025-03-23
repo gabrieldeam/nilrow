@@ -131,6 +131,8 @@ const MainHeader: React.FC = () => {
       const channel = await getMyChannel();
       const activeStatus = await isChannelActive(channel.id);
       if (activeStatus) {
+        router.push(`/${nickname}`);
+      } else {
         router.push('/channel');
       }
     } catch {

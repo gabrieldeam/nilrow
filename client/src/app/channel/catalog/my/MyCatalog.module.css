@@ -95,13 +95,13 @@
   .myCatalogAdditionalSteps {      
     flex-direction: column;
     margin-top: 0px;
-    gap: 5px;
+    gap: 0px;
   }
 
   .myCatalogAdditional {
     flex-direction: column;
     margin-top: 0px;
-    gap: 5px;
+    gap: 0px;
     margin-bottom: 0;
   }
 

@@ -150,7 +150,7 @@ function Channel({ nickname }: ChannelProps) {
           getFollowingCount(nickname),
           getAboutByNickname(nickname),
           getFAQsByNickname(nickname),
-          getPublishedCatalogs(channel.id), // <- se o canal estiver publicado
+          getPublishedCatalogs(channel.id),
         ]);
 
         setFollowersCount(countFollowers);
@@ -511,6 +511,7 @@ function Channel({ nickname }: ChannelProps) {
             isMobile={isMobile}
             handleSearchClick={handleSearchClick}
             catalogs={publishedCatalogs}
+            nickname={nickname}
           />
         )}
 

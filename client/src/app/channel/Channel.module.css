@@ -257,7 +257,8 @@
     
     .myChannelAdditionalSteps {
         flex-direction: column;
-        margin-top: 5px;
+        margin-top: 0px;
+        gap: 0px;
     }
 
     .seeDataWrapper {
@@ -279,5 +280,6 @@
 
     .myChannelStepCardWrapper {
         flex-direction: column;
+        gap: 0px;
     }
 }

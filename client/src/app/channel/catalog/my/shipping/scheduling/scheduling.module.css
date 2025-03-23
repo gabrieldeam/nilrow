@@ -20,14 +20,39 @@
     margin-bottom: auto;
   }
   
-  .scheduling {    
-    width: 100%;
-    max-width: 100%;
-    padding: 14px;
+  .pickupSchedulings {    
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    background-color: #000;
+    padding: 10px 15px;
+    list-style: none;
+    margin: 0;
     border-radius: 5px;
-    background-color: #212121;
-    color: #fff;
-    box-sizing: border-box;
+    margin-bottom: 5px;
+  }
+
+  .pickupSchedulings button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0.3rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  
+  .pickupSchedulings button:hover {
+    opacity: 0.8;
+  }
+
+  .buttons {
+    display: flex;
+  }
+
+  .createItem {
+    display: flex;
+    gap: 10px;
   }
 
   @media (max-width: 768px) {
