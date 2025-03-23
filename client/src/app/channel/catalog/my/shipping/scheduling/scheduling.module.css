@@ -1,21 +1,23 @@
 .schedulingPage {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    color: #fff;
-    padding-top: 115px;
-    box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #000;
+  color: #fff;
+  padding-top: 150px;
+  padding-bottom: 85px;
+  box-sizing: border-box;
   }
   
   .schedulingContainer {
-    display: flex;
-    flex-direction: column;
     width: 100%;
-    padding: 0 58px;
+    max-width: 419px;
+    padding: 6px;
     box-sizing: border-box;
-    position: relative;
+    margin-top: auto; 
+    margin-bottom: auto;
   }
   
   .scheduling {    
@@ -30,10 +32,7 @@
 
   @media (max-width: 768px) {
     .schedulingPage {
-      min-height: 0;
-      padding-top: 110px;
-    }
-    .schedulingContainer {
-      padding: 0 6px;
+      padding-top: 105px;
+      padding-bottom: 85px;
     }
   }

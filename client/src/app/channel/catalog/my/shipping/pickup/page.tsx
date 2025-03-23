@@ -105,12 +105,17 @@ function Pickup() {
   }, [catalogId]);
 
   // Atualiza os valores do formulário conforme o usuário interage
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormValues((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : Number(value),
-    }));
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value, type } = e.target;
+    if (type === "checkbox") {
+      // Type guard: se for checkbox, garante que é um HTMLInputElement
+      const checked = (e.target as HTMLInputElement).checked;
+      setFormValues((prev) => ({ ...prev, [name]: checked }));
+    } else {
+      setFormValues((prev) => ({ ...prev, [name]: Number(value) }));
+    }
   };
 
   // Função que alterna o campo "active" e chama o updatePickup para atualizar somente esse campo
@@ -222,16 +227,36 @@ function Pickup() {
         )}
 
         <Card title="Editar">
-          {pickup ? (   
-              <CustomInput title="Prazo" name="Prazo" value={formValues.prazoRetirada} onChange={handleChange} bottomLeftText={`Defina o tempo até está pronto para ser retirado`}/>            
-              <CustomInput title="Preço" name="Preço para retirada" value={formValues.precoRetirada} onChange={handleChange} bottomLeftText={`Caso queira de gráça deixe 0`}/>        
-                <div className={styles.deliveryConfirmationButtonSpace}>
-                  <StageButton text="Salvar" backgroundColor="#7B33E5" type="submit" onClick={handleUpdate} />
-                </div>  
+          {pickup ? (
+            <>
+              <CustomInput
+                title="Prazo"
+                name="prazoRetirada"
+                value={formValues.prazoRetirada}
+                onChange={handleChange}
+                bottomLeftText="Defina o tempo até estar pronto para ser retirado"
+              />
+              <CustomInput
+                title="Preço"
+                name="precoRetirada"
+                value={formValues.precoRetirada}
+                onChange={handleChange}
+                bottomLeftText="Caso queira de graça, deixe 0"
+              />
+              <div className={styles.pickupConfirmationButtonSpace}>
+                <StageButton
+                  text="Salvar"
+                  backgroundColor="#7B33E5"
+                  type="submit"
+                  onClick={handleUpdate}
+                />
+              </div>
+            </>
           ) : (
             <p>Nenhum pickup encontrado.</p>
           )}
         </Card>
+
       </div>
     </div>
   );

@@ -30,6 +30,10 @@
     box-sizing: border-box;
   }
 
+  .pickupConfirmationButtonSpace {
+    margin-top: 20px;
+  }
+
   @media (max-width: 768px) {
     .pickupPage {
       padding-top: 105px;
