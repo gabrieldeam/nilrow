@@ -143,22 +143,22 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.POST, "/deliveries/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/deliveries/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/deliveries/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/deliveries/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/deliveries/**").permitAll()
 
                         .requestMatchers(HttpMethod.POST, "/pickups/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/pickups/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/pickups/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/pickups/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/pickups/**").permitAll()
 
                         .requestMatchers(HttpMethod.POST, "/scheduling/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/scheduling/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/scheduling/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/scheduling/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/scheduling/**").permitAll()
 
                         .requestMatchers(HttpMethod.POST, "/scheduling-intervals/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/scheduling-intervals/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/scheduling-intervals/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/scheduling-intervals/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/scheduling-intervals/**").permitAll()
 
                         .requestMatchers("/melhorenvio/**").permitAll()
 
