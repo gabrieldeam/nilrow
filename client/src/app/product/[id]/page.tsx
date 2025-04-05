@@ -18,12 +18,14 @@ import {
 import { DeliveryPriceDTO } from '@/types/services/delivery';
 import { PickupActiveDetailsDTO } from '@/types/services/pickup';
 import StageButton from '@/components/UI/StageButton/StageButton';
+import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';
+import ProductRating from '@/components/UI/ProductRating/ProductRating';
 
 import ExpandableCard from '@/components/UI/ExpandableCard/ExpandableCard';
 import Card from '@/components/UI/Card/Card';
 import shareIcon from '../../../../public/assets/share.svg';
-import chatIcon from '../../../../public/assets/chat.svg';
 import followIcon from '../../../../public/assets/follow.svg';
+
 
 import {
   getChannelByNickname,
@@ -58,11 +60,6 @@ interface FAQData {
   answer: string;
 }
 
-/**
- * Optional props:
- *   - imageSrc?: allows us to pass an icon or image
- *   - onClick?: function for any click handler
- */
 interface StageButtonProps {
   text: string;
   backgroundColor: string;
@@ -74,7 +71,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   // ----------------------------------------------------------------------------
   // 1. HOOKS AT THE TOP-LEVEL
   const resolvedParams = use(params);
-  const { id } = resolvedParams; // params is a Promise in Next 13
+  const { id } = resolvedParams; // params é uma Promise no Next 13
 
   const { location } = useLocationContext();
 
@@ -85,7 +82,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   );
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
+  const [showFullAddress, setShowFullAddress] = useState(false);
   // Store the images for each variation
   const [variationImagesMap, setVariationImagesMap] = useState<
     Record<string, VariationImageDTO[]>
@@ -120,7 +117,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
   // ----------------------------------------------------------------------------
-  // FETCH: Product (with delivery data)
+  // FETCH: Product (com dados de entrega)
   useEffect(() => {
     if (!id || !location) return;
     setLoading(true);
@@ -136,7 +133,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   }, [id, location]);
 
   // ----------------------------------------------------------------------------
-  // FETCH: Channel data (by nickname)
+  // FETCH: Channel data (por nickname)
   useEffect(() => {
     if (!nickname) return;
 
@@ -198,14 +195,14 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   }, [product]);
 
   // ----------------------------------------------------------------------------
-  // Auto-select the first variation if the product has variations
+  // Selecionar automaticamente a primeira variação, se existir
   useEffect(() => {
     if (!product) return;
-    // If the product has variations and we haven't selected anything yet:
+    // Se o produto tem variações e ainda não escolhemos nada
     if (product.variations && product.variations.length > 0) {
-      // Take the first variation
+      // Pega a primeira variação
       const firstVar = product.variations[0];
-      // Create an attributes object
+      // Cria o objeto de atributos
       const newSelectedAttributes: Record<string, string> = {};
       firstVar.attributes.forEach((attr) => {
         if (attr.attributeName && attr.attributeValue) {
@@ -216,7 +213,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
     }
   }, [product]);
 
-  // Build an attribute map for display
+  // Monta um map de atributos -> conjunto de possíveis valores
   const attributesMap = new Map<string, Set<string>>();
   if (product?.variations && product.variations.length > 0) {
     product.variations.forEach((variation) => {
@@ -230,7 +227,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
     });
   }
 
-  // Handle attribute clicks
+  // Clique num atributo: atualiza "selectedAttributes"
   const handleAttributeClick = (attrName: string, attrValue: string) => {
     setSelectedAttributes((prev) => ({
       ...prev,
@@ -238,7 +235,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
     }));
   };
 
-  // Find the matching variation for the selected attributes
+  // Encontrar a variação correspondente aos atributos selecionados
   function getMatchingVariation(): ProductVariationDTO | null {
     if (!product || !product.variations?.length) return null;
 
@@ -251,22 +248,21 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
       product.variations.find((variation) => {
         return selectedPairs.every(([name, value]) =>
           variation.attributes.some(
-            (attr) =>
-              attr.attributeName === name && attr.attributeValue === value
+            (attr) => attr.attributeName === name && attr.attributeValue === value
           )
         );
       }) || null
     );
   }
 
-  // Whenever selectedAttributes changes, try to find the corresponding variation
+  // Sempre que "selectedAttributes" mudar, atualizamos "selectedVariation"
   useEffect(() => {
     const matchedVariation = getMatchingVariation();
     setSelectedVariation(matchedVariation || null);
   }, [selectedAttributes, product]);
 
   // ----------------------------------------------------------------------------
-  // Build the image gallery
+  // Montar a galeria de imagens
   const activeThumbnailRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -274,13 +270,13 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
 
     let combined: string[] = [];
 
-    // 1. Images from the selected variation (if any)
+    // 1. Imagens da variação selecionada, se houver
     if (selectedVariation) {
       const selVarImages = variationImagesMap[selectedVariation.id!] || [];
       combined.push(...selVarImages.map((img) => img.imageUrl));
     }
 
-    // 2. Images from all variations
+    // 2. Imagens de todas as variações
     if (product.variations?.length) {
       Object.values(variationImagesMap).forEach((imgArr) => {
         imgArr.forEach((img) => {
@@ -289,17 +285,17 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
       });
     }
 
-    // 3. Images from the main product
+    // 3. Imagens do produto principal
     if (product.images?.length) {
       combined.push(...product.images);
     }
 
-    // 4. Remove duplicates
+    // 4. Remove duplicados
     combined = Array.from(new Set(combined));
 
     setGalleryImages(combined);
 
-    // 5. Pick the first one as the mainImage
+    // 5. Pega a primeira como a principal
     if (combined.length > 0) {
       setMainImage(combined[0]);
     } else {
@@ -307,15 +303,18 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
     }
   }, [product, selectedVariation, variationImagesMap]);
 
-  // Scroll to the active thumbnail
+  // Scroll para o thumbnail ativo (caso queira manter)
   useEffect(() => {
+    if (!mainImage || !galleryImages.includes(mainImage)) return;
+
     if (activeThumbnailRef.current) {
       activeThumbnailRef.current.scrollIntoView({
         behavior: 'smooth',
         inline: 'center',
+        block: 'nearest', // evita rolar para o topo na vertical
       });
     }
-  }, [mainImage]);
+  }, [mainImage, galleryImages]);
 
   // ----------------------------------------------------------------------------
   // FETCH: Delivery price
@@ -332,6 +331,11 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
     }
   }, [product, location]);
 
+  const handleBack = useCallback(() => {
+    router.back();
+  }, [router]);
+  
+
   // FETCH: Pickup details
   useEffect(() => {
     if (!product) return;
@@ -346,7 +350,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   }, [product]);
 
   // ----------------------------------------------------------------------------
-  // ACTIONS: follow, unfollow, message
+  // AÇÕES: seguir, deixar de seguir, mensagem
   const handleFollowClick = useCallback(async () => {
     if (!channelData) return;
     try {
@@ -387,19 +391,19 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   }, [channelData, router]);
 
   // ----------------------------------------------------------------------------
-  // LOADING / ERROR STATES
+  // ESTADOS DE LOADING E ERRO
   if (loading) return <p>Carregando produto...</p>;
   if (error) return <p>{error}</p>;
   if (!product) return <p>Nenhum produto encontrado.</p>;
   if (!channelData) return <div>Carregando canal...</div>;
 
   // ----------------------------------------------------------------------------
-  // CHANNEL BUTTONS
+  // BOTÕES DO CANAL
   const formattedNickname = nickname.startsWith('@')
     ? nickname.slice(1)
     : nickname;
 
-  // We define stageButtons so that each item can optionally have imageSrc or onClick
+  // Definimos stageButtons para cada caso
   const stageButtons: StageButtonProps[] = isOwner
     ? [
         {
@@ -426,272 +430,277 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
       ];
 
   // ----------------------------------------------------------------------------
-  // PRODUCT PRICE DISPLAY
+  // PREÇOS E NOME
   const baseName = product.name;
   const basePrice = product.salePrice;
   const baseDiscount = product.discountPrice;
 
-  // If there’s a selected variation, use its name/price
   const variationName = selectedVariation?.name;
   const variationPrice = selectedVariation?.price;
   const variationDiscount = selectedVariation?.discountPrice;
 
+  // O que iremos exibir de fato
   const displayName = variationName || baseName;
   const displayPrice = variationPrice ?? basePrice;
   const displayDiscount = variationDiscount ?? baseDiscount;
 
+  // String com todos os detalhes do endereço separados por vírgula
+  const addressDetails = pickupDetails?.address
+  ? `${pickupDetails.address.street}, ${pickupDetails.address.neighborhood}, ${pickupDetails.address.cep}, ${pickupDetails.address.city}, ${pickupDetails.address.state}` +
+    (pickupDetails.address.complement ? `, ${pickupDetails.address.complement}` : '')
+  : '';
+
   // ----------------------------------------------------------------------------
   // RENDER
   return (
-    <div className={styles.productPage}>
-      <div className={styles.leftColumn}>
-        <div className={styles.productConteiner}>
-          {/* CHANNEL HEADER */}
-          <div className={styles.productChannelImageDesc}>
-            <div className={styles.channelHeader}>
-              <div className={styles.channelLeft}>
-                <div className={styles.channelTitle}>
-                  <Image
-                    src={`${apiUrl}${channelData.imageUrl}`}
-                    alt={`${channelData.name} - Imagem`}
-                    className={styles.channelImage}
-                    width={130}
-                    height={130}
-                  />
-                  <div
-                    className={styles.channelInfo}
-                    onClick={() => {
-                      window.location.href = `${frontUrl}${formattedNickname}`;
-                    }}
-                  >
-                    <h2 className={styles.channelName}>{channelData.name}</h2>
-                    <p className={styles.channelNickname}>{nickname}</p>
-                  </div>
-                </div>
-                <div className={styles.channelFollow}>
-                  {stageButtons
-                    .filter(
-                      (btn) => btn.text === 'Seguir' || btn.text === 'Amigos'
-                    )
-                    .map((button, index) => (
-                      <StageButton
-                        key={index}
-                        text={button.text}
-                        backgroundColor={button.backgroundColor}
-                        imageSrc={button.imageSrc}
-                        onClick={button.onClick}
-                      />
-                    ))}
-                </div>
-              </div>              
-            </div>
-
-            {/* PRODUCT GALLERY */}
-            <div className={styles.galleryContainer}>
-              <div className={styles.mainImage}>
-                {mainImage ? (
-                  <Image
-                    src={`${apiUrl}${mainImage}`}
-                    alt={`Imagem principal do ${displayName}`}
-                    width={419}
-                    height={419}
-                  />
-                ) : (
-                  <Image
-                    src={defaultImage}
-                    alt="Imagem padrão"
-                    width={419}
-                    height={419}
-                  />
-                )}
-              </div>
-
-              {/* Thumbnails */}
-              <div className={styles.thumbnailList}>
-                {galleryImages.map((imgUrl, index) => {
-                  const isActive = imgUrl === mainImage;
-                  return (
+    <>
+    <MobileHeader title="Produto" buttons={{ close: true, bag: true, address: true, share: true }} handleBack={handleBack} />
+      <div className={styles.productPage}>
+        <div className={styles.leftColumn}>
+          <div className={styles.productConteiner}>
+            {/* CHANNEL HEADER */}
+            <div className={styles.productChannelImageDesc}>
+              <div className={styles.channelHeader}>
+                <div className={styles.channelLeft}>
+                  <div className={styles.channelTitle}>
+                    <Image
+                      src={`${apiUrl}${channelData.imageUrl}`}
+                      alt={`${channelData.name} - Imagem`}
+                      className={styles.channelImage}
+                      width={130}
+                      height={130}
+                    />
                     <div
-                      key={imgUrl + index}
-                      ref={isActive ? activeThumbnailRef : null}
-                      className={styles.thumbnailItem}
-                      onClick={() => setMainImage(imgUrl)}
+                      className={styles.channelInfo}
+                      onClick={() => {
+                        window.location.href = `${frontUrl}${formattedNickname}`;
+                      }}
                     >
-                      <Image
-                        src={`${apiUrl}${imgUrl}`}
-                        alt={`Miniatura de ${displayName} - ${index + 1}`}
-                        width={101}
-                        height={101}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className={styles.shortDescription}>
-              <span>{product.shortDescription}</span>
-            </div>
-          </div>
-
-          {/* MAIN PRODUCT SECTION */}
-          <div className={styles.productSection}>
-            <div className={styles.name}>
-              <span>{displayName}</span>
-            </div>
-
-            {/* Price Section */}
-            <div className={styles.priceSection}>
-              {displayDiscount && displayDiscount > 0 && (
-                <span className={styles.originalPrice}>
-                  {(() => {
-                    const discountValue = Number(displayDiscount || 0);
-                    const salePriceValue = Number(displayPrice || 0);
-                    // Example of calculating the original price from discount
-                    const original = salePriceValue / (1 - discountValue / 100);
-                    return `R$ ${original.toFixed(2).replace('.', ',')}`;
-                  })()}
-                </span>
-              )}
-
-              <div className={styles.priceSaleSection}>
-                <div className={styles.salePrice}>
-                  {(() => {
-                    const price = Number(displayPrice || 0);
-                    const [reais, centavos] = price.toFixed(2).split('.');
-                    return (
-                      <>
-                        R$ {reais}
-                        <sup>{centavos}</sup>
-                      </>
-                    );
-                  })()}
-                </div>
-                <div className={styles.pix}>30% OFF no Pix</div>
-              </div>
-
-              <div className={styles.otherOptions}>
-                ou <strong>R$ 109</strong> em outros meios <a>Ver mais</a>
-              </div>
-            </div>
-
-            {/* Attributes (variation) */}
-            {product.variations && product.variations.length > 0 && (
-              <div style={{ margin: '1rem 0' }}>
-                {[...attributesMap.entries()].map(([attrName, values]) => (
-                  <div key={attrName} style={{ marginBottom: '1rem' }}>
-                    <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                      {attrName}
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      {[...values].map((val) => (
-                        <button
-                          key={val}
-                          onClick={() => handleAttributeClick(attrName, val)}
-                          style={{
-                            padding: '0.5rem 1rem',
-                            border: '1px solid #ccc',
-                            cursor: 'pointer',
-                            borderColor:
-                              selectedAttributes[attrName] === val
-                                ? '#7B33E5'
-                                : '#fff',
-                          }}
-                        >
-                          {val}
-                        </button>
-                      ))}
+                      <h2 className={styles.channelName}>{channelData.name}</h2>
+                      <p className={styles.channelNickname}>{nickname}</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
 
-            <Card title="Opiniões do produto">
-              <div>
-                <span>4.7</span>
+                  <div className={styles.channelFollow}>
+                    {stageButtons
+                      .filter((btn) => btn.text === 'Seguir' || btn.text === 'Amigos')
+                      .map((button, index) => (
+                        <StageButton
+                          key={index}
+                          text={button.text}
+                          backgroundColor={button.backgroundColor}
+                          imageSrc={button.imageSrc}
+                          onClick={button.onClick}
+                        />
+                      ))}
+                  </div>
+                </div>
               </div>
-            </Card>
+
+              {/* PRODUCT GALLERY */}
+              <div className={styles.galleryContainer}>
+                <div className={styles.mainImage}>
+                  {mainImage ? (
+                    <Image
+                      src={`${apiUrl}${mainImage}`}
+                      alt={`Imagem principal do ${displayName}`}
+                      width={419}
+                      height={419}
+                    />
+                  ) : (
+                    <Image
+                      src={defaultImage}
+                      alt="Imagem padrão"
+                      width={419}
+                      height={419}
+                    />
+                  )}
+                </div>
+
+                {/* Thumbnails */}
+                <div className={styles.thumbnailList}>
+                  {galleryImages.map((imgUrl, index) => {
+                    const isActive = imgUrl === mainImage;
+                    return (
+                      <div
+                        key={imgUrl + index}
+                        ref={isActive ? activeThumbnailRef : null}
+                        className={styles.thumbnailItem}
+                        onClick={() => setMainImage(imgUrl)}
+                      >
+                        <Image
+                          src={`${apiUrl}${imgUrl}`}
+                          alt={`Miniatura de ${displayName} - ${index + 1}`}
+                          width={101}
+                          height={101}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className={styles.shortDescription}>
+                <span>{product.shortDescription}</span>
+              </div>
+            </div>
+
+            {/* MAIN PRODUCT SECTION */}
+            <div className={styles.productSection}>
+              <div className={styles.name}>
+                <span>{displayName}</span>
+              </div>
+
+              {/* Price Section */}
+              <div className={styles.priceSection}>
+                {displayDiscount && displayDiscount > 0 && (
+                  <span className={styles.originalPrice}>
+                    {(() => {
+                      const discountValue = Number(displayDiscount || 0);
+                      const salePriceValue = Number(displayPrice || 0);
+                      // Exemplo de cálculo de preço original com base na %
+                      const original = salePriceValue / (1 - discountValue / 100);
+                      return `R$ ${original.toFixed(2).replace('.', ',')}`;
+                    })()}
+                  </span>
+                )}
+
+                <div className={styles.priceSaleSection}>
+                  <div className={styles.salePrice}>
+                    {(() => {
+                      const price = Number(displayPrice || 0);
+                      const [reais, centavos] = price.toFixed(2).split('.');
+                      return (
+                        <>
+                          R$ {reais}
+                          <sup>{centavos}</sup>
+                        </>
+                      );
+                    })()}
+                  </div>
+                  <div className={styles.pix}>30% OFF no Pix</div>
+                </div>
+
+                <div className={styles.otherOptions}>
+                  ou <strong>R$ 109</strong> em outros meios <a>Ver mais</a>
+                </div>
+              </div>
+
+              {/* Atributos (variações) */}
+              {product.variations && product.variations.length > 0 && (
+                <div>
+                  {[...attributesMap.entries()].map(([attrName, values]) => (
+                    <div key={attrName} style={{ marginBottom: '1rem' }}>
+                      <div style={{ fontWeight: 'bold', marginBottom: '0.4rem' }}>
+                        {attrName}
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        {[...values].map((val) => (
+                          <button
+                            key={val}
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleAttributeClick(attrName, val);
+                            }}
+                            style={{
+                              padding: '0.5rem 1rem',
+                              border: '1px solid #ccc',
+                              cursor: 'pointer',
+                              borderColor:
+                                selectedAttributes[attrName] === val
+                                  ? '#7B33E5'
+                                  : '#fff',
+                            }}
+                          >
+                            {val}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <Card title="Opiniões do produto">              
+                <ProductRating />
+              </Card>
+            </div>
+          </div>
+
+          <div className={styles.infoConteiner}>
+            <ExpandableCard title="Informações do produto">
+              <p>Aqui</p>
+            </ExpandableCard>
+            <ExpandableCard title="Mais detalhes">
+              <p>Aqui</p>
+            </ExpandableCard>
           </div>
         </div>
 
-        <div className={styles.infoConteiner}>
-          <ExpandableCard title="Informações do produto">
-            <p>Aqui</p>
-          </ExpandableCard>
-          <ExpandableCard title="Mais detalhes">
-            <p>Aqui</p>
-          </ExpandableCard>
-        </div>
-      </div>
+        <div className={styles.rightColumn}>
+          <div className={styles.deliveries}>
+            <Card title="Delivery">
+              {deliveryData && (
+                <div className={styles.pickupBox}>
+                  {/* Rótulos acima da caixa preta */}
+                  <div className={styles.labels}>
+                    <span>Preço</span>
+                    <span>Tempo de Entrega</span>
+                  </div>
 
-      <div className={styles.rightColumn}>
-        <div className={styles.deliveries}>
-          <Card title="Delivery">
-            <div>
-              <span>{deliveryData ? `R$ ${deliveryData.price}` : 'N/A'}</span>
-              <span>
-                {deliveryData ? `${deliveryData.averageDeliveryTime} min` : 'N/A'}
-              </span>
-            </div>
-          </Card>
-          <Card title="Retirada">
-            <div>
-              {pickupDetails && (
-                <div>
-                  <h2>Opção de Retirada</h2>
-                  <p>
-                    <strong>Preço de Retirada:</strong>{' '}
-                    {pickupDetails.precoRetirada === 0
-                      ? 'Grátis'
-                      : pickupDetails.precoRetirada}
-                  </p>
-                  <p>
-                    <strong>Prazo de Retirada:</strong>{' '}
-                    {pickupDetails.prazoRetirada} dias
-                  </p>
-                  <h3>Endereço do Catálogo</h3>
-                  <ul>
-                    <li>
-                      <strong>Destinatário:</strong>{' '}
-                      {pickupDetails.address.recipientName}
-                    </li>
-                    <li>
-                      <strong>Telefone:</strong>{' '}
-                      {pickupDetails.address.recipientPhone}
-                    </li>
-                    <li>
-                      <strong>CEP:</strong> {pickupDetails.address.cep}
-                    </li>
-                    <li>
-                      <strong>Estado:</strong> {pickupDetails.address.state}
-                    </li>
-                    <li>
-                      <strong>Cidade:</strong> {pickupDetails.address.city}
-                    </li>
-                    <li>
-                      <strong>Bairro:</strong> {pickupDetails.address.neighborhood}
-                    </li>
-                    <li>
-                      <strong>Rua:</strong> {pickupDetails.address.street}
-                    </li>
-                    <li>
-                      <strong>Número:</strong> {pickupDetails.address.number}
-                    </li>
-                    {pickupDetails.address.complement && (
-                      <li>
-                        <strong>Complemento:</strong>{' '}
-                        {pickupDetails.address.complement}
-                      </li>
-                    )}
-                  </ul>
+                  <div className={styles.pickupInfo}>
+                    <div className={styles.price}>
+                      {deliveryData.price === 0 ? 'Grátis' : `R$ ${deliveryData.price}`}
+                    </div>
+                    <div className={styles.availability}>
+                      {deliveryData.averageDeliveryTime} min
+                    </div>
+                  </div>
                 </div>
               )}
-            </div>
-          </Card>
+            </Card>
+
+            <Card title="Retirada">
+              {pickupDetails && (
+                <div className={styles.pickupBox}>
+                  <p className={styles.pickupTitle}>
+                    <strong>Retirar em:</strong>{' '}
+                    {showFullAddress ? addressDetails : (
+                      <span className={styles.truncated}>
+                        {pickupDetails.address.street}
+                      </span>
+                    )}
+                    <span 
+                      className={styles.verMais} 
+                      onClick={() => setShowFullAddress(!showFullAddress)}
+                    >
+                      {showFullAddress ? 'ver menos' : 'ver mais'}
+                    </span>
+                  </p>
+
+                  {/* Rótulos acima da caixa preta */}
+                  <div className={styles.labels}>
+                    <span>Preço</span>
+                    <span>Disponibilidade</span>
+                  </div>
+
+                  <div className={styles.pickupInfo}>
+                    <div className={styles.price}>
+                      {pickupDetails.precoRetirada === 0 ? 'Grátis' : pickupDetails.precoRetirada}
+                    </div>
+                    <div className={styles.availability}>
+                      em {pickupDetails.prazoRetirada} dias
+                    </div>
+                  </div>
+                </div>
+              )}
+            </Card>
+
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

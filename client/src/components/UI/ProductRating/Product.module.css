@@ -1,0 +1,104 @@
+.productRatingContainer {
+    color: #fff;
+    border-radius: 8px;
+    width: 100%;
+    margin: 0 auto;
+    font-family: sans-serif;
+  }
+  
+  .header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  
+  .left {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  
+  .right {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 150px;
+  }
+  
+  /* Nota geral (4.7) */
+  .ratingValue {
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    line-height: 1;
+  }
+  
+  /* Linha de estrelas */
+  .starRow {
+    display: flex;
+    align-items: center;
+  }
+  
+  /* Ícone da estrela */
+  .starIcon {
+    width: 24px;
+    height: 24px;
+    margin-right: 4px;
+  }
+  
+  /* Texto de total de avaliações (ex: 12 avaliações) */
+  .totalReviews {
+    font-size: 0.9rem;
+    color: #ccc;
+    margin-top: 0.5rem;
+  }
+  
+  /* Barras de distribuição (5★, 4★, 3★, etc.) */
+  .distributionRow {
+    display: flex;
+    align-items: center;
+    margin: 0.3rem 0;
+  }
+  
+  .distributionRow span {
+    width: 2rem;
+    text-align: right;
+    margin-right: 0.5rem;
+  }
+  
+  .barContainer {
+    background-color: #555;
+    height: 6px;
+    border-radius: 3px;
+    width: 100%;
+    position: relative;
+  }
+  
+  .barFill {
+    background-color: #f90; /* cor laranja para representar estrelas */
+    height: 6px;
+    border-radius: 3px;
+  }
+  
+  /* SubRatings: blocos com Custo-benefício, Resistência, etc. */
+  .subRatings {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .subRatingItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    min-width: 120px;
+  }
+  
+  .subRatingLabel {
+    margin-top: 0.5rem;
+    color: #ccc;
+    font-size: 0.875rem;
+  }
+  

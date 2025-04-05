@@ -133,19 +133,12 @@ function Channel({ nickname }: ChannelProps) {
         const channel = await getChannelByNickname(nickname);
         if (!channel || !channel.id) {
           console.error('Canal inválido', channel);
-          return; // sai daqui, não há canal
+          return; // Sai se não houver canal válido
         }
         setChannelData({ ...channel, imageUrl: channel.imageUrl || '' });
 
-
-        // 2) Buscar tudo que é "público" em paralelo
-        const [
-          countFollowers,
-          countFollowing,
-          aboutData,
-          faqsData,
-          catalogs
-        ] = await Promise.all([
+        // 2) Buscar tudo que é "público" em paralelo utilizando Promise.allSettled
+        const results = await Promise.allSettled([
           getFollowersCount(channel.id),
           getFollowingCount(nickname),
           getAboutByNickname(nickname),
@@ -153,23 +146,28 @@ function Channel({ nickname }: ChannelProps) {
           getPublishedCatalogs(channel.id),
         ]);
 
+        const countFollowers = results[0].status === 'fulfilled' ? results[0].value : 0;
+        const countFollowing = results[1].status === 'fulfilled' ? results[1].value : 0;
+        const aboutData = results[2].status === 'fulfilled' ? results[2].value : null;
+        const faqsData = results[3].status === 'fulfilled' ? results[3].value : [];
+        const catalogs = results[4].status === 'fulfilled' ? results[4].value : [];
+
         setFollowersCount(countFollowers);
         setFollowingCount(countFollowing);
 
-        // Se about ou FAQ tiver conteúdo, habilita o botão "Sobre"
+        // Se "about" ou "FAQ" tiver conteúdo, habilita o botão "Sobre"
         if ((aboutData?.aboutText) || (faqsData && faqsData.length > 0)) {
           setShowAboutButton(true);
         }
 
-        // Montar a lista de catálogos publicados
+        // Monta a lista de catálogos publicados
         const mappedCatalogs = catalogs.map((c: any) => ({
           id: c.id,
           name: c.name || 'Loja'
         }));
         setPublishedCatalogs(mappedCatalogs);
 
-        // 3) Agora verificar se o usuário está autenticado
-        //    Se estiver, buscar dados que exigem login (isChannelOwner, isFollowing).
+        // 3) Verifica se o usuário está autenticado para buscar dados restritos
         const authResponse = await checkAuth();
         if (authResponse.isAuthenticated) {
           try {
@@ -180,11 +178,9 @@ function Channel({ nickname }: ChannelProps) {
             setIsOwner(ownerCheck);
             setIsFollowingChannel(followingCheck);
           } catch (err) {
-            // Se der 401 aqui, tudo bem, significa que token não válido, etc.
             console.error('Erro ao buscar info autenticada:', err);
           }
         }
-
       } catch (error) {
         console.error('Erro ao buscar dados do canal (ou dados públicos):', error);
       }
@@ -192,7 +188,6 @@ function Channel({ nickname }: ChannelProps) {
 
     fetchPublicData();
   }, [nickname]);
-  
 
   // Scroll fixo para os botões
   const handleScroll = useCallback(() => {
@@ -213,7 +208,7 @@ function Channel({ nickname }: ChannelProps) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
-  // Botão de Voltar
+  // Botão de voltar
   const handleBack = useCallback(() => {
     router.back();
   }, [router]);
@@ -232,15 +227,13 @@ function Channel({ nickname }: ChannelProps) {
   const handleImageClick = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
 
-  // Toggle seções
+  // Toggle das seções
   const handleButtonClick = (section: 'post' | 'store' | 'assessment' | 'purchaseEvent') => {
     setActiveSection(section);
   };
 
   const getButtonClass = useCallback(
-    (section: string) => {
-      return activeSection === section ? `${styles.fixedButton} ${styles.active}` : styles.fixedButton;
-    },
+    (section: string) => activeSection === section ? `${styles.fixedButton} ${styles.active}` : styles.fixedButton,
     [activeSection]
   );
 
@@ -408,11 +401,7 @@ function Channel({ nickname }: ChannelProps) {
 
           {/* Botões à direita */}
           <div className={styles.channelRight}>
-            <div
-              className={`${styles.channelLinkButtonContainer} ${
-                !channelData.externalLink ? styles.centered : ''
-              }`}
-            >
+            <div className={`${styles.channelLinkButtonContainer} ${!channelData.externalLink ? styles.centered : ''}`}>
               {channelData.externalLink && (
                 <a
                   href={channelData.externalLink}
@@ -456,11 +445,7 @@ function Channel({ nickname }: ChannelProps) {
         </div>
 
         {/* Seção de botões fixos */}
-        <div
-          className={`${styles.channelButtonsSection} ${
-            isFixed ? styles.fixedChannelButtonsSection : ''
-          } channel-buttons-section`}
-        >
+        <div className={`${styles.channelButtonsSection} ${isFixed ? styles.fixedChannelButtonsSection : ''} channel-buttons-section`}>
           <div className={styles.buttonsContainer}>
             <div className={styles.fixedButtonsContainer}>
               {/* Renderiza o botão "Store" somente se existir pelo menos um catálogo publicado */}
@@ -472,16 +457,10 @@ function Channel({ nickname }: ChannelProps) {
               <button className={getButtonClass('post')} onClick={() => handleButtonClick('post')}>
                 <Image src={postIcon} alt="Post" />
               </button>
-              <button
-                className={getButtonClass('assessment')}
-                onClick={() => handleButtonClick('assessment')}
-              >
+              <button className={getButtonClass('assessment')} onClick={() => handleButtonClick('assessment')}>
                 <Image src={assessmentIcon} alt="Assessment" />
               </button>
-              <button
-                className={getButtonClass('purchaseEvent')}
-                onClick={() => handleButtonClick('purchaseEvent')}
-              >
+              <button className={getButtonClass('purchaseEvent')} onClick={() => handleButtonClick('purchaseEvent')}>
                 <Image src={purchaseEventChannelIcon} alt="Purchase Event Channel" />
               </button>
             </div>
@@ -516,9 +495,7 @@ function Channel({ nickname }: ChannelProps) {
         )}
 
         {activeSection === 'post' && <PostSection />}
-
         {activeSection === 'assessment' && <AssessmentSection />}
-
         {activeSection === 'purchaseEvent' && <PurchaseEventSection />}
       </div>
 
