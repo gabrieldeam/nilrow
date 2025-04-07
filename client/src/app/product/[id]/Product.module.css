@@ -303,7 +303,9 @@
 }
 
 @media (min-width: 980px) and (max-width: 1224px) {
-
+    .productPage {
+        flex-direction: column;
+    }
     .mainImage {
         width: 300px;
         height: 300px;
@@ -338,7 +340,16 @@
     .name {
         font-size: 16px;
     }
+
+    .rightColumn {
+        width: 100%;
+    }
     
+    .deliveries {
+        display: flex;
+        gap: 5px;
+    }
+
 }
 
 @media (min-width: 768px) and (max-width: 980px) {

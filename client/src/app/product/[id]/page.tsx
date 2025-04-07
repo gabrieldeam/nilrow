@@ -4,6 +4,7 @@ import React, { use, useEffect, useState, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocationContext } from '@/context/LocationContext';
+import { useBag } from '@/context/BagContext';
 import {
   getProductByIdWithDelivery,
   listVariationImagesByVariation,
@@ -74,6 +75,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   const { id } = resolvedParams; // params é uma Promise no Next 13
 
   const { location } = useLocationContext();
+  const { addToBag } = useBag();
 
   const [product, setProduct] = useState<ProductDTO | null>(null);
   const [deliveryData, setDeliveryData] = useState<DeliveryPriceDTO | null>(null);
@@ -450,6 +452,13 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
     (pickupDetails.address.complement ? `, ${pickupDetails.address.complement}` : '')
   : '';
 
+
+  const handleAddToCart = () => {
+    if (product) {
+      addToBag({ id: product.id!, quantity: 1, nickname });
+      }
+  };
+
   // ----------------------------------------------------------------------------
   // RENDER
   return (
@@ -597,24 +606,26 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         {[...values].map((val) => (
                           <button
-                            key={val}
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handleAttributeClick(attrName, val);
-                            }}
-                            style={{
-                              padding: '0.5rem 1rem',
-                              border: '1px solid #ccc',
-                              cursor: 'pointer',
-                              borderColor:
-                                selectedAttributes[attrName] === val
-                                  ? '#7B33E5'
-                                  : '#fff',
-                            }}
-                          >
-                            {val}
-                          </button>
+                          key={val}
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleAttributeClick(attrName, val);
+                          }}
+                          style={{
+                            padding: '0.5rem 1rem',
+                            border: '1px solid #ccc',
+                            borderStyle: selectedAttributes[attrName] === val ? 'dashed' : 'solid',
+                            cursor: 'pointer',
+                            borderRadius: '20px',
+                            color: 'white',
+                            backgroundColor: 'transparent',
+                            borderColor:
+                              selectedAttributes[attrName] === val ? '#7B33E5' : '#fff',
+                          }}
+                        >
+                          {val}
+                        </button>
                         ))}
                       </div>
                     </div>
@@ -622,8 +633,17 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                 </div>
               )}
 
+              <div>
+                <StageButton
+                  text="Adicionar ao Carrinho"
+                  backgroundColor="#DF1414"
+                  onClick={handleAddToCart}
+                />
+              </div>
+
+
               <Card title="Opiniões do produto">              
-                <ProductRating />
+                <ProductRating /> 
               </Card>
             </div>
           </div>

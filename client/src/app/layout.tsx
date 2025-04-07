@@ -2,6 +2,7 @@
 
 import './globals.css';
 import { NotificationProvider } from '@/context/NotificationContext';
+import { BagProvider } from '@/context/BagContext'; 
 import { LocationProvider } from '@/context/LocationContext';
 import { SearchProvider } from '@/context/SearchContext';
 import { LoadingProvider } from '@/context/LoadingContext';
@@ -13,7 +14,6 @@ import MobileFooter from '@/components/Layout/MobileFooter/MobileFooter';
 import AuthFooter from '@/components/Layout/AuthFooter/AuthFooter';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-
 
 const AUTH_ROUTES = [
   '/login',
@@ -79,8 +79,9 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <NotificationProvider>
-          <LocationProvider>
-            <SearchProvider>
+          <BagProvider>
+            <LocationProvider>
+              <SearchProvider>
                 <LoadingProvider>
                   <NotificationWrapper>
                     {renderHeader()}
@@ -89,8 +90,9 @@ export default function RootLayout({
                     {renderAuthFooter()}
                   </NotificationWrapper>
                 </LoadingProvider>
-            </SearchProvider>
-          </LocationProvider>
+              </SearchProvider>
+            </LocationProvider>
+          </BagProvider>
         </NotificationProvider>
       </body>
     </html>

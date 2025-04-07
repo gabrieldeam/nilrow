@@ -25,49 +25,46 @@ export default function ProductRating() {
 
   return (
     <div className={styles.productRatingContainer}>
-      {/* Cabeçalho: nota geral + distribuição de estrelas */}
       <div className={styles.header}>
-        {/* Parte esquerda: nota, estrelas e total de avaliações */}
         <div className={styles.left}>
           <div className={styles.ratingValue}>4.7</div>
-          <div className={styles.starRow}>
-            {renderStars(4)} {/* Exibe 4 estrelas cheias (exemplo simplificado para 4.7) */}
+          <div className={styles.starContainer}>
+            <div className={styles.starRow}>
+              {renderStars(4)} 
+            </div>
+            <div className={styles.totalReviews}>12 avaliações</div>
           </div>
-          <div className={styles.totalReviews}>12 avaliações</div>
         </div>
-
-        {/* Parte direita: distribuição por estrela (5★, 4★, etc.) */}
         <div className={styles.right}>
           <div className={styles.distributionRow}>
-            <span>5★</span>
             <div className={styles.barContainer}>
-              {/* Ajuste a width conforme a % de avaliações que deram 5 estrelas */}
               <div className={styles.barFill} style={{ width: '80%' }}></div>
             </div>
+            <span>5★</span>            
           </div>
-          <div className={styles.distributionRow}>
-            <span>4★</span>
+          <div className={styles.distributionRow}>            
             <div className={styles.barContainer}>
               <div className={styles.barFill} style={{ width: '60%' }}></div>
             </div>
+            <span>4★</span>
           </div>
           <div className={styles.distributionRow}>
-            <span>3★</span>
             <div className={styles.barContainer}>
               <div className={styles.barFill} style={{ width: '30%' }}></div>
             </div>
+            <span>3★</span>
           </div>
           <div className={styles.distributionRow}>
-            <span>2★</span>
             <div className={styles.barContainer}>
               <div className={styles.barFill} style={{ width: '10%' }}></div>
             </div>
+            <span>2★</span>
           </div>
           <div className={styles.distributionRow}>
-            <span>1★</span>
             <div className={styles.barContainer}>
               <div className={styles.barFill} style={{ width: '5%' }}></div>
             </div>
+            <span>1★</span>
           </div>
         </div>
       </div>

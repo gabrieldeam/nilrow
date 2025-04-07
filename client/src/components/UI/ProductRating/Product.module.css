@@ -3,89 +3,98 @@
     border-radius: 8px;
     width: 100%;
     margin: 0 auto;
-    font-family: sans-serif;
   }
   
   .header {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 1rem;
+    margin-bottom: 1rem;    
+    width: 100%;
   }
   
   .left {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
     justify-content: center;
+    gap: 20px;    
+    width: 100%;
+  }
+
+  .starContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;  
+  }
+
+  .starContainer img {    
+    width: 30px;
+    height: 30px;
   }
   
   .right {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    min-width: 150px;
+    justify-content: center;  
+    width: 100%;
   }
   
-  /* Nota geral (4.7) */
   .ratingValue {
-    font-size: 3rem;
+    font-size: 5rem;
     font-weight: bold;
-    margin-bottom: 0.5rem;
     line-height: 1;
   }
   
-  /* Linha de estrelas */
   .starRow {
     display: flex;
     align-items: center;
   }
   
-  /* Ícone da estrela */
   .starIcon {
-    width: 24px;
-    height: 24px;
+    width: 15px;
+    height: 15px;
     margin-right: 4px;
   }
   
-  /* Texto de total de avaliações (ex: 12 avaliações) */
   .totalReviews {
     font-size: 0.9rem;
     color: #ccc;
     margin-top: 0.5rem;
   }
   
-  /* Barras de distribuição (5★, 4★, 3★, etc.) */
   .distributionRow {
     display: flex;
     align-items: center;
-    margin: 0.3rem 0;
+    width: 100%;
+    margin: 0 0;
   }
   
   .distributionRow span {
-    width: 2rem;
     text-align: right;
     margin-right: 0.5rem;
+    font-size: 12px;
   }
   
   .barContainer {
     background-color: #555;
     height: 6px;
     border-radius: 3px;
-    width: 100%;
     position: relative;
+    flex-grow: 1;
+    margin-right: 20px;
   }
   
   .barFill {
-    background-color: #f90; /* cor laranja para representar estrelas */
+    background-color: #f90;
     height: 6px;
     border-radius: 3px;
   }
   
-  /* SubRatings: blocos com Custo-benefício, Resistência, etc. */
   .subRatings {
     display: flex;
     justify-content: space-between;
-    gap: 1rem;
     margin-top: 1rem;
+    overflow: auto;
   }
   
   .subRatingItem {
@@ -102,3 +111,24 @@
     font-size: 0.875rem;
   }
   
+
+  @media (max-width: 768px) {
+    .left {
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .starContainer {  
+      align-items: center;
+    }
+
+    .starContainer img {    
+      width: 20px;
+      height: 20px;
+    }
+
+    .ratingValue {
+      font-size: 3rem;
+    }
+
+  }
