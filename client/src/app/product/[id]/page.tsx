@@ -26,6 +26,8 @@ import ExpandableCard from '@/components/UI/ExpandableCard/ExpandableCard';
 import Card from '@/components/UI/Card/Card';
 import shareIcon from '../../../../public/assets/share.svg';
 import followIcon from '../../../../public/assets/follow.svg';
+import likesIcon from '../../../../public/assets/likes.svg';
+import purchaseEventIcon from '../../../../public/assets/purchaseEventChannel.svg';
 
 
 import {
@@ -633,18 +635,26 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                 </div>
               )}
 
-              <div>
+              <div className={styles.toCart}>
                 <StageButton
                   text="Adicionar ao Carrinho"
                   backgroundColor="#DF1414"
                   onClick={handleAddToCart}
                 />
+                <button className={styles.toCartButton}>
+                  <Image src={likesIcon} alt="Likes" width={24} height={24} />
+                </button>
+                <button className={styles.toCartButton}>
+                  <Image src={purchaseEventIcon} alt="Purchase Event" width={24} height={24} />
+                </button>
               </div>
 
 
-              <Card title="Opiniões do produto">              
-                <ProductRating /> 
-              </Card>
+              <div className={styles.ProductRating}>
+                <Card title="Opiniões do produto">              
+                  <ProductRating /> 
+                </Card>
+              </div>
             </div>
           </div>
 
