@@ -111,6 +111,38 @@
     font-size: 0.75rem;
   }
 
+  @media (min-width: 768px) and (max-width: 1124px) {
+    .left {
+      flex-direction: column;
+      gap: 2px;        
+      width: 50%;
+    }
+
+    .right {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;  
+      width: 80%;
+    }
+
+    .starContainer {  
+      align-items: center;
+    }
+
+    .starContainer img {    
+      width: 20px;
+      height: 20px;
+    }
+
+    .ratingValue {
+      font-size: 3rem;
+    }
+
+    .subRatings {
+      display: none;
+    }
+  }
+
   @media (max-width: 768px) {
     .left {
       flex-direction: column;

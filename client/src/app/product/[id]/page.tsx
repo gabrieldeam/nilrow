@@ -29,7 +29,6 @@ import followIcon from '../../../../public/assets/follow.svg';
 import likesIcon from '../../../../public/assets/likes.svg';
 import purchaseEventIcon from '../../../../public/assets/purchaseEventChannel.svg';
 
-
 import {
   getChannelByNickname,
   isChannelOwner,
@@ -659,12 +658,91 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
           </div>
 
           <div className={styles.infoConteiner}>
-            <ExpandableCard title="Informações do produto">
-              <p>Aqui</p>
-            </ExpandableCard>
-            <ExpandableCard title="Mais detalhes">
-              <p>Aqui</p>
-            </ExpandableCard>
+          <ExpandableCard title="Informações do produto">
+            <div className={styles.productInfoContainer}>
+              {/* Coluna da descrição complementar */}
+              <div className={styles.descriptionColumn}>
+                <h3>Descrição Completa</h3>
+                <p>{product.complementaryDescription}</p>
+              </div>
+              
+              {/* Coluna dos detalhes em tabela */}
+              <div className={styles.detailsColumn}>
+                <h3>Detalhes</h3>
+                <table className={styles.detailsTable}>
+                  <tbody>
+                    <tr>
+                      <td>Condição</td>
+                      <td>{product.condition}</td>
+                    </tr>
+                    <tr>
+                      <td>Categoria</td>
+                      <td>{product.categoryId}</td>
+                    </tr>
+                    <tr>
+                      <td>Subcategoria</td>
+                      <td>{product.subCategoryId}</td>
+                    </tr>
+                    <tr>
+                      <td>Marca</td>
+                      <td>{product.brandId}</td>
+                    </tr>
+                    <tr>
+                      <td>Peso Líquido</td>
+                      <td>{product.netWeight}</td>
+                    </tr>
+                    <tr>
+                      <td>Peso Bruto</td>
+                      <td>{product.grossWeight}</td>
+                    </tr>
+                    <tr>
+                      <td>Largura</td>
+                      <td>{product.width}</td>
+                    </tr>
+                    <tr>
+                      <td>Altura</td>
+                      <td>{product.height}</td>
+                    </tr>
+                    <tr>
+                      <td>Profundidade</td>
+                      <td>{product.depth}</td>
+                    </tr>
+                    <tr>
+                      <td>Volumes</td>
+                      <td>{product.volumes}</td>
+                    </tr>
+                    <tr>
+                      <td>Itens por Caixa</td>
+                      <td>{product.itemsPerBox}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </ExpandableCard>
+
+          <ExpandableCard title="Mais detalhes">
+            <div className={styles.productInfoContainer}>
+              <div className={styles.descriptionColumn}>
+                <h3>Notes</h3>
+                <p>{product.notes}</p>
+              </div>
+              <div className={styles.detailsColumn}>
+                <h3>Technical Specifications</h3>
+                <table className={styles.detailsTable}>
+                  <tbody>
+                    {product.technicalSpecifications?.map((spec) => (
+                      <tr key={spec.id || spec.title}>
+                        <td>{spec.title}</td>
+                        <td>{spec.content}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </ExpandableCard>
+
           </div>
         </div>
 

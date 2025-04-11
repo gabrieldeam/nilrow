@@ -19,7 +19,6 @@ import chatIcon from '../../../../public/assets/chat.svg';
 import profileIcon from '../../../../public/assets/profile.svg';
 import scanIcon from '../../../../public/assets/scan.svg';
 import adminIcon from '../../../../public/assets/admin.svg';
-// Ícone default para o canal (pode ser substituído por um ícone específico)
 import userIcon from '../../../../public/assets/user.png';
 
 import { useLocationContext } from '../../../context/LocationContext';
@@ -29,8 +28,8 @@ import { isAdmin } from '../../../services/authService';
 import ModalInfoAddress from '../../Modals/ModalInfoAddress/ModalInfoAddress';
 import AddressModal from '../../Modals/AddressModal/AddressModal';
 import { useAuth } from '../../../hooks/useAuth';
+import { useBag } from '../../../context/BagContext';
 
-// Importando funções para verificar o canal
 import { getMyChannel, isChannelActive } from '@/services/channel/channelService';
 import { getUserNickname } from '@/services/profileService';
 
@@ -47,11 +46,29 @@ const MainHeader: React.FC = () => {
   const pathname = usePathname();
   const divRef = useRef<HTMLDivElement | null>(null);
   const [buttonPosition, setButtonPosition] = useState({ top: 0, left: 0 });
+  const { bag } = useBag();
+  const totalItems = bag.reduce((acc, item) => acc + item.quantity, 0);
 
   // Estados para o canal
   const [hasChannel, setHasChannel] = useState(false);
   const [channelImageUrl, setChannelImageUrl] = useState('');
   const [nickname, setNickname] = useState('');
+
+  // Estado para controlar o tamanho da tela
+  const [isLargeScreen, setIsLargeScreen] = useState(true);
+
+  useEffect(() => {
+    // Função que atualiza o state baseado na largura da janela
+    const handleResize = () => {
+      setIsLargeScreen(window.innerWidth >= 900);
+    };
+
+    // Executa ao montar o componente
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -179,11 +196,21 @@ const MainHeader: React.FC = () => {
           <HeaderButton
             icon={addressIcon}
             onClick={openAddressModal}
-            text={location.city ? `${location.city} - ${location.zip}` : 'Atualizar local'}
+            // Aqui, se a tela for grande, mostramos o texto normalmente; caso contrário, passamos uma string vazia
+            text={
+              isLargeScreen
+                ? location.city
+                  ? `${location.city} - ${location.zip}`
+                  : 'Atualizar local'
+                : ''
+            }
           />
         </div>
         <ProtectedLink to="/bag">
-          <HeaderButton icon={bagIcon} isActive={getIsActive('/bag')} />
+          <div className={styles.bagButtonContainer}>
+            <HeaderButton icon={bagIcon} isActive={getIsActive('/bag')} />
+            {totalItems > 0 && <span className={styles.bagCount}>{totalItems}</span>}
+          </div>
         </ProtectedLink>
         {isAuthenticated && (
           <>
@@ -192,14 +219,14 @@ const MainHeader: React.FC = () => {
             {/* Novo botão para o canal, exibido se o usuário possuir canal */}
             {hasChannel && (
               <a onClick={handleChannelClick} className={styles.channelLink}>
-              <Image
-                src={channelImageUrl ? `${apiUrl}${channelImageUrl}` : userIcon}
-                alt="Canal"
-                width={46}
-                height={44}
-                className={styles.channelImage}
-              />
-            </a>
+                <Image
+                  src={channelImageUrl ? `${apiUrl}${channelImageUrl}` : userIcon}
+                  alt="Canal"
+                  width={46}
+                  height={44}
+                  className={styles.channelImage}
+                />
+              </a>
             )}
             {isAdminUser && <HeaderButton icon={adminIcon} link="/admin" isActive={getIsActive('/admin')} />}
           </>
