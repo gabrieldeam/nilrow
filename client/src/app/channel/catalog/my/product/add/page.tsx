@@ -394,7 +394,7 @@ const ProductCreateContent: React.FC = () => {
         price: 0,
         discountPrice: 0,
         stock: 0,
-        active: true,
+        active: false,
         images: [],
         attributes,
       };
@@ -454,6 +454,11 @@ const ProductCreateContent: React.FC = () => {
   // 4) ATRIBUTOS PARA GERAÇÃO DE VARIAÇÕES
   // ----------------------------------------------------------
   const handleAddAttribute = () => {
+    if (productAttributes.length >= 3) {
+      setMessage('Você pode adicionar no máximo 3 atributos.', 'error');
+      return;
+    }
+  
     setProductAttributes((prev) => [...prev, { attributeName: '', values: [] }]);
   };
 
@@ -593,9 +598,21 @@ const ProductCreateContent: React.FC = () => {
   ) => {
     setVariations((prev) => {
       const arr = [...prev];
-      arr[variationIndex] = { ...arr[variationIndex], [field]: value };
+      const current = arr[variationIndex];
+    
+      if (field === 'active' && value === true) {
+        const price = current.price ?? 0;
+        const stock = current.stock ?? 0;
+    
+        if (price <= 0 || stock <= 0) {
+          setMessage('Para ativar a variação, defina preço e estoque maiores que zero.', 'error');
+          return prev;
+        }
+      }
+    
+      arr[variationIndex] = { ...current, [field]: value };
       return arr;
-    });
+    });        
   };
 
   // ----------------------------------------------------------
@@ -613,7 +630,7 @@ const ProductCreateContent: React.FC = () => {
         price: 0,
         discountPrice: 0,
         stock: 0,
-        active: true,
+        active: false,
         images: [],
         attributes: mappedAttributes
       };
@@ -1283,12 +1300,15 @@ const ProductCreateContent: React.FC = () => {
                 />
               </div>
             ))}
-            <StageButton
-              type="button"
-              text="+ Atributo"
-              backgroundColor="#7B33E5"
-              onClick={handleAddAttribute}
-            />
+            {productAttributes.length < 3 && (
+              <StageButton
+                type="button"
+                text="+ Atributo"
+                backgroundColor="#7B33E5"
+                onClick={handleAddAttribute}
+              />
+            )}
+
             <div style={{ marginTop: '1rem' }}>
               <StageButton
                 type="button"

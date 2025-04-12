@@ -314,10 +314,68 @@
     background-color: #5e5e5e;
   }
 
-@media (min-width: 1024px) and (max-width: 1532px) {
+  .ProductRatingTwo {
+    display: none;
+  }
+
+  .infoContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 25px;
+  }
+  
+  .infoItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    color: white;
+    font-size: 14px;
+    line-height: 1.4;
+    align-items: center;
+  }
+  
+  .highlight {
+    color: #7B33E5;
+  }
+  
+  .variationsSection {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .variationsSection {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: flex-start;
+  }
+
+  .variationGroup {
+    flex: 1 1 250px;
+    min-width: 200px;
+  }
+
+  .variationButtons {
+    display: flex;
+    flex-wrap: wrap; /* permite quebra de linha */
+    gap: 0.5rem;
+  }
+  .variationButton {
+    padding: 0.5rem 1rem;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    cursor: pointer;
+    color: white;
+    background-color: transparent;
+  }
+  
+  
+
+@media (min-width: 1224px) and (max-width: 1532px) {
     .productPage {
         flex-direction: column;
-        gap: 0px;
     } 
     
     .name {
@@ -340,32 +398,19 @@
       .leftColumn {
         flex: none;
     }
-}
 
-@media (min-width: 980px) and (max-width: 1024px) {
-    .productPage {
-        gap: 0px;
+    .infoContainer {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
     }
-
-    .productChannelImageDesc {
-        width: 450px;
-    }
-    .rightColumn {
-        width: 300px;  
-    }
-
-    /* .ProductRating {
-        display: none;
-    } */
-
-    .leftColumn {
-        flex: none;
-    }
+      
 }
 
 @media (min-width: 980px) and (max-width: 1224px) {
     .productPage {
         flex-direction: column;
+        gap: 0px;
     }
     .mainImage {
         width: 300px;
@@ -413,7 +458,21 @@
 
     .toCart {
         width: 400px;
-      }
+    }
+
+    .ProductRating {
+        display: none;
+    }
+
+    .ProductRatingTwo {
+        display: block;
+    }
+
+    .infoContainer {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+    }
 
 }
 
@@ -421,6 +480,7 @@
     .productPage {
         margin-top: 155px;
         flex-direction: column;
+        gap: 0px;
     }
 
     .productChannelImageDesc {
@@ -445,18 +505,17 @@
         width: 100%;        
     }
 
-
     .mainImage {
         width: 98%;
         height: 519px;
         overflow: hidden;
-      }
-    
-      .mainImage img {
-        width: 100%;
-        height: 519px;
-        object-fit: cover;
-      }
+    }
+
+    .mainImage img {
+    width: 100%;
+    height: 519px;
+    object-fit: cover;
+    }
 
     .thumbnailList {
         gap: 5px;
@@ -481,7 +540,13 @@
 
     .toCart {
         width: 400px;
-      }
+    }
+
+    .infoContainer {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+    }
 }
 
 
@@ -490,7 +555,7 @@
     .productPage {
         margin-top: 89px;
         flex-direction: column;
-        gap: 1px;
+        gap: 0px;
         margin-bottom: 90px;
         padding: 0 0;
     }
@@ -601,6 +666,7 @@
         flex-direction: column;
         gap: 10px;
       }
+      
 }
 
   

@@ -3,6 +3,10 @@ package marketplace.nilrow.domain.catalog.product;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import marketplace.nilrow.domain.catalog.category.CategoryDTO;
+import marketplace.nilrow.domain.catalog.category.SubCategoryDTO;
+import marketplace.nilrow.domain.catalog.product.brand.BrandDTO;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -103,4 +107,11 @@ public class ProductDTO {
     private List<ProductVariationDTO> variations;
 
     private String deliveryMessage;
+
+    private BrandDTO brand;
+
+    private CategoryDTO category;
+
+    private SubCategoryDTO subCategory;
+
 }

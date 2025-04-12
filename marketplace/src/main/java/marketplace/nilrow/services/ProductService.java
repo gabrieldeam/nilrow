@@ -1,8 +1,11 @@
 package marketplace.nilrow.services;
 
 import marketplace.nilrow.domain.catalog.Catalog;
+import marketplace.nilrow.domain.catalog.category.CategoryDTO;
+import marketplace.nilrow.domain.catalog.category.SubCategoryDTO;
 import marketplace.nilrow.domain.catalog.location.Location;
 import marketplace.nilrow.domain.catalog.product.*;
+import marketplace.nilrow.domain.catalog.product.brand.BrandDTO;
 import marketplace.nilrow.repositories.*;
 import marketplace.nilrow.util.GeoUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -147,6 +150,14 @@ public class ProductService {
     public ProductDTO getProductByIdWithDeliveryFilters(String id, double latitude, double longitude) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
+        if (product.getVariations() != null) {
+            product.setVariations(
+                    product.getVariations().stream()
+                            .filter(ProductVariation::isActive)
+                            .toList()
+            );
+        }
+
         ProductDTO dto = convertToDTO(product);
 
         // Verifica o catálogo
@@ -559,9 +570,32 @@ public class ProductService {
         dto.setStock(product.getStock());
         dto.setActive(product.isActive());
         dto.setCatalogId(product.getCatalog() != null ? product.getCatalog().getId() : null);
-        dto.setBrandId(product.getBrand() != null ? product.getBrand().getId() : null);
-        dto.setCategoryId(product.getCategory() != null ? product.getCategory().getId() : null);
-        dto.setSubCategoryId(product.getSubCategory() != null ? product.getSubCategory().getId() : null);
+        if (product.getBrand() != null) {
+            dto.setBrandId(product.getBrand().getId());
+            BrandDTO brandDTO = new BrandDTO(
+                    product.getBrand().getId(),
+                    product.getBrand().getName()
+            );
+            dto.setBrand(brandDTO);
+        }
+        if (product.getCategory() != null) {
+            dto.setCategoryId(product.getCategory().getId());
+            dto.setCategory(new CategoryDTO(
+                    product.getCategory().getId(),
+                    product.getCategory().getName(),
+                    product.getCategory().getImageUrl()
+            ));
+        }
+
+        if (product.getSubCategory() != null) {
+            dto.setSubCategoryId(product.getSubCategory().getId());
+            dto.setSubCategory(new SubCategoryDTO(
+                    product.getSubCategory().getId(),
+                    product.getSubCategory().getName(),
+                    product.getCategory().getId() // ou product.getSubCategory().getCategory().getId() se tiver esse relacionamento
+            ));
+        }
+
         if (product.getProductTemplate() != null) {
             dto.setProductTemplateId(product.getProductTemplate().getId());
         }

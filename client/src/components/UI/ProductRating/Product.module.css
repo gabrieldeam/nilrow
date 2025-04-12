@@ -111,6 +111,17 @@
     font-size: 0.75rem;
   }
 
+  @media (min-width: 1124px) and (max-width: 1575px) {
+    .ratingValue {
+      font-size: 3rem;
+    }
+
+    .starContainer img {    
+      width: 20px;
+      height: 20px;
+    }
+  }
+
   @media (min-width: 768px) and (max-width: 1124px) {
     .left {
       flex-direction: column;
@@ -137,10 +148,7 @@
     .ratingValue {
       font-size: 3rem;
     }
-
-    .subRatings {
-      display: none;
-    }
+    
   }
 
   @media (max-width: 768px) {

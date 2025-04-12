@@ -28,6 +28,8 @@ import shareIcon from '../../../../public/assets/share.svg';
 import followIcon from '../../../../public/assets/follow.svg';
 import likesIcon from '../../../../public/assets/likes.svg';
 import purchaseEventIcon from '../../../../public/assets/purchaseEventChannel.svg';
+import checkBuyIcon from '../../../../public/assets/checkBuy.svg';
+import reabastecerIcon from '../../../../public/assets/reabastecer.svg';
 
 import {
   getChannelByNickname,
@@ -598,40 +600,36 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
 
               {/* Atributos (variações) */}
               {product.variations && product.variations.length > 0 && (
-                <div>
-                  {[...attributesMap.entries()].map(([attrName, values]) => (
-                    <div key={attrName} style={{ marginBottom: '1rem' }}>
-                      <div style={{ fontWeight: 'bold', marginBottom: '0.4rem' }}>
-                        {attrName}
-                      </div>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        {[...values].map((val) => (
-                          <button
+                <div className={styles.variationsSection}>
+                {[...attributesMap.entries()].map(([attrName, values]) => (
+                  <div key={attrName} className={styles.variationGroup}>
+                    <div style={{ fontWeight: 'bold', marginBottom: '0.4rem' }}>
+                      {attrName}
+                    </div>
+                    <div className={styles.variationButtons}>
+                      {[...values].map((val) => (
+                        <button
                           key={val}
                           type="button"
                           onClick={(e) => {
                             e.preventDefault();
                             handleAttributeClick(attrName, val);
                           }}
+                          className={styles.variationButton}
                           style={{
-                            padding: '0.5rem 1rem',
-                            border: '1px solid #ccc',
-                            borderStyle: selectedAttributes[attrName] === val ? 'dashed' : 'solid',
-                            cursor: 'pointer',
-                            borderRadius: '20px',
-                            color: 'white',
-                            backgroundColor: 'transparent',
+                            borderStyle:
+                              selectedAttributes[attrName] === val ? 'dashed' : 'solid',
                             borderColor:
                               selectedAttributes[attrName] === val ? '#7B33E5' : '#fff',
                           }}
                         >
                           {val}
                         </button>
-                        ))}
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
+              </div>              
               )}
 
               <div className={styles.toCart}>
@@ -658,6 +656,11 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
           </div>
 
           <div className={styles.infoConteiner}>
+          <div className={styles.ProductRatingTwo}>
+            <Card title="Opiniões do produto">              
+              <ProductRating /> 
+            </Card>
+          </div>
           <ExpandableCard title="Informações do produto">
             <div className={styles.productInfoContainer}>
               {/* Coluna da descrição complementar */}
@@ -677,15 +680,15 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                     </tr>
                     <tr>
                       <td>Categoria</td>
-                      <td>{product.categoryId}</td>
+                      <td>{product.category?.name}</td>
                     </tr>
                     <tr>
                       <td>Subcategoria</td>
-                      <td>{product.subCategoryId}</td>
+                      <td>{product.subCategory?.name}</td>
                     </tr>
                     <tr>
                       <td>Marca</td>
-                      <td>{product.brandId}</td>
+                      <td>{product.brand?.name}</td>
                     </tr>
                     <tr>
                       <td>Peso Líquido</td>
@@ -803,9 +806,23 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                   </div>
                 </div>
               )}
-            </Card>
-
+            </Card>            
           </div>
+          <div className={styles.infoContainer}>
+            <div className={styles.infoItem}>
+              <Image src={reabastecerIcon} alt="Ícone de devolução" width={24} height={24} />
+              <span>
+                <strong className={styles.highlight}>Devolução grátis.</strong> Você tem 30 dias a partir da data de recebimento.
+              </span>
+            </div>
+            <div className={styles.infoItem}>
+              <Image src={checkBuyIcon} alt="Ícone de garantia" width={24} height={24} />
+              <span>
+                <strong className={styles.highlight}>Compra Garantida.</strong> Receba o produto que está esperando ou devolvemos o dinheiro.
+              </span>
+            </div>
+          </div>
+
         </div>
       </div>
     </>

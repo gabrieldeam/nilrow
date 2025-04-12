@@ -1,4 +1,6 @@
-// Enums do produto
+import { BrandDTO } from '@/types/services/brand';
+import { CategoryDTO,  SubCategoryDTO } from '@/types/services/category';
+
 export enum ProductType {
   PRODUCT = 'PRODUCT',
   SERVICE = 'SERVICE',
@@ -83,4 +85,7 @@ export interface ProductDTO {
   technicalSpecifications: TechnicalSpecificationDTO[];
   variations: ProductVariationDTO[];
   deliveryMessage?: string;
+  brand?: BrandDTO;
+  category?: CategoryDTO;
+  subCategory?: SubCategoryDTO;
 }

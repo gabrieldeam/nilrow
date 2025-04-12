@@ -499,7 +499,7 @@ const ProductEdit = () => {
         price: 0,
         discountPrice: 0,
         stock: 0,
-        active: true,
+        active: false,
         images: [],
         attributes,
       };
@@ -555,8 +555,14 @@ const ProductEdit = () => {
   };
 
   const handleAddAttribute = () => {
+    if (productAttributes.length >= 3) {
+      setMessage('Você pode adicionar no máximo 3 atributos.', 'error');
+      return;
+    }
+  
     setProductAttributes((prev) => [...prev, { attributeName: '', values: [] }]);
   };
+  
 
   const handleRemoveAttribute = (idx: number) => {
     setProductAttributes((prev) => prev.filter((_, i) => i !== idx));
@@ -691,10 +697,23 @@ const ProductEdit = () => {
   ) => {
     setVariations((prev) => {
       const arr = [...prev];
-      arr[variationIndex] = { ...arr[variationIndex], [field]: value };
+      const current = arr[variationIndex];
+  
+      if (field === 'active' && value === true) {
+        const price = current.price ?? 0;
+        const stock = current.stock ?? 0;
+  
+        if (price <= 0 || stock <= 0) {
+          setMessage('Para ativar a variação, defina preço e estoque maiores que zero.', 'error');
+          return prev; // não ativa
+        }
+      }
+  
+      arr[variationIndex] = { ...current, [field]: value };
       return arr;
     });
   };
+  
 
   // =====================================
   // SUBMIT: ATUALIZAR PRODUTO
@@ -1274,12 +1293,15 @@ const ProductEdit = () => {
               </div>
             ))}
 
+          {productAttributes.length < 3 && (
             <StageButton
               type="button"
               text="+ Atributo"
               backgroundColor="#7B33E5"
               onClick={handleAddAttribute}
             />
+          )}
+
             <div style={{ marginTop: '1rem' }}>
               <StageButton
                 type="button"
