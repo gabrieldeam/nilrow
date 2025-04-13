@@ -160,6 +160,11 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.DELETE, "/scheduling-intervals/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/scheduling-intervals/**").permitAll()
 
+                        .requestMatchers(HttpMethod.GET, "/favorites/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/favorites/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/favorites/**").authenticated()
+
+
                         .requestMatchers("/melhorenvio/**").permitAll()
 
                         .requestMatchers("/uploads/**").permitAll()

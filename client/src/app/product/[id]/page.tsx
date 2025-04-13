@@ -44,8 +44,17 @@ import {
 import { checkAuth } from '@/services/authService';
 import { startConversation } from '@/services/chatService';
 import defaultImage from '../../../../public/assets/user.png';
+import Modal from '@/components/Modals/Modal/Modal';
+
+import {
+  listFavoriteFolders,
+  likeProduct as favoriteProduct,
+  removeProductLike,
+} from '@/services/favoriteService';
+
 import styles from './Product.module.css';
 
+// Tipos locais
 interface ProductPageProps {
   params: Promise<{ id: string }>;
 }
@@ -72,10 +81,9 @@ interface StageButtonProps {
 
 const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   // ----------------------------------------------------------------------------
-  // 1. HOOKS AT THE TOP-LEVEL
+  // HOOKS E ESTADOS
   const resolvedParams = use(params);
-  const { id } = resolvedParams; // params é uma Promise no Next 13
-
+  const { id } = resolvedParams;
   const { location } = useLocationContext();
   const { bag, addToBag } = useBag();
 
@@ -85,27 +93,31 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [showFullAddress, setShowFullAddress] = useState(false);
-  // Store the images for each variation
   const [variationImagesMap, setVariationImagesMap] = useState<Record<string, VariationImageDTO[]>>({});
 
-  // Controls the currently selected variation (by attributes)
+  // Variação e atributos
   const [selectedVariation, setSelectedVariation] = useState<ProductVariationDTO | null>(null);
-  // Store the selected attribute values
   const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
-  // Gallery of images from the main product + all variations
+
+  // Galeria de imagens
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
-  // Currently displayed main image
   const [mainImage, setMainImage] = useState<string>('');
 
-  // Channel data
+  // Dados do canal
   const [channelData, setChannelData] = useState<ChannelData | null>(null);
   const [isFollowingChannel, setIsFollowingChannel] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
 
-  // Estados para produtos relacionados (filtrados por catálogo e subcategoria)
+  // Produtos relacionados
   const [relatedProducts, setRelatedProducts] = useState<ProductDTO[]>([]);
   const [relatedLoading, setRelatedLoading] = useState<boolean>(false);
   const [relatedError, setRelatedError] = useState<string | null>(null);
+
+  // Favoritos
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [showLikeModal, setShowLikeModal] = useState(false);
+  const [favoriteFolders, setFavoriteFolders] = useState<any[]>([]);
+  const [newFolderName, setNewFolderName] = useState<string>('');
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -114,15 +126,15 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   const frontUrl = process.env.NEXT_PUBLIC_FRONT_URL || '';
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
+  const activeThumbnailRef = useRef<HTMLDivElement | null>(null);
+
   // ----------------------------------------------------------------------------
-  // FETCH: Product (com dados de entrega)
+  // FETCHES
   useEffect(() => {
     if (!id || !location) return;
     setLoading(true);
     getProductByIdWithDelivery(id, location.latitude, location.longitude)
-      .then((data) => {
-        setProduct(data);
-      })
+      .then(setProduct)
       .catch((err) => {
         console.error(err);
         setError('Erro ao carregar o produto.');
@@ -130,12 +142,9 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
       .finally(() => setLoading(false));
   }, [id, location]);
 
-  // ----------------------------------------------------------------------------
-  // FETCH: Channel data (por nickname)
   useEffect(() => {
     if (!nickname) return;
-
-    const fetchChannelData = async () => {
+    (async () => {
       try {
         const formattedNickname = nickname.startsWith('@') ? nickname.slice(1) : nickname;
         const channel = await getChannelByNickname(formattedNickname);
@@ -143,27 +152,18 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
           console.error('Canal não encontrado!');
           return;
         }
-        setChannelData({
-          ...channel,
-          imageUrl: channel.imageUrl || '',
-        });
-        const following = await isFollowing(channel.id);
-        setIsFollowingChannel(following);
-        const ownerCheck = await isChannelOwner(channel.id);
-        setIsOwner(ownerCheck);
+        setChannelData({ ...channel, imageUrl: channel.imageUrl || '' });
+        setIsFollowingChannel(await isFollowing(channel.id));
+        setIsOwner(await isChannelOwner(channel.id));
       } catch (error) {
         console.error('Erro ao buscar dados do canal:', error);
       }
-    };
-
-    fetchChannelData();
+    })();
   }, [nickname]);
 
-  // ----------------------------------------------------------------------------
-  // FETCH: Variation images
   useEffect(() => {
-    const fetchVariationImages = async () => {
-      if (!product?.variations?.length) return;
+    if (!product?.variations?.length) return;
+    (async () => {
       try {
         const variationImagePromises = product.variations.map(async (variation) => {
           const images = await listVariationImagesByVariation(variation.id!);
@@ -178,13 +178,9 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
       } catch (err) {
         console.error('Erro ao carregar imagens de variação:', err);
       }
-    };
-
-    fetchVariationImages();
+    })();
   }, [product]);
 
-  // ----------------------------------------------------------------------------
-  // Selecionar automaticamente a primeira variação, se existir
   useEffect(() => {
     if (!product) return;
     if (product.variations && product.variations.length > 0) {
@@ -199,7 +195,6 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
     }
   }, [product]);
 
-  // Monta um map de atributos -> conjunto de possíveis valores
   const attributesMap = new Map<string, Set<string>>();
   if (product?.variations && product.variations.length > 0) {
     product.variations.forEach((variation) => {
@@ -213,74 +208,50 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
     });
   }
 
-  // Clique num atributo: atualiza "selectedAttributes"
   const handleAttributeClick = (attrName: string, attrValue: string) => {
-    setSelectedAttributes((prev) => ({
-      ...prev,
-      [attrName]: attrValue,
-    }));
+    setSelectedAttributes((prev) => ({ ...prev, [attrName]: attrValue }));
   };
 
-  // Encontrar a variação correspondente aos atributos selecionados
   function getMatchingVariation(): ProductVariationDTO | null {
     if (!product || !product.variations?.length) return null;
     const selectedPairs = Object.entries(selectedAttributes);
-    if (selectedPairs.length === 0) {
-      return null;
-    }
+    if (selectedPairs.length === 0) return null;
     return (
-      product.variations.find((variation) => {
-        return selectedPairs.every(([name, value]) =>
+      product.variations.find((variation) =>
+        selectedPairs.every(([name, value]) =>
           variation.attributes.some(
             (attr) => attr.attributeName === name && attr.attributeValue === value
           )
-        );
-      }) || null
+        )
+      ) || null
     );
   }
 
-  // Sempre que "selectedAttributes" mudar, atualizamos "selectedVariation"
   useEffect(() => {
     const matchedVariation = getMatchingVariation();
     setSelectedVariation(matchedVariation || null);
   }, [selectedAttributes, product]);
 
-  // ----------------------------------------------------------------------------
-  // Montar a galeria de imagens
-  const activeThumbnailRef = useRef<HTMLDivElement | null>(null);
-
   useEffect(() => {
     if (!product) return;
     let combined: string[] = [];
-    // 1. Imagens da variação selecionada, se houver
     if (selectedVariation) {
       const selVarImages = variationImagesMap[selectedVariation.id!] || [];
       combined.push(...selVarImages.map((img) => img.imageUrl));
     }
-    // 2. Imagens de todas as variações
     if (product.variations?.length) {
       Object.values(variationImagesMap).forEach((imgArr) => {
-        imgArr.forEach((img) => {
-          combined.push(img.imageUrl);
-        });
+        imgArr.forEach((img) => combined.push(img.imageUrl));
       });
     }
-    // 3. Imagens do produto principal
     if (product.images?.length) {
       combined.push(...product.images);
     }
-    // 4. Remove duplicados
     combined = Array.from(new Set(combined));
     setGalleryImages(combined);
-    // 5. Pega a primeira como a principal
-    if (combined.length > 0) {
-      setMainImage(combined[0]);
-    } else {
-      setMainImage('');
-    }
+    setMainImage(combined[0] || '');
   }, [product, selectedVariation, variationImagesMap]);
 
-  // Scroll para o thumbnail ativo
   useEffect(() => {
     if (!mainImage || !galleryImages.includes(mainImage)) return;
     if (activeThumbnailRef.current) {
@@ -292,14 +263,10 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
     }
   }, [mainImage, galleryImages]);
 
-  // ----------------------------------------------------------------------------
-  // FETCH: Delivery price
   useEffect(() => {
     if (product && location) {
       getDeliveryPrice(product.catalogId, location.latitude, location.longitude)
-        .then((data) => {
-          setDeliveryData(data);
-        })
+        .then(setDeliveryData)
         .catch((err) => {
           console.error('Erro ao carregar preço de entrega:', err);
           setDeliveryData(null);
@@ -311,25 +278,18 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
     router.back();
   }, [router]);
 
-  // ----------------------------------------------------------------------------
-  // FETCH: Pickup details
   useEffect(() => {
     if (!product) return;
     getActivePickupDetailsByCatalogId(product.catalogId)
-      .then((data) => {
-        setPickupDetails(data);
-      })
+      .then(setPickupDetails)
       .catch((err) => {
         console.error('Erro ao carregar dados de retirada:', err);
         setPickupDetails(null);
       });
   }, [product]);
 
-  // ----------------------------------------------------------------------------
-  // FETCH: Produtos Relacionados (por catálogo e subcategoria)
   useEffect(() => {
     if (!product || !location) return;
-    // Se o produto não possuir subcategoria, não busca
     if (!product.subCategoryId) {
       setRelatedProducts([]);
       return;
@@ -343,9 +303,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
       0,
       10
     )
-      .then((response) => {
-        setRelatedProducts(response.content);
-      })
+      .then((response) => setRelatedProducts(response.content))
       .catch((error) => {
         console.error('Erro ao buscar produtos relacionados:', error);
         setRelatedError('Erro ao carregar produtos relacionados.');
@@ -353,8 +311,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
       .finally(() => setRelatedLoading(false));
   }, [product, location]);
 
-  // ----------------------------------------------------------------------------
-  // AÇÕES: seguir, deixar de seguir, mensagem
+  // Ações: seguir, deixar de seguir, mensagem
   const handleFollowClick = useCallback(async () => {
     if (!channelData) return;
     try {
@@ -394,43 +351,129 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
     }
   }, [channelData, router]);
 
+  // FAVORITOS: verificar se o produto já está na pasta "todos"
+  useEffect(() => {
+    (async () => {
+      try {
+        const authRes = await checkAuth();
+        if (!authRes.isAuthenticated || !product) return;
+        const folders = await listFavoriteFolders();
+        setFavoriteFolders(folders || []);
+        const todosFolder = folders.find((f) => f.name === 'todos');
+        if (todosFolder && todosFolder.productIds.includes(product.id!)) {
+          setIsFavorited(true);
+        }
+      } catch (error) {
+        console.error('Erro ao verificar favoritos:', error);
+      }
+    })();
+  }, [product]);
+
+  // Computa as pastas que já possuem o produto
+  const currentFolders = favoriteFolders.filter((folder) =>
+    folder.productIds.includes(product?.id)
+  );
+
+  // FUNÇÃO: Clicar no botão de like
+  const handleLikeClick = async () => {
+    try {
+      const authRes = await checkAuth();
+      if (!authRes.isAuthenticated) {
+        router.push('/login');
+        return;
+      }
+      if (!product) return;
+      if (!isFavorited) {
+        await favoriteProduct(product.id!, undefined);
+        setIsFavorited(true);
+      } else {
+        // Se já favoritado, abre a modal para gerenciar (exibir onde está e permitir descurtir ou alterar pasta)
+        setShowLikeModal(true);
+      }
+    } catch (error) {
+      console.error('Erro ao curtir o produto:', error);
+    }
+  };
+
+  // FUNÇÃO: Descurtir – remover o produto da pasta atual (por exemplo, da "todos")
+  const handleUnlike = async () => {
+    if (!product) return;
+    if (currentFolders.length === 0) return;
+    try {
+      // Remove do primeiro folder onde foi salvo
+      await removeProductLike(product.id!, currentFolders[0].name);
+      alert(`Produto removido da pasta "${currentFolders[0].name}"`);
+      setIsFavorited(false);
+      const folders = await listFavoriteFolders();
+      setFavoriteFolders(folders || []);
+      setShowLikeModal(false);
+    } catch (error) {
+      console.error('Erro ao descurtir o produto:', error);
+    }
+  };
+
+  // MODAL: Criar nova pasta e salvar
+  const handleCreateFolder = async () => {
+    if (!newFolderName.trim() || !product) return;
+    try {
+      await favoriteProduct(product.id!, newFolderName.trim());
+      alert(`Produto salvo na pasta "${newFolderName}".`);
+      setNewFolderName('');
+      setShowLikeModal(false);
+      const folders = await listFavoriteFolders();
+      setFavoriteFolders(folders || []);
+    } catch (error) {
+      console.error('Erro ao criar pasta e salvar produto:', error);
+    }
+  };
+
+  // MODAL: Adicionar a uma pasta existente
+  const handleAddToExistingFolder = async (folderName: string) => {
+    if (!product) return;
+    try {
+      await favoriteProduct(product.id!, folderName);
+      alert(`Produto salvo na pasta "${folderName}"`);
+      setShowLikeModal(false);
+      const folders = await listFavoriteFolders();
+      setFavoriteFolders(folders || []);
+    } catch (error) {
+      console.error('Erro ao salvar em pasta existente:', error);
+    }
+  };
+
   // ----------------------------------------------------------------------------
-  // ESTADOS DE LOADING E ERRO
+  // ADICIONAR AO CARRINHO
+  const handleAddToCart = () => {
+    const currentId = selectedVariation?.id ?? product?.id;
+    const currentStock = selectedVariation?.stock ?? product?.stock ?? 0;
+    if (!currentId || currentStock <= 0) {
+      alert('Produto indisponível no momento.');
+      return;
+    }
+    const existingItem = bag.find((item) => item.id === currentId);
+    const existingQty = existingItem?.quantity ?? 0;
+    const desiredQty = existingQty + 1;
+    if (desiredQty > currentStock) {
+      alert(`Você só pode adicionar até ${currentStock} unidades deste item.`);
+      return;
+    }
+    addToBag({ id: currentId, quantity: 1, nickname });
+  };
+
+  // ----------------------------------------------------------------------------
+  // RENDER
   if (loading) return <p>Carregando produto...</p>;
   if (error) return <p>{error}</p>;
   if (!product) return <p>Nenhum produto encontrado.</p>;
   if (!channelData) return <div>Carregando canal...</div>;
 
-  // ----------------------------------------------------------------------------
-  // BOTÕES DO CANAL
   const formattedNickname = nickname.startsWith('@') ? nickname.slice(1) : nickname;
   const stageButtons: StageButtonProps[] = isOwner
-    ? [
-        {
-          text: 'Compartilhar',
-          backgroundColor: '#212121',
-          imageSrc: shareIcon,
-        },
-      ]
+    ? [{ text: 'Compartilhar', backgroundColor: '#212121', imageSrc: shareIcon }]
     : isFollowingChannel
-    ? [
-        {
-          text: 'Amigos',
-          backgroundColor: '#212121',
-          onClick: handleUnfollowClick,
-        },
-      ]
-    : [
-        {
-          text: 'Seguir',
-          backgroundColor: '#DF1414',
-          imageSrc: followIcon,
-          onClick: handleFollowClick,
-        },
-      ];
+    ? [{ text: 'Amigos', backgroundColor: '#212121', onClick: handleUnfollowClick }]
+    : [{ text: 'Seguir', backgroundColor: '#DF1414', imageSrc: followIcon, onClick: handleFollowClick }];
 
-  // ----------------------------------------------------------------------------
-  // PREÇOS E NOME
   const baseName = product.name;
   const basePrice = product.salePrice;
   const baseDiscount = product.discountPrice;
@@ -441,35 +484,11 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   const displayPrice = variationPrice ?? basePrice;
   const displayDiscount = variationDiscount ?? baseDiscount;
   const addressDetails = pickupDetails?.address
-    ? `${pickupDetails.address.street}, ${pickupDetails.address.neighborhood}, ${pickupDetails.address.cep}, ${pickupDetails.address.city}, ${pickupDetails.address.state}` +
-      (pickupDetails.address.complement ? `, ${pickupDetails.address.complement}` : '')
+    ? `${pickupDetails.address.street}, ${pickupDetails.address.neighborhood}, ${pickupDetails.address.cep}, ${pickupDetails.address.city}, ${pickupDetails.address.state}${
+        pickupDetails.address.complement ? `, ${pickupDetails.address.complement}` : ''
+      }`
     : '';
 
-    const handleAddToCart = () => {
-      const currentId = selectedVariation?.id ?? product?.id;
-      const currentStock = selectedVariation?.stock ?? product?.stock ?? 0;
-    
-      if (!currentId || currentStock <= 0) {
-        alert('Produto indisponível no momento.');
-        return;
-      }
-    
-      const existingItem = bag.find(item => item.id === currentId);
-      const existingQty = existingItem?.quantity ?? 0;
-      const desiredQty = existingQty + 1;
-    
-      if (desiredQty > currentStock) {
-        alert(`Você só pode adicionar até ${currentStock} unidades deste item.`);
-        return;
-      }
-    
-      addToBag({ id: currentId, quantity: 1, nickname });
-    };
-    
-    
-
-  // ----------------------------------------------------------------------------
-  // RENDER
   return (
     <>
       <MobileHeader
@@ -477,10 +496,11 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
         buttons={{ close: true, bag: true, address: true, share: true }}
         handleBack={handleBack}
       />
+
       <div className={styles.productPage}>
+        {/* COLUNA ESQUERDA */}
         <div className={styles.leftColumn}>
           <div className={styles.productConteiner}>
-            {/* CHANNEL HEADER */}
             <div className={styles.productChannelImageDesc}>
               <div className={styles.channelHeader}>
                 <div className={styles.channelLeft}>
@@ -494,9 +514,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                     />
                     <div
                       className={styles.channelInfo}
-                      onClick={() => {
-                        window.location.href = `${frontUrl}${formattedNickname}`;
-                      }}
+                      onClick={() => (window.location.href = `${frontUrl}${formattedNickname}`)}
                     >
                       <h2 className={styles.channelName}>{channelData.name}</h2>
                       <p className={styles.channelNickname}>{nickname}</p>
@@ -517,7 +535,8 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                   </div>
                 </div>
               </div>
-              {/* PRODUCT GALLERY */}
+
+              {/* GALERIA */}
               <div className={styles.galleryContainer}>
                 <div className={styles.mainImage}>
                   {mainImage ? (
@@ -531,7 +550,6 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                     <Image src={defaultImage} alt="Imagem padrão" width={419} height={419} />
                   )}
                 </div>
-                {/* Thumbnails */}
                 <div className={styles.thumbnailList}>
                   {galleryImages.map((imgUrl, index) => {
                     const isActive = imgUrl === mainImage;
@@ -558,12 +576,10 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
               </div>
             </div>
 
-            {/* MAIN PRODUCT SECTION */}
             <div className={styles.productSection}>
               <div className={styles.name}>
                 <span>{displayName}</span>
               </div>
-              {/* Price Section */}
               <div className={styles.priceSection}>
                 {displayDiscount && displayDiscount > 0 && (
                   <span className={styles.originalPrice}>
@@ -595,7 +611,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                 </div>
               </div>
 
-              {/* Atributos (variações) */}
+              {/* VARIAÇÕES */}
               {product.variations && product.variations.length > 0 && (
                 <div className={styles.variationsSection}>
                   {[...attributesMap.entries()].map(([attrName, values]) => (
@@ -632,14 +648,17 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                   width="auto"
                   onClick={handleAddToCart}
                 />
-                <button className={styles.toCartButton}>
+                {/* BOTÃO DE LIKE */}
+                <button
+                  className={`${styles.toCartButton} ${isFavorited ? styles.liked : ''}`}
+                  onClick={handleLikeClick}
+                >
                   <Image src={likesIcon} alt="Likes" width={24} height={24} />
                 </button>
                 <button className={styles.toCartButton}>
                   <Image src={purchaseEventIcon} alt="Purchase Event" width={24} height={24} />
                 </button>
               </div>
-
               <div className={styles.ProductRating}>
                 <Card title="Opiniões do produto">
                   <ProductRating />
@@ -648,7 +667,6 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
             </div>
           </div>
 
-          {/* Área de informações adicionais */}
           <div className={styles.infoConteiner}>
             <div className={styles.ProductRatingTwo}>
               <Card title="Opiniões do produto">
@@ -657,12 +675,10 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
             </div>
             <ExpandableCard title="Informações do produto">
               <div className={styles.productInfoContainer}>
-                {/* Coluna da descrição complementar */}
                 <div className={styles.descriptionColumn}>
                   <h3>Descrição Completa</h3>
                   <p>{product.complementaryDescription}</p>
                 </div>
-                {/* Coluna dos detalhes em tabela */}
                 <div className={styles.detailsColumn}>
                   <h3>Detalhes</h3>
                   <table className={styles.detailsTable}>
@@ -737,9 +753,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                   </table>
                 </div>
               </div>
-            </ExpandableCard>  
-
-
+            </ExpandableCard>
 
             <div className={styles.DeliveryColumn}>
               <div className={styles.deliveriesTwo}>
@@ -761,19 +775,18 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                     </div>
                   )}
                 </Card>
-
                 <Card title="Retirada">
                   {pickupDetails && (
                     <div className={styles.pickupBox}>
                       <p className={styles.pickupTitle}>
                         <strong>Retirar em:</strong>{' '}
-                        {showFullAddress ? addressDetails : (
-                          <span className={styles.truncated}>
-                            {pickupDetails.address.street}
-                          </span>
+                        {showFullAddress ? (
+                          addressDetails
+                        ) : (
+                          <span className={styles.truncated}>{pickupDetails.address.street}</span>
                         )}
-                        <span 
-                          className={styles.verMais} 
+                        <span
+                          className={styles.verMais}
                           onClick={() => setShowFullAddress(!showFullAddress)}
                         >
                           {showFullAddress ? 'ver menos' : 'ver mais'}
@@ -785,7 +798,9 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                       </div>
                       <div className={styles.pickupInfo}>
                         <div className={styles.price}>
-                          {pickupDetails.precoRetirada === 0 ? 'Grátis' : pickupDetails.precoRetirada}
+                          {pickupDetails.precoRetirada === 0
+                            ? 'Grátis'
+                            : pickupDetails.precoRetirada}
                         </div>
                         <div className={styles.availability}>
                           em {pickupDetails.prazoRetirada} dias
@@ -810,13 +825,9 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                 </div>
               </div>
             </div>
-
-
-
-
-
           </div>
-          {/* NOVA SEÇÃO: Produtos Relacionados */}
+
+          {/* PRODUTOS RELACIONADOS */}
           <div className={styles.relatedProductsSection}>
             {relatedLoading ? (
               <p>Carregando produtos relacionados...</p>
@@ -850,10 +861,9 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
               <p>Nenhum produto relacionado encontrado.</p>
             )}
           </div>
-
-
         </div>
 
+        {/* COLUNA DIREITA */}
         <div className={styles.rightColumn}>
           <div className={styles.deliveries}>
             <Card title="Delivery">
@@ -874,19 +884,18 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                 </div>
               )}
             </Card>
-
             <Card title="Retirada">
               {pickupDetails && (
                 <div className={styles.pickupBox}>
                   <p className={styles.pickupTitle}>
                     <strong>Retirar em:</strong>{' '}
-                    {showFullAddress ? addressDetails : (
-                      <span className={styles.truncated}>
-                        {pickupDetails.address.street}
-                      </span>
+                    {showFullAddress ? (
+                      addressDetails
+                    ) : (
+                      <span className={styles.truncated}>{pickupDetails.address.street}</span>
                     )}
-                    <span 
-                      className={styles.verMais} 
+                    <span
+                      className={styles.verMais}
                       onClick={() => setShowFullAddress(!showFullAddress)}
                     >
                       {showFullAddress ? 'ver menos' : 'ver mais'}
@@ -924,6 +933,51 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
           </div>
         </div>
       </div>
+
+      {/* MODAL DE LIKE – com cabeçalho, corpo e rodapé */}
+      <Modal isOpen={showLikeModal} onClose={() => setShowLikeModal(false)}>
+        <div className={styles.modalHeader}>
+          <div className={styles.modalIcon}>
+            <Image src={likesIcon} alt="Likes" width={24} height={24} />
+          </div>
+          {currentFolders.length > 0 && (
+            <div className={styles.savedInfo}>
+              <span>Produto salvo em:&nbsp;</span>
+              {currentFolders.map((folder) => (
+                <span key={folder.id} className={styles.folderName}>
+                  {folder.name}
+                </span>
+              ))}
+            </div>
+          )}
+          <button className={styles.unlikeButton} onClick={handleUnlike}>
+            Descurtir
+          </button>
+        </div>
+        <div className={styles.modalBody}>
+          <h3>Escolha outra pasta para salvar:</h3>
+          <ul className={styles.folderList}>
+            {favoriteFolders.map((folder) => (
+              <li
+                key={folder.id}
+                className={styles.folderItem}
+                onClick={() => handleAddToExistingFolder(folder.name)}
+              >
+                {folder.name}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className={styles.modalFooter}>
+          <input
+            type="text"
+            placeholder="Digite o nome da nova pasta"
+            value={newFolderName}
+            onChange={(e) => setNewFolderName(e.target.value)}
+          />
+          <button onClick={handleCreateFolder}>Criar nova pasta</button>
+        </div>
+      </Modal>
     </>
   );
 };
