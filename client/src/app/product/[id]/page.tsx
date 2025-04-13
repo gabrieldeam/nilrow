@@ -627,8 +627,9 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
 
               <div className={styles.toCart}>
                 <StageButton
-                  text="Adicionar ao Carrinho"
+                  text="Adicionar"
                   backgroundColor="#DF1414"
+                  width="auto"
                   onClick={handleAddToCart}
                 />
                 <button className={styles.toCartButton}>
@@ -736,7 +737,84 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                   </table>
                 </div>
               </div>
-            </ExpandableCard>            
+            </ExpandableCard>  
+
+
+
+            <div className={styles.DeliveryColumn}>
+              <div className={styles.deliveriesTwo}>
+                <Card title="Delivery">
+                  {deliveryData && (
+                    <div className={styles.pickupBox}>
+                      <div className={styles.labels}>
+                        <span>Preço</span>
+                        <span>Tempo de Entrega</span>
+                      </div>
+                      <div className={styles.pickupInfo}>
+                        <div className={styles.price}>
+                          {deliveryData.price === 0 ? 'Grátis' : `R$ ${deliveryData.price}`}
+                        </div>
+                        <div className={styles.availability}>
+                          {deliveryData.averageDeliveryTime} min
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </Card>
+
+                <Card title="Retirada">
+                  {pickupDetails && (
+                    <div className={styles.pickupBox}>
+                      <p className={styles.pickupTitle}>
+                        <strong>Retirar em:</strong>{' '}
+                        {showFullAddress ? addressDetails : (
+                          <span className={styles.truncated}>
+                            {pickupDetails.address.street}
+                          </span>
+                        )}
+                        <span 
+                          className={styles.verMais} 
+                          onClick={() => setShowFullAddress(!showFullAddress)}
+                        >
+                          {showFullAddress ? 'ver menos' : 'ver mais'}
+                        </span>
+                      </p>
+                      <div className={styles.labels}>
+                        <span>Preço</span>
+                        <span>Disponibilidade</span>
+                      </div>
+                      <div className={styles.pickupInfo}>
+                        <div className={styles.price}>
+                          {pickupDetails.precoRetirada === 0 ? 'Grátis' : pickupDetails.precoRetirada}
+                        </div>
+                        <div className={styles.availability}>
+                          em {pickupDetails.prazoRetirada} dias
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </Card>
+              </div>
+              <div className={styles.infoContainerTwo}>
+                <div className={styles.infoItem}>
+                  <Image src={reabastecerIcon} alt="Ícone de devolução" width={24} height={24} />
+                  <span>
+                    <strong className={styles.highlight}>Devolução grátis.</strong> Você tem 30 dias a partir da data de recebimento.
+                  </span>
+                </div>
+                <div className={styles.infoItem}>
+                  <Image src={checkBuyIcon} alt="Ícone de garantia" width={24} height={24} />
+                  <span>
+                    <strong className={styles.highlight}>Compra Garantida.</strong> Receba o produto que está esperando ou devolvemos o dinheiro.
+                  </span>
+                </div>
+              </div>
+            </div>
+
+
+
+
+
           </div>
           {/* NOVA SEÇÃO: Produtos Relacionados */}
           <div className={styles.relatedProductsSection}>

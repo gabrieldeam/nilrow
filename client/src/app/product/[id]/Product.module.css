@@ -262,11 +262,12 @@
   }
 
   .toCart {
-    width: 80%;
+    width: 100%;
     display: flex;
-    gap: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
   }
-
+  
   .toCartButton {
     padding: 0 25px;
     border: 1px solid #212121;
@@ -276,6 +277,8 @@
     justify-content: center;
     height: 40px;
     border-radius: 5px;
+    flex-shrink: 0;
+    width: auto;
   }
 
   .productInfoContainer {
@@ -324,6 +327,15 @@
     flex-direction: column;
     gap: 12px;
     margin: 25px;
+  }
+
+  .infoContainerTwo {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 25px;
+    align-items: center;
+    justify-content: space-between;
   }
   
   .infoItem {
@@ -388,50 +400,105 @@
     flex: 0 0 auto;
     width: 165px; 
   }
-  
 
-@media (min-width: 1224px) and (max-width: 1703px) {
-    .productPage {
-        flex-direction: column;
-    } 
-    
+  .DeliveryColumn {
+    display: none;
+  }
+
+
+@media (min-width: 1024px) and (max-width: 1703px) { 
     .name {
         font-size: 16px;
     }
 
-    .rightColumn {
-        width: 100%;
-    }
-
-    .leftColumn {   
-        width: 100%;
+    .pix {
+        font-size: 0.6rem;
+        color: #7B33E5;
     }
     
-    .deliveries {
-        display: flex;
-        gap: 5px;
+    .originalPrice {
+        font-size: 0.6rem;
+        width: fit-content;
+        text-decoration: line-through;
+        color: #9F9F9F;
+    }
+    
+    .salePrice {
+        font-size: 2.0rem;
+        font-weight: bold;
+        line-height: 1;
+    }
+    
+    .salePrice sup {
+        font-size: 1rem;
+        vertical-align: top;
+        margin-left: 0.2rem;
     }
 
-    .toCart {
-        width: 400px;
+    .otherOptions {
+        font-size: 0.8rem;
+    }
+
+
+    .galleryContainer {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
       }
 
-      .leftColumn {
-        flex: none;
+    .mainImage {
+        width: 100%;
+        min-width: 280px;
+        height: 280px;
+    }
+    
+    .mainImage img {
+        width: 100%;;
+        min-width: 280px;
+        height: 280px;
     }
 
-    .infoContainer {
-        display: flex;
+    .thumbnailList {
+        gap: 5px;
+        max-height: 280px;
+        min-width: 100%;
         flex-direction: row;
-        justify-content: space-between;
     }
-      
+    
+    .thumbnailItem {
+        width: 80px;
+        min-width: 80px;
+        max-width: 80px;
+        height: 80px;    
+        min-height: 80px;    
+        max-height: 80px;
+    }
+    
+    .thumbnailItem img {
+        object-fit: cover;
+        width: 80px;
+        height: 80px;
+    } 
+    
+    .toCartButton {
+        padding: 10px;
+        border: 1px solid #212121;
+        background-color: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 40px;
+        border-radius: 5px;
+        flex-shrink: 0;
+        width: auto;
+      }
 }
 
-@media (min-width: 980px) and (max-width: 1224px) {
+@media (min-width: 980px) and (max-width: 1024px) {
     .productPage {
         flex-direction: column;
-        gap: 0px;
     }
     .mainImage {
         width: 300px;
@@ -469,7 +536,7 @@
     }
 
     .rightColumn {
-        width: 100%;
+        display: none;
     }
 
     .leftColumn {   
@@ -499,13 +566,20 @@
         justify-content: space-between;
     }
 
+    .DeliveryColumn {
+        display: flex;
+    }
+
+    .deliveriesTwo {
+        display: flex;
+        gap: 5px;
+    }
 }
 
 @media (min-width: 768px) and (max-width: 980px) {
     .productPage {
         margin-top: 155px;
         flex-direction: column;
-        gap: 0px;
     }
 
     .productChannelImageDesc {
@@ -513,7 +587,7 @@
     }
 
     .rightColumn {
-        width: 100%;
+        display: none;
     }
 
     .leftColumn {   
@@ -575,6 +649,19 @@
         display: flex;
         flex-direction: row;
         justify-content: space-between;
+    }
+
+    .DeliveryColumn {
+        display: flex;
+    }
+
+    .deliveriesTwo {
+        display: flex;
+        gap: 5px;
+    }
+
+    .DeliveryColumn {
+        flex-direction: column;
     }
 }
 
@@ -676,7 +763,7 @@
     }
 
     .rightColumn {
-        width: 100%;
+        display: none;
         max-width: 97vw;  
         padding: 0 6px;
     }
@@ -701,12 +788,23 @@
       }
       
       .relatedProductsSection {
-        margin: 20px 0 20px 6px;
+        margin: 0px 0 20px 6px;
       }
 
       .relatedProductsContainer {
         overflow-x: auto;
       }
+
+      .DeliveryColumn {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .deliveriesTwo {
+        display: flex;
+        flex-direction: column;
+        gap: 0px;
+    }
 }
 
   

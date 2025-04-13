@@ -24,7 +24,6 @@ export default function ProductRating() {
   };
 
   return (
-    <div className={styles.productRatingContainer}>
       <div className={styles.header}>
         <div className={styles.left}>
           <div className={styles.ratingValue}>4.7</div>
@@ -68,26 +67,5 @@ export default function ProductRating() {
           </div>
         </div>
       </div>
-
-      {/* Avaliações separadas por critério */}
-      <div className={styles.subRatings}>
-        <div className={styles.subRatingItem}>
-          <div className={styles.starRow}>{renderStars(5)}</div>
-          <span className={styles.subRatingLabel}>Custo-benefício</span>
-        </div>
-        <div className={styles.subRatingItem}>
-          <div className={styles.starRow}>{renderStars(4)}</div>
-          <span className={styles.subRatingLabel}>Resistência</span>
-        </div>
-        <div className={styles.subRatingItem}>
-          <div className={styles.starRow}>{renderStars(3)}</div>
-          <span className={styles.subRatingLabel}>Potência</span>
-        </div>
-        <div className={styles.subRatingItem}>
-          <div className={styles.starRow}>{renderStars(3)}</div>
-          <span className={styles.subRatingLabel}>Duração da bateria</span>
-        </div>
-      </div>
-    </div>
   );
 }

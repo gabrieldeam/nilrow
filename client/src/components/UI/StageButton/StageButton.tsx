@@ -9,6 +9,7 @@ const StageButton: React.FC<StageButtonProps> = ({
   onClick = () => {}, 
   imageSrc = null,
   type = 'button',
+  width = '100%'  
 }) => {
   const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
     onClick(e);
@@ -17,7 +18,7 @@ const StageButton: React.FC<StageButtonProps> = ({
   return (
     <button 
       className={styles.stageButton}
-      style={{ backgroundColor }}
+      style={{ backgroundColor, width }}
       onClick={handleClick}
       type={type}
     >

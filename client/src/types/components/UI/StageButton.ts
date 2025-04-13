@@ -7,4 +7,5 @@ export interface StageButtonProps {
   imageSrc?: string | StaticImageData; 
   type?: 'button' | 'submit' | 'reset';
   disabled?: boolean;
+  width?: string;
 }
