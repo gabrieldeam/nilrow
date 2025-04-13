@@ -2,12 +2,14 @@
 
 import React, { use, useEffect, useState, useCallback, useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocationContext } from '@/context/LocationContext';
 import { useBag } from '@/context/BagContext';
 import {
   getProductByIdWithDelivery,
   listVariationImagesByVariation,
+  getProductsByCatalogAndSubcategoryWithDelivery,
 } from '@/services/product/productService';
 import { getDeliveryPrice } from '@/services/deliveryService';
 import { getActivePickupDetailsByCatalogId } from '@/services/pickupService';
@@ -21,16 +23,15 @@ import { PickupActiveDetailsDTO } from '@/types/services/pickup';
 import StageButton from '@/components/UI/StageButton/StageButton';
 import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';
 import ProductRating from '@/components/UI/ProductRating/ProductRating';
-
 import ExpandableCard from '@/components/UI/ExpandableCard/ExpandableCard';
 import Card from '@/components/UI/Card/Card';
+import ProductCard from '@/components/UI/ProductCard/ProductCard';
 import shareIcon from '../../../../public/assets/share.svg';
 import followIcon from '../../../../public/assets/follow.svg';
 import likesIcon from '../../../../public/assets/likes.svg';
 import purchaseEventIcon from '../../../../public/assets/purchaseEventChannel.svg';
 import checkBuyIcon from '../../../../public/assets/checkBuy.svg';
 import reabastecerIcon from '../../../../public/assets/reabastecer.svg';
-
 import {
   getChannelByNickname,
   isChannelOwner,
@@ -40,10 +41,8 @@ import {
   unfollowChannel,
   isFollowing,
 } from '@/services/channel/followService';
-
 import { checkAuth } from '@/services/authService';
 import { startConversation } from '@/services/chatService';
-
 import defaultImage from '../../../../public/assets/user.png';
 import styles from './Product.module.css';
 
@@ -78,34 +77,23 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   const { id } = resolvedParams; // params é uma Promise no Next 13
 
   const { location } = useLocationContext();
-  const { addToBag } = useBag();
+  const { bag, addToBag } = useBag();
 
   const [product, setProduct] = useState<ProductDTO | null>(null);
   const [deliveryData, setDeliveryData] = useState<DeliveryPriceDTO | null>(null);
-  const [pickupDetails, setPickupDetails] = useState<PickupActiveDetailsDTO | null>(
-    null
-  );
+  const [pickupDetails, setPickupDetails] = useState<PickupActiveDetailsDTO | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [showFullAddress, setShowFullAddress] = useState(false);
   // Store the images for each variation
-  const [variationImagesMap, setVariationImagesMap] = useState<
-    Record<string, VariationImageDTO[]>
-  >({});
+  const [variationImagesMap, setVariationImagesMap] = useState<Record<string, VariationImageDTO[]>>({});
 
   // Controls the currently selected variation (by attributes)
-  const [selectedVariation, setSelectedVariation] = useState<
-    ProductVariationDTO | null
-  >(null);
-
+  const [selectedVariation, setSelectedVariation] = useState<ProductVariationDTO | null>(null);
   // Store the selected attribute values
-  const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>(
-    {}
-  );
-
+  const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
   // Gallery of images from the main product + all variations
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
-
   // Currently displayed main image
   const [mainImage, setMainImage] = useState<string>('');
 
@@ -113,6 +101,11 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   const [channelData, setChannelData] = useState<ChannelData | null>(null);
   const [isFollowingChannel, setIsFollowingChannel] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
+
+  // Estados para produtos relacionados (filtrados por catálogo e subcategoria)
+  const [relatedProducts, setRelatedProducts] = useState<ProductDTO[]>([]);
+  const [relatedLoading, setRelatedLoading] = useState<boolean>(false);
+  const [relatedError, setRelatedError] = useState<string | null>(null);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -144,24 +137,18 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
 
     const fetchChannelData = async () => {
       try {
-        const formattedNickname = nickname.startsWith('@')
-          ? nickname.slice(1)
-          : nickname;
-
+        const formattedNickname = nickname.startsWith('@') ? nickname.slice(1) : nickname;
         const channel = await getChannelByNickname(formattedNickname);
         if (!channel) {
           console.error('Canal não encontrado!');
           return;
         }
-
         setChannelData({
           ...channel,
           imageUrl: channel.imageUrl || '',
         });
-
         const following = await isFollowing(channel.id);
         setIsFollowingChannel(following);
-
         const ownerCheck = await isChannelOwner(channel.id);
         setIsOwner(ownerCheck);
       } catch (error) {
@@ -177,19 +164,16 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   useEffect(() => {
     const fetchVariationImages = async () => {
       if (!product?.variations?.length) return;
-
       try {
         const variationImagePromises = product.variations.map(async (variation) => {
           const images = await listVariationImagesByVariation(variation.id!);
           return { variationId: variation.id!, images };
         });
-
         const results = await Promise.all(variationImagePromises);
         const mapResult = results.reduce((acc, { variationId, images }) => {
           acc[variationId] = images;
           return acc;
         }, {} as Record<string, VariationImageDTO[]>);
-
         setVariationImagesMap(mapResult);
       } catch (err) {
         console.error('Erro ao carregar imagens de variação:', err);
@@ -203,11 +187,8 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   // Selecionar automaticamente a primeira variação, se existir
   useEffect(() => {
     if (!product) return;
-    // Se o produto tem variações e ainda não escolhemos nada
     if (product.variations && product.variations.length > 0) {
-      // Pega a primeira variação
       const firstVar = product.variations[0];
-      // Cria o objeto de atributos
       const newSelectedAttributes: Record<string, string> = {};
       firstVar.attributes.forEach((attr) => {
         if (attr.attributeName && attr.attributeValue) {
@@ -243,12 +224,10 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   // Encontrar a variação correspondente aos atributos selecionados
   function getMatchingVariation(): ProductVariationDTO | null {
     if (!product || !product.variations?.length) return null;
-
     const selectedPairs = Object.entries(selectedAttributes);
     if (selectedPairs.length === 0) {
       return null;
     }
-
     return (
       product.variations.find((variation) => {
         return selectedPairs.every(([name, value]) =>
@@ -272,15 +251,12 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
 
   useEffect(() => {
     if (!product) return;
-
     let combined: string[] = [];
-
     // 1. Imagens da variação selecionada, se houver
     if (selectedVariation) {
       const selVarImages = variationImagesMap[selectedVariation.id!] || [];
       combined.push(...selVarImages.map((img) => img.imageUrl));
     }
-
     // 2. Imagens de todas as variações
     if (product.variations?.length) {
       Object.values(variationImagesMap).forEach((imgArr) => {
@@ -289,17 +265,13 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
         });
       });
     }
-
     // 3. Imagens do produto principal
     if (product.images?.length) {
       combined.push(...product.images);
     }
-
     // 4. Remove duplicados
     combined = Array.from(new Set(combined));
-
     setGalleryImages(combined);
-
     // 5. Pega a primeira como a principal
     if (combined.length > 0) {
       setMainImage(combined[0]);
@@ -308,15 +280,14 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
     }
   }, [product, selectedVariation, variationImagesMap]);
 
-  // Scroll para o thumbnail ativo (caso queira manter)
+  // Scroll para o thumbnail ativo
   useEffect(() => {
     if (!mainImage || !galleryImages.includes(mainImage)) return;
-
     if (activeThumbnailRef.current) {
       activeThumbnailRef.current.scrollIntoView({
         behavior: 'smooth',
         inline: 'center',
-        block: 'nearest', // evita rolar para o topo na vertical
+        block: 'nearest',
       });
     }
   }, [mainImage, galleryImages]);
@@ -339,8 +310,8 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   const handleBack = useCallback(() => {
     router.back();
   }, [router]);
-  
 
+  // ----------------------------------------------------------------------------
   // FETCH: Pickup details
   useEffect(() => {
     if (!product) return;
@@ -353,6 +324,34 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
         setPickupDetails(null);
       });
   }, [product]);
+
+  // ----------------------------------------------------------------------------
+  // FETCH: Produtos Relacionados (por catálogo e subcategoria)
+  useEffect(() => {
+    if (!product || !location) return;
+    // Se o produto não possuir subcategoria, não busca
+    if (!product.subCategoryId) {
+      setRelatedProducts([]);
+      return;
+    }
+    setRelatedLoading(true);
+    getProductsByCatalogAndSubcategoryWithDelivery(
+      product.catalogId,
+      product.subCategoryId,
+      location.latitude,
+      location.longitude,
+      0,
+      10
+    )
+      .then((response) => {
+        setRelatedProducts(response.content);
+      })
+      .catch((error) => {
+        console.error('Erro ao buscar produtos relacionados:', error);
+        setRelatedError('Erro ao carregar produtos relacionados.');
+      })
+      .finally(() => setRelatedLoading(false));
+  }, [product, location]);
 
   // ----------------------------------------------------------------------------
   // AÇÕES: seguir, deixar de seguir, mensagem
@@ -404,11 +403,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
 
   // ----------------------------------------------------------------------------
   // BOTÕES DO CANAL
-  const formattedNickname = nickname.startsWith('@')
-    ? nickname.slice(1)
-    : nickname;
-
-  // Definimos stageButtons para cada caso
+  const formattedNickname = nickname.startsWith('@') ? nickname.slice(1) : nickname;
   const stageButtons: StageButtonProps[] = isOwner
     ? [
         {
@@ -439,34 +434,49 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   const baseName = product.name;
   const basePrice = product.salePrice;
   const baseDiscount = product.discountPrice;
-
   const variationName = selectedVariation?.name;
   const variationPrice = selectedVariation?.price;
   const variationDiscount = selectedVariation?.discountPrice;
-
-  // O que iremos exibir de fato
   const displayName = variationName || baseName;
   const displayPrice = variationPrice ?? basePrice;
   const displayDiscount = variationDiscount ?? baseDiscount;
-
-  // String com todos os detalhes do endereço separados por vírgula
   const addressDetails = pickupDetails?.address
-  ? `${pickupDetails.address.street}, ${pickupDetails.address.neighborhood}, ${pickupDetails.address.cep}, ${pickupDetails.address.city}, ${pickupDetails.address.state}` +
-    (pickupDetails.address.complement ? `, ${pickupDetails.address.complement}` : '')
-  : '';
+    ? `${pickupDetails.address.street}, ${pickupDetails.address.neighborhood}, ${pickupDetails.address.cep}, ${pickupDetails.address.city}, ${pickupDetails.address.state}` +
+      (pickupDetails.address.complement ? `, ${pickupDetails.address.complement}` : '')
+    : '';
 
-
-  const handleAddToCart = () => {
-    if (product) {
-      addToBag({ id: product.id!, quantity: 1, nickname });
+    const handleAddToCart = () => {
+      const currentId = selectedVariation?.id ?? product?.id;
+      const currentStock = selectedVariation?.stock ?? product?.stock ?? 0;
+    
+      if (!currentId || currentStock <= 0) {
+        alert('Produto indisponível no momento.');
+        return;
       }
-  };
+    
+      const existingItem = bag.find(item => item.id === currentId);
+      const existingQty = existingItem?.quantity ?? 0;
+      const desiredQty = existingQty + 1;
+    
+      if (desiredQty > currentStock) {
+        alert(`Você só pode adicionar até ${currentStock} unidades deste item.`);
+        return;
+      }
+    
+      addToBag({ id: currentId, quantity: 1, nickname });
+    };
+    
+    
 
   // ----------------------------------------------------------------------------
   // RENDER
   return (
     <>
-    <MobileHeader title="Produto" buttons={{ close: true, bag: true, address: true, share: true }} handleBack={handleBack} />
+      <MobileHeader
+        title="Produto"
+        buttons={{ close: true, bag: true, address: true, share: true }}
+        handleBack={handleBack}
+      />
       <div className={styles.productPage}>
         <div className={styles.leftColumn}>
           <div className={styles.productConteiner}>
@@ -492,7 +502,6 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                       <p className={styles.channelNickname}>{nickname}</p>
                     </div>
                   </div>
-
                   <div className={styles.channelFollow}>
                     {stageButtons
                       .filter((btn) => btn.text === 'Seguir' || btn.text === 'Amigos')
@@ -508,7 +517,6 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                   </div>
                 </div>
               </div>
-
               {/* PRODUCT GALLERY */}
               <div className={styles.galleryContainer}>
                 <div className={styles.mainImage}>
@@ -520,15 +528,9 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                       height={419}
                     />
                   ) : (
-                    <Image
-                      src={defaultImage}
-                      alt="Imagem padrão"
-                      width={419}
-                      height={419}
-                    />
+                    <Image src={defaultImage} alt="Imagem padrão" width={419} height={419} />
                   )}
                 </div>
-
                 {/* Thumbnails */}
                 <div className={styles.thumbnailList}>
                   {galleryImages.map((imgUrl, index) => {
@@ -551,7 +553,6 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                   })}
                 </div>
               </div>
-
               <div className={styles.shortDescription}>
                 <span>{product.shortDescription}</span>
               </div>
@@ -562,7 +563,6 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
               <div className={styles.name}>
                 <span>{displayName}</span>
               </div>
-
               {/* Price Section */}
               <div className={styles.priceSection}>
                 {displayDiscount && displayDiscount > 0 && (
@@ -570,13 +570,11 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                     {(() => {
                       const discountValue = Number(displayDiscount || 0);
                       const salePriceValue = Number(displayPrice || 0);
-                      // Exemplo de cálculo de preço original com base na %
                       const original = salePriceValue / (1 - discountValue / 100);
                       return `R$ ${original.toFixed(2).replace('.', ',')}`;
                     })()}
                   </span>
                 )}
-
                 <div className={styles.priceSaleSection}>
                   <div className={styles.salePrice}>
                     {(() => {
@@ -592,7 +590,6 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                   </div>
                   <div className={styles.pix}>30% OFF no Pix</div>
                 </div>
-
                 <div className={styles.otherOptions}>
                   ou <strong>R$ 109</strong> em outros meios <a>Ver mais</a>
                 </div>
@@ -601,35 +598,31 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
               {/* Atributos (variações) */}
               {product.variations && product.variations.length > 0 && (
                 <div className={styles.variationsSection}>
-                {[...attributesMap.entries()].map(([attrName, values]) => (
-                  <div key={attrName} className={styles.variationGroup}>
-                    <div style={{ fontWeight: 'bold', marginBottom: '0.4rem' }}>
-                      {attrName}
+                  {[...attributesMap.entries()].map(([attrName, values]) => (
+                    <div key={attrName} className={styles.variationGroup}>
+                      <div style={{ fontWeight: 'bold', marginBottom: '0.4rem' }}>{attrName}</div>
+                      <div className={styles.variationButtons}>
+                        {[...values].map((val) => (
+                          <button
+                            key={val}
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleAttributeClick(attrName, val);
+                            }}
+                            className={styles.variationButton}
+                            style={{
+                              borderStyle: selectedAttributes[attrName] === val ? 'dashed' : 'solid',
+                              borderColor: selectedAttributes[attrName] === val ? '#7B33E5' : '#fff',
+                            }}
+                          >
+                            {val}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                    <div className={styles.variationButtons}>
-                      {[...values].map((val) => (
-                        <button
-                          key={val}
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleAttributeClick(attrName, val);
-                          }}
-                          className={styles.variationButton}
-                          style={{
-                            borderStyle:
-                              selectedAttributes[attrName] === val ? 'dashed' : 'solid',
-                            borderColor:
-                              selectedAttributes[attrName] === val ? '#7B33E5' : '#fff',
-                          }}
-                        >
-                          {val}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>              
+                  ))}
+                </div>
               )}
 
               <div className={styles.toCart}>
@@ -646,107 +639,141 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                 </button>
               </div>
 
-
               <div className={styles.ProductRating}>
-                <Card title="Opiniões do produto">              
-                  <ProductRating /> 
+                <Card title="Opiniões do produto">
+                  <ProductRating />
                 </Card>
               </div>
             </div>
           </div>
 
+          {/* Área de informações adicionais */}
           <div className={styles.infoConteiner}>
-          <div className={styles.ProductRatingTwo}>
-            <Card title="Opiniões do produto">              
-              <ProductRating /> 
-            </Card>
-          </div>
-          <ExpandableCard title="Informações do produto">
-            <div className={styles.productInfoContainer}>
-              {/* Coluna da descrição complementar */}
-              <div className={styles.descriptionColumn}>
-                <h3>Descrição Completa</h3>
-                <p>{product.complementaryDescription}</p>
-              </div>
-              
-              {/* Coluna dos detalhes em tabela */}
-              <div className={styles.detailsColumn}>
-                <h3>Detalhes</h3>
-                <table className={styles.detailsTable}>
-                  <tbody>
-                    <tr>
-                      <td>Condição</td>
-                      <td>{product.condition}</td>
-                    </tr>
-                    <tr>
-                      <td>Categoria</td>
-                      <td>{product.category?.name}</td>
-                    </tr>
-                    <tr>
-                      <td>Subcategoria</td>
-                      <td>{product.subCategory?.name}</td>
-                    </tr>
-                    <tr>
-                      <td>Marca</td>
-                      <td>{product.brand?.name}</td>
-                    </tr>
-                    <tr>
-                      <td>Peso Líquido</td>
-                      <td>{product.netWeight}</td>
-                    </tr>
-                    <tr>
-                      <td>Peso Bruto</td>
-                      <td>{product.grossWeight}</td>
-                    </tr>
-                    <tr>
-                      <td>Largura</td>
-                      <td>{product.width}</td>
-                    </tr>
-                    <tr>
-                      <td>Altura</td>
-                      <td>{product.height}</td>
-                    </tr>
-                    <tr>
-                      <td>Profundidade</td>
-                      <td>{product.depth}</td>
-                    </tr>
-                    <tr>
-                      <td>Volumes</td>
-                      <td>{product.volumes}</td>
-                    </tr>
-                    <tr>
-                      <td>Itens por Caixa</td>
-                      <td>{product.itemsPerBox}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+            <div className={styles.ProductRatingTwo}>
+              <Card title="Opiniões do produto">
+                <ProductRating />
+              </Card>
             </div>
-          </ExpandableCard>
-
-          <ExpandableCard title="Mais detalhes">
-            <div className={styles.productInfoContainer}>
-              <div className={styles.descriptionColumn}>
-                <h3>Notes</h3>
-                <p>{product.notes}</p>
-              </div>
-              <div className={styles.detailsColumn}>
-                <h3>Technical Specifications</h3>
-                <table className={styles.detailsTable}>
-                  <tbody>
-                    {product.technicalSpecifications?.map((spec) => (
-                      <tr key={spec.id || spec.title}>
-                        <td>{spec.title}</td>
-                        <td>{spec.content}</td>
+            <ExpandableCard title="Informações do produto">
+              <div className={styles.productInfoContainer}>
+                {/* Coluna da descrição complementar */}
+                <div className={styles.descriptionColumn}>
+                  <h3>Descrição Completa</h3>
+                  <p>{product.complementaryDescription}</p>
+                </div>
+                {/* Coluna dos detalhes em tabela */}
+                <div className={styles.detailsColumn}>
+                  <h3>Detalhes</h3>
+                  <table className={styles.detailsTable}>
+                    <tbody>
+                      <tr>
+                        <td>Condição</td>
+                        <td>{product.condition}</td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                      <tr>
+                        <td>Categoria</td>
+                        <td>{product.category?.name}</td>
+                      </tr>
+                      <tr>
+                        <td>Subcategoria</td>
+                        <td>{product.subCategory?.name}</td>
+                      </tr>
+                      <tr>
+                        <td>Marca</td>
+                        <td>{product.brand?.name}</td>
+                      </tr>
+                      <tr>
+                        <td>Peso Líquido</td>
+                        <td>{product.netWeight}</td>
+                      </tr>
+                      <tr>
+                        <td>Peso Bruto</td>
+                        <td>{product.grossWeight}</td>
+                      </tr>
+                      <tr>
+                        <td>Largura</td>
+                        <td>{product.width}</td>
+                      </tr>
+                      <tr>
+                        <td>Altura</td>
+                        <td>{product.height}</td>
+                      </tr>
+                      <tr>
+                        <td>Profundidade</td>
+                        <td>{product.depth}</td>
+                      </tr>
+                      <tr>
+                        <td>Volumes</td>
+                        <td>{product.volumes}</td>
+                      </tr>
+                      <tr>
+                        <td>Itens por Caixa</td>
+                        <td>{product.itemsPerBox}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          </ExpandableCard>
+            </ExpandableCard>
 
+            <ExpandableCard title="Mais detalhes">
+              <div className={styles.productInfoContainer}>
+                <div className={styles.descriptionColumn}>
+                  <h3>Notes</h3>
+                  <p>{product.notes}</p>
+                </div>
+                <div className={styles.detailsColumn}>
+                  <h3>Technical Specifications</h3>
+                  <table className={styles.detailsTable}>
+                    <tbody>
+                      {product.technicalSpecifications?.map((spec) => (
+                        <tr key={spec.id || spec.title}>
+                          <td>{spec.title}</td>
+                          <td>{spec.content}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </ExpandableCard>            
           </div>
+          {/* NOVA SEÇÃO: Produtos Relacionados */}
+          <div className={styles.relatedProductsSection}>
+            {relatedLoading ? (
+              <p>Carregando produtos relacionados...</p>
+            ) : relatedError ? (
+              <p>{relatedError}</p>
+            ) : relatedProducts.length > 0 ? (
+              <div className={styles.relatedProductsContainer}>
+                {relatedProducts.map((relProd) => (
+                  <Link
+                    key={relProd.id}
+                    href={`/product/${relProd.id}?nickname=${nickname}`}
+                    style={{ textDecoration: 'none' }}
+                  >
+                    <div className={styles.relatedProductItem}>
+                      <ProductCard
+                        images={
+                          relProd.images?.length
+                            ? relProd.images.map((img) => `${apiUrl}${img}`)
+                            : [defaultImage.src]
+                        }
+                        name={relProd.name}
+                        price={relProd.salePrice}
+                        discount={relProd.discountPrice}
+                        freeShipping={relProd.freeShipping}
+                      />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p>Nenhum produto relacionado encontrado.</p>
+            )}
+          </div>
+
+
         </div>
 
         <div className={styles.rightColumn}>
@@ -754,12 +781,10 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
             <Card title="Delivery">
               {deliveryData && (
                 <div className={styles.pickupBox}>
-                  {/* Rótulos acima da caixa preta */}
                   <div className={styles.labels}>
                     <span>Preço</span>
                     <span>Tempo de Entrega</span>
                   </div>
-
                   <div className={styles.pickupInfo}>
                     <div className={styles.price}>
                       {deliveryData.price === 0 ? 'Grátis' : `R$ ${deliveryData.price}`}
@@ -789,13 +814,10 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                       {showFullAddress ? 'ver menos' : 'ver mais'}
                     </span>
                   </p>
-
-                  {/* Rótulos acima da caixa preta */}
                   <div className={styles.labels}>
                     <span>Preço</span>
                     <span>Disponibilidade</span>
                   </div>
-
                   <div className={styles.pickupInfo}>
                     <div className={styles.price}>
                       {pickupDetails.precoRetirada === 0 ? 'Grátis' : pickupDetails.precoRetirada}
@@ -806,7 +828,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                   </div>
                 </div>
               )}
-            </Card>            
+            </Card>
           </div>
           <div className={styles.infoContainer}>
             <div className={styles.infoItem}>
@@ -822,7 +844,6 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
               </span>
             </div>
           </div>
-
         </div>
       </div>
     </>

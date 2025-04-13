@@ -150,15 +150,17 @@ public class ProductService {
     public ProductDTO getProductByIdWithDeliveryFilters(String id, double latitude, double longitude) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
-        if (product.getVariations() != null) {
-            product.setVariations(
-                    product.getVariations().stream()
-                            .filter(ProductVariation::isActive)
-                            .toList()
-            );
-        }
 
+        // Converte para DTO sem alterar a entidade.
         ProductDTO dto = convertToDTO(product);
+
+        // Filtra as variações inativas no DTO (somente as com active true são mantidas).
+        if (dto.getVariations() != null) {
+            List<ProductVariationDTO> filteredVariations = dto.getVariations().stream()
+                    .filter(ProductVariationDTO::isActive)
+                    .collect(Collectors.toList());
+            dto.setVariations(filteredVariations);
+        }
 
         // Verifica o catálogo
         Catalog catalog = product.getCatalog();
@@ -166,16 +168,13 @@ public class ProductService {
             throw new RuntimeException("Catálogo não encontrado para o produto.");
         }
 
-        // Carrega as locations do catálogo
+        // Carrega as locations do catálogo e verifica se o ponto está na área de entrega
         List<Location> locations = locationRepository.findByCatalogId(catalog.getId());
-
-        // Verifica se o ponto (endereço) está incluído na área de entrega
         GeoUtils.GeoPoint point = new GeoUtils.GeoPoint(latitude, longitude);
         boolean addressDeliverable = false;
         if (locations != null && !locations.isEmpty()) {
-            // Se o ponto estiver em qualquer polígono EXCLUDED, ele não é atendido
+            // Se o ponto estiver em qualquer polígono EXCLUDED, não é atendido.
             if (!isPointGloballyExcluded(point, locations)) {
-                // Verifica se está incluído em pelo menos um polígono de inclusão
                 for (Location loc : locations) {
                     if (GeoUtils.isPointInAnyIncludedPolygon(point, loc)) {
                         addressDeliverable = true;
@@ -185,7 +184,7 @@ public class ProductService {
             }
         }
 
-        // Verifica se o catálogo está aberto
+        // Verifica se o catálogo está aberto.
         boolean storeOpen = marketplace.nilrow.utils.OperatingHoursUtils.isCatalogOpen(catalog);
 
         // Define a mensagem baseada nos testes
@@ -201,6 +200,87 @@ public class ProductService {
 
         return dto;
     }
+
+    @Transactional
+    public Page<ProductDTO> getProductsByCatalogAndSubCategoryWithDelivery(
+            String catalogId,
+            String subcategoryId,
+            double latitude,
+            double longitude,
+            Pageable pageable
+    ) {
+        // 1) Verifica se o catálogo existe e está aberto
+        Catalog catalog = catalogRepository.findById(catalogId).orElse(null);
+        if (catalog == null || !marketplace.nilrow.utils.OperatingHoursUtils.isCatalogOpen(catalog)) {
+            return Page.empty(pageable);
+        }
+
+        // 2) Carrega as locations do catálogo e verifica se há áreas de entrega
+        List<Location> locations = locationRepository.findByCatalogId(catalogId);
+        if (locations == null || locations.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        GeoUtils.GeoPoint point = new GeoUtils.GeoPoint(latitude, longitude);
+        // Se o ponto estiver em qualquer polígono EXCLUDED, não entrega
+        if (isPointGloballyExcluded(point, locations)) {
+            return Page.empty(pageable);
+        }
+        // Verifica se o ponto está incluído em pelo menos uma das locations
+        boolean includedInAnyLocation = false;
+        for (Location loc : locations) {
+            if (GeoUtils.isPointInAnyIncludedPolygon(point, loc)) {
+                includedInAnyLocation = true;
+                break;
+            }
+        }
+        if (!includedInAnyLocation) {
+            return Page.empty(pageable);
+        }
+
+        // 3) Obtém os produtos do catálogo e filtra os que pertencem à subcategoria informada
+        //    e que estão ativos e com estoque
+        List<Product> products = productRepository.findByCatalogId(catalogId);
+        List<Product> filtered = products.stream().filter(product -> {
+            boolean isSubCategoryMatch = product.getSubCategory() != null
+                    && product.getSubCategory().getId().equals(subcategoryId);
+            if (!isSubCategoryMatch) {
+                return false;
+            }
+            if (!product.isActive()) {
+                return false;
+            }
+            boolean hasStock;
+            if (product.getVariations() == null || product.getVariations().isEmpty()) {
+                hasStock = (product.getStock() != null && product.getStock() > 0);
+            } else {
+                // Para variações, verifica se há alguma variação ativa com estoque disponível
+                hasStock = product.getVariations().stream()
+                        .anyMatch(v -> v.isActive() && v.getStock() != null && v.getStock() > 0);
+            }
+            return hasStock;
+        }).collect(Collectors.toList());
+
+        // 4) Converte os produtos filtrados para DTO
+        //    Filtrando as variações para retornar apenas as ativas (no DTO)
+        List<ProductDTO> dtos = filtered.stream().map(product -> {
+            ProductDTO dto = convertToDTO(product);
+            if (dto.getVariations() != null) {
+                List<ProductVariationDTO> activeVariations = dto.getVariations().stream()
+                        .filter(ProductVariationDTO::isActive)
+                        .collect(Collectors.toList());
+                dto.setVariations(activeVariations);
+            }
+            return dto;
+        }).collect(Collectors.toList());
+
+        // 5) Pagina os resultados na memória
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), dtos.size());
+        List<ProductDTO> pageContent = (start > end) ? List.of() : dtos.subList(start, end);
+        return new PageImpl<>(pageContent, pageable, dtos.size());
+    }
+
 
     @Transactional
     public Page<ProductDTO> filterProductsByCatalogAndDelivery(

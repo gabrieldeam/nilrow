@@ -145,5 +145,20 @@ public class ProductController {
     }
 
 
+    @GetMapping("/catalog/{catalogId}/subcategory/{subcategoryId}/delivery")
+    public ResponseEntity<Page<ProductDTO>> getProductsByCatalogAndSubcategoryWithDelivery(
+            @PathVariable String catalogId,
+            @PathVariable String subcategoryId,
+            @RequestParam("latitude") double latitude,
+            @RequestParam("longitude") double longitude,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size
+    ) {
+        Page<ProductDTO> result = productService.getProductsByCatalogAndSubCategoryWithDelivery(
+                catalogId, subcategoryId, latitude, longitude, PageRequest.of(page, size)
+        );
+        return ResponseEntity.ok(result);
+    }
+
 
 }

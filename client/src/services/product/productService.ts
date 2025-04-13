@@ -266,3 +266,31 @@ export const getProductByIdWithDelivery = async (
   );
   return response.data;
 };
+
+
+/**
+ * Lista produtos de um catálogo filtrados por subcategoria e endereço de entrega (latitude e longitude),
+ * considerando a regra de entrega (ponto permitido em pelo menos uma Location) e estoque > 0.
+ *
+ * @param catalogId ID do catálogo.
+ * @param subcategoryId ID da subcategoria.
+ * @param latitude Latitude do endereço de entrega.
+ * @param longitude Longitude do endereço de entrega.
+ * @param page Página (padrão 0).
+ * @param size Quantidade de itens por página (padrão 10).
+ * @returns Promise<PagedResponse<ProductDTO>>
+ */
+export const getProductsByCatalogAndSubcategoryWithDelivery = async (
+  catalogId: string,
+  subcategoryId: string,
+  latitude: number,
+  longitude: number,
+  page = 0,
+  size = 10
+): Promise<PagedResponse<ProductDTO>> => {
+  const response = await api.get<PagedResponse<ProductDTO>>(
+    `/products/catalog/${catalogId}/subcategory/${subcategoryId}/delivery?latitude=${latitude}&longitude=${longitude}&page=${page}&size=${size}`
+  );
+  return response.data;
+};
+
