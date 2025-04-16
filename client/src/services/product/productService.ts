@@ -261,9 +261,12 @@ export const getProductByIdWithDelivery = async (
   latitude: number,
   longitude: number
 ): Promise<ProductDTO> => {
-  const response = await api.get<ProductDTO>(
-    `/products/${id}/delivery?latitude=${latitude}&longitude=${longitude}`
-  );
+  const response = await api.get<ProductDTO>(`/products/${id}/delivery`, {
+    params: { 
+      latitude,
+      longitude
+    }
+  });
   return response.data;
 };
 

@@ -147,59 +147,92 @@ public class ProductService {
     }
 
     @Transactional
-    public ProductDTO getProductByIdWithDeliveryFilters(String id, double latitude, double longitude) {
+    public ProductDTO getProductByIdWithDeliveryFilters(
+            String id,
+            double latitude,
+            double longitude
+    ) {
+        // 1) Verificação de latitude e longitude
+        if (latitude == 0 || longitude == 0) {
+            throw new RuntimeException("Latitude e Longitude inválidos.");
+        }
+
+        // 2) Recupera o produto pelo ID
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
 
-        // Converte para DTO sem alterar a entidade.
+        // 3) Converte para DTO
         ProductDTO dto = convertToDTO(product);
 
-        // Filtra as variações inativas no DTO (somente as com active true são mantidas).
-        if (dto.getVariations() != null) {
-            List<ProductVariationDTO> filteredVariations = dto.getVariations().stream()
-                    .filter(ProductVariationDTO::isActive)
-                    .collect(Collectors.toList());
-            dto.setVariations(filteredVariations);
-        }
+        // 4) Filtra as variações ativas
+        //if (dto.getVariations() != null) {
+        //    List<ProductVariationDTO> filteredVariations = dto.getVariations().stream()
+        //            .filter(ProductVariationDTO::isActive)
+        //            .collect(Collectors.toList());
+        //    dto.setVariations(filteredVariations);
+        //}
 
-        // Verifica o catálogo
+        // 5) Verifica o catálogo
         Catalog catalog = product.getCatalog();
         if (catalog == null) {
             throw new RuntimeException("Catálogo não encontrado para o produto.");
         }
 
-        // Carrega as locations do catálogo e verifica se o ponto está na área de entrega
+        // 6) Carrega as locations do catálogo
         List<Location> locations = locationRepository.findByCatalogId(catalog.getId());
+        if (locations == null || locations.isEmpty()) {
+            throw new RuntimeException("Nenhuma localização de entrega encontrada para o catálogo.");
+        }
+
+        // 7) Monta o GeoPoint com a latitude e longitude fornecidas
         GeoUtils.GeoPoint point = new GeoUtils.GeoPoint(latitude, longitude);
-        boolean addressDeliverable = false;
-        if (locations != null && !locations.isEmpty()) {
-            // Se o ponto estiver em qualquer polígono EXCLUDED, não é atendido.
-            if (!isPointGloballyExcluded(point, locations)) {
-                for (Location loc : locations) {
-                    if (GeoUtils.isPointInAnyIncludedPolygon(point, loc)) {
-                        addressDeliverable = true;
-                        break;
-                    }
-                }
+
+        // 8) Verifica se o ponto está excluído em alguma Location (Exclusão Global)
+        if (isPointGloballyExcluded(point, locations)) {
+            dto.setDeliveryMessage("Não entrega nesse endereço.");
+            zeroStock(dto);
+            return dto;
+        }
+
+        // 9) Verifica se o ponto está incluído em alguma das locations
+        boolean includedInAnyLocation = false;
+        for (Location loc : locations) {
+            if (GeoUtils.isPointInAnyIncludedPolygon(point, loc)) {
+                includedInAnyLocation = true;
+                break;
             }
         }
-
-        // Verifica se o catálogo está aberto.
-        boolean storeOpen = marketplace.nilrow.utils.OperatingHoursUtils.isCatalogOpen(catalog);
-
-        // Define a mensagem baseada nos testes
-        String message = "";
-        if (!addressDeliverable && storeOpen) {
-            message = "Não entrega nesse endereço.";
-        } else if (addressDeliverable && !storeOpen) {
-            message = "Loja está fechada.";
-        } else if (!addressDeliverable && !storeOpen) {
-            message = "Não entrega nesse endereço e a loja está fechada.";
+        if (!includedInAnyLocation) {
+            dto.setDeliveryMessage("Não entrega nesse endereço.");
+            zeroStock(dto);
+            return dto;
         }
-        dto.setDeliveryMessage(message);
+
+        // 10) Verifica se o catálogo está aberto
+        boolean storeOpen = marketplace.nilrow.utils.OperatingHoursUtils.isCatalogOpen(catalog);
+        if (!storeOpen) {
+            dto.setDeliveryMessage("Loja está fechada.");
+            zeroStock(dto);
+            return dto;
+        }
+
+        // 11) Se todas as validações passarem, retorna o DTO com a mensagem de entrega disponível
 
         return dto;
     }
+
+    /**
+     * Método auxiliar que zera o estoque do produto e de suas variações.
+     */
+    private void zeroStock(ProductDTO dto) {
+        dto.setStock(0);
+        if (dto.getVariations() != null) {
+            dto.getVariations().forEach(variation -> variation.setStock(0));
+        }
+    }
+
+
+
 
     @Transactional
     public Page<ProductDTO> getProductsByCatalogAndSubCategoryWithDelivery(

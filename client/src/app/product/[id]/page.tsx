@@ -52,6 +52,9 @@ import {
   removeProductLike,
 } from '@/services/favoriteService';
 
+// Hook de notificações
+import { useNotification } from '@/hooks/useNotification';
+
 import styles from './Product.module.css';
 
 // Tipos locais
@@ -87,13 +90,18 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   const { location } = useLocationContext();
   const { bag, addToBag } = useBag();
 
+  // Uso do hook de notificações
+  const { setMessage } = useNotification();
+
   const [product, setProduct] = useState<ProductDTO | null>(null);
   const [deliveryData, setDeliveryData] = useState<DeliveryPriceDTO | null>(null);
   const [pickupDetails, setPickupDetails] = useState<PickupActiveDetailsDTO | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [showFullAddress, setShowFullAddress] = useState(false);
-  const [variationImagesMap, setVariationImagesMap] = useState<Record<string, VariationImageDTO[]>>({});
+  const [variationImagesMap, setVariationImagesMap] = useState<Record<string, VariationImageDTO[]>>(
+    {}
+  );
 
   // Variação e atributos
   const [selectedVariation, setSelectedVariation] = useState<ProductVariationDTO | null>(null);
@@ -131,7 +139,8 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   // ----------------------------------------------------------------------------
   // FETCHES
   useEffect(() => {
-    if (!id || !location) return;
+    if (!id || !location || location.latitude === 0 || location.longitude === 0) return;
+
     setLoading(true);
     getProductByIdWithDelivery(id, location.latitude, location.longitude)
       .then(setProduct)
@@ -163,30 +172,14 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
 
   useEffect(() => {
     if (!product?.variations?.length) return;
-    (async () => {
-      try {
-        const variationImagePromises = product.variations.map(async (variation) => {
-          const images = await listVariationImagesByVariation(variation.id!);
-          return { variationId: variation.id!, images };
-        });
-        const results = await Promise.all(variationImagePromises);
-        const mapResult = results.reduce((acc, { variationId, images }) => {
-          acc[variationId] = images;
-          return acc;
-        }, {} as Record<string, VariationImageDTO[]>);
-        setVariationImagesMap(mapResult);
-      } catch (err) {
-        console.error('Erro ao carregar imagens de variação:', err);
-      }
-    })();
-  }, [product]);
-
-  useEffect(() => {
-    if (!product) return;
-    if (product.variations && product.variations.length > 0) {
-      const firstVar = product.variations[0];
+  
+    // Busca a primeira variação cuja propriedade "active" seja exatamente true
+    const firstActiveVar = product.variations.find((v) => v.active === true);
+    console.log("Variação ativa encontrada:", firstActiveVar); // Debug: verifique no console
+  
+    if (firstActiveVar) {
       const newSelectedAttributes: Record<string, string> = {};
-      firstVar.attributes.forEach((attr) => {
+      firstActiveVar.attributes.forEach((attr) => {
         if (attr.attributeName && attr.attributeValue) {
           newSelectedAttributes[attr.attributeName] = attr.attributeValue;
         }
@@ -227,6 +220,8 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
     );
   }
 
+
+  
   useEffect(() => {
     const matchedVariation = getMatchingVariation();
     setSelectedVariation(matchedVariation || null);
@@ -317,20 +312,24 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
     try {
       await followChannel(channelData.id);
       setIsFollowingChannel(true);
+      setMessage('Canal seguido com sucesso!', 'success');
     } catch (error) {
       console.error('Erro ao seguir o canal:', error);
+      setMessage('Erro ao seguir o canal!', 'error');
     }
-  }, [channelData]);
+  }, [channelData, setMessage]);
 
   const handleUnfollowClick = useCallback(async () => {
     if (!channelData) return;
     try {
       await unfollowChannel(channelData.id);
       setIsFollowingChannel(false);
+      setMessage('Você deixou de seguir o canal.', 'success');
     } catch (error) {
       console.error('Erro ao deixar de seguir o canal:', error);
+      setMessage('Erro ao deixar de seguir o canal!', 'error');
     }
-  }, [channelData]);
+  }, [channelData, setMessage]);
 
   const handleMessageClick = useCallback(async () => {
     if (!channelData) return;
@@ -348,8 +347,9 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
       router.push(`/chat?conversationId=${conversationId}`);
     } catch (error) {
       console.error('Erro ao iniciar conversa:', error);
+      setMessage('Não foi possível iniciar a conversa.', 'error');
     }
-  }, [channelData, router]);
+  }, [channelData, router, setMessage]);
 
   // FAVORITOS: verificar se o produto já está na pasta "todos"
   useEffect(() => {
@@ -386,12 +386,14 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
       if (!isFavorited) {
         await favoriteProduct(product.id!, undefined);
         setIsFavorited(true);
+        setMessage('Produto favoritado com sucesso!', 'success');
       } else {
-        // Se já favoritado, abre a modal para gerenciar (exibir onde está e permitir descurtir ou alterar pasta)
+        // Se já favoritado, abre a modal para gerenciar
         setShowLikeModal(true);
       }
     } catch (error) {
       console.error('Erro ao curtir o produto:', error);
+      setMessage('Erro ao favoritar o produto!', 'error');
     }
   };
 
@@ -402,13 +404,14 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
     try {
       // Remove do primeiro folder onde foi salvo
       await removeProductLike(product.id!, currentFolders[0].name);
-      alert(`Produto removido da pasta "${currentFolders[0].name}"`);
+      setMessage(`Produto removido da pasta "${currentFolders[0].name}"`, 'success');
       setIsFavorited(false);
       const folders = await listFavoriteFolders();
       setFavoriteFolders(folders || []);
       setShowLikeModal(false);
     } catch (error) {
       console.error('Erro ao descurtir o produto:', error);
+      setMessage('Erro ao remover produto dos favoritos!', 'error');
     }
   };
 
@@ -417,13 +420,14 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
     if (!newFolderName.trim() || !product) return;
     try {
       await favoriteProduct(product.id!, newFolderName.trim());
-      alert(`Produto salvo na pasta "${newFolderName}".`);
+      setMessage(`Produto salvo na pasta "${newFolderName}".`, 'success');
       setNewFolderName('');
       setShowLikeModal(false);
       const folders = await listFavoriteFolders();
       setFavoriteFolders(folders || []);
     } catch (error) {
       console.error('Erro ao criar pasta e salvar produto:', error);
+      setMessage('Erro ao criar pasta e salvar produto!', 'error');
     }
   };
 
@@ -432,12 +436,13 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
     if (!product) return;
     try {
       await favoriteProduct(product.id!, folderName);
-      alert(`Produto salvo na pasta "${folderName}"`);
+      setMessage(`Produto salvo na pasta "${folderName}"`, 'success');
       setShowLikeModal(false);
       const folders = await listFavoriteFolders();
       setFavoriteFolders(folders || []);
     } catch (error) {
       console.error('Erro ao salvar em pasta existente:', error);
+      setMessage('Erro ao salvar em pasta existente!', 'error');
     }
   };
 
@@ -447,17 +452,18 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
     const currentId = selectedVariation?.id ?? product?.id;
     const currentStock = selectedVariation?.stock ?? product?.stock ?? 0;
     if (!currentId || currentStock <= 0) {
-      alert('Produto indisponível no momento.');
+      setMessage('Produto indisponível no momento.', 'error');
       return;
     }
     const existingItem = bag.find((item) => item.id === currentId);
     const existingQty = existingItem?.quantity ?? 0;
     const desiredQty = existingQty + 1;
     if (desiredQty > currentStock) {
-      alert(`Você só pode adicionar até ${currentStock} unidades deste item.`);
+      setMessage(`Você só pode adicionar até ${currentStock} unidades deste item.`, 'error');
       return;
     }
     addToBag({ id: currentId, quantity: 1, nickname });
+    setMessage('Item adicionado ao carrinho!', 'success');
   };
 
   // ----------------------------------------------------------------------------
@@ -472,7 +478,14 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
     ? [{ text: 'Compartilhar', backgroundColor: '#212121', imageSrc: shareIcon }]
     : isFollowingChannel
     ? [{ text: 'Amigos', backgroundColor: '#212121', onClick: handleUnfollowClick }]
-    : [{ text: 'Seguir', backgroundColor: '#DF1414', imageSrc: followIcon, onClick: handleFollowClick }];
+    : [
+        {
+          text: 'Seguir',
+          backgroundColor: '#DF1414',
+          imageSrc: followIcon,
+          onClick: handleFollowClick,
+        },
+      ];
 
   const baseName = product.name;
   const basePrice = product.salePrice;
@@ -488,447 +501,487 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
         pickupDetails.address.complement ? `, ${pickupDetails.address.complement}` : ''
       }`
     : '';
+    const deliveryMessage = product?.deliveryMessage;
 
+    
   return (
     <>
       <MobileHeader
         title="Produto"
         buttons={{ close: true, bag: true, address: true, share: true }}
         handleBack={handleBack}
-      />
+      />      
 
       <div className={styles.productPage}>
+
+        {deliveryMessage && (
+          <div className={styles.deliveryMessageLayout}>
+            <div className={styles.deliveryMessageBanner}>
+              {deliveryMessage}
+            </div>
+          </div>
+        )}
+
         {/* COLUNA ESQUERDA */}
-        <div className={styles.leftColumn}>
-          <div className={styles.productConteiner}>
-            <div className={styles.productChannelImageDesc}>
-              <div className={styles.channelHeader}>
-                <div className={styles.channelLeft}>
-                  <div className={styles.channelTitle}>
-                    <Image
-                      src={`${apiUrl}${channelData.imageUrl}`}
-                      alt={`${channelData.name} - Imagem`}
-                      className={styles.channelImage}
-                      width={130}
-                      height={130}
-                    />
-                    <div
-                      className={styles.channelInfo}
-                      onClick={() => (window.location.href = `${frontUrl}${formattedNickname}`)}
-                    >
-                      <h2 className={styles.channelName}>{channelData.name}</h2>
-                      <p className={styles.channelNickname}>{nickname}</p>
+        <div className={styles.productPageConteiner}>
+          <div className={styles.leftColumn}>
+            <div className={styles.productConteiner}>
+              <div className={styles.productChannelImageDesc}>
+                <div className={styles.channelHeader}>
+                  <div className={styles.channelLeft}>
+                    <div className={styles.channelTitle}>
+                      <Image
+                        src={`${apiUrl}${channelData.imageUrl}`}
+                        alt={`${channelData.name} - Imagem`}
+                        className={styles.channelImage}
+                        width={130}
+                        height={130}
+                      />
+                      <div
+                        className={styles.channelInfo}
+                        onClick={() => (window.location.href = `${frontUrl}${formattedNickname}`)}
+                      >
+                        <h2 className={styles.channelName}>{channelData.name}</h2>
+                        <p className={styles.channelNickname}>{nickname}</p>
+                      </div>
+                    </div>
+                    <div className={styles.channelFollow}>
+                      {stageButtons
+                        .filter((btn) => btn.text === 'Seguir' || btn.text === 'Amigos')
+                        .map((button, index) => (
+                          <StageButton
+                            key={index}
+                            text={button.text}
+                            backgroundColor={button.backgroundColor}
+                            imageSrc={button.imageSrc}
+                            onClick={button.onClick}
+                          />
+                        ))}
                     </div>
                   </div>
-                  <div className={styles.channelFollow}>
-                    {stageButtons
-                      .filter((btn) => btn.text === 'Seguir' || btn.text === 'Amigos')
-                      .map((button, index) => (
-                        <StageButton
-                          key={index}
-                          text={button.text}
-                          backgroundColor={button.backgroundColor}
-                          imageSrc={button.imageSrc}
-                          onClick={button.onClick}
-                        />
-                      ))}
+                </div>
+
+                {/* GALERIA */}
+                <div className={styles.galleryContainer}>
+                  <div className={styles.mainImage}>
+                    {mainImage ? (
+                      <Image
+                        src={`${apiUrl}${mainImage}`}
+                        alt={`Imagem principal do ${displayName}`}
+                        width={419}
+                        height={419}
+                      />
+                    ) : (
+                      <Image src={defaultImage} alt="Imagem padrão" width={419} height={419} />
+                    )}
                   </div>
+                  <div className={styles.thumbnailList}>
+                    {galleryImages.map((imgUrl, index) => {
+                      const isActive = imgUrl === mainImage;
+                      return (
+                        <div
+                          key={imgUrl + index}
+                          ref={isActive ? activeThumbnailRef : null}
+                          className={styles.thumbnailItem}
+                          onClick={() => setMainImage(imgUrl)}
+                        >
+                          <Image
+                            src={`${apiUrl}${imgUrl}`}
+                            alt={`Miniatura de ${displayName} - ${index + 1}`}
+                            width={101}
+                            height={101}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className={styles.shortDescription}>
+                  <span>{product.shortDescription}</span>
                 </div>
               </div>
 
-              {/* GALERIA */}
-              <div className={styles.galleryContainer}>
-                <div className={styles.mainImage}>
-                  {mainImage ? (
-                    <Image
-                      src={`${apiUrl}${mainImage}`}
-                      alt={`Imagem principal do ${displayName}`}
-                      width={419}
-                      height={419}
-                    />
-                  ) : (
-                    <Image src={defaultImage} alt="Imagem padrão" width={419} height={419} />
+              <div className={styles.productSection}>
+                <div className={styles.name}>
+                  <span>{displayName}</span>
+                </div>
+                <div className={styles.priceSection}>
+                  {displayDiscount && displayDiscount > 0 && (
+                    <span className={styles.originalPrice}>
+                      {(() => {
+                        const discountValue = Number(displayDiscount || 0);
+                        const salePriceValue = Number(displayPrice || 0);
+                        const original = salePriceValue / (1 - discountValue / 100);
+                        return `R$ ${original.toFixed(2).replace('.', ',')}`;
+                      })()}
+                    </span>
                   )}
+                  <div className={styles.priceSaleSection}>
+                    <div className={styles.salePrice}>
+                      {(() => {
+                        const price = Number(displayPrice || 0);
+                        const [reais, centavos] = price.toFixed(2).split('.');
+                        return (
+                          <>
+                            R$ {reais}
+                            <sup>{centavos}</sup>
+                          </>
+                        );
+                      })()}
+                    </div>
+                    <div className={styles.pix}>30% OFF no Pix</div>
+                  </div>
+                  <div className={styles.otherOptions}>
+                    ou <strong>R$ 109</strong> em outros meios <a>Ver mais</a>
+                  </div>
                 </div>
-                <div className={styles.thumbnailList}>
-                  {galleryImages.map((imgUrl, index) => {
-                    const isActive = imgUrl === mainImage;
-                    return (
-                      <div
-                        key={imgUrl + index}
-                        ref={isActive ? activeThumbnailRef : null}
-                        className={styles.thumbnailItem}
-                        onClick={() => setMainImage(imgUrl)}
-                      >
-                        <Image
-                          src={`${apiUrl}${imgUrl}`}
-                          alt={`Miniatura de ${displayName} - ${index + 1}`}
-                          width={101}
-                          height={101}
-                        />
+
+                {/* VARIAÇÕES */}
+                {product.variations && product.variations.length > 0 && (
+                  <div className={styles.variationsSection}>
+                    {[...attributesMap.entries()].map(([attrName, values]) => (
+                      <div key={attrName} className={styles.variationGroup}>
+                        <div style={{ fontWeight: 'bold', marginBottom: '0.4rem' }}>
+                          {attrName}
+                        </div>
+                        <div className={styles.variationButtons}>
+                          {[...values].map((val) => {
+                            // Verifica se existe ALGUMA variação com esse (attrName, val) e active = true
+                            const hasActiveVariation = product.variations.some(
+                              (variation) =>
+                                variation.active === true &&
+                                variation.attributes.some(
+                                  (attr) =>
+                                    attr.attributeName === attrName &&
+                                    attr.attributeValue === val
+                                )
+                            );
+
+                            return (
+                              <button
+                                key={val}
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  if (hasActiveVariation) {
+                                    handleAttributeClick(attrName, val);
+                                  }
+                                }}
+                                className={styles.variationButton}
+                                disabled={!hasActiveVariation}
+                                style={{
+                                  opacity: hasActiveVariation ? 1 : 0.5,
+                                  borderStyle:
+                                    selectedAttributes[attrName] === val ? 'dashed' : 'solid',
+                                  borderColor:
+                                    selectedAttributes[attrName] === val ? '#7B33E5' : '#fff',
+                                  cursor: hasActiveVariation ? 'pointer' : 'not-allowed',
+                                }}
+                              >
+                                {val}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
+                )}
+
+
+                <div className={styles.toCart}>
+                  <StageButton
+                    text="Adicionar"
+                    backgroundColor="#DF1414"
+                    width="auto"
+                    onClick={handleAddToCart}
+                  />
+                  {/* BOTÃO DE LIKE */}
+                  <button
+                    className={`${styles.toCartButton} ${isFavorited ? styles.liked : ''}`}
+                    onClick={handleLikeClick}
+                  >
+                    <Image src={likesIcon} alt="Likes" width={24} height={24} />
+                  </button>
+                  <button className={styles.toCartButton}>
+                    <Image src={purchaseEventIcon} alt="Purchase Event" width={24} height={24} />
+                  </button>
                 </div>
-              </div>
-              <div className={styles.shortDescription}>
-                <span>{product.shortDescription}</span>
+                <div className={styles.ProductRating}>
+                  <Card title="Opiniões do produto">
+                    <ProductRating />
+                  </Card>
+                </div>
               </div>
             </div>
 
-            <div className={styles.productSection}>
-              <div className={styles.name}>
-                <span>{displayName}</span>
-              </div>
-              <div className={styles.priceSection}>
-                {displayDiscount && displayDiscount > 0 && (
-                  <span className={styles.originalPrice}>
-                    {(() => {
-                      const discountValue = Number(displayDiscount || 0);
-                      const salePriceValue = Number(displayPrice || 0);
-                      const original = salePriceValue / (1 - discountValue / 100);
-                      return `R$ ${original.toFixed(2).replace('.', ',')}`;
-                    })()}
-                  </span>
-                )}
-                <div className={styles.priceSaleSection}>
-                  <div className={styles.salePrice}>
-                    {(() => {
-                      const price = Number(displayPrice || 0);
-                      const [reais, centavos] = price.toFixed(2).split('.');
-                      return (
-                        <>
-                          R$ {reais}
-                          <sup>{centavos}</sup>
-                        </>
-                      );
-                    })()}
-                  </div>
-                  <div className={styles.pix}>30% OFF no Pix</div>
-                </div>
-                <div className={styles.otherOptions}>
-                  ou <strong>R$ 109</strong> em outros meios <a>Ver mais</a>
-                </div>
-              </div>
-
-              {/* VARIAÇÕES */}
-              {product.variations && product.variations.length > 0 && (
-                <div className={styles.variationsSection}>
-                  {[...attributesMap.entries()].map(([attrName, values]) => (
-                    <div key={attrName} className={styles.variationGroup}>
-                      <div style={{ fontWeight: 'bold', marginBottom: '0.4rem' }}>{attrName}</div>
-                      <div className={styles.variationButtons}>
-                        {[...values].map((val) => (
-                          <button
-                            key={val}
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handleAttributeClick(attrName, val);
-                            }}
-                            className={styles.variationButton}
-                            style={{
-                              borderStyle: selectedAttributes[attrName] === val ? 'dashed' : 'solid',
-                              borderColor: selectedAttributes[attrName] === val ? '#7B33E5' : '#fff',
-                            }}
-                          >
-                            {val}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className={styles.toCart}>
-                <StageButton
-                  text="Adicionar"
-                  backgroundColor="#DF1414"
-                  width="auto"
-                  onClick={handleAddToCart}
-                />
-                {/* BOTÃO DE LIKE */}
-                <button
-                  className={`${styles.toCartButton} ${isFavorited ? styles.liked : ''}`}
-                  onClick={handleLikeClick}
-                >
-                  <Image src={likesIcon} alt="Likes" width={24} height={24} />
-                </button>
-                <button className={styles.toCartButton}>
-                  <Image src={purchaseEventIcon} alt="Purchase Event" width={24} height={24} />
-                </button>
-              </div>
-              <div className={styles.ProductRating}>
+            <div className={styles.infoConteiner}>
+              <div className={styles.ProductRatingTwo}>
                 <Card title="Opiniões do produto">
                   <ProductRating />
                 </Card>
               </div>
+              <ExpandableCard title="Informações do produto">
+                <div className={styles.productInfoContainer}>
+                  <div className={styles.descriptionColumn}>
+                    <h3>Descrição Completa</h3>
+                    <p>{product.complementaryDescription}</p>
+                  </div>
+                  <div className={styles.detailsColumn}>
+                    <h3>Detalhes</h3>
+                    <table className={styles.detailsTable}>
+                      <tbody>
+                        <tr>
+                          <td>Condição</td>
+                          <td>{product.condition}</td>
+                        </tr>
+                        <tr>
+                          <td>Categoria</td>
+                          <td>{product.category?.name}</td>
+                        </tr>
+                        <tr>
+                          <td>Subcategoria</td>
+                          <td>{product.subCategory?.name}</td>
+                        </tr>
+                        <tr>
+                          <td>Marca</td>
+                          <td>{product.brand?.name}</td>
+                        </tr>
+                        <tr>
+                          <td>Peso Líquido</td>
+                          <td>{product.netWeight}</td>
+                        </tr>
+                        <tr>
+                          <td>Peso Bruto</td>
+                          <td>{product.grossWeight}</td>
+                        </tr>
+                        <tr>
+                          <td>Largura</td>
+                          <td>{product.width}</td>
+                        </tr>
+                        <tr>
+                          <td>Altura</td>
+                          <td>{product.height}</td>
+                        </tr>
+                        <tr>
+                          <td>Profundidade</td>
+                          <td>{product.depth}</td>
+                        </tr>
+                        <tr>
+                          <td>Volumes</td>
+                          <td>{product.volumes}</td>
+                        </tr>
+                        <tr>
+                          <td>Itens por Caixa</td>
+                          <td>{product.itemsPerBox}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </ExpandableCard>
+
+              <ExpandableCard title="Mais detalhes">
+                <div className={styles.productInfoContainer}>
+                  <div className={styles.descriptionColumn}>
+                    <h3>Notes</h3>
+                    <p>{product.notes}</p>
+                  </div>
+                  <div className={styles.detailsColumn}>
+                    <h3>Technical Specifications</h3>
+                    <table className={styles.detailsTable}>
+                      <tbody>
+                        {product.technicalSpecifications?.map((spec) => (
+                          <tr key={spec.id || spec.title}>
+                            <td>{spec.title}</td>
+                            <td>{spec.content}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </ExpandableCard>
+
+              <div className={styles.DeliveryColumn}>
+                <div className={styles.deliveriesTwo}>
+                  <Card title="Delivery">
+                    {deliveryData && (
+                      <div className={styles.pickupBox}>
+                        <div className={styles.labels}>
+                          <span>Preço</span>
+                          <span>Tempo de Entrega</span>
+                        </div>
+                        <div className={styles.pickupInfo}>
+                          <div className={styles.price}>
+                            {deliveryData.price === 0 ? 'Grátis' : `R$ ${deliveryData.price}`}
+                          </div>
+                          <div className={styles.availability}>
+                            {deliveryData.averageDeliveryTime} min
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </Card>
+                  <Card title="Retirada">
+                    {pickupDetails && (
+                      <div className={styles.pickupBox}>
+                        <p className={styles.pickupTitle}>
+                          <strong>Retirar em:</strong>{' '}
+                          {showFullAddress ? (
+                            addressDetails
+                          ) : (
+                            <span className={styles.truncated}>{pickupDetails.address.street}</span>
+                          )}
+                          <span
+                            className={styles.verMais}
+                            onClick={() => setShowFullAddress(!showFullAddress)}
+                          >
+                            {showFullAddress ? 'ver menos' : 'ver mais'}
+                          </span>
+                        </p>
+                        <div className={styles.labels}>
+                          <span>Preço</span>
+                          <span>Disponibilidade</span>
+                        </div>
+                        <div className={styles.pickupInfo}>
+                          <div className={styles.price}>
+                            {pickupDetails.precoRetirada === 0
+                              ? 'Grátis'
+                              : pickupDetails.precoRetirada}
+                          </div>
+                          <div className={styles.availability}>
+                            em {pickupDetails.prazoRetirada} dias
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </Card>
+                </div>
+                <div className={styles.infoContainerTwo}>
+                  <div className={styles.infoItem}>
+                    <Image src={reabastecerIcon} alt="Ícone de devolução" width={24} height={24} />
+                    <span>
+                      <strong className={styles.highlight}>Devolução grátis.</strong> Você tem 30 dias
+                      a partir da data de recebimento.
+                    </span>
+                  </div>
+                  <div className={styles.infoItem}>
+                    <Image src={checkBuyIcon} alt="Ícone de garantia" width={24} height={24} />
+                    <span>
+                      <strong className={styles.highlight}>Compra Garantida.</strong> Receba o produto
+                      que está esperando ou devolvemos o dinheiro.
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* PRODUTOS RELACIONADOS */}
+            <div className={styles.relatedProductsSection}>
+              {relatedLoading ? (
+                <p>Carregando produtos relacionados...</p>
+              ) : relatedError ? (
+                <p>{relatedError}</p>
+              ) : relatedProducts.length > 0 ? (
+                <div className={styles.relatedProductsContainer}>
+                  {relatedProducts.map((relProd) => (
+                    <Link
+                      key={relProd.id}
+                      href={`/product/${relProd.id}?nickname=${nickname}`}
+                      style={{ textDecoration: 'none' }}
+                    >
+                      <div className={styles.relatedProductItem}>
+                        <ProductCard
+                          images={
+                            relProd.images?.length
+                              ? relProd.images.map((img) => `${apiUrl}${img}`)
+                              : [defaultImage.src]
+                          }
+                          name={relProd.name}
+                          price={relProd.salePrice}
+                          discount={relProd.discountPrice}
+                          freeShipping={relProd.freeShipping}
+                        />
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p>Nenhum produto relacionado encontrado.</p>
+              )}
             </div>
           </div>
 
-          <div className={styles.infoConteiner}>
-            <div className={styles.ProductRatingTwo}>
-              <Card title="Opiniões do produto">
-                <ProductRating />
+          {/* COLUNA DIREITA */}
+          <div className={styles.rightColumn}>
+            <div className={styles.deliveries}>
+              <Card title="Delivery">
+                {deliveryData && (
+                  <div className={styles.pickupBox}>
+                    <div className={styles.labels}>
+                      <span>Preço</span>
+                      <span>Tempo de Entrega</span>
+                    </div>
+                    <div className={styles.pickupInfo}>
+                      <div className={styles.price}>
+                        {deliveryData.price === 0 ? 'Grátis' : `R$ ${deliveryData.price}`}
+                      </div>
+                      <div className={styles.availability}>
+                        {deliveryData.averageDeliveryTime} min
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </Card>
+              <Card title="Retirada">
+                {pickupDetails && (
+                  <div className={styles.pickupBox}>
+                    <p className={styles.pickupTitle}>
+                      <strong>Retirar em:</strong>{' '}
+                      {showFullAddress ? (
+                        addressDetails
+                      ) : (
+                        <span className={styles.truncated}>{pickupDetails.address.street}</span>
+                      )}
+                      <span
+                        className={styles.verMais}
+                        onClick={() => setShowFullAddress(!showFullAddress)}
+                      >
+                        {showFullAddress ? 'ver menos' : 'ver mais'}
+                      </span>
+                    </p>
+                    <div className={styles.labels}>
+                      <span>Preço</span>
+                      <span>Disponibilidade</span>
+                    </div>
+                    <div className={styles.pickupInfo}>
+                      <div className={styles.price}>
+                        {pickupDetails.precoRetirada === 0 ? 'Grátis' : pickupDetails.precoRetirada}
+                      </div>
+                      <div className={styles.availability}>
+                        em {pickupDetails.prazoRetirada} dias
+                      </div>
+                    </div>
+                  </div>
+                )}
               </Card>
             </div>
-            <ExpandableCard title="Informações do produto">
-              <div className={styles.productInfoContainer}>
-                <div className={styles.descriptionColumn}>
-                  <h3>Descrição Completa</h3>
-                  <p>{product.complementaryDescription}</p>
-                </div>
-                <div className={styles.detailsColumn}>
-                  <h3>Detalhes</h3>
-                  <table className={styles.detailsTable}>
-                    <tbody>
-                      <tr>
-                        <td>Condição</td>
-                        <td>{product.condition}</td>
-                      </tr>
-                      <tr>
-                        <td>Categoria</td>
-                        <td>{product.category?.name}</td>
-                      </tr>
-                      <tr>
-                        <td>Subcategoria</td>
-                        <td>{product.subCategory?.name}</td>
-                      </tr>
-                      <tr>
-                        <td>Marca</td>
-                        <td>{product.brand?.name}</td>
-                      </tr>
-                      <tr>
-                        <td>Peso Líquido</td>
-                        <td>{product.netWeight}</td>
-                      </tr>
-                      <tr>
-                        <td>Peso Bruto</td>
-                        <td>{product.grossWeight}</td>
-                      </tr>
-                      <tr>
-                        <td>Largura</td>
-                        <td>{product.width}</td>
-                      </tr>
-                      <tr>
-                        <td>Altura</td>
-                        <td>{product.height}</td>
-                      </tr>
-                      <tr>
-                        <td>Profundidade</td>
-                        <td>{product.depth}</td>
-                      </tr>
-                      <tr>
-                        <td>Volumes</td>
-                        <td>{product.volumes}</td>
-                      </tr>
-                      <tr>
-                        <td>Itens por Caixa</td>
-                        <td>{product.itemsPerBox}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+            <div className={styles.infoContainer}>
+              <div className={styles.infoItem}>
+                <Image src={reabastecerIcon} alt="Ícone de devolução" width={24} height={24} />
+                <span>
+                  <strong className={styles.highlight}>Devolução grátis.</strong> Você tem 30 dias a
+                  partir da data de recebimento.
+                </span>
               </div>
-            </ExpandableCard>
-
-            <ExpandableCard title="Mais detalhes">
-              <div className={styles.productInfoContainer}>
-                <div className={styles.descriptionColumn}>
-                  <h3>Notes</h3>
-                  <p>{product.notes}</p>
-                </div>
-                <div className={styles.detailsColumn}>
-                  <h3>Technical Specifications</h3>
-                  <table className={styles.detailsTable}>
-                    <tbody>
-                      {product.technicalSpecifications?.map((spec) => (
-                        <tr key={spec.id || spec.title}>
-                          <td>{spec.title}</td>
-                          <td>{spec.content}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+              <div className={styles.infoItem}>
+                <Image src={checkBuyIcon} alt="Ícone de garantia" width={24} height={24} />
+                <span>
+                  <strong className={styles.highlight}>Compra Garantida.</strong> Receba o produto que
+                  está esperando ou devolvemos o dinheiro.
+                </span>
               </div>
-            </ExpandableCard>
-
-            <div className={styles.DeliveryColumn}>
-              <div className={styles.deliveriesTwo}>
-                <Card title="Delivery">
-                  {deliveryData && (
-                    <div className={styles.pickupBox}>
-                      <div className={styles.labels}>
-                        <span>Preço</span>
-                        <span>Tempo de Entrega</span>
-                      </div>
-                      <div className={styles.pickupInfo}>
-                        <div className={styles.price}>
-                          {deliveryData.price === 0 ? 'Grátis' : `R$ ${deliveryData.price}`}
-                        </div>
-                        <div className={styles.availability}>
-                          {deliveryData.averageDeliveryTime} min
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </Card>
-                <Card title="Retirada">
-                  {pickupDetails && (
-                    <div className={styles.pickupBox}>
-                      <p className={styles.pickupTitle}>
-                        <strong>Retirar em:</strong>{' '}
-                        {showFullAddress ? (
-                          addressDetails
-                        ) : (
-                          <span className={styles.truncated}>{pickupDetails.address.street}</span>
-                        )}
-                        <span
-                          className={styles.verMais}
-                          onClick={() => setShowFullAddress(!showFullAddress)}
-                        >
-                          {showFullAddress ? 'ver menos' : 'ver mais'}
-                        </span>
-                      </p>
-                      <div className={styles.labels}>
-                        <span>Preço</span>
-                        <span>Disponibilidade</span>
-                      </div>
-                      <div className={styles.pickupInfo}>
-                        <div className={styles.price}>
-                          {pickupDetails.precoRetirada === 0
-                            ? 'Grátis'
-                            : pickupDetails.precoRetirada}
-                        </div>
-                        <div className={styles.availability}>
-                          em {pickupDetails.prazoRetirada} dias
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </Card>
-              </div>
-              <div className={styles.infoContainerTwo}>
-                <div className={styles.infoItem}>
-                  <Image src={reabastecerIcon} alt="Ícone de devolução" width={24} height={24} />
-                  <span>
-                    <strong className={styles.highlight}>Devolução grátis.</strong> Você tem 30 dias a partir da data de recebimento.
-                  </span>
-                </div>
-                <div className={styles.infoItem}>
-                  <Image src={checkBuyIcon} alt="Ícone de garantia" width={24} height={24} />
-                  <span>
-                    <strong className={styles.highlight}>Compra Garantida.</strong> Receba o produto que está esperando ou devolvemos o dinheiro.
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* PRODUTOS RELACIONADOS */}
-          <div className={styles.relatedProductsSection}>
-            {relatedLoading ? (
-              <p>Carregando produtos relacionados...</p>
-            ) : relatedError ? (
-              <p>{relatedError}</p>
-            ) : relatedProducts.length > 0 ? (
-              <div className={styles.relatedProductsContainer}>
-                {relatedProducts.map((relProd) => (
-                  <Link
-                    key={relProd.id}
-                    href={`/product/${relProd.id}?nickname=${nickname}`}
-                    style={{ textDecoration: 'none' }}
-                  >
-                    <div className={styles.relatedProductItem}>
-                      <ProductCard
-                        images={
-                          relProd.images?.length
-                            ? relProd.images.map((img) => `${apiUrl}${img}`)
-                            : [defaultImage.src]
-                        }
-                        name={relProd.name}
-                        price={relProd.salePrice}
-                        discount={relProd.discountPrice}
-                        freeShipping={relProd.freeShipping}
-                      />
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <p>Nenhum produto relacionado encontrado.</p>
-            )}
-          </div>
-        </div>
-
-        {/* COLUNA DIREITA */}
-        <div className={styles.rightColumn}>
-          <div className={styles.deliveries}>
-            <Card title="Delivery">
-              {deliveryData && (
-                <div className={styles.pickupBox}>
-                  <div className={styles.labels}>
-                    <span>Preço</span>
-                    <span>Tempo de Entrega</span>
-                  </div>
-                  <div className={styles.pickupInfo}>
-                    <div className={styles.price}>
-                      {deliveryData.price === 0 ? 'Grátis' : `R$ ${deliveryData.price}`}
-                    </div>
-                    <div className={styles.availability}>
-                      {deliveryData.averageDeliveryTime} min
-                    </div>
-                  </div>
-                </div>
-              )}
-            </Card>
-            <Card title="Retirada">
-              {pickupDetails && (
-                <div className={styles.pickupBox}>
-                  <p className={styles.pickupTitle}>
-                    <strong>Retirar em:</strong>{' '}
-                    {showFullAddress ? (
-                      addressDetails
-                    ) : (
-                      <span className={styles.truncated}>{pickupDetails.address.street}</span>
-                    )}
-                    <span
-                      className={styles.verMais}
-                      onClick={() => setShowFullAddress(!showFullAddress)}
-                    >
-                      {showFullAddress ? 'ver menos' : 'ver mais'}
-                    </span>
-                  </p>
-                  <div className={styles.labels}>
-                    <span>Preço</span>
-                    <span>Disponibilidade</span>
-                  </div>
-                  <div className={styles.pickupInfo}>
-                    <div className={styles.price}>
-                      {pickupDetails.precoRetirada === 0 ? 'Grátis' : pickupDetails.precoRetirada}
-                    </div>
-                    <div className={styles.availability}>
-                      em {pickupDetails.prazoRetirada} dias
-                    </div>
-                  </div>
-                </div>
-              )}
-            </Card>
-          </div>
-          <div className={styles.infoContainer}>
-            <div className={styles.infoItem}>
-              <Image src={reabastecerIcon} alt="Ícone de devolução" width={24} height={24} />
-              <span>
-                <strong className={styles.highlight}>Devolução grátis.</strong> Você tem 30 dias a partir da data de recebimento.
-              </span>
-            </div>
-            <div className={styles.infoItem}>
-              <Image src={checkBuyIcon} alt="Ícone de garantia" width={24} height={24} />
-              <span>
-                <strong className={styles.highlight}>Compra Garantida.</strong> Receba o produto que está esperando ou devolvemos o dinheiro.
-              </span>
             </div>
           </div>
         </div>
