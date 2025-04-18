@@ -6,10 +6,13 @@ import lombok.*;
 import marketplace.nilrow.domain.catalog.category.CategoryDTO;
 import marketplace.nilrow.domain.catalog.category.SubCategoryDTO;
 import marketplace.nilrow.domain.catalog.product.brand.BrandDTO;
+import marketplace.nilrow.domain.channel.SimpleChannelDTO;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @NoArgsConstructor
@@ -113,5 +116,53 @@ public class ProductDTO {
     private CategoryDTO category;
 
     private SubCategoryDTO subCategory;
+
+    private SimpleChannelDTO channel;
+
+    public static ProductDTO fromEntity(Product p) {
+        ProductDTO dto = new ProductDTO();
+
+        dto.setId(p.getId());
+        dto.setName(p.getName());
+        dto.setSkuCode(p.getSkuCode());
+        dto.setSalePrice(p.getSalePrice());
+        dto.setDiscountPrice(p.getDiscountPrice());
+        dto.setUnitOfMeasure(p.getUnitOfMeasure());
+        dto.setType(p.getType());
+        dto.setCondition(p.getCondition());
+        // se no entity Category e SubCategory são objetos:
+        dto.setCategoryId(p.getCategory().getId());
+        dto.setSubCategoryId(p.getSubCategory().getId());
+        dto.setBrandId(p.getBrand().getId());
+        dto.setProductionType(p.getProductionType());
+        dto.setExpirationDate(p.getExpirationDate());
+        dto.setFreeShipping(p.isFreeShipping());
+        dto.setNetWeight(p.getNetWeight());
+        dto.setGrossWeight(p.getGrossWeight());
+        dto.setWidth(p.getWidth());
+        dto.setHeight(p.getHeight());
+        dto.setDepth(p.getDepth());
+        dto.setVolumes(p.getVolumes());
+        dto.setItemsPerBox(p.getItemsPerBox());
+        dto.setGtinEan(p.getGtinEan());
+        dto.setGtinEanTax(p.getGtinEanTax());
+        dto.setShortDescription(p.getShortDescription());
+        dto.setComplementaryDescription(p.getComplementaryDescription());
+        dto.setNotes(p.getNotes());
+        dto.setStock(p.getStock());
+        dto.setActive(p.isActive());
+        dto.setCatalogId(p.getCatalog().getId());
+
+        // imagens (supondo que seu Product armazena uma coleção de Image com URL)
+        dto.setImages(
+                new ArrayList<>(p.getImages())
+        );
+
+        // Se você quiser trazer DTOs aninhados completos:
+
+
+        return dto;
+    }
+
 
 }

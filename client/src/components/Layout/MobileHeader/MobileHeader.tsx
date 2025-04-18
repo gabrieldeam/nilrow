@@ -9,6 +9,7 @@ import AddressModal from '../../Modals/AddressModal/AddressModal';
 import QRCodeModal from '../../Modals/QRCodeModal/QRCodeModal';
 import ChatModal from '../../Modals/ChatModal/ChatModal';
 import { useLocationContext } from '../../../context/LocationContext';
+import { useBag } from '../../../context/BagContext'; // <-- import do contexto da sacola
 import styles from './MobileHeader.module.css';
 
 import addressIcon from '../../../../public/assets/address.svg';
@@ -34,8 +35,8 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
   title,
   buttons,
   handleBack,
-  onFilter, // callback para o botão de filtro
-  handleTemplate, // callback para o novo botão Template
+  onFilter,
+  handleTemplate,
   showLogo = false,
   showSearch = false,
   searchPlaceholder = 'Buscar...',
@@ -45,6 +46,9 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
   onDelete,
 }) => {
   const { location } = useLocationContext();
+  const { bag } = useBag(); // <-- pega itens da sacola
+  const totalItems = bag.reduce((acc, item) => acc + item.quantity, 0);
+
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [isQRCodeModalOpen, setIsQRCodeModalOpen] = useState(false);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
@@ -76,8 +80,8 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
     notifications: notificationsIcon,
     trash: trashIcon,
     orders: ordersIcon,
-    filter: checkWhite, // ícone para filtro
-    template: templateIcon, // ícone para Template
+    filter: checkWhite,
+    template: templateIcon,
   };
 
   return (
@@ -109,7 +113,12 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
           {!showLogo && !showSearch && <h1>{title}</h1>}
         </div>
         <div className={styles.mobileHeaderRight}>
-          {buttons.bag && <HeaderButton icon={icons.bag} link="/bag" />}
+          {buttons.bag && (
+            <div className={styles.bagButtonContainer}>
+              <HeaderButton icon={icons.bag} link="/bag" />
+              {totalItems > 0 && <span className={styles.bagCount}>{totalItems}</span>}
+            </div>
+          )}
           {buttons.share && <HeaderButton icon={icons.share} link="/share" />}
           {buttons.filter && <HeaderButton icon={icons.filter} onClick={onFilter} />}
           {buttons.search && <HeaderButton icon={icons.search} link="/search" />}
@@ -125,6 +134,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
           {buttons.template && <HeaderButton icon={icons.template} onClick={handleTemplate} />}
         </div>
       </div>
+
       <AddressModal isOpen={isAddressModalOpen} onClose={closeAddressModal} />
       <QRCodeModal isOpen={isQRCodeModalOpen} onClose={closeQRCodeModal} url={currentUrl} nickname={title || ''} />
       <ChatModal isOpen={isChatModalOpen} onClose={closeChatModal} />

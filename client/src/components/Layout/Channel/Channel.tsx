@@ -1,3 +1,4 @@
+// components/Channel/Channel.tsx
 'use client';
 
 import React, { memo, useEffect, useState, useCallback } from 'react';
@@ -27,7 +28,7 @@ import {
 import { checkAuth } from '../../../services/authService';
 import { startConversation } from '../../../services/chatService';
 
-// Importando as seções
+// sections
 import StoreSection from './sections/StoreSection/StoreSection';
 import PostSection from './sections/PostSection/PostSection';
 import AssessmentSection from './sections/AssessmentSection/AssessmentSection';
@@ -35,9 +36,7 @@ import PurchaseEventSection from './sections/PurchaseEventSection/PurchaseEventS
 
 import { getPublishedCatalogs } from '../../../services/catalogService';
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-// Import de ícones
+// icons
 import chatIcon from '../../../../public/assets/chat.svg';
 import followIcon from '../../../../public/assets/follow.svg';
 import editChannelIcon from '../../../../public/assets/editChannel.svg';
@@ -51,94 +50,94 @@ import categoriesIcon from '../../../../public/assets/categories.svg';
 import searchIcon from '../../../../public/assets/search.svg';
 import purchaseEventChannelIcon from '../../../../public/assets/purchaseEventChannel.svg';
 
-// Import do CSS principal do Channel
 import styles from './channel.module.css';
 
-// Função para formatar números
-function formatNumber(num: number) {
-  if (num >= 1_000_000) {
-    return (num / 1_000_000).toFixed(1) + 'Milhão';
-  } else if (num >= 1000) {
-    return (num / 1000).toFixed(1) + 'Mil';
-  } else {
-    return num.toString();
-  }
-}
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-function formatUrl(url: string) {
+// ------------- helpers -------------
+const formatNumber = (num: number) =>
+  num >= 1_000_000
+    ? (num / 1_000_000).toFixed(1) + 'Milhão'
+    : num >= 1000
+    ? (num / 1000).toFixed(1) + 'Mil'
+    : num.toString();
+
+const formatUrl = (url: string) => {
   try {
-    const urlObj = new URL(url.includes('://') ? url : `http://${url}`);
-    let formattedUrl = urlObj.hostname;
-    if (formattedUrl.startsWith('www.')) {
-      formattedUrl = formattedUrl.substring(4);
-    }
-    return formattedUrl;
-  } catch (error) {
-    console.error('Erro ao formatar URL:', error);
+    const u = new URL(url.includes('://') ? url : `http://${url}`);
+    return u.hostname.replace(/^www\./, '');
+  } catch {
     return url;
   }
-}
+};
 
-// Tipagem das propriedades do componente
+// ------------- tipos -------------
 interface ChannelProps {
   nickname: string;
 }
-
-// Definindo a interface para os dados do canal
 interface ChannelData {
   id: string;
   name: string;
   biography?: string;
   externalLink?: string;
   imageUrl: string;
-  // Adicione outras propriedades conforme necessário
 }
-
-// Definindo a interface para os catálogos publicados
 interface Catalog {
   id: string;
   name: string;
 }
 
+// ------------- componente -------------
 function Channel({ nickname }: ChannelProps) {
   const router = useRouter();
 
+  // autenticação: carregamos UMA vez
+  const [auth, setAuth] = useState<{ isAuthenticated: boolean } | null>(null);
+  useEffect(() => {
+    checkAuth()
+      .then(setAuth)
+      .catch(() => setAuth({ isAuthenticated: false }));
+  }, []);
+
+  // dados
   const [channelData, setChannelData] = useState<ChannelData | null>(null);
   const [isOwner, setIsOwner] = useState(false);
   const [isFollowingChannel, setIsFollowingChannel] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
-  // Agora armazenamos os catálogos com id e name
   const [publishedCatalogs, setPublishedCatalogs] = useState<Catalog[]>([]);
 
+  // UI
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFixed, setIsFixed] = useState(false);
-  const [activeSection, setActiveSection] = useState<'post' | 'store' | 'assessment' | 'purchaseEvent'>('post');
+  const [activeSection, setActiveSection] = useState<
+    'post' | 'store' | 'assessment' | 'purchaseEvent'
+  >('post');
   const [showAboutButton, setShowAboutButton] = useState(false);
-
   const [isMobile, setIsMobile] = useState(false);
 
-  // Detectar se é mobile
+  // detect mobile
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setIsMobile(window.innerWidth <= 768);
     }
   }, []);
 
-  // Buscar dados iniciais do canal
+  // fetch público + privado
   useEffect(() => {
-    const fetchPublicData = async () => {
+    const fetchData = async () => {
       try {
-        // 1) Buscar dados do canal
         const channel = await getChannelByNickname(nickname);
-        if (!channel || !channel.id) {
-          console.error('Canal inválido', channel);
-          return; // Sai se não houver canal válido
-        }
+        if (!channel?.id) return;
         setChannelData({ ...channel, imageUrl: channel.imageUrl || '' });
 
-        // 2) Buscar tudo que é "público" em paralelo utilizando Promise.allSettled
-        const results = await Promise.allSettled([
+        const [
+          followers,
+          following,
+          about,
+          faqs,
+          catalogs,
+        ] = await Promise.all([
           getFollowersCount(channel.id),
           getFollowingCount(nickname),
           getAboutByNickname(nickname),
@@ -146,216 +145,190 @@ function Channel({ nickname }: ChannelProps) {
           getPublishedCatalogs(channel.id),
         ]);
 
-        const countFollowers = results[0].status === 'fulfilled' ? results[0].value : 0;
-        const countFollowing = results[1].status === 'fulfilled' ? results[1].value : 0;
-        const aboutData = results[2].status === 'fulfilled' ? results[2].value : null;
-        const faqsData = results[3].status === 'fulfilled' ? results[3].value : [];
-        const catalogs = results[4].status === 'fulfilled' ? results[4].value : [];
+        setFollowersCount(followers);
+        setFollowingCount(following);
+        if (about?.aboutText || (faqs?.length ?? 0) > 0) setShowAboutButton(true);
 
-        setFollowersCount(countFollowers);
-        setFollowingCount(countFollowing);
+        setPublishedCatalogs(
+          catalogs.map((c: any) => ({ id: c.id, name: c.name || 'Loja' })),
+        );
 
-        // Se "about" ou "FAQ" tiver conteúdo, habilita o botão "Sobre"
-        if ((aboutData?.aboutText) || (faqsData && faqsData.length > 0)) {
-          setShowAboutButton(true);
+        // privado
+        if ((await checkAuth()).isAuthenticated) {
+          const [owner, followingFlag] = await Promise.all([
+            isChannelOwner(channel.id),
+            isFollowing(channel.id),
+          ]);
+          setIsOwner(owner);
+          setIsFollowingChannel(followingFlag);
         }
-
-        // Monta a lista de catálogos publicados
-        const mappedCatalogs = catalogs.map((c: any) => ({
-          id: c.id,
-          name: c.name || 'Loja'
-        }));
-        setPublishedCatalogs(mappedCatalogs);
-
-        // 3) Verifica se o usuário está autenticado para buscar dados restritos
-        const authResponse = await checkAuth();
-        if (authResponse.isAuthenticated) {
-          try {
-            const [ownerCheck, followingCheck] = await Promise.all([
-              isChannelOwner(channel.id),
-              isFollowing(channel.id),
-            ]);
-            setIsOwner(ownerCheck);
-            setIsFollowingChannel(followingCheck);
-          } catch (err) {
-            console.error('Erro ao buscar info autenticada:', err);
-          }
-        }
-      } catch (error) {
-        console.error('Erro ao buscar dados do canal (ou dados públicos):', error);
+      } catch (err) {
+        console.error('Erro ao buscar dados do canal:', err);
       }
     };
-
-    fetchPublicData();
+    fetchData();
   }, [nickname]);
 
-  // Scroll fixo para os botões
+  // scroll fix
   const handleScroll = useCallback(() => {
-    const offsetTop = 80;
     const section = document.querySelector('.channel-buttons-section');
     if (!section) return;
-
-    const rect = section.getBoundingClientRect();
-    if (rect.top <= offsetTop) {
-      setIsFixed(true);
-    } else if (window.scrollY <= offsetTop) {
-      setIsFixed(false);
-    }
+    setIsFixed(section.getBoundingClientRect().top <= 80);
   }, []);
-
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
-  // Botão de voltar
-  const handleBack = useCallback(() => {
-    router.back();
-  }, [router]);
+  // navegação
+  const handleBack = () => router.back();
+  const handleMyChannel = () => router.push('/channel');
+  const handleAboutChannel = () => router.push(`/${nickname}/about`);
+  const handleSearchClick = () => router.push('/store-search');
+  const handleFollowersClick = () => router.push(`/channel/follow/${nickname}`);
+  const handleFollowingClick = () => router.push(`/channel/follow/${nickname}`);
 
-  // Ir para MyChannel
-  const handleMyChannel = useCallback(() => {
-    router.push('/channel');
-  }, [router]);
-
-  // Exibir about
-  const handleAboutChannel = useCallback(() => {
-    router.push(`/${nickname}/about`);
-  }, [router, nickname]);
-
-  // Modal de imagem
-  const handleImageClick = () => setIsModalOpen(true);
-  const handleCloseModal = () => setIsModalOpen(false);
-
-  // Toggle das seções
-  const handleButtonClick = (section: 'post' | 'store' | 'assessment' | 'purchaseEvent') => {
-    setActiveSection(section);
-  };
-
-  const getButtonClass = useCallback(
-    (section: string) => activeSection === section ? `${styles.fixedButton} ${styles.active}` : styles.fixedButton,
-    [activeSection]
-  );
-
-  // Ir para busca de store
-  const handleSearchClick = () => {
-    router.push('/store-search');
-  };
-
-  // Ir para followers e following
-  const handleFollowersClick = () => {
-    router.push(`/channel/follow/${nickname}`);
-  };
-  const handleFollowingClick = () => {
-    router.push(`/channel/follow/${nickname}`);
-  };
-
-  // Seguir / Deixar de seguir
+  // follow / unfollow
   const handleFollowClick = async () => {
-    const authResponse = await checkAuth();
-    if (!authResponse.isAuthenticated) {
-      router.push('/login');
-      return;
-    }
+    if (!channelData) return;
     try {
-      await followChannel(channelData!.id);
+      await followChannel(channelData.id);
       setIsFollowingChannel(true);
-      const newCount = await getFollowersCount(channelData!.id);
-      setFollowersCount(newCount);
-    } catch (error) {
-      console.error('Erro ao seguir canal:', error);
+      setFollowersCount(await getFollowersCount(channelData.id));
+    } catch (err: any) {
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        await router.push('/login');
+      } else {
+        console.error('Erro ao seguir canal:', err);
+      }
     }
   };
 
   const handleUnfollowClick = async () => {
-    const authResponse = await checkAuth();
-    if (!authResponse.isAuthenticated) {
-      router.push('/login');
+    if (!channelData) return;
+    try {
+      await unfollowChannel(channelData.id);
+      setIsFollowingChannel(false);
+      setFollowersCount(await getFollowersCount(channelData.id));
+    } catch (err: any) {
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        await router.push('/login');
+      } else {
+        console.error('Erro ao deixar de seguir:', err);
+      }
+    }
+  };
+
+  // mensagem
+  const handleMessageClick = async () => {
+    if (!channelData) return;
+    if (!auth?.isAuthenticated) {
+      await router.push('/login');
       return;
     }
     try {
-      await unfollowChannel(channelData!.id);
-      setIsFollowingChannel(false);
-      const newCount = await getFollowersCount(channelData!.id);
-      setFollowersCount(newCount);
-    } catch (error) {
-      console.error('Erro ao deixar de seguir o canal:', error);
+      const id = await startConversation(channelData.id, '');
+      if (typeof id === 'string') router.push(`/chat?conversationId=${id}`);
+    } catch (err) {
+      console.error('Erro ao iniciar conversa:', err);
     }
   };
 
-  // Iniciar conversa
-  const handleMessageClick = async () => {
-    try {
-      const conversationId = await startConversation(channelData!.id, '');
-      if (!conversationId || typeof conversationId !== 'string') {
-        console.error('Erro: A API retornou um ID inválido.', conversationId);
-        return;
-      }
-      router.push(`/chat?conversationId=${conversationId}`);
-    } catch (error) {
-      console.error('Erro ao iniciar conversa:', error);
-    }
-  };
+  // modal img
+  const handleImageClick = () => setIsModalOpen(true);
+  const handleCloseModal = () => setIsModalOpen(false);
 
-  if (!channelData) {
-    return <LoadingSpinner />;
-  }
+  // seção ativa
+  const handleButtonClick = (section: typeof activeSection) => setActiveSection(section);
+  const getButtonClass = (section: string) =>
+    activeSection === section ? `${styles.fixedButton} ${styles.active}` : styles.fixedButton;
 
-  // Botões do canal (StageButton)
-  const stageButtons = isOwner
-    ? [
-        {
-          text: 'Editar Canal',
-          backgroundColor: '#212121',
-          imageSrc: editChannelIcon,
-          onClick: handleMyChannel,
-        },
-        {
-          text: 'Compartilhar',
-          backgroundColor: '#212121',
-          imageSrc: shareIcon,
-        },
-      ]
-    : isFollowingChannel
-    ? [
-        {
-          text: 'Amigos',
-          backgroundColor: '#212121',
-          onClick: handleUnfollowClick,
-        },
-        {
-          text: 'Mensagem',
-          backgroundColor: '#212121',
-          imageSrc: chatIcon,
-          onClick: handleMessageClick,
-        },
-      ]
-    : [
-        {
-          text: 'Seguir',
-          backgroundColor: '#DF1414',
-          imageSrc: followIcon,
-          onClick: handleFollowClick,
-        },
-        {
-          text: 'Mensagem',
-          backgroundColor: '#212121',
-          imageSrc: chatIcon,
-          onClick: handleMessageClick,
-        },
-      ];
+  if (!channelData) return <LoadingSpinner />;
 
+  // ---------- StageButtons ----------
+  const stageButtons =
+    isOwner
+      ? [
+          {
+            text: 'Editar Canal',
+            backgroundColor: '#212121',
+            imageSrc: editChannelIcon,
+            onClick: handleMyChannel,
+          },
+          {
+            text: 'Compartilhar',
+            backgroundColor: '#212121',
+            imageSrc: shareIcon,
+            onClick: async () => {},
+          },
+        ]
+      : isFollowingChannel
+      ? [
+          {
+            text: 'Amigos',
+            backgroundColor: '#212121',
+            onClick: handleUnfollowClick,
+          },
+          {
+            text: 'Mensagem',
+            backgroundColor: '#212121',
+            imageSrc: chatIcon,
+            onClick: handleMessageClick,
+          },
+        ]
+      : auth === null
+      ? [
+          {
+            text: '…',
+            backgroundColor: '#ccc',
+            onClick: async () => {},
+          },
+        ]
+      : auth.isAuthenticated
+      ? [
+          {
+            text: 'Seguir',
+            backgroundColor: '#DF1414',
+            imageSrc: followIcon,
+            onClick: handleFollowClick,
+          },
+          {
+            text: 'Mensagem',
+            backgroundColor: '#212121',
+            imageSrc: chatIcon,
+            onClick: handleMessageClick,
+          },
+        ]
+      : [
+          {
+            text: 'Seguir',
+            backgroundColor: '#DF1414',
+            imageSrc: followIcon,
+            onClick: async () => {
+              await router.push('/login');
+            },
+          },
+          {
+            text: 'Mensagem',
+            backgroundColor: '#212121',
+            imageSrc: chatIcon,
+            onClick: async () => {
+              await router.push('/login');
+            },
+          },
+        ];
+
+  // ---------- JSX ----------
   return (
     <div className={styles.channelPage}>
       <Head>
-        <title>{channelData.name} - Canal</title>
+        <title>{channelData.name} – Canal</title>
         <meta name="description" content={channelData.biography} />
       </Head>
 
-      {/* Header mobile */}
       {isMobile && (
         <MobileHeader
-          title={`${nickname}`}
+          title={nickname}
           buttons={{
             close: true,
             address: true,
@@ -368,40 +341,38 @@ function Channel({ nickname }: ChannelProps) {
       )}
 
       <div className={styles.channelContainer}>
-        {/* Banner */}
+        {/* banner */}
         <div className={styles.channelBanner}>
           <div className={styles.channelLeft}>
             <Image
               src={`${apiUrl}${channelData.imageUrl}`}
-              alt={`${channelData.name} - Imagem`}
+              alt={`${channelData.name} – Imagem`}
               className={styles.channelImage}
               width={130}
               height={130}
               onClick={handleImageClick}
-              onError={(e) => {
-                console.error('Erro ao carregar imagem:', e);
-                (e.target as HTMLImageElement).src = 'path/to/placeholder.png';
-              }}
             />
             <div className={styles.channelDetails}>
               <h1 className={styles.channelName}>{channelData.name}</h1>
               <div className={styles.followInfo}>
-                <button className={styles.followInfoButton} onClick={handleFollowersClick}>
+                <button onClick={handleFollowersClick} className={styles.followInfoButton}>
                   <span>{formatNumber(followersCount)}</span> Seguidores
                 </button>
-                <button className={styles.followInfoButton} onClick={handleFollowingClick}>
+                <button onClick={handleFollowingClick} className={styles.followInfoButton}>
                   <span>{formatNumber(followingCount)}</span> Seguindo
                 </button>
               </div>
-              {channelData.biography && (
-                <p className={styles.biography}>{channelData.biography}</p>
-              )}
+              {channelData.biography && <p className={styles.biography}>{channelData.biography}</p>}
             </div>
           </div>
 
-          {/* Botões à direita */}
+          {/* direita */}
           <div className={styles.channelRight}>
-            <div className={`${styles.channelLinkButtonContainer} ${!channelData.externalLink ? styles.centered : ''}`}>
+            <div
+              className={`${styles.channelLinkButtonContainer} ${
+                !channelData.externalLink ? styles.centered : ''
+              }`}
+            >
               {channelData.externalLink && (
                 <a
                   href={channelData.externalLink}
@@ -409,46 +380,41 @@ function Channel({ nickname }: ChannelProps) {
                   rel="noopener noreferrer"
                   className={styles.channelLinkButton}
                 >
-                  <Image
-                    src={globocon}
-                    alt="External Link"
-                    className={styles.channelLinkButtonIcon}
-                  />
+                  <Image src={globocon} alt="External" className={styles.channelLinkButtonIcon} />
                   {formatUrl(channelData.externalLink)}
                 </a>
               )}
 
               {showAboutButton && (
                 <button className={styles.channelLinkButton} onClick={handleAboutChannel}>
-                  <Image
-                    src={infoIcon}
-                    alt="Sobre"
-                    className={styles.channelLinkButtonIcon}
-                  />
+                  <Image src={infoIcon} alt="Sobre" className={styles.channelLinkButtonIcon} />
                   SOBRE
                 </button>
               )}
             </div>
 
             <div className={styles.channelStageButtons}>
-              {stageButtons.map((button, index) => (
+              {stageButtons.map((b, i) => (
                 <StageButton
-                  key={index}
-                  text={button.text}
-                  backgroundColor={button.backgroundColor}
-                  imageSrc={button.imageSrc}
-                  onClick={button.onClick}
+                  key={i}
+                  text={b.text}
+                  backgroundColor={b.backgroundColor}
+                  imageSrc={b.imageSrc}
+                  onClick={b.onClick}
                 />
               ))}
             </div>
           </div>
         </div>
 
-        {/* Seção de botões fixos */}
-        <div className={`${styles.channelButtonsSection} ${isFixed ? styles.fixedChannelButtonsSection : ''} channel-buttons-section`}>
+        {/* botões fixos */}
+        <div
+          className={`${styles.channelButtonsSection} ${
+            isFixed ? styles.fixedChannelButtonsSection : ''
+          } channel-buttons-section`}
+        >
           <div className={styles.buttonsContainer}>
             <div className={styles.fixedButtonsContainer}>
-              {/* Renderiza o botão "Store" somente se existir pelo menos um catálogo publicado */}
               {publishedCatalogs.length > 0 && (
                 <button className={getButtonClass('store')} onClick={() => handleButtonClick('store')}>
                   <Image src={storeIcon} alt="Store" />
@@ -457,22 +423,24 @@ function Channel({ nickname }: ChannelProps) {
               <button className={getButtonClass('post')} onClick={() => handleButtonClick('post')}>
                 <Image src={postIcon} alt="Post" />
               </button>
-              <button className={getButtonClass('assessment')} onClick={() => handleButtonClick('assessment')}>
+              <button
+                className={getButtonClass('assessment')}
+                onClick={() => handleButtonClick('assessment')}
+              >
                 <Image src={assessmentIcon} alt="Assessment" />
               </button>
-              <button className={getButtonClass('purchaseEvent')} onClick={() => handleButtonClick('purchaseEvent')}>
-                <Image src={purchaseEventChannelIcon} alt="Purchase Event Channel" />
+              <button
+                className={getButtonClass('purchaseEvent')}
+                onClick={() => handleButtonClick('purchaseEvent')}
+              >
+                <Image src={purchaseEventChannelIcon} alt="Purchase" />
               </button>
             </div>
 
-            {/* SubButtons para a Store (desktop view) */}
+            {/* subbuttons store (desktop) */}
             {!isMobile && activeSection === 'store' && (
               <div className={styles.subButtonsContainer}>
-                <SubButton
-                  text="Categorias"
-                  backgroundColor="#212121"
-                  imageSrc={categoriesIcon}
-                />
+                <SubButton text="Categorias" backgroundColor="#212121" imageSrc={categoriesIcon} />
                 <SubButton
                   text="Pesquisar"
                   backgroundColor="#212121"
@@ -484,7 +452,7 @@ function Channel({ nickname }: ChannelProps) {
           </div>
         </div>
 
-        {/* Conteúdos por seção */}
+        {/* seções */}
         {activeSection === 'store' && publishedCatalogs.length > 0 && (
           <StoreSection
             isMobile={isMobile}
@@ -493,18 +461,14 @@ function Channel({ nickname }: ChannelProps) {
             nickname={nickname}
           />
         )}
-
         {activeSection === 'post' && <PostSection />}
         {activeSection === 'assessment' && <AssessmentSection />}
         {activeSection === 'purchaseEvent' && <PurchaseEventSection />}
       </div>
 
-      {/* Modal de imagem */}
+      {/* modal img */}
       {isModalOpen && (
-        <ImageModal
-          imageUrl={`${apiUrl}${channelData.imageUrl}`}
-          onClose={handleCloseModal}
-        />
+        <ImageModal imageUrl={`${apiUrl}${channelData.imageUrl}`} onClose={handleCloseModal} />
       )}
     </div>
   );

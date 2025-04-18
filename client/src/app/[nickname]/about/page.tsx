@@ -33,12 +33,11 @@ import styles from './about.module.css';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 const frontUrl = process.env.NEXT_PUBLIC_FRONT_URL || '';
 
-// Interfaces para os dados do canal, about e FAQ
+// --- tipagens locais ---
 interface ChannelData {
   id: string;
   name: string;
   imageUrl: string;
-  // Adicione outras propriedades conforme necessário
 }
 
 interface AboutData {
@@ -53,12 +52,12 @@ interface FAQData {
   answer: string;
 }
 
+// --- componente ---
 function AboutPage() {
   const router = useRouter();
-  const params = useParams();
-  const nickname = params.nickname as string;
+  const { nickname } = useParams() as { nickname: string };
 
-  // Detectar se é mobile
+  // detecta mobile
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -66,115 +65,186 @@ function AboutPage() {
     }
   }, []);
 
-  // Estados dos dados
+  // autenticação
+  const [auth, setAuth] = useState<{ isAuthenticated: boolean } | null>(null);
+  useEffect(() => {
+    checkAuth()
+      .then((res) => setAuth(res))
+      .catch(() => setAuth({ isAuthenticated: false }));
+  }, []);
+
+  // dados do canal, about e FAQ
   const [channelData, setChannelData] = useState<ChannelData | null>(null);
   const [aboutData, setAboutData] = useState<AboutData>({});
   const [faqData, setFaqData] = useState<FAQData[]>([]);
   const [isFollowingChannel, setIsFollowingChannel] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
 
-  // Buscar dados do canal, about e FAQ
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Remove arroba, se existir
-        const formattedNickname = nickname.startsWith('@') ? nickname.slice(1) : nickname;
-
-        const channel = await getChannelByNickname(formattedNickname);
+        const nick = nickname.startsWith('@') ? nickname.slice(1) : nickname;
+        const channel = await getChannelByNickname(nick);
         if (!channel) {
           console.error('Canal não encontrado!');
           return;
         }
-        // Transforma os dados garantindo que imageUrl seja sempre uma string
         setChannelData({ ...channel, imageUrl: channel.imageUrl || '' });
 
-        const about = await getAboutByNickname(formattedNickname);
-        const faqs = await getFAQsByNickname(formattedNickname);
+        const about = await getAboutByNickname(nick);
+        const faqs = await getFAQsByNickname(nick);
 
         setAboutData(about || {});
         setFaqData(faqs || []);
 
-        const following = await isFollowing(channel.id);
-        setIsFollowingChannel(following);
-
-        const ownerCheck = await isChannelOwner(channel.id);
-        setIsOwner(ownerCheck);
-      } catch (error) {
-        console.error('Erro ao buscar dados do canal:', error);
+        setIsFollowingChannel(await isFollowing(channel.id));
+        setIsOwner(await isChannelOwner(channel.id));
+      } catch (err) {
+        console.error('Erro ao buscar dados do canal:', err);
       }
     };
 
     fetchData();
   }, [nickname]);
 
-  // Botão Voltar
+  // handlers
   const handleBack = useCallback(() => {
     router.back();
   }, [router]);
 
-  // Funções de seguir/deixar de seguir
   const handleFollowClick = useCallback(async () => {
     if (!channelData) return;
     try {
       await followChannel(channelData.id);
       setIsFollowingChannel(true);
-    } catch (error) {
-      console.error('Erro ao seguir o canal:', error);
+    } catch (err: any) {
+      // redireciona em caso de 401/403
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        await router.push('/login');
+      } else {
+        console.error('Erro ao seguir o canal:', err);
+      }
     }
-  }, [channelData]);
+  }, [channelData, router]);
 
   const handleUnfollowClick = useCallback(async () => {
     if (!channelData) return;
     try {
       await unfollowChannel(channelData.id);
       setIsFollowingChannel(false);
-    } catch (error) {
-      console.error('Erro ao deixar de seguir o canal:', error);
+    } catch (err) {
+      console.error('Erro ao deixar de seguir o canal:', err);
     }
   }, [channelData]);
 
-  // Mensagem
   const handleMessageClick = useCallback(async () => {
     if (!channelData) return;
-    const authResponse = await checkAuth();
-    if (!authResponse.isAuthenticated) {
-      router.push('/login');
+    if (!auth?.isAuthenticated) {
+      await router.push('/login');
       return;
     }
     try {
       const conversationId = await startConversation(channelData.id, '');
-      if (!conversationId || typeof conversationId !== 'string') {
+      if (typeof conversationId === 'string') {
+        router.push(`/chat?conversationId=${conversationId}`);
+      } else {
         console.error('Conversa inválida:', conversationId);
-        return;
       }
-      router.push(`/chat?conversationId=${conversationId}`);
-    } catch (error) {
-      console.error('Erro ao iniciar conversa:', error);
+    } catch (err) {
+      console.error('Erro ao iniciar conversa:', err);
     }
-  }, [channelData, router]);
+  }, [channelData, auth, router]);
 
   if (!channelData) {
     return <div>Carregando...</div>;
   }
 
-  // Remover arroba para links
-  const formattedNickname = nickname.startsWith('@') ? nickname.slice(1) : nickname;
+  const formattedNickname = nickname.startsWith('@')
+    ? nickname.slice(1)
+    : nickname;
 
-  // Monta StageButtons
+  // monta os botões de ação
   const stageButtons = isOwner
     ? [
-        { text: 'Compartilhar', backgroundColor: '#212121', imageSrc: shareIcon },
+        {
+          text: 'Compartilhar',
+          backgroundColor: '#212121',
+          imageSrc: shareIcon,
+          onClick: async () => {}, // placeholder
+        },
       ]
     : isFollowingChannel
     ? [
-        { text: 'Amigos', backgroundColor: '#212121', onClick: handleUnfollowClick },
-        { text: 'Mensagem', backgroundColor: '#212121', imageSrc: chatIcon, onClick: handleMessageClick },
-        { text: 'Compartilhar', backgroundColor: '#212121', imageSrc: shareIcon },
+        {
+          text: 'Amigos',
+          backgroundColor: '#212121',
+          onClick: handleUnfollowClick,
+        },
+        {
+          text: 'Mensagem',
+          backgroundColor: '#212121',
+          imageSrc: chatIcon,
+          onClick: handleMessageClick,
+        },
+        {
+          text: 'Compartilhar',
+          backgroundColor: '#212121',
+          imageSrc: shareIcon,
+          onClick: async () => {},
+        },
+      ]
+    : auth === null
+    ? [
+        {
+          text: '…',
+          backgroundColor: '#ccc',
+          onClick: async () => {},
+        },
+      ]
+    : auth.isAuthenticated
+    ? [
+        {
+          text: 'Seguir',
+          backgroundColor: '#DF1414',
+          imageSrc: followIcon,
+          onClick: handleFollowClick,
+        },
+        {
+          text: 'Mensagem',
+          backgroundColor: '#212121',
+          imageSrc: chatIcon,
+          onClick: handleMessageClick,
+        },
+        {
+          text: 'Compartilhar',
+          backgroundColor: '#212121',
+          imageSrc: shareIcon,
+          onClick: async () => {},
+        },
       ]
     : [
-        { text: 'Seguir', backgroundColor: '#DF1414', imageSrc: followIcon, onClick: handleFollowClick },
-        { text: 'Mensagem', backgroundColor: '#212121', imageSrc: chatIcon, onClick: handleMessageClick },
-        { text: 'Compartilhar', backgroundColor: '#212121', imageSrc: shareIcon },
+        {
+          text: 'Seguir',
+          backgroundColor: '#DF1414',
+          imageSrc: followIcon,
+          onClick: async () => {
+            await router.push('/login');
+          },
+        },
+        {
+          text: 'Mensagem',
+          backgroundColor: '#212121',
+          imageSrc: chatIcon,
+          onClick: async () => {
+            await router.push('/login');
+          },
+        },
+        {
+          text: 'Compartilhar',
+          backgroundColor: '#212121',
+          imageSrc: shareIcon,
+          onClick: async () => {},
+        },
       ];
 
   return (
@@ -197,7 +267,7 @@ function AboutPage() {
           <div className={styles.aboutChannelLeft}>
             <Image
               src={`${apiUrl}${channelData.imageUrl}`}
-              alt={`${channelData.name} - Imagem`}
+              alt={`${channelData.name} – Imagem`}
               className={styles.aboutChannelImage}
               width={130}
               height={130}
@@ -208,16 +278,20 @@ function AboutPage() {
                 window.location.href = `${frontUrl}${formattedNickname}`;
               }}
             >
-              <h2 className={styles.aboutChannelName}>{channelData.name}</h2>
-              <p className={styles.aboutChannelNickname}>{nickname}</p>
+              <h2 className={styles.aboutChannelName}>
+                {channelData.name}
+              </h2>
+              <p className={styles.aboutChannelNickname}>
+                {nickname}
+              </p>
             </div>
 
             <div className={styles.aboutChannelFollow}>
               {stageButtons
                 .filter((btn) => btn.text === 'Seguir' || btn.text === 'Amigos')
-                .map((button, index) => (
+                .map((button, idx) => (
                   <StageButton
-                    key={index}
+                    key={idx}
                     text={button.text}
                     backgroundColor={button.backgroundColor}
                     imageSrc={button.imageSrc}
@@ -230,9 +304,9 @@ function AboutPage() {
           <div className={styles.aboutChannelRight}>
             {stageButtons
               .filter((btn) => btn.text !== 'Seguir' && btn.text !== 'Amigos')
-              .map((button, index) => (
+              .map((button, idx) => (
                 <StageButton
-                  key={index}
+                  key={idx}
                   text={button.text}
                   backgroundColor={button.backgroundColor}
                   imageSrc={button.imageSrc}
@@ -244,8 +318,8 @@ function AboutPage() {
 
         <div className={styles.aboutChannelOutro}>
           {aboutData.aboutText && (
-            <ExpandableCard title="Sobre" defaultExpanded={true}>
-              <p className={`${styles.aboutChannelText} roboto-regular`}>
+            <ExpandableCard title="Sobre" defaultExpanded>
+              <p className={styles.aboutChannelText}>
                 {aboutData.aboutText}
               </p>
             </ExpandableCard>
@@ -254,14 +328,18 @@ function AboutPage() {
           {faqData.length > 0 && (
             <ExpandableCard title="FAQ">
               {faqData.map((faq, idx) => (
-                <FAQExpandableCard key={idx} question={faq.question} answer={faq.answer} />
+                <FAQExpandableCard
+                  key={idx}
+                  question={faq.question}
+                  answer={faq.answer}
+                />
               ))}
             </ExpandableCard>
           )}
 
           {aboutData.storePolicies && (
             <ExpandableCard title="Políticas">
-              <p className={`${styles.aboutChannelText} roboto-regular`}>
+              <p className={styles.aboutChannelText}>
                 {aboutData.storePolicies}
               </p>
             </ExpandableCard>
@@ -269,7 +347,7 @@ function AboutPage() {
 
           {aboutData.exchangesAndReturns && (
             <ExpandableCard title="Trocas e devoluções">
-              <p className={`${styles.aboutChannelText} roboto-regular`}>
+              <p className={styles.aboutChannelText}>
                 {aboutData.exchangesAndReturns}
               </p>
             </ExpandableCard>
@@ -277,7 +355,7 @@ function AboutPage() {
 
           {aboutData.additionalInfo && (
             <ExpandableCard title="Mais informações">
-              <p className={`${styles.aboutChannelText} roboto-regular`}>
+              <p className={styles.aboutChannelText}>
                 {aboutData.additionalInfo}
               </p>
             </ExpandableCard>

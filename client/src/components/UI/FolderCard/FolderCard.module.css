@@ -1,0 +1,6 @@
+.card      { width: 170px; cursor:pointer; }
+.thumbs    { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; height:90px; position:relative; }
+.thumb     { object-fit:cover; }
+.footer    { display:flex; justify-content:space-between; align-items:center; padding-top:4px; }
+.name      { font-size:.85rem; font-weight:600; }
+.more      { background:none; border:none; font-size:20px; line-height:20px; cursor:pointer;}

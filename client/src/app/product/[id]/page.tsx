@@ -18,17 +18,21 @@ import {
   VariationImageDTO,
   ProductVariationDTO,
 } from '@/types/services/product';
+import {
+  FavoriteFolderDTO,
+  FavoriteStatusDTO
+} from '@/types/services/favorites';
 import { DeliveryPriceDTO } from '@/types/services/delivery';
 import { PickupActiveDetailsDTO } from '@/types/services/pickup';
 import StageButton from '@/components/UI/StageButton/StageButton';
 import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';
 import ProductRating from '@/components/UI/ProductRating/ProductRating';
 import ExpandableCard from '@/components/UI/ExpandableCard/ExpandableCard';
+import { LikeIcon } from '@/components/icons/LikeIcon';
 import Card from '@/components/UI/Card/Card';
 import ProductCard from '@/components/UI/ProductCard/ProductCard';
 import shareIcon from '../../../../public/assets/share.svg';
 import followIcon from '../../../../public/assets/follow.svg';
-import likesIcon from '../../../../public/assets/likes.svg';
 import purchaseEventIcon from '../../../../public/assets/purchaseEventChannel.svg';
 import checkBuyIcon from '../../../../public/assets/checkBuy.svg';
 import reabastecerIcon from '../../../../public/assets/reabastecer.svg';
@@ -42,12 +46,12 @@ import {
   isFollowing,
 } from '@/services/channel/followService';
 import { checkAuth } from '@/services/authService';
-import { startConversation } from '@/services/chatService';
 import defaultImage from '../../../../public/assets/user.png';
 import Modal from '@/components/Modals/Modal/Modal';
 
 import {
   listFavoriteFolders,
+  getFavoriteStatus, 
   likeProduct as favoriteProduct,
   removeProductLike,
 } from '@/services/favoriteService';
@@ -89,6 +93,9 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   const { id } = resolvedParams;
   const { location } = useLocationContext();
   const { bag, addToBag } = useBag();
+  const [followLoading, setFollowLoading] = useState(false);
+  const [folderMembership, setFolderMembership] = useState<Record<string, boolean>>({});
+  const [favoriteStatus, setFavoriteStatus]   = useState<FavoriteStatusDTO | null>(null);
 
   // Uso do hook de notificações
   const { setMessage } = useNotification();
@@ -124,7 +131,8 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   // Favoritos
   const [isFavorited, setIsFavorited] = useState(false);
   const [showLikeModal, setShowLikeModal] = useState(false);
-  const [favoriteFolders, setFavoriteFolders] = useState<any[]>([]);
+  const [favoriteFolders, setFavoriteFolders] = useState<FavoriteFolderDTO[]>([]);
+
   const [newFolderName, setNewFolderName] = useState<string>('');
 
   const router = useRouter();
@@ -135,6 +143,15 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
   const activeThumbnailRef = useRef<HTMLDivElement | null>(null);
+
+
+  const [auth, setAuth] = useState<{ isAuthenticated: boolean } | null>(null);
+
+  useEffect(() => {
+    checkAuth()
+      .then(setAuth)
+      .catch(() => setAuth({ isAuthenticated: false }));
+  }, []);
 
   // ----------------------------------------------------------------------------
   // FETCHES
@@ -228,6 +245,31 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   }, [selectedAttributes, product]);
 
   useEffect(() => {
+    const fetchVariationImages = async () => {
+      if (!product?.variations?.length) return;
+
+      try {
+        const variationImagePromises = product.variations.map(async (variation) => {
+          const images = await listVariationImagesByVariation(variation.id!);
+          return { variationId: variation.id!, images };
+        });
+
+        const results = await Promise.all(variationImagePromises);
+        const mapResult = results.reduce((acc, { variationId, images }) => {
+          acc[variationId] = images;
+          return acc;
+        }, {} as Record<string, VariationImageDTO[]>);
+
+        setVariationImagesMap(mapResult);
+      } catch (err) {
+        console.error('Erro ao carregar imagens de variação:', err);
+      }
+    };
+
+    fetchVariationImages();
+  }, [product]);
+  
+  useEffect(() => {
     if (!product) return;
     let combined: string[] = [];
     if (selectedVariation) {
@@ -308,16 +350,26 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
 
   // Ações: seguir, deixar de seguir, mensagem
   const handleFollowClick = useCallback(async () => {
-    if (!channelData) return;
-    try {
-      await followChannel(channelData.id);
-      setIsFollowingChannel(true);
-      setMessage('Canal seguido com sucesso!', 'success');
-    } catch (error) {
-      console.error('Erro ao seguir o canal:', error);
-      setMessage('Erro ao seguir o canal!', 'error');
+  if (!channelData || followLoading) return;
+
+  setFollowLoading(true);
+  try {
+    await followChannel(channelData.id);
+    setIsFollowingChannel(true);
+    setMessage('Canal seguido com sucesso!', 'success');
+  } catch (error: any) {
+    console.error('Erro ao seguir o canal:', error);
+    // se der 401/403 no followChannel, talvez o token tenha expirado
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      router.push('/login');
+      return; 
     }
-  }, [channelData, setMessage]);
+    setMessage('Não foi possível seguir o canal. Tente novamente.', 'error');
+  } finally {
+    setFollowLoading(false);
+  }
+}, [channelData, followLoading, router, setMessage]);
+
 
   const handleUnfollowClick = useCallback(async () => {
     if (!channelData) return;
@@ -331,49 +383,37 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
     }
   }, [channelData, setMessage]);
 
-  const handleMessageClick = useCallback(async () => {
-    if (!channelData) return;
-    const authResponse = await checkAuth();
-    if (!authResponse.isAuthenticated) {
-      router.push('/login');
-      return;
-    }
-    try {
-      const conversationId = await startConversation(channelData.id, '');
-      if (!conversationId || typeof conversationId !== 'string') {
-        console.error('Conversa inválida:', conversationId);
-        return;
-      }
-      router.push(`/chat?conversationId=${conversationId}`);
-    } catch (error) {
-      console.error('Erro ao iniciar conversa:', error);
-      setMessage('Não foi possível iniciar a conversa.', 'error');
-    }
-  }, [channelData, router, setMessage]);
-
-  // FAVORITOS: verificar se o produto já está na pasta "todos"
+  // no lugar do useEffect atual de FAVORITOS
   useEffect(() => {
+    if (!product) return;
+  
     (async () => {
       try {
         const authRes = await checkAuth();
-        if (!authRes.isAuthenticated || !product) return;
+        if (!authRes.isAuthenticated) return;
+  
+        // 1) status rápido do produto
+        const status = await getFavoriteStatus(product.id!);
+        setFavoriteStatus(status);
+        setIsFavorited(status.favorited);
+        setFolderMembership(
+          Object.fromEntries(status.folders.map((n) => [n, true]))
+        );
+  
+        // 2) lista (para exibir todas as pastas no modal)
         const folders = await listFavoriteFolders();
-        setFavoriteFolders(folders || []);
-        const todosFolder = folders.find((f) => f.name === 'todos');
-        if (todosFolder && todosFolder.productIds.includes(product.id!)) {
-          setIsFavorited(true);
-        }
-      } catch (error) {
-        console.error('Erro ao verificar favoritos:', error);
+        setFavoriteFolders(folders);
+      } catch (err) {
+        console.error('Erro ao verificar favoritos:', err);
       }
     })();
-  }, [product]);
+  }, [product, showLikeModal]);
+  
+
 
   // Computa as pastas que já possuem o produto
-  const currentFolders = favoriteFolders.filter((folder) =>
-    folder.productIds.includes(product?.id)
-  );
-
+  const currentFolders = favoriteStatus?.folders ?? [];
+  
   // FUNÇÃO: Clicar no botão de like
   const handleLikeClick = async () => {
     try {
@@ -403,8 +443,10 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
     if (currentFolders.length === 0) return;
     try {
       // Remove do primeiro folder onde foi salvo
-      await removeProductLike(product.id!, currentFolders[0].name);
-      setMessage(`Produto removido da pasta "${currentFolders[0].name}"`, 'success');
+      const folderName = currentFolders[0];
+      await removeProductLike(product.id!, folderName);
+      setMessage(`Produto removido da pasta "${folderName}"`, 'success');
+
       setIsFavorited(false);
       const folders = await listFavoriteFolders();
       setFavoriteFolders(folders || []);
@@ -431,20 +473,46 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
     }
   };
 
-  // MODAL: Adicionar a uma pasta existente
-  const handleAddToExistingFolder = async (folderName: string) => {
-    if (!product) return;
-    try {
+  // MODAL: Adicionar ou remover de uma pasta existente
+const handleAddToExistingFolder = async (folderName: string) => {
+  if (!product) return;
+
+  try {
+    const isAlreadySaved = !!folderMembership[folderName];
+
+    if (isAlreadySaved) {
+      // 👉 já está na pasta → remover
+      await removeProductLike(product.id!, folderName);
+      setMessage(`Produto removido da pasta "${folderName}"`, 'success');
+    } else {
+      // 👉 não está na pasta → adicionar
       await favoriteProduct(product.id!, folderName);
       setMessage(`Produto salvo na pasta "${folderName}"`, 'success');
-      setShowLikeModal(false);
-      const folders = await listFavoriteFolders();
-      setFavoriteFolders(folders || []);
-    } catch (error) {
-      console.error('Erro ao salvar em pasta existente:', error);
-      setMessage('Erro ao salvar em pasta existente!', 'error');
     }
-  };
+
+    /* ---------- atualiza estado local ---------- */
+    setFolderMembership((prev) => ({
+      ...prev,
+      [folderName]: !isAlreadySaved,
+    }));
+    // atualiza flag geral
+    setIsFavorited((prev) =>
+      isAlreadySaved ?                    // acabou de remover
+        Object.values({ ...folderMembership, [folderName]: false }).some(Boolean)
+        : true                            // acabou de adicionar
+    );
+
+    // recarrega lista (opcional – garante consistência)
+    const folders = await listFavoriteFolders();
+    setFavoriteFolders(folders);
+
+    setShowLikeModal(false);
+  } catch (error) {
+    console.error('Erro ao alternar pasta de favoritos:', error);
+    setMessage('Falha ao atualizar favoritos. Tente novamente.', 'error');
+  }
+};
+
 
   // ----------------------------------------------------------------------------
   // ADICIONAR AO CARRINHO
@@ -475,17 +543,52 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
 
   const formattedNickname = nickname.startsWith('@') ? nickname.slice(1) : nickname;
   const stageButtons: StageButtonProps[] = isOwner
-    ? [{ text: 'Compartilhar', backgroundColor: '#212121', imageSrc: shareIcon }]
-    : isFollowingChannel
-    ? [{ text: 'Amigos', backgroundColor: '#212121', onClick: handleUnfollowClick }]
-    : [
-        {
-          text: 'Seguir',
-          backgroundColor: '#DF1414',
-          imageSrc: followIcon,
-          onClick: handleFollowClick,
+  ? [
+      {
+        text: 'Compartilhar',
+        backgroundColor: '#212121',
+        imageSrc: shareIcon,
+        // (sem onClick – tudo ok)
+      },
+    ]
+  : isFollowingChannel
+  ? [
+      {
+        text: 'Amigos',
+        backgroundColor: '#212121',
+        onClick: handleUnfollowClick,       // já é async () => Promise<void>
+      },
+    ]
+  : auth === null
+  ? [
+      {
+        text: '…',
+        backgroundColor: '#ccc',
+        onClick: async () => {},           // agora é Promise<void>
+      },
+    ]
+  : auth.isAuthenticated
+  ? [
+      {
+        text: 'Seguir',
+        backgroundColor: '#DF1414',
+        imageSrc: followIcon,
+        onClick: handleFollowClick,        // já é async () => Promise<void>
+        // remova o `disabled` daqui do array e passe direto pro componente,
+        // ou adicione `disabled?: boolean` em StageButtonProps
+      },
+    ]
+  : [
+      {
+        text: 'Seguir',
+        backgroundColor: '#DF1414',
+        imageSrc: followIcon,
+        onClick: async () => {             // async + await faz Promise<void>
+          await router.push('/login');
         },
-      ];
+      },
+    ]
+
 
   const baseName = product.name;
   const basePrice = product.salePrice;
@@ -701,7 +804,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                     className={`${styles.toCartButton} ${isFavorited ? styles.liked : ''}`}
                     onClick={handleLikeClick}
                   >
-                    <Image src={likesIcon} alt="Likes" width={24} height={24} />
+                    <LikeIcon />
                   </button>
                   <button className={styles.toCartButton}>
                     <Image src={purchaseEventIcon} alt="Purchase Event" width={24} height={24} />
@@ -990,25 +1093,15 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
       {/* MODAL DE LIKE – com cabeçalho, corpo e rodapé */}
       <Modal isOpen={showLikeModal} onClose={() => setShowLikeModal(false)}>
         <div className={styles.modalHeader}>
-          <div className={styles.modalIcon}>
-            <Image src={likesIcon} alt="Likes" width={24} height={24} />
-          </div>
-          {currentFolders.length > 0 && (
-            <div className={styles.savedInfo}>
-              <span>Produto salvo em:&nbsp;</span>
-              {currentFolders.map((folder) => (
-                <span key={folder.id} className={styles.folderName}>
-                  {folder.name}
-                </span>
-              ))}
-            </div>
-          )}
           <button className={styles.unlikeButton} onClick={handleUnlike}>
-            Descurtir
+          <div className={`${styles.modalIcon} ${isFavorited ? styles.likedIcon : ''}`}> 
+            <LikeIcon />           
+            <span>Curtido</span>
+          </div>
           </button>
         </div>
         <div className={styles.modalBody}>
-          <h3>Escolha outra pasta para salvar:</h3>
+          <span>Todas as pastas</span>
           <ul className={styles.folderList}>
             {favoriteFolders.map((folder) => (
               <li
@@ -1017,10 +1110,15 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
                 onClick={() => handleAddToExistingFolder(folder.name)}
               >
                 {folder.name}
+                {/* Mark current saved folder with "Salvo" */}
+                {folderMembership[folder.name] && (
+                  <span className={styles.savedMarker}>Salvo</span>
+                )}
               </li>
             ))}
           </ul>
         </div>
+
         <div className={styles.modalFooter}>
           <input
             type="text"

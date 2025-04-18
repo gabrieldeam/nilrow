@@ -49,3 +49,21 @@
     padding-top: 10px; /* Ajusta o alinhamento quando a busca está visível */
   }
   
+  .bagButtonContainer {
+    position: relative;
+    display: inline-block;
+    margin-left: 12px; 
+  }
+  
+  .bagCount {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background-color: #7B33E5;
+    color: #fff;
+    border-radius: 45%;
+    padding: 2px 6px;
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 1;
+  }

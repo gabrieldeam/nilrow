@@ -112,10 +112,10 @@ function Profile() {
                 Meu perfil
               </h1>
               <div className={styles.profileButtons}>
-                <HeaderButton icon={ordersIcon} link="/orders" />
-                <HeaderButton icon={notificationsIcon} link="/notifications" />
-                <HeaderButton icon={blockedIcon} link="/blocked" />
-                <HeaderButton icon={likesIcon} link="/likes" />
+                <HeaderButton icon={ordersIcon} link="/profile/orders" />
+                <HeaderButton icon={notificationsIcon} link="/profile/notifications" />
+                <HeaderButton icon={blockedIcon} link="/profile/blocked" />
+                <HeaderButton icon={likesIcon} link="/profile/likes" />
               </div>
             </div>
 

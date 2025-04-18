@@ -300,51 +300,68 @@
     border-radius: 5px;
     flex-shrink: 0;
     width: auto;
+    color: white;
+  } 
+  
+  .toCartButton.liked {
+    color: #DF1414; 
   }
-
-  .toCartButton.liked img {
-    filter: invert(11%) sepia(95%) saturate(7493%) hue-rotate(357deg) brightness(104%) contrast(108%);
+  
+  .toCartButton svg path {
+    fill: currentColor;
   }
 
   .modalHeader {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 1rem;
     margin-bottom: 1rem;
+    margin-top: -10px;
   }
-  
+
+  .unlikeButton {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+
   .modalIcon {
     display: flex;
     align-items: center;
+    gap: 10px;
+  }
+
+  .likedIcon {
+    color: #DF1414;
   }
   
+  .modalIcon svg path {
+    fill: currentColor;
+  }
+
+  .modalBody {
+    overflow-y: auto;
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 500px;
+  }
+
+  .modalBody span {
+    font-size: 12px;
+  }
+
+  .savedMarker {
+    margin-left: 0.5rem;
+    font-weight: bold;
+    color: #7b33e5;
+  }
+
   .savedInfo {
     flex: 1;
     margin-left: 1rem;
     font-size: 0.9rem;
-  }
-  
-  .folderName {
-    font-weight: bold;
-    color: #e53935;
-    margin-right: 0.5rem;
-  }
-  
-  .unlikeButton {
-    background: transparent;
-    border: none;
-    color: #e53935;
-    font-weight: bold;
-    cursor: pointer;
-  }
-  
-  .modalBody {
-    max-height: 250px;
-    overflow-y: auto;
-    margin-bottom: 1rem;
-  }
+  }   
   
   .folderList {
     list-style: none;
@@ -354,38 +371,40 @@
   
   .folderItem {
     padding: 0.5rem;
-    border: 1px solid #ccc;
+    background-color: #242424;
     border-radius: 4px;
     margin-bottom: 0.5rem;
     cursor: pointer;
   }
   
   .folderItem:hover {
-    background: #f0f0f0;
+    background-color: #242424;
   }
   
   .modalFooter {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    border-top: 1px solid #ddd;
-    padding-top: 1rem;
+    background-color: #212121;
+    padding: 20px;
+    margin: -20px;
   }
   
   .modalFooter input {
     flex: 1;
     padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    border: 1px solid white;
+    background-color: #212121;
+    border-radius: 5px 0 0 5px;
+    border-right: none;
   }
   
   .modalFooter button {
-    padding: 0.5rem 1rem;
-    background-color: #7b33e5;
-    color: #fff;
+    padding: 0.563rem;
+    background-color: white;
+    color: #000000;
     border: none;
-    border-radius: 4px;
     cursor: pointer;
+    border-radius: 0 5px 5px 0;
   }
 
 

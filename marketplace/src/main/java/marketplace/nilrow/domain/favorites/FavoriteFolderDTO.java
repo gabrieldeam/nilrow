@@ -3,7 +3,9 @@ package marketplace.nilrow.domain.favorites;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import marketplace.nilrow.domain.catalog.product.ProductDTO;
 
+import java.util.List;
 import java.util.Set;
 
 @Data
@@ -14,5 +16,5 @@ public class FavoriteFolderDTO {
     private String id;
     private String name;
     private String peopleId; // Dono da pasta
-    private Set<String> productIds; // IDs dos produtos contidos na pasta
+    private List<ProductDTO> productsPreview; // IDs dos produtos contidos na pasta
 }
