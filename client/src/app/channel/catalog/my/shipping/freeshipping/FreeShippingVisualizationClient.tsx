@@ -433,6 +433,40 @@ const FreeShippingVisualizationClient: React.FC = () => {
     setCenteredIndex(idx);
   };
 
+  const handleFocusRegion = useCallback(
+      (index: number) => {
+        const loc = locations[index];
+        if (!loc || !mapRef.current) return;
+  
+        const bounds: [number, number][] = [];
+        if (
+          typeof loc.latitude === "number" &&
+          !isNaN(loc.latitude) &&
+          typeof loc.longitude === "number" &&
+          !isNaN(loc.longitude)
+        ) {
+          bounds.push([loc.latitude, loc.longitude]);
+        }
+  
+        loc.includedPolygons?.forEach((poly) => {
+          if (Array.isArray(poly) && poly.length > 0) {
+            bounds.push(...(poly as [number, number][]));
+          }
+        });
+  
+        loc.excludedPolygons?.forEach((poly) => {
+          if (Array.isArray(poly) && poly.length > 0) {
+            bounds.push(...(poly as [number, number][]));
+          }
+        });
+  
+        if (bounds.length > 0 && mapRef.current) {
+          mapRef.current.fitBounds(bounds);
+        }
+      },
+      [locations]
+    );
+    
   /* -------------------- MAP CENTER ---------------------------------- */
   let mapCenter: [number, number] = [-14.235, -51.9253];
   let mapZoom = 3;
@@ -550,9 +584,81 @@ const FreeShippingVisualizationClient: React.FC = () => {
 
               <MapRefUpdater mapRef={mapRef} />
 
+              {/* Renderiza os marcadores das localizações cadastradas */}
+                            {locations.map((loc, idx) => {
+                              const isLatLonValid =
+                                typeof loc.latitude === "number" &&
+                                !isNaN(loc.latitude) &&
+                                typeof loc.longitude === "number" &&
+                                !isNaN(loc.longitude);
+              
+                              return (
+                                <React.Fragment key={loc.id ?? idx}>
+                                  {/* Polígonos de inclusão */}
+                                  {loc.includedPolygons?.map((poly, i) =>
+                                    poly.length > 0 ? (
+                                      <Polygon
+                                        key={`inc-${loc.id ?? idx}-${i}`}
+                                        positions={poly}
+                                        color="green"
+                                      />
+                                    ) : null
+                                  )}
+              
+                                  {/* Polígonos de exclusão */}
+                                  {loc.excludedPolygons?.map((poly, i) =>
+                                    poly.length > 0 ? (
+                                      <Polygon
+                                        key={`exc-${loc.id ?? idx}-${i}`}
+                                        positions={poly}
+                                        color="red"
+                                      />
+                                    ) : null
+                                  )}
+              
+                                  {/* Marcador principal */}
+                                  {isLatLonValid && (
+                                    <>
+                                      <Marker
+                                        position={[loc.latitude, loc.longitude]}
+                                        icon={
+                                          loc.action === "include" ? includeIcon : excludeIcon
+                                        }
+                                      >
+                                        <Popup>{loc.name}</Popup>
+                                      </Marker>
+              
+                                      {/* Círculo em torno do local (fixo 5 km) */}
+                                      <Circle
+                                        center={[loc.latitude, loc.longitude]}
+                                        radius={5000} // 5 km
+                                        pathOptions={{
+                                          color: loc.action === "include" ? "green" : "red",
+                                          fillColor:
+                                            loc.action === "include" ? "green" : "red",
+                                          fillOpacity: 0.2,
+                                        }}
+                                      >
+                                        <Popup>
+                                          {loc.action === "include"
+                                            ? "Raio de inclusão (5km)"
+                                            : "Raio de exclusão (5km)"}
+                                          <br />
+                                          Local: {loc.name}
+                                        </Popup>
+                                      </Circle>
+                                    </>
+                                  )}
+                                </React.Fragment>
+                              );
+                            })}
+
               {/* MARCADOR CATALOGO */}
-              {catalogMarker && includeIcon && (
-                <Marker position={[catalogMarker.lat, catalogMarker.lng]} icon={includeIcon}>
+              {catalogMarker && (
+                <Marker
+                  position={[catalogMarker.lat, catalogMarker.lng]}
+                  icon={includeIcon}
+                >
                   <Popup>Endereço do Catálogo</Popup>
                 </Marker>
               )}

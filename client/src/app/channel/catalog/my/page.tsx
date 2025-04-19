@@ -20,7 +20,7 @@ import previewIcon from '../../../../../public/assets/preview.svg';
 import productsIcon from '../../../../../public/assets/products.svg';
 import ordersCatalogIcon from '../../../../../public/assets/ordersCatalog.svg';
 import invoiceIcon from '../../../../../public/assets/invoice.svg';
-import eventsIcon from '../../../../../public/assets/events.svg';
+import toolIcon from '../../../../../public/assets/tool.svg';
 
 import { isCatalogReleased, isCatalogVisible, updateCatalogVisibility } from '@/services/catalogService';
 import { useNotification } from '@/hooks/useNotification';
@@ -184,10 +184,10 @@ const MyCatalogContent: React.FC = () => {
               onClick={() => router.push('/channel/catalog/my/depois-colocar')}
             />
             <StepButton
-              icon={eventsIcon}
-              title="Eventos"
+              icon={toolIcon}
+              title="Ferramentas"
               paragraph="Escolha onde seus produtos poderão ser vistos e vendidos."
-              onClick={() => router.push('/channel/catalog/my/depois-colocar')}
+              onClick={() => router.push('/channel/catalog/my/tools')}
             />
           </div>
           <Card title="Status">
