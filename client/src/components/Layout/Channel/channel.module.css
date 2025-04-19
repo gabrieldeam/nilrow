@@ -26,19 +26,14 @@
   box-sizing: border-box;
 }
 
-.channelButtonsSection {
-  margin-bottom: 3px;
-  margin-top: 30px;
-}
 
-.fixedChannelButtonsSection {
-  position: fixed;
-  top: 89px;
-  left: 0;
-  width: 100%;
+.channelButtonsSection {
+  min-width: 105%;
+  position: sticky; 
+  top: 118px;
   z-index: 100;
   background-color: #000000;
-  padding: 10px 58px;
+  margin-left: -1px;
 }
 
 .channelLeft {
@@ -146,7 +141,6 @@
   display: flex;
   gap: 60px;
   padding: 10px;
-  z-index: 100;
 }
 
 .fixedButton {
@@ -170,6 +164,7 @@
   gap: 10px;
   width: 350px;
   justify-content: center;
+  margin-top: 10px;
 }
 
 @media (min-width: 768px) and (max-width: 1024px) {
@@ -181,7 +176,7 @@
   }
 }
 
-/* Mobile */
+/* ---------- Mobile ---------- */
 @media (max-width: 768px) {
   .channelPage {
     padding-bottom: 93px;
@@ -208,13 +203,13 @@
   .channelLinkButtonContainer {
     justify-content: center;
   }
-  .fixedChannelButtonsSection {
-    top: 73px;
-  }
+
   .channelButtonsSection {
+    top: 108px;
     margin-bottom: 3px;
-    margin-top: 15px;
+    min-width: 100%;
   }
+
   .channelStageButtons {
     width: calc(100vw - 40px);
     justify-content: center;

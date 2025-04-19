@@ -1,6 +1,62 @@
-.card      { width: 170px; cursor:pointer; }
-.thumbs    { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; height:90px; position:relative; }
-.thumb     { object-fit:cover; }
-.footer    { display:flex; justify-content:space-between; align-items:center; padding-top:4px; }
-.name      { font-size:.85rem; font-weight:600; }
-.more      { background:none; border:none; font-size:20px; line-height:20px; cursor:pointer;}
+/* components/UI/FolderCard/FolderCard.module.css */
+
+.card {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: visible;
+    width: 100%;
+  }
+  
+  .thumbs {
+    display: flex;
+    align-items: flex-start;
+    padding: 8px;
+  }
+
+  .thumbWrapper {
+  width: 100px;
+  height: 100px;
+  position: relative;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #f7fafc;
+  margin-bottom: 8px;
+  margin-left: 0; 
+  border: 1px solid #e2e8f0;
+}
+
+/* desloca a 2ª e a 3ª 30px para a esquerda */
+.thumbWrapper:nth-child(2),
+.thumbWrapper:nth-child(3) {
+  margin-left: -30px;
+}
+
+.thumbWrapper:nth-child(1) { z-index: 3; }
+.thumbWrapper:nth-child(2) { z-index: 2; }
+.thumbWrapper:nth-child(3) { z-index: 1;}
+
+  .thumb {
+    object-fit: cover;
+  }
+  
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+  }
+  
+  .name {
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+  
+  .more {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+    color: white;
+  }
+  

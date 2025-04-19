@@ -160,7 +160,9 @@ public class ProductDTO {
 
         // Se você quiser trazer DTOs aninhados completos:
 
-
+        if (p.getCatalog() != null && p.getCatalog().getChannel() != null) {
+            dto.setChannel(new SimpleChannelDTO(p.getCatalog().getChannel()));
+        }
         return dto;
     }
 

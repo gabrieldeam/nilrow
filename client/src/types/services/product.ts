@@ -1,5 +1,6 @@
 import { BrandDTO } from '@/types/services/brand';
 import { CategoryDTO,  SubCategoryDTO } from '@/types/services/category';
+import { SimpleChannelDTO  } from '@/types/services/channel';
 
 export enum ProductType {
   PRODUCT = 'PRODUCT',
@@ -88,4 +89,5 @@ export interface ProductDTO {
   brand?: BrandDTO;
   category?: CategoryDTO;
   subCategory?: SubCategoryDTO;
+  channel?: SimpleChannelDTO;
 }

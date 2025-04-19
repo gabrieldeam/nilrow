@@ -7,6 +7,7 @@ import { FavoriteFolderDTO } from '@/types/services/favorites';
 import { listFavoriteFolders } from '@/services/favoriteService';
 import Modal from '@/components/Modals/Modal/Modal';
 import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';
+import SubHeader from '@/components/Layout/SubHeader/SubHeader';
 
 import styles from './likes.module.css';
 
@@ -42,9 +43,17 @@ export default function LikesPage() {
     )}
 
     <div className={styles.likesContainer}>
-    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,170px)',gap:'12px'}}>
+      <SubHeader title="Curtidas" handleBack={handleBack} />
+      <div
+        style={{
+          display: 'grid',
+          width: '100%',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
+          gap: '8px',
+        }}
+      >
         {folders.map((f) => (
-          <div key={f.id} onClick={() => router.push(`/likes/${encodeURIComponent(f.name)}`)}>
+          <div key={f.id} onClick={() => router.push(`/profile/likes/${encodeURIComponent(f.name)}`)}>
             <FolderCard folder={f} onMore={(e) => { e.stopPropagation(); setOpen(f.name);} } />
           </div>
         ))}

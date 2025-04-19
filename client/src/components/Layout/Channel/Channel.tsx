@@ -1,7 +1,6 @@
-// components/Channel/Channel.tsx
 'use client';
 
-import React, { memo, useEffect, useState, useCallback } from 'react';
+import React, { memo, useEffect, useState } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -109,7 +108,6 @@ function Channel({ nickname }: ChannelProps) {
 
   // UI
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isFixed, setIsFixed] = useState(false);
   const [activeSection, setActiveSection] = useState<
     'post' | 'store' | 'assessment' | 'purchaseEvent'
   >('post');
@@ -168,17 +166,6 @@ function Channel({ nickname }: ChannelProps) {
     };
     fetchData();
   }, [nickname]);
-
-  // scroll fix
-  const handleScroll = useCallback(() => {
-    const section = document.querySelector('.channel-buttons-section');
-    if (!section) return;
-    setIsFixed(section.getBoundingClientRect().top <= 80);
-  }, []);
-  useEffect(() => {
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [handleScroll]);
 
   // navegação
   const handleBack = () => router.back();
@@ -407,12 +394,8 @@ function Channel({ nickname }: ChannelProps) {
           </div>
         </div>
 
-        {/* botões fixos */}
-        <div
-          className={`${styles.channelButtonsSection} ${
-            isFixed ? styles.fixedChannelButtonsSection : ''
-          } channel-buttons-section`}
-        >
+        {/* botões (agora STICKY) */}
+        <div className={`${styles.channelButtonsSection} channel-buttons-section`}>
           <div className={styles.buttonsContainer}>
             <div className={styles.fixedButtonsContainer}>
               {publishedCatalogs.length > 0 && (

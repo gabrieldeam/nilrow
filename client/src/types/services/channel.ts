@@ -76,3 +76,9 @@ export interface FAQData {
     aboutId: string;
 }
   
+export interface SimpleChannelDTO {
+    id: string;
+    name: string;
+    imageUrl: string;
+    nickname: string;
+  }

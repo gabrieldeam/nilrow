@@ -11,6 +11,7 @@ import melhorenvioIcon from '../../../../../../public/assets/melhorenvio.svg';
 import deliveryIcon from '../../../../../../public/assets/delivery.svg';
 import removeIcon from '../../../../../../public/assets/remove.svg';
 import schedulingIcon from '../../../../../../public/assets/scheduling.svg';
+import freeShippingIcon from '../../../../../../public/assets/freeShipping.svg';
 
 import styles from './shipping.module.css';
 
@@ -31,43 +32,52 @@ function Shipping() {
     <div className={styles.administrationPage}>
 
       {isMobile && (
-        <MobileHeader title="Meu Catálogo" buttons={{ close: true}} handleBack={handleBack} />
+        <MobileHeader title="Entregas" buttons={{ close: true}} handleBack={handleBack} />
       )}
 
       {loading && <LoadingSpinner />}
       <div className={styles.administrationContainer}>
         <div className={styles.myCatalogHeader}>
-          <SubHeader title="Meu Catálogo" handleBack={handleBack} />
+          <SubHeader title="Entregas" handleBack={handleBack} />
         </div>
-        <div className={styles.administrationList}>
-          <StepButton
-            icon={melhorenvioIcon}
-            title="Melhor Envio"
-            paragraph="Lista de usuários cadastrados"
-            onClick={() => router.push('/channel/catalog/my/shipping/melhorenvio')}
-          />
-          <StepButton
-            icon={deliveryIcon}
-            title="Delivery"
-            paragraph="Crie e veja as categorias e subcategorias"
-            onClick={() => router.push('/channel/catalog/my/shipping/delivery')} 
-          />
+          <div className={styles.administrationList}>
+            <StepButton
+              icon={melhorenvioIcon}
+              title="Melhor Envio"
+              paragraph="Lista de usuários cadastrados"
+              onClick={() => router.push('/channel/catalog/my/shipping/melhorenvio')}
+            />
+            <StepButton
+              icon={deliveryIcon}
+              title="Delivery"
+              paragraph="Crie e veja as categorias e subcategorias"
+              onClick={() => router.push('/channel/catalog/my/shipping/delivery')} 
+            />
           </div>
 
           <div className={styles.administrationList}>
-          <StepButton
-            icon={removeIcon}
-            title="Retirar"
-            paragraph="Crie e veja as Marcas"
-            onClick={() => router.push('/channel/catalog/my/shipping/pickup')} 
-          />
-          <StepButton
-            icon={schedulingIcon}
-            title="Agendar"
-            paragraph="Crie e veja os Tamplates de Produtos"
-            onClick={() => router.push('/channel/catalog/my/shipping/scheduling')} 
-          />
-        </div>
+            <StepButton
+              icon={removeIcon}
+              title="Retirar"
+              paragraph="Crie e veja as Marcas"
+              onClick={() => router.push('/channel/catalog/my/shipping/pickup')} 
+            />
+            <StepButton
+              icon={schedulingIcon}
+              title="Agendar"
+              paragraph="Crie e veja os Tamplates de Produtos"
+              onClick={() => router.push('/channel/catalog/my/shipping/scheduling')} 
+            />          
+          </div>
+
+          <div className={styles.administrationList}>
+            <StepButton
+              icon={freeShippingIcon}
+              title="Frete Grátis"
+              paragraph="Crie e veja as Marcas"
+              onClick={() => router.push('/channel/catalog/my/shipping/freeshipping')} 
+            />        
+          </div>
       </div>
     </div>
   );

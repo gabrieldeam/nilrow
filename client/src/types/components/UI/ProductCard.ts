@@ -1,7 +1,8 @@
 export interface ButtonItem {
-    image: string; // URL da imagem do botão
+    Icon?: React.ReactNode
+    image?: string; // URL da imagem do botão
     link?: string; // link é opcional
-    onClick?: () => void; // função onClick opcional
+    onClick?: React.MouseEventHandler<HTMLElement>;
   }
   
   export interface ProductCardProps {
