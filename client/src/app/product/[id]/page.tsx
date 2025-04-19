@@ -1019,56 +1019,60 @@ const handleAddToExistingFolder = async (folderName: string) => {
           {/* COLUNA DIREITA */}
           <div className={styles.rightColumn}>
             <div className={styles.deliveries}>
-              <Card title="Delivery">
-                {deliveryData && (
-                  <div className={styles.pickupBox}>
-                    <div className={styles.labels}>
-                      <span>Preço</span>
-                      <span>Tempo de Entrega</span>
-                    </div>
-                    <div className={styles.pickupInfo}>
-                      <div className={styles.price}>
-                        {deliveryData.price === 0 ? 'Grátis' : `R$ ${deliveryData.price}`}
+              {deliveryData && (
+                <Card title="Delivery">
+                  {deliveryData && (
+                    <div className={styles.pickupBox}>
+                      <div className={styles.labels}>
+                        <span>Preço</span>
+                        <span>Tempo de Entrega</span>
                       </div>
-                      <div className={styles.availability}>
-                        {deliveryData.averageDeliveryTime} min
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </Card>
-              <Card title="Retirada">
-                {pickupDetails && (
-                  <div className={styles.pickupBox}>
-                    <p className={styles.pickupTitle}>
-                      <strong>Retirar em:</strong>{' '}
-                      {showFullAddress ? (
-                        addressDetails
-                      ) : (
-                        <span className={styles.truncated}>{pickupDetails.address.street}</span>
-                      )}
-                      <span
-                        className={styles.verMais}
-                        onClick={() => setShowFullAddress(!showFullAddress)}
-                      >
-                        {showFullAddress ? 'ver menos' : 'ver mais'}
-                      </span>
-                    </p>
-                    <div className={styles.labels}>
-                      <span>Preço</span>
-                      <span>Disponibilidade</span>
-                    </div>
-                    <div className={styles.pickupInfo}>
-                      <div className={styles.price}>
-                        {pickupDetails.precoRetirada === 0 ? 'Grátis' : pickupDetails.precoRetirada}
-                      </div>
-                      <div className={styles.availability}>
-                        em {pickupDetails.prazoRetirada} dias
+                      <div className={styles.pickupInfo}>
+                        <div className={styles.price}>
+                          {deliveryData.price === 0 ? 'Grátis' : `R$ ${deliveryData.price}`}
+                        </div>
+                        <div className={styles.availability}>
+                          {deliveryData.averageDeliveryTime} min
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-              </Card>
+                  )}
+                </Card>
+              )}
+              {pickupDetails && (
+                <Card title="Retirada">
+                  {pickupDetails && (
+                    <div className={styles.pickupBox}>
+                      <p className={styles.pickupTitle}>
+                        <strong>Retirar em:</strong>{' '}
+                        {showFullAddress ? (
+                          addressDetails
+                        ) : (
+                          <span className={styles.truncated}>{pickupDetails.address.street}</span>
+                        )}
+                        <span
+                          className={styles.verMais}
+                          onClick={() => setShowFullAddress(!showFullAddress)}
+                        >
+                          {showFullAddress ? 'ver menos' : 'ver mais'}
+                        </span>
+                      </p>
+                      <div className={styles.labels}>
+                        <span>Preço</span>
+                        <span>Disponibilidade</span>
+                      </div>
+                      <div className={styles.pickupInfo}>
+                        <div className={styles.price}>
+                          {pickupDetails.precoRetirada === 0 ? 'Grátis' : pickupDetails.precoRetirada}
+                        </div>
+                        <div className={styles.availability}>
+                          em {pickupDetails.prazoRetirada} dias
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </Card>
+              )}
             </div>
             <div className={styles.infoContainer}>
               <div className={styles.infoItem}>

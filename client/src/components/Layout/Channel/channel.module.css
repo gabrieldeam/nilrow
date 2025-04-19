@@ -28,7 +28,7 @@
 
 
 .channelButtonsSection {
-  min-width: 105%;
+  min-width: 100%;
   position: sticky; 
   top: 118px;
   z-index: 100;

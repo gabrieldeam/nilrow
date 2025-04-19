@@ -17,7 +17,7 @@ public class PolygonUtils {
      * @param polygon Lista de DeliveryCoordinate que define o polígono
      * @return true se o ponto estiver dentro do polígono, false caso contrário
      */
-    public static boolean isPointInPolygon(double lat, double lon, List<DeliveryCoordinate> polygon) {
+    public static boolean isPointInPolygon(double lat, double lon, List<? extends GeoCoordinate> polygon) {
         boolean inside = false;
         int n = polygon.size();
         for (int i = 0, j = n - 1; i < n; j = i++) {
