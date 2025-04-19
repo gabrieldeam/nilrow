@@ -42,7 +42,7 @@ function Tools() {
               icon={cupomIcon}
               title="Cupom"
               paragraph="Lista de usuários cadastrados"
-              onClick={() => router.push('/channel/catalog/my/shipping/melhorenvio')}
+              onClick={() => router.push('/channel/catalog/my/tools/coupon')}
             />
             <StepButton
               icon={eventsIcon}
