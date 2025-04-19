@@ -28,10 +28,12 @@ import { LocationData } from "@/types/services/catalog";
 import MobileHeader from "@/components/Layout/MobileHeader/MobileHeader";
 import SubHeader from "@/components/Layout/SubHeader/SubHeader";
 import CustomInput from "@/components/UI/CustomInput/CustomInput";
+import CustomSelect from "@/components/UI/CustomSelect/CustomSelect";
 import Modal from "@/components/Modals/Modal/Modal";
 import Card from "@/components/UI/Card/Card";
 import StageButton from "@/components/UI/StageButton/StageButton";
 import LoadingSpinner from "@/components/UI/LoadingSpinner/LoadingSpinner";
+import ProductSelectionModal from "@/components/Modals/ProductSelectionModal/ProductSelectionModal";
 
 import includeIconSrc from "../../../../../../../public/assets/include.svg";
 import excludeIconSrc from "../../../../../../../public/assets/close.svg";
@@ -61,6 +63,11 @@ import {
   getAllCoupons,
   checkCoupon,
 } from "@/services/couponService";
+
+import {
+  getAllCategoriesAdmin,
+  getSubCategoriesByCategory
+} from '@/services/categoryService';
 
 /* ------------------------------------------------------------------ */
 /*  TIPOS AUXILIARES & POLÍGONOS – (reaproveitando funções)           */
@@ -206,6 +213,65 @@ const CouponVisualizationClient: React.FC = () => {
   /* -------------------- REFS ---------------------------------------- */
   const mapRef = useRef<L.Map | null>(null);
   const [centeredIdx, setCenteredIdx] = useState<number | null>(null);
+  const [cupRule, setCupRule] = useState<'ALL'|'CATEGORY'|'SUBCATEGORY'|'PRODUCT'>('ALL');
+  const [prodModalOpen, setProdModalOpen] = useState(false);
+  
+  const generateCode = () => {
+    const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+    setCupForm(prev => ({ ...prev, code }));
+  };
+
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [subCategories, setSubCategories] = useState<{ id: string; name: string }[]>([]);
+  const [categoryPage, setCategoryPage] = useState(0);
+  const [hasMoreCategories, setHasMoreCategories] = useState(false);
+  const [subCategoryPage, setSubCategoryPage] = useState(0);
+  const [hasMoreSubCategories, setHasMoreSubCategories] = useState(false);
+
+  const [categoryId, setCategoryId] = useState("");
+  const [subCategoryId, setSubCategoryId] = useState("");
+
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+
+  const handleConfirmProducts = (ids: string[]) => {
+    setSelectedProductIds(ids);
+    setCupForm(f => ({ ...f, productIds: ids }));
+    setProdModalOpen(false);
+  };
+
+
+  // efeitos para carregar categorias iniciais
+  useEffect(() => {
+    async function fetchInitialCats() {
+      try {
+        const res = await getAllCategoriesAdmin(0, 10);
+        setCategories(res.content);
+        setHasMoreCategories(!res.last);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    fetchInitialCats();
+  }, []);
+
+  // função para buscar mais categorias
+  const loadMoreCategories = async () => {
+    const next = categoryPage + 1;
+    const res = await getAllCategoriesAdmin(next, 10);
+    setCategories(prev => [...prev, ...res.content]);
+    setHasMoreCategories(!res.last);
+    setCategoryPage(next);
+  };
+
+  // função para buscar subcategorias de uma categoria
+  const fetchSubCategories = async (catId: string, page = 0) => {
+    const res = await getSubCategoriesByCategory(catId, page, 10);
+    if (page === 0) setSubCategories(res.content);
+    else setSubCategories(prev => [...prev, ...res.content]);
+    setHasMoreSubCategories(!res.last);
+    setSubCategoryPage(page);
+  };
+
 
   /* -------------------- ICONES MAPA --------------------------------- */
   const includeIcon = useMemo(() => {
@@ -455,6 +521,42 @@ const CouponVisualizationClient: React.FC = () => {
     }
   };
 
+
+  const handleFocusRegion = useCallback(
+        (index: number) => {
+          const loc = locations[index];
+          if (!loc || !mapRef.current) return;
+    
+          const bounds: [number, number][] = [];
+          if (
+            typeof loc.latitude === "number" &&
+            !isNaN(loc.latitude) &&
+            typeof loc.longitude === "number" &&
+            !isNaN(loc.longitude)
+          ) {
+            bounds.push([loc.latitude, loc.longitude]);
+          }
+    
+          loc.includedPolygons?.forEach((poly) => {
+            if (Array.isArray(poly) && poly.length > 0) {
+              bounds.push(...(poly as [number, number][]));
+            }
+          });
+    
+          loc.excludedPolygons?.forEach((poly) => {
+            if (Array.isArray(poly) && poly.length > 0) {
+              bounds.push(...(poly as [number, number][]));
+            }
+          });
+    
+          if (bounds.length > 0 && mapRef.current) {
+            mapRef.current.fitBounds(bounds);
+          }
+        },
+        [locations]
+      );
+
+
   /* -------------------- MAP CENTER ---------------------------------- */
   let mapCenter: [number, number] = [-14.235, -51.9253];
   let mapZoom = 3;
@@ -673,43 +775,189 @@ const CouponVisualizationClient: React.FC = () => {
                 })}
             </MapContainer>
           </div>
+          <div className={styles.visualizationSearchHistory}>
+            {locations.map((loc, idx) => (
+              <div
+                key={loc.id ?? idx}
+                className={styles.visualizationSearchItem}
+                onClick={() => handleFocusRegion(idx)}
+              >
+                <Image
+                  src={
+                    loc.action === "include"
+                      ? includeIconSrc.src ?? includeIconSrc
+                      : excludeIconSrc.src ?? excludeIconSrc
+                  }
+                  alt="Ícone"
+                  className={styles.searchHistoryIcon}
+                  width={20}
+                  height={20}
+                  style={{ marginRight: 8 }}
+                />
+                <span>{loc.name}</span>
+              </div>
+            ))}
+          </div>
         </Card>
       </div>
 
       {/* MODAL CUPOM (novo/editar) */}
       {cupModalOpen && (
-        <Modal isOpen={cupModalOpen} onClose={() => setCupModalOpen(false)}>
-          <h3>{isEditingCupom.current ? "Editar cupom" : "Novo cupom"}</h3>
+      <Modal isOpen={cupModalOpen} onClose={() => setCupModalOpen(false)}>
+        <h3>{isEditingCupom.current ? "Editar cupom" : "Novo cupom"}</h3>
 
+        {/* código + gerador */}
+        <div className={styles.modalRow}>
           <CustomInput
             title="Código"
             value={cupForm.code}
-            onChange={(e) => setCupForm({ ...cupForm, code: e.target.value.toUpperCase() })}
+            onChange={e => setCupForm({ ...cupForm, code: e.target.value.toUpperCase() })}
           />
-          <CustomInput
-            title="Valor do desconto"
-            value={String(cupForm.discountValue)}
-            onChange={(e) => setCupForm({ ...cupForm, discountValue: e.target.value })}
-            placeholder={cupForm.discountType === DiscountType.PERCENTAGE ? "%" : "R$"}
-          />
-          <CustomInput
-            title="Limite por usuário"
-            value={String(cupForm.perUserLimit)}
-            onChange={(e) => setCupForm({ ...cupForm, perUserLimit: Number(e.target.value) })}
-          />
-          <CustomInput
-            title="Limite total"
-            value={String(cupForm.totalLimit)}
-            onChange={(e) => setCupForm({ ...cupForm, totalLimit: Number(e.target.value) })}
-          />
+          <button
+            type="button"
+            className={styles.generateButton}
+            onClick={generateCode}
+          >
+            Gerar
+          </button>
+        </div>
 
-          <StageButton
-            text="Salvar"
-            backgroundColor="#7B33E5"
-            onClick={saveCoupon}
+        {/* tipo de desconto */}
+        <div className={styles.modalRow}>
+          <label htmlFor="discountType">Tipo de desconto</label>
+          <select
+            id="discountType"
+            value={cupForm.discountType}
+            onChange={e =>
+              setCupForm({ ...cupForm, discountType: e.target.value as DiscountType })
+            }
+          >
+            <option value={DiscountType.PERCENTAGE}>Percentual</option>
+            <option value={DiscountType.FIXED_AMOUNT}>Valor fixo</option>
+          </select>
+        </div>
+
+        {/* valor do desconto */}
+        <CustomInput
+          title="Valor do desconto"
+          value={String(cupForm.discountValue)}
+          onChange={e => setCupForm({ ...cupForm, discountValue: e.target.value })}
+          placeholder={
+            cupForm.discountType === DiscountType.PERCENTAGE ? "%" : "R$"
+          }
+        />
+
+        {/* limites */}
+        <CustomInput
+          title="Limite por usuário"
+          value={String(cupForm.perUserLimit)}
+          onChange={e =>
+            setCupForm({ ...cupForm, perUserLimit: Number(e.target.value) })
+          }
+        />
+        <CustomInput
+          title="Limite total"
+          value={String(cupForm.totalLimit)}
+          onChange={e =>
+            setCupForm({ ...cupForm, totalLimit: Number(e.target.value) })
+          }
+        />
+
+        {/* seleção de regra de aplicação */}
+        <div className={styles.modalRow}>
+          <label htmlFor="cupomRule">Aplicar em</label>
+          <select
+            id="cupomRule"
+            value={cupRule}
+            onChange={e => setCupRule(e.target.value as typeof cupRule)}
+          >
+            <option value="ALL">Todos</option>
+            <option value="CATEGORY">Categoria</option>
+            <option value="SUBCATEGORY">Subcategoria</option>
+            <option value="PRODUCT">Produtos</option>
+          </select>
+        </div>
+
+        {/* se categoria */}
+        {cupRule === "CATEGORY" && (
+          <CustomSelect
+            title="Categoria"
+            value={categoryId}
+            onChange={e => {
+              setCategoryId(e.target.value);
+              setSubCategoryId("");
+              fetchSubCategories(e.target.value, 0);
+            }}
+            options={categories.map(c => ({ value: c.id, label: c.name }))}
+            onLoadMore={loadMoreCategories}
+            hasMore={hasMoreCategories}
+            bottomLeftText="Obrigatório"
           />
-        </Modal>
+        )}
+
+        {/* se subcategoria */}
+        {cupRule === "SUBCATEGORY" && (
+          <>
+            <CustomSelect
+              title="Categoria"
+              value={categoryId}
+              onChange={e => {
+                setCategoryId(e.target.value);
+                setSubCategoryId("");
+                fetchSubCategories(e.target.value, 0);
+              }}
+              options={categories.map(c => ({ value: c.id, label: c.name }))}
+              onLoadMore={loadMoreCategories}
+              hasMore={hasMoreCategories}
+              bottomLeftText="Obrigatório"
+            />
+
+            {categoryId && (
+              <CustomSelect
+                title="SubCategoria"
+                value={subCategoryId}
+                onChange={e => setSubCategoryId(e.target.value)}
+                options={subCategories.map(s => ({ value: s.id, label: s.name }))}
+                onLoadMore={() => fetchSubCategories(categoryId, subCategoryPage + 1)}
+                hasMore={hasMoreSubCategories}
+                bottomLeftText="Obrigatório"
+              />
+            )}
+          </>
+        )}
+
+        {/* botão produtos permanece igual */}
+        {cupRule === "PRODUCT" && (
+          <>
+            <button
+              type="button"
+              className={styles.secondaryButton}
+              onClick={() => setProdModalOpen(true)}
+            >
+              Selecionar produtos ({selectedProductIds.length})
+            </button>
+            <small>{selectedProductIds.join(", ")}</small>
+          </>
+        )}
+
+        <div className={styles.modalActions}>
+          <StageButton text="Salvar" backgroundColor="#7B33E5" onClick={saveCoupon} />
+        </div>
+      </Modal>
+    )}
+
+      {/* MODAL STUB: seleção de produtos */}
+      {prodModalOpen && (
+        <ProductSelectionModal
+        isOpen={prodModalOpen}
+        catalogId={catalogId!}
+        initiallySelectedIds={selectedProductIds}
+        onClose={() => setProdModalOpen(false)}
+        onConfirm={handleConfirmProducts}
+      />
+      
       )}
+
 
       {/* MODAL RADIUS */}
       {radModalOpen && (

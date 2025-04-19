@@ -20,26 +20,18 @@ export enum DiscountType {
   export interface CouponDTO {
     id?: string;
     code: string;
-    catalogId: string;
-  
-    active: boolean;
-  
+    catalogId: string;  
+    active: boolean;  
     discountType: DiscountType;
-    /** Pode vir como número ou string (BigDecimal do back) */
-    discountValue: number | string;
-  
+    discountValue: number | string;  
     perUserLimit: number;
     totalLimit: number;
-    totalUsed?: number;
-  
-    startsAt?: string;          // ISO 8601
-    endsAt?: string;            // ISO 8601
-  
-    /* Escopo de aplicação */
+    totalUsed?: number;  
+    startsAt?: string; 
+    endsAt?: string; 
     categoryIds?: string[];
     subCategoryIds?: string[];
-    productIds?: string[];
-  
+    productIds?: string[];  
     radii?: CouponRadiusDTO[];
   }
   
