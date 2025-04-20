@@ -9,4 +9,5 @@ import java.util.Optional;
 public interface FavoriteFolderRepository extends JpaRepository<FavoriteFolder, String> {
     List<FavoriteFolder> findByPeopleId(String peopleId);
     Optional<FavoriteFolder> findByPeopleIdAndName(String peopleId, String folderName);
+    boolean existsByPeopleIdAndName(String peopleId, String name);
 }

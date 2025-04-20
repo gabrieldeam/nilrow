@@ -1,8 +1,10 @@
 package marketplace.nilrow.controllers;
 
+import jakarta.validation.Valid;
 import marketplace.nilrow.domain.catalog.product.ProductDTO;
 import marketplace.nilrow.domain.favorites.FavoriteFolderDTO;
 import marketplace.nilrow.domain.favorites.FavoriteStatusDTO;
+import marketplace.nilrow.domain.favorites.RenameFolderRequest;
 import marketplace.nilrow.domain.people.People;
 import marketplace.nilrow.domain.user.User;
 import marketplace.nilrow.repositories.PeopleRepository;
@@ -85,6 +87,19 @@ public class FavoriteFolderController {
         People people = getAuthenticatedPeople();
         FavoriteStatusDTO dto =
                 folderService.getStatusForProduct(people.getId(), productId);
+        return ResponseEntity.ok(dto);
+    }
+
+
+    @PatchMapping("/{folderId}")
+    public ResponseEntity<FavoriteFolderDTO> renameFolder(
+            @PathVariable String folderId,
+            @Valid @RequestBody RenameFolderRequest body) {
+
+        // body.newName() ou body.getNewName()
+        FavoriteFolderDTO dto = folderService
+                .renameFolder(getAuthenticatedPeople().getId(), folderId, body.newName());
+
         return ResponseEntity.ok(dto);
     }
 

@@ -40,8 +40,12 @@ import excludeIconSrc from "../../../../../../../public/assets/close.svg";
 import editWhiteIconSrc from "../../../../../../../public/assets/editWhite.svg";
 import centerIconSrc from "../../../../../../../public/assets/buttom.svg";
 import centeredIconSrc from "../../../../../../../public/assets/buttomCheio.svg";
+import verificacaoIconSrc from "../../../../../../../public/assets/verificacao.svg";
+import checkWhiteIconSrc from "../../../../../../../public/assets/check-white.svg";
 
 import styles from "./FreeShipping.module.css";
+  
+import { debounce } from "lodash";
 
 /* ------------------------------------------------------------------ */
 /*  TIPOS E SERVIÇOS DE CUPONS                                        */
@@ -73,11 +77,13 @@ import {
 /*  TIPOS AUXILIARES & POLÍGONOS – (reaproveitando funções)           */
 /* ------------------------------------------------------------------ */
 interface NominatimSuggestion {
+  place_id?: number;                    //  ← novo
   display_name: string;
   lat: string;
   lon: string;
   geojson?: { type: string; coordinates: unknown };
 }
+
 
 function polygonArea(coords: [number, number][]): number {
   let area = 0;
@@ -157,38 +163,6 @@ function MapRefUpdater({ mapRef }: { mapRef: React.MutableRefObject<L.Map | null
 }
 
 /* ------------------------------------------------------------------ */
-/*  HELPER PARA GERAR CÍRCULO                                         */
-/* ------------------------------------------------------------------ */
-const generateCircleCoordinates = (
-  center: { lat: number; lng: number },
-  radiusKm: number,
-  points = 36
-): CouponCoordinateDTO[] => {
-  const out: CouponCoordinateDTO[] = [];
-  const R = 6371;
-  for (let i = 0; i < points; i++) {
-    const brng = (i * 360) / points * (Math.PI / 180);
-    const lat1 = center.lat * (Math.PI / 180);
-    const lon1 = center.lng * (Math.PI / 180);
-    const lat2 = Math.asin(
-      Math.sin(lat1) * Math.cos(radiusKm / R) +
-        Math.cos(lat1) * Math.sin(radiusKm / R) * Math.cos(brng)
-    );
-    const lon2 =
-      lon1 +
-      Math.atan2(
-        Math.sin(brng) * Math.sin(radiusKm / R) * Math.cos(lat1),
-        Math.cos(radiusKm / R) - Math.sin(lat1) * Math.sin(lat2)
-      );
-    out.push({
-      latitude: (lat2 * 180) / Math.PI,
-      longitude: (lon2 * 180) / Math.PI,
-    });
-  }
-  return out;
-};
-
-/* ------------------------------------------------------------------ */
 /*  COMPONENTE PRINCIPAL                                              */
 /* ------------------------------------------------------------------ */
 const CouponVisualizationClient: React.FC = () => {
@@ -233,12 +207,43 @@ const CouponVisualizationClient: React.FC = () => {
 
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
 
+  // ---------- REGIÕES ----------
+  const [regionModalOpen, setRegionModalOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<NominatimSuggestion[]>([]);
+  const [picked, setPicked] = useState<NominatimSuggestion | null>(null);
+  const [isEditingRegion, setIsEditingRegion] = useState(false);
+  const editingRegionIdxRef = useRef<number | null>(null);
+
+  // util: converte [lat, lon] => DTO
+  const toCouponCoords = (poly: [number, number][]): CouponCoordinateDTO[] =>
+    poly.map(([lat, lon]) => ({ latitude: lat, longitude: lon }));
+
   const handleConfirmProducts = (ids: string[]) => {
     setSelectedProductIds(ids);
     setCupForm(f => ({ ...f, productIds: ids }));
     setProdModalOpen(false);
   };
 
+
+  const searchNominatim = debounce(async (text: string) => {
+    if (text.length < 3) return;
+    const url =
+      `https://nominatim.openstreetmap.org/search` +
+      `?q=${encodeURIComponent(text)}` +
+      `&format=jsonv2&polygon_geojson=1&limit=5`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'Nilrow-Coupons/1.0 (contato@nilrow.com)' },
+    }).then(r => r.json());
+    setSuggestions(res);
+  }, 400);
+
+
+  useEffect(() => {
+    searchNominatim(query);
+    return () => searchNominatim.cancel();
+  }, [query]);
+  
 
   // efeitos para carregar categorias iniciais
   useEffect(() => {
@@ -416,6 +421,9 @@ const CouponVisualizationClient: React.FC = () => {
     perUserLimit: 1,
     totalLimit: 100,
     radii: [],
+    productIds:    [],
+    categoryIds:   [],
+    subCategoryIds:[],
   };
 
   const [cupModalOpen, setCupModalOpen] = useState(false);
@@ -465,42 +473,9 @@ const CouponVisualizationClient: React.FC = () => {
   };
 
   /* --------------- RADII DO CUPOM SELECIONADO ----------------------- */
-  const selectedCoupon = selectedIdx !== null ? coupons[selectedIdx] : null;
+  const selectedCoupon = selectedIdx !== null ? coupons[selectedIdx] : null;  
 
-  const [radModalOpen, setRadModalOpen] = useState(false);
-  const [radForm, setRadForm] = useState({ km: "", });
-
-  const openAddRadius = () => {
-    setRadForm({ km: "" });
-    setRadModalOpen(true);
-  };
-
-  const submitAddRadius = async () => {
-    if (!selectedCoupon || !catalogMarker) return;
-    const km = parseFloat(radForm.km);
-    if (isNaN(km) || km <= 0) {
-      setMessage("Raio inválido", "error");
-      return;
-    }
-    const coords = generateCircleCoordinates(catalogMarker, km);
-    const radiusDTO: CouponRadiusDTO = { radius: km, coordinates: coords };
-    try {
-      setIsLoading(true);
-      const upd = await addCouponRadius(selectedCoupon.id!, radiusDTO);
-      setCoupons((arr) => {
-        const clone = [...arr];
-        clone[selectedIdx!] = upd;
-        return clone;
-      });
-      setRadModalOpen(false);
-      setMessage("Raio adicionado");
-    } catch {
-      setMessage("Erro ao adicionar", "error");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  
   const removeRadius = async (radIdx: number) => {
     if (!selectedCoupon) return;
     const r = selectedCoupon.radii?.[radIdx];
@@ -521,6 +496,36 @@ const CouponVisualizationClient: React.FC = () => {
     }
   };
 
+  const handleRuleChange = (
+    newRule: 'ALL' | 'CATEGORY' | 'SUBCATEGORY' | 'PRODUCT',
+  ) => {
+    setCupRule(newRule);
+  
+    setCupForm(prev => ({
+      ...prev,
+  
+      /** mantém só se a regra for PRODUCT */
+      productIds: newRule === 'PRODUCT' ? prev.productIds ?? [] : [],
+  
+      /** mantém se CATEGORY ou SUBCATEGORY */
+      categoryIds:
+        newRule === 'CATEGORY' || newRule === 'SUBCATEGORY'
+          ? prev.categoryIds ?? []
+          : [],
+  
+      /** mantém só se SUBCATEGORY */
+      subCategoryIds:
+        newRule === 'SUBCATEGORY' ? prev.subCategoryIds ?? [] : [],
+    }));
+  
+    /* limpa a UI local */
+    if (newRule !== 'PRODUCT') setSelectedProductIds([]);
+    if (newRule !== 'CATEGORY' && newRule !== 'SUBCATEGORY') setCategoryId('');
+    if (newRule !== 'SUBCATEGORY') setSubCategoryId('');
+  };
+  
+  
+  
 
   const handleFocusRegion = useCallback(
         (index: number) => {
@@ -573,6 +578,39 @@ const CouponVisualizationClient: React.FC = () => {
 
   if (!isClient || !leafletMod) return <div>Carregando...</div>;
 
+  const openEditRegion = async (idx: number) => {
+    if (!selectedCoupon) return;
+    const r = selectedCoupon.radii![idx];
+    editingRegionIdxRef.current = idx;
+    setIsEditingRegion(true);
+  
+    // ---- obtém nome completo da área via Nominatim reverse ----
+    const lat = r.coordinates![0].latitude;
+    const lon = r.coordinates![0].longitude;
+    let displayName = `Região #${idx + 1}`;
+    try {
+      const rev = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=jsonv2&accept-language=pt`
+      ).then(res => res.json());
+      if (rev?.display_name) displayName = rev.display_name;
+    } catch { /* silencioso */ }
+  
+    // preenche campos do modal
+    setQuery(displayName);
+    setPicked({
+      display_name: displayName,
+      lat: String(lat),
+      lon: String(lon),
+      geojson: {
+        type: 'Polygon',
+        coordinates: [r.coordinates!.map(c => [c.longitude, c.latitude])],
+      },
+    } as any);
+  
+    setRegionModalOpen(true);
+  };  
+
+  
   /* ------------------------------------------------------------------ */
   /*  RENDER                                                            */
   /* ------------------------------------------------------------------ */
@@ -618,8 +656,14 @@ const CouponVisualizationClient: React.FC = () => {
 
                   <div className={styles.buttons}>
                     <button onClick={() => toggleCoupon(idx)}>
-                      {c.active ? "Desativar" : "Ativar"}
+                      <Image
+                        src={c.active ? verificacaoIconSrc : checkWhiteIconSrc}
+                        width={20}
+                        height={20}
+                        alt={c.active ? "Desativar" : "Ativar"}
+                      />
                     </button>
+
                     <button onClick={() => openEditCoupon(idx)}>
                       <Image src={editWhiteIconSrc} width={20} height={20} alt="Editar" />
                     </button>
@@ -652,27 +696,25 @@ const CouponVisualizationClient: React.FC = () => {
         {selectedCoupon && (
           <Card
             title={`Raios do cupom ${selectedCoupon.code}`}
-            rightButton={{ text: "+ Adicionar raio", onClick: openAddRadius }}
+            rightButton={{ text: "+ Adicionar região", onClick: () => setRegionModalOpen(true) }}
           >
             {selectedCoupon.radii?.length ? (
               <ul className={styles.DeliveryRaios}>
                 {selectedCoupon.radii.map((r, i) => (
                   <li key={r.id ?? i}>
-                    <strong>Raio: {r.radius} km</strong>
+                    <strong>Região #{i + 1}</strong>
                     <div className={styles.buttons}>
+                    <button onClick={() => openEditRegion(i)}>
+                      <Image src={editWhiteIconSrc} width={20} height={20} alt="Editar" />
+                    </button>
                       <button onClick={() => removeRadius(i)}>
                         <Image src={excludeIconSrc} width={20} height={20} alt="Excluir" />
                       </button>
                       <button
                         onClick={() => {
-                          if (!mapRef.current || !catalogMarker) return;
-                          mapRef.current.fitBounds(
-                            generateCircleCoordinates(catalogMarker, r.radius).map((c) => [
-                              c.latitude,
-                              c.longitude,
-                            ]) as [number, number][]
-                          );
-                        }}
+                          const poly = r.coordinates!.map(c => [c.latitude, c.longitude]) as [number, number][];
+                          if (mapRef.current) mapRef.current.fitBounds(poly);
+                        }}                        
                         className={styles.centerButton}
                       >
                         <Image
@@ -756,23 +798,22 @@ const CouponVisualizationClient: React.FC = () => {
                 </Marker>
               )}
 
-              {/* círculos dos raios do cupom selecionado */}
-              {catalogMarker &&
-                selectedCoupon?.radii?.map((r, i) => {
-                  const color = ["#ff0000", "#00ff00", "#0000ff", "#ff00ff", "#ffa500", "#008b8b"][
-                    i % 6
-                  ];
-                  return (
-                    <Circle
-                      key={r.id ?? i}
-                      center={[catalogMarker.lat, catalogMarker.lng]}
-                      radius={r.radius * 1000}
-                      pathOptions={{ color, fillColor: color, fillOpacity: 0.2 }}
-                    >
-                      <Popup>Raio: {r.radius} km</Popup>
-                    </Circle>
-                  );
-                })}
+              {/* polígonos das regiões do cupom selecionado */}
+              {selectedCoupon?.radii?.map((r, i) => {
+                const poly = r.coordinates!.map(c => [c.latitude, c.longitude]) as [number, number][];
+                const color = ['#ff0000','#00ff00','#0000ff','#ff00ff','#ffa500','#008b8b'][i % 6];
+                return (
+                  <Polygon
+                    key={r.id ?? i}
+                    positions={poly}
+                    pathOptions={{ color, fillColor: color, fillOpacity: 0.25 }}
+                  >
+                    <Popup>Região #{i + 1}</Popup>
+                  </Polygon>
+                );
+              })}
+
+
             </MapContainer>
           </div>
           <div className={styles.visualizationSearchHistory}>
@@ -869,7 +910,7 @@ const CouponVisualizationClient: React.FC = () => {
           <select
             id="cupomRule"
             value={cupRule}
-            onChange={e => setCupRule(e.target.value as typeof cupRule)}
+            onChange={e => handleRuleChange(e.target.value as typeof cupRule)}
           >
             <option value="ALL">Todos</option>
             <option value="CATEGORY">Categoria</option>
@@ -884,9 +925,18 @@ const CouponVisualizationClient: React.FC = () => {
             title="Categoria"
             value={categoryId}
             onChange={e => {
-              setCategoryId(e.target.value);
-              setSubCategoryId("");
-              fetchSubCategories(e.target.value, 0);
+              const id = e.target.value;
+            
+              // estado da UI
+              setCategoryId(id);
+              setSubCategoryId('');
+            
+              // grava no DTO que vai ser salvo
+              setCupForm(f => ({
+                ...f,
+                categoryIds: id ? [id] : [],   // array!
+                subCategoryIds: [],            // zera, porque não é SUBCATEGORY
+              }));
             }}
             options={categories.map(c => ({ value: c.id, label: c.name }))}
             onLoadMore={loadMoreCategories}
@@ -902,9 +952,18 @@ const CouponVisualizationClient: React.FC = () => {
               title="Categoria"
               value={categoryId}
               onChange={e => {
-                setCategoryId(e.target.value);
-                setSubCategoryId("");
-                fetchSubCategories(e.target.value, 0);
+                const id = e.target.value;
+              
+                setCategoryId(id);
+                setSubCategoryId('');
+              
+                setCupForm(f => ({
+                  ...f,
+                  categoryIds: id ? [id] : [],
+                  subCategoryIds: [],    // ainda não escolheu a sub
+                }));
+              
+                fetchSubCategories(id, 0);
               }}
               options={categories.map(c => ({ value: c.id, label: c.name }))}
               onLoadMore={loadMoreCategories}
@@ -916,7 +975,16 @@ const CouponVisualizationClient: React.FC = () => {
               <CustomSelect
                 title="SubCategoria"
                 value={subCategoryId}
-                onChange={e => setSubCategoryId(e.target.value)}
+                onChange={e => {
+                  const id = e.target.value;
+                
+                  setSubCategoryId(id);
+                
+                  setCupForm(f => ({
+                    ...f,
+                    subCategoryIds: id ? [id] : [],
+                  }));
+                }}
                 options={subCategories.map(s => ({ value: s.id, label: s.name }))}
                 onLoadMore={() => fetchSubCategories(categoryId, subCategoryPage + 1)}
                 hasMore={hasMoreSubCategories}
@@ -958,24 +1026,86 @@ const CouponVisualizationClient: React.FC = () => {
       
       )}
 
-
-      {/* MODAL RADIUS */}
-      {radModalOpen && (
-        <Modal isOpen={radModalOpen} onClose={() => setRadModalOpen(false)}>
-          <h3>Novo raio para {selectedCoupon?.code}</h3>
+      {/* MODAL REGIÃO */}
+      {regionModalOpen && (
+        <Modal isOpen onClose={() => {
+          setRegionModalOpen(false);
+          setQuery('');
+          setSuggestions([]);
+          setPicked(null);
+          setIsEditingRegion(false);
+          editingRegionIdxRef.current = null;
+        }}>
+          <h4>{isEditingRegion ? "Editar região" : "Adicionar região"} para {selectedCoupon?.code}</h4>
           <CustomInput
-            title="Raio (km)"
-            value={radForm.km}
-            onChange={(e) => setRadForm({ km: e.target.value })}
+            title="Buscar bairro/cidade"
+            value={query}
+            onChange={e => {
+              setQuery(e.target.value);
+              setPicked(null);
+            }}
+            placeholder="Ex.: Vila Mariana São Paulo"
           />
 
-          <StageButton
-            text="Adicionar"
-            backgroundColor="#7B33E5"
-            onClick={submitAddRadius}
-          />
+          {/* sugestões */}
+          <ul className={styles.suggestionList}>
+            {suggestions.map(s => (
+              <li
+                key={s.place_id}
+                onClick={() => {
+                  setPicked(s);
+                  setQuery(s.display_name);
+                  setSuggestions([]);
+                }}
+              >
+                {s.display_name}
+              </li>
+            ))}
+          </ul>          
+
+          {picked && (
+            <StageButton
+              text={isEditingRegion ? "Salvar" : "Adicionar"}
+              backgroundColor="#7B33E5"
+              onClick={async () => {
+                if (!selectedCoupon || !picked) return;
+                const poly = getLargestPolygon(picked.geojson);
+                if (!poly) return setMessage('Região sem polígono', 'error');
+
+                const dto: CouponRadiusDTO = {
+                  radius: 0, // agora irrelevante
+                  coordinates: toCouponCoords(poly),
+                };
+
+                try {
+                  setIsLoading(true);
+                  const upd = isEditingRegion
+                  ? await updateCouponRadius(
+                      selectedCoupon.id!,
+                      selectedCoupon.radii![editingRegionIdxRef.current!].id!,
+                      { ...dto, id: selectedCoupon.radii![editingRegionIdxRef.current!].id }
+                    )
+                  : await addCouponRadius(selectedCoupon.id!, dto);
+                  setCoupons(arr => {
+                    const clone = [...arr];
+                    clone[selectedIdx!] = upd;
+                    return clone;
+                  });
+                  setRegionModalOpen(false);
+                  setMessage('Região adicionada');
+                } catch {
+                  setMessage('Erro ao adicionar', 'error');
+                } finally {
+                  setIsLoading(false);
+                }
+              }}
+            />
+          )}
         </Modal>
       )}
+
+
+      
     </div>
   );
 };

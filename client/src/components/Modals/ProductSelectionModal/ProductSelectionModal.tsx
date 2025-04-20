@@ -1,21 +1,23 @@
-// app/components/Modals/ProductSelectionModal/ProductSelectionModal.tsx
-"use client";
+'use client';
 
 import React, { useState, useEffect, useCallback } from "react";
-import Modal from "../Modal/Modal";
-import CustomInput from "@/components/UI/CustomInput/CustomInput";
+import { useRouter } from 'next/navigation';
 import CustomButton from "@/components/UI/CustomButton/CustomButton";
 import ProductCard from "@/components/UI/ProductCard/ProductCard";
+import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';
+import SubHeader from '@/components/Layout/SubHeader/SubHeader';
+import Card from "@/components/UI/Card/Card";
+import defaultImage from "../../../../public/assets/user.png";
+import checkWhite from '../../../../public/assets/check-white.svg';
+import verificacao from '../../../../public/assets/verificacao.svg';
+import styles from "./ProductSelectionModal.module.css";
+
 import { ProductDTO } from "@/types/services/product";
+import { PagedResponse } from "@/types/services/common";
 import {
   getProductsByCatalog,
   searchProductsByCatalog,
 } from "@/services/product/productService";
-
-import defaultImage from "../../../../public/assets/user.png";
-import verificacao from "../../../../public/assets/verificacao.svg";
-
-import styles from "./ProductSelectionModal.module.css";
 
 interface Props {
   isOpen: boolean;
@@ -26,124 +28,158 @@ interface Props {
 }
 
 const ProductSelectionModal: React.FC<Props> = ({
-  isOpen,
-  catalogId,
+  catalogId: initialCatalogId,
   initiallySelectedIds = [],
   onClose,
   onConfirm,
 }) => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [page, setPage] = useState(0);
-  const [itemsPerPage] = useState(20);
-  const [totalPages, setTotalPages] = useState(0);
-  const [products, setProducts] = useState<ProductDTO[]>([]);
-  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 
+  const [catalogId, setCatalogId] = useState<string>(initialCatalogId);
+  const [products, setProducts] = useState<ProductDTO[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [page, setPage] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(30);
+  const [showOnlySelected, setShowOnlySelected] = useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
     () => new Set(initiallySelectedIds)
   );
 
-  // Busca produtos sempre que catalogId, searchTerm ou page mudam
-  const fetch = useCallback(async () => {
-    if (!catalogId) return;
-    setLoading(true);
-    try {
-      const resp = searchTerm
-        ? await searchProductsByCatalog(catalogId, searchTerm, page, itemsPerPage)
-        : await getProductsByCatalog(catalogId, page, itemsPerPage);
-      setProducts(resp.content);
-      setTotalPages(resp.totalPages);
-    } catch (err) {
-      console.error("Erro ao buscar produtos:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [catalogId, searchTerm, page, itemsPerPage]);
-
-  useEffect(() => {
-    fetch();
-  }, [fetch]);
+  // Ao fechar ou confirmar, envia seleção ao pai
+  const handleClose = useCallback(() => {
+    onConfirm(Array.from(selectedIds));
+    onClose();
+  }, [onConfirm, onClose, selectedIds]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
-      const copy = new Set(prev);
-      copy.has(id) ? copy.delete(id) : copy.add(id);
-      return copy;
+      const newSet = new Set(prev);
+      if (newSet.has(id)) newSet.delete(id);
+      else newSet.add(id);
+      return newSet;
     });
   };
 
+  // Ajusta itens por breakpoint
+  useEffect(() => {
+    const updateItems = () => {
+      const width = window.innerWidth;
+      if (width <= 768) setItemsPerPage(10);
+      else if (width <= 1024) setItemsPerPage(15);
+      else setItemsPerPage(20);
+    };
+    updateItems();
+    window.addEventListener('resize', updateItems);
+    return () => window.removeEventListener('resize', updateItems);
+  }, []);
+
+  useEffect(() => { setPage(0); }, [itemsPerPage]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('selectedCatalogId');
+    if (!stored) router.push('/channel/catalog/my/tools/coupon');
+    else setCatalogId(stored);
+  }, [router]);
+
+  // Busca produtos
+  useEffect(() => {
+    if (!catalogId) return;
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        let response: PagedResponse<ProductDTO>;
+        if (searchTerm.trim()) {
+          response = await searchProductsByCatalog(catalogId, searchTerm, page, itemsPerPage);
+        } else {
+          response = await getProductsByCatalog(catalogId, page, itemsPerPage);
+        }
+        setProducts(response.content);
+        setTotalPages(response.totalPages);
+      } catch (error) {
+        console.error('Erro ao carregar produtos:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, [catalogId, page, itemsPerPage, searchTerm]);
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+
+  const handleToggleSelectedFilter = () => {
+    setShowOnlySelected(prev => !prev);
+  };
+
+  const handlePreviousPage = () => { if (page > 0) setPage(page - 1); };
+  const handleNextPage = () => { if (page < totalPages - 1) setPage(page + 1); };
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value);
+  const handleSearchSubmit = () => setPage(0);
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
-      <h3>Selecionar produtos</h3>
-
-      {/* pesquisa */}
-      <CustomInput
-        title="Pesquisar"
-        value={searchTerm}
-        onChange={e => {
-          setSearchTerm(e.target.value);
-          setPage(0);
-        }}
-        placeholder="Nome ou SKU"
-      />
-
-      {/* lista de cards */}
-      <div className={styles.grid}>
-        {loading && <p>Carregando...</p>}
-        {!loading && products.length === 0 && <p>Nenhum produto</p>}
-        {!loading && products.map(p => {
-          const imgUrl = p.images?.[0]
-            ? `${process.env.NEXT_PUBLIC_API_URL}${p.images[0]}`
-            : defaultImage.src;
-          const isSel = p.id ? selectedIds.has(p.id) : false;
-          return (
-            <div
-              key={p.id}
-              onClick={() => p.id && toggleSelect(p.id)}
-              className={`${styles.cardItem} ${isSel ? styles.selected : ""}`}
-            >
-              <ProductCard
-                images={[imgUrl]}
-                name={p.name}
-                price={p.salePrice}
-                discount={p.discountPrice || 0}
-                freeShipping={p.freeShipping}
-                buttons={[
-                  { image: verificacao.src, onClick: () => p.id && toggleSelect(p.id) }
-                ]}
-              />
-            </div>
-          );
-        })}
+    <div className={styles.modalOverlay} onClick={handleClose}>
+      <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+        <div className={styles.productPage}>
+          {isMobile && (
+            <MobileHeader
+              title="Produto"
+              showSearch
+              searchPlaceholder="Pesquisar..."
+              searchValue={searchTerm}
+              onSearchChange={handleSearchChange}
+              onSearchSubmit={handleSearchSubmit}
+              buttons={{ close: true, filter: true }}
+              onFilter={handleToggleSelectedFilter}
+              handleBack={handleClose}
+            />
+          )}
+          <div className={styles.productContainer}>
+            <SubHeader
+              title="Produto"
+              handleBack={handleClose}
+              showActiveFilterButton
+              handleActiveFilter={handleToggleSelectedFilter}
+              showSearch
+              searchPlaceholder="Pesquisar..."
+              searchValue={searchTerm}
+              onSearchChange={handleSearchChange}
+              onSearchSubmit={handleSearchSubmit}
+            />
+            <Card title="Cadastrados" rightButton={{text: 'Confirmar', onClick: handleClose}}>            
+              <div className={styles.productSeeDataWrapper}>
+                <div className={styles.productSeeDatacontainer} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(165px, 1fr))', gap: '5px' }}>
+                  {loading && <p>Carregando produtos...</p>}
+                  {!loading && products.filter(p => !showOnlySelected || selectedIds.has(p.id || '')).length === 0 && (
+                    <p>Nenhum produto {showOnlySelected ? 'selecionado' : 'cadastrado'}.</p>
+                  )}
+                  {!loading && products.filter(p => !showOnlySelected || selectedIds.has(p.id || '')).map(product => {
+                    const isSelected = selectedIds.has(product.id || '');
+                    return (
+                      <ProductCard
+                        key={product.id}
+                        images={product.images?.length ? product.images.map(img => `${apiUrl}${img}`) : [defaultImage.src]}
+                        name={product.name}
+                        price={product.salePrice}
+                        discount={product.discountPrice || 0}
+                        freeShipping={product.freeShipping}
+                        buttons={[{ image: isSelected ? verificacao.src : checkWhite.src, onClick: () => product.id && toggleSelect(product.id) }]}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+              <div className={styles.pagination}>
+                <CustomButton title="Anterior" onClick={page === 0 ? undefined : handlePreviousPage} backgroundColor="#9F9F9F" />
+                <span>Página {page + 1} de {totalPages}</span>
+                <CustomButton title="Próximo" onClick={page >= totalPages - 1 ? undefined : handleNextPage} backgroundColor="#9F9F9F" />
+              </div>              
+            </Card>
+          </div>
+        </div>
       </div>
-
-      {/* paginação */}
-      <div className={styles.pagination}>
-        <CustomButton
-          title="Anterior"
-          onClick={page > 0 ? () => setPage(page - 1) : undefined}
-          backgroundColor="#9F9F9F"
-        />
-        <span>{page + 1} / {totalPages}</span>
-        <CustomButton
-          title="Próximo"
-          onClick={page < totalPages - 1 ? () => setPage(page + 1) : undefined}
-          backgroundColor="#9F9F9F"
-        />
-      </div>
-
-      {/* ações */}
-      <div className={styles.actions}>
-        <CustomButton title="Cancelar" onClick={onClose} backgroundColor="#777" />
-        <span style={{ marginLeft: 8 }}>
-          <CustomButton
-            title={`Confirmar (${selectedIds.size})`}
-            onClick={() => onConfirm(Array.from(selectedIds))}
-            backgroundColor="#7B33E5"
-          />
-        </span>
-      </div>
-    </Modal>
+    </div>
   );
 };
 

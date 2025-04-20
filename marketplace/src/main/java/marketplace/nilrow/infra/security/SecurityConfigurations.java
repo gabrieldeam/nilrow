@@ -169,6 +169,10 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.DELETE, "/free-shippings/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/free-shippings/**").authenticated()
 
+                        .requestMatchers(HttpMethod.GET, "/coupons/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/coupons/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/coupons/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/coupons/**").authenticated()
 
                         .requestMatchers("/melhorenvio/**").permitAll()
 

@@ -144,6 +144,35 @@ public class FavoriteFolderService {
         return new FavoriteStatusDTO(!folderNames.isEmpty(), folderNames);
     }
 
+    @Transactional
+    public FavoriteFolderDTO renameFolder(String peopleId,
+                                          String folderId,
+                                          String newName) {
+
+        if (newName == null || newName.trim().isBlank()) {
+            throw new IllegalArgumentException("Novo nome não pode ser vazio");
+        }
+
+        FavoriteFolder folder = folderRepository.findById(folderId)
+                .orElseThrow(() -> new RuntimeException("Pasta não encontrada"));
+
+        // garante que a pasta pertence a quem está logado
+        if (!folder.getPeople().getId().equals(peopleId)) {
+            throw new RuntimeException("A pasta não pertence ao usuário");
+        }
+
+        // evita conflito de nome (opcional, mas recomendado)
+        if (folderRepository.existsByPeopleIdAndName(peopleId, newName)) {
+            throw new RuntimeException("Já existe uma pasta com esse nome");
+        }
+
+        folder.setName(newName.trim());
+        folderRepository.save(folder);
+
+        return toDTO(folder, 3);   // reaproveitando o mesmo helper
+    }
+
+
     private FavoriteFolderDTO toDTO(FavoriteFolder folder, int limit) {
         List<ProductDTO> preview = folder.getProducts().stream()
                 .limit(limit)
