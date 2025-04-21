@@ -1,3 +1,6 @@
+import { VariationAttributeDTO } from './product';
+import { SimpleChannelDTO } from './channel';
+
 export interface CartItemRequest {
     productId?: string;
     variationId?: string;
@@ -16,6 +19,8 @@ export interface CartItemRequest {
     unitPrice: number;
     discountPrice?: number | null;
     quantity: number;
+    attributes: VariationAttributeDTO[];
+    channel: SimpleChannelDTO;
   }
   
   /**

@@ -2,6 +2,9 @@ package marketplace.nilrow.domain.cart;
 
 
 import lombok.*;
+import marketplace.nilrow.domain.catalog.product.VariationAttributeDTO;
+import marketplace.nilrow.domain.channel.SimpleChannelDTO;
+
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -16,4 +19,6 @@ public class CartItemDTO {
     private BigDecimal unitPrice;
     private BigDecimal discountPrice;
     private Integer quantity;
+    private List<VariationAttributeDTO> attributes;
+    private SimpleChannelDTO channel;
 }

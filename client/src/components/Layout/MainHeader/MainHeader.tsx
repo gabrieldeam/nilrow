@@ -206,12 +206,12 @@ const MainHeader: React.FC = () => {
             }
           />
         </div>
-        <ProtectedLink to="/bag">
+        <Link href="/bag">
           <div className={styles.bagButtonContainer}>
             <HeaderButton icon={bagIcon} isActive={getIsActive('/bag')} />
             {totalItems > 0 && <span className={styles.bagCount}>{totalItems}</span>}
           </div>
-        </ProtectedLink>
+        </Link>
         {isAuthenticated && (
           <>
             <HeaderButton icon={chatIcon} link="/chat" isActive={getIsActive('/chat')} />

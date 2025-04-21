@@ -3,6 +3,7 @@ package marketplace.nilrow.services;
 import marketplace.nilrow.domain.cart.*;
 import marketplace.nilrow.domain.catalog.product.Product;
 import marketplace.nilrow.domain.catalog.product.ProductVariation;
+import marketplace.nilrow.domain.channel.SimpleChannelDTO;
 import marketplace.nilrow.domain.people.People;
 import marketplace.nilrow.repositories.CartRepository;
 import marketplace.nilrow.repositories.PeopleRepository;
@@ -10,8 +11,10 @@ import marketplace.nilrow.repositories.ProductRepository;
 import marketplace.nilrow.repositories.ProductVariationRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import marketplace.nilrow.domain.catalog.product.VariationAttributeDTO;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -148,6 +151,21 @@ public class CartService {
                             ? variation.getDiscountPrice()
                             : product.getDiscountPrice();
 
+                    List<VariationAttributeDTO> attrs = (variation != null && variation.getAttributes() != null)
+                            ? variation.getAttributes().stream()
+                            .map(a -> new VariationAttributeDTO(
+                                    a.getId(),
+                                    a.getAttributeName(),
+                                    a.getAttributeValue()
+                            ))
+                            .collect(Collectors.toList())
+                            : Collections.emptyList();
+
+                    SimpleChannelDTO channelDTO = null;
+                    if (product.getCatalog() != null && product.getCatalog().getChannel() != null) {
+                        channelDTO = new SimpleChannelDTO(product.getCatalog().getChannel());
+                    }
+
                     return new CartItemDTO(
                             ci.getId(),
                             ci.getProductId(),
@@ -156,10 +174,12 @@ public class CartService {
                             image,
                             unitPrice,
                             discount,
-                            ci.getQuantity()
+                            ci.getQuantity(),
+                            attrs,
+                            channelDTO
                     );
                 })
-                .filter(Objects::nonNull)  // remove itens inválidos
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
         BigDecimal total = itemDTOs.stream()

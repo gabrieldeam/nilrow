@@ -8,7 +8,7 @@ import java.util.List;
 @Data @NoArgsConstructor @AllArgsConstructor
 public class CartDTO {
     private String cartId;
-    private String userId;
+    private String peopleId;
     private List<CartItemDTO> items;
     private BigDecimal total;  // soma de (unitPrice ou discountPrice) * qty
 }

@@ -70,13 +70,6 @@ interface ChannelData {
   id: string;
   name: string;
   imageUrl: string;
-  about?: any;
-  faqs?: FAQData[];
-}
-
-interface FAQData {
-  question: string;
-  answer: string;
 }
 
 interface StageButtonProps {
@@ -392,7 +385,6 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
         const authRes = await checkAuth();
         if (!authRes.isAuthenticated) return;
   
-        // 1) status rápido do produto
         const status = await getFavoriteStatus(product.id!);
         setFavoriteStatus(status);
         setIsFavorited(status.favorited);
@@ -400,9 +392,18 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
           Object.fromEntries(status.folders.map((n) => [n, true]))
         );
   
-        // 2) lista (para exibir todas as pastas no modal)
-        const { data: folders } = await listFavoriteFolders();
-        setFavoriteFolders(folders);    // ← agora folders é FavoriteFolderDTO[]
+        // --- aqui, adapte à forma real do retorno: ---
+        const response = await listFavoriteFolders();
+        // se for array:
+        const foldersArray = Array.isArray(response) 
+          ? response 
+          // se for { data: [...] }:
+          : Array.isArray((response as any).data) 
+            ? (response as any).data 
+            //  fallback seguro:
+            : [];
+  
+        setFavoriteFolders(foldersArray);
       } catch (err) {
         console.error('Erro ao verificar favoritos:', err);
       }
@@ -534,7 +535,7 @@ const handleAddToExistingFolder = async (folderName: string) => {
       return;
     }
   
-    addToBag({ id: currentId, isVariation: isVar, quantity: 1, nickname });
+    addToBag({ id: currentId, isVariation: isVar, quantity: 1 });
     setMessage("Item adicionado ao carrinho!", "success");
   };
   
@@ -723,7 +724,7 @@ const handleAddToExistingFolder = async (folderName: string) => {
                         return `R$ ${original.toFixed(2).replace('.', ',')}`;
                       })()}
                     </span>
-                  )}
+                  )} 
                   <div className={styles.priceSaleSection}>
                     <div className={styles.salePrice}>
                       {(() => {

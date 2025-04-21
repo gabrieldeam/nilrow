@@ -845,8 +845,8 @@
 
     .deliveries { 
         width: 100%;
-
     }
+
     .productConteiner {
         display: flex;
         flex-direction: column;
