@@ -1,6 +1,6 @@
 // src/services/favoriteService.ts
 import api from './api';
-import { FavoriteFolderDTO, FavoriteStatusDTO } from '../types/services/favorites';
+import { FavoriteFolderDTO, FavoriteStatusDTO, RenameFolderRequest, FavoriteFoldersResponse } from '../types/services/favorites';
 import { ProductDTO } from '../types/services/product';
 import { PagedResponse } from '../types/services/common';
 
@@ -8,9 +8,9 @@ import { PagedResponse } from '../types/services/common';
  * Retorna todas as pastas de favoritos do usuário autenticado.
  * Cada pasta já traz até 3 produtos em `productsPreview`.
  */
-export const listFavoriteFolders = async (): Promise<FavoriteFolderDTO[]> => {
-  const { data } = await api.get<FavoriteFolderDTO[]>('/favorites');
-  return data;
+export const listFavoriteFolders = async (): Promise<FavoriteFoldersResponse> => {
+  const res = await api.get<FavoriteFoldersResponse>('/favorites');
+  return res.data;  // aqui res.data já é { data, message }
 };
 
 /**
@@ -64,6 +64,23 @@ export const getFavoriteStatus = async (productId: string)
   : Promise<FavoriteStatusDTO> => {
   const { data } = await api.get<FavoriteStatusDTO>(
     '/favorites/status', { params: { productId } }
+  );
+  return data;
+};
+
+/**
+ * Renomeia uma pasta de favoritos existente.
+ * @param folderId ID da pasta a ser renomeada
+ * @param newName  Novo nome desejado
+ */
+export const renameFavoriteFolder = async (
+  folderId: string,
+  newName: string
+): Promise<FavoriteFolderDTO> => {
+  const body: RenameFolderRequest = { newName };
+  const { data } = await api.patch<FavoriteFolderDTO>(
+    `/favorites/${encodeURIComponent(folderId)}`,
+    body
   );
   return data;
 };

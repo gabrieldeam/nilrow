@@ -1,4 +1,3 @@
-import { PagedResponse } from './common';
 import { ProductDTO } from './product';
 
 export interface SimpleChannelDTO {
@@ -19,4 +18,13 @@ export interface FavoriteFolderDTO {
 export interface FavoriteStatusDTO {
   favorited: boolean;
   folders: string[];
+}
+
+export interface RenameFolderRequest {
+  newName: string;
+}
+
+export interface FavoriteFoldersResponse {
+  data: FavoriteFolderDTO[];
+  message: string;
 }

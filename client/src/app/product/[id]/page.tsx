@@ -401,13 +401,14 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
         );
   
         // 2) lista (para exibir todas as pastas no modal)
-        const folders = await listFavoriteFolders();
-        setFavoriteFolders(folders);
+        const { data: folders } = await listFavoriteFolders();
+        setFavoriteFolders(folders);    // ← agora folders é FavoriteFolderDTO[]
       } catch (err) {
         console.error('Erro ao verificar favoritos:', err);
       }
     })();
   }, [product, showLikeModal]);
+  
   
 
 
@@ -446,10 +447,10 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
       const folderName = currentFolders[0];
       await removeProductLike(product.id!, folderName);
       setMessage(`Produto removido da pasta "${folderName}"`, 'success');
-
+  
       setIsFavorited(false);
-      const folders = await listFavoriteFolders();
-      setFavoriteFolders(folders || []);
+      const { data: folders } = await listFavoriteFolders();
+      setFavoriteFolders(folders);    // ← corrige o tipo
       setShowLikeModal(false);
     } catch (error) {
       console.error('Erro ao descurtir o produto:', error);
@@ -465,8 +466,8 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
       setMessage(`Produto salvo na pasta "${newFolderName}".`, 'success');
       setNewFolderName('');
       setShowLikeModal(false);
-      const folders = await listFavoriteFolders();
-      setFavoriteFolders(folders || []);
+      const { data: folders } = await listFavoriteFolders();
+      setFavoriteFolders(folders);    // ← agora correto
     } catch (error) {
       console.error('Erro ao criar pasta e salvar produto:', error);
       setMessage('Erro ao criar pasta e salvar produto!', 'error');
@@ -503,9 +504,8 @@ const handleAddToExistingFolder = async (folderName: string) => {
     );
 
     // recarrega lista (opcional – garante consistência)
-    const folders = await listFavoriteFolders();
-    setFavoriteFolders(folders);
-
+    const { data: folders } = await listFavoriteFolders();
+    setFavoriteFolders(folders);    // ← extrai .data antes
     setShowLikeModal(false);
   } catch (error) {
     console.error('Erro ao alternar pasta de favoritos:', error);
@@ -517,22 +517,27 @@ const handleAddToExistingFolder = async (folderName: string) => {
   // ----------------------------------------------------------------------------
   // ADICIONAR AO CARRINHO
   const handleAddToCart = () => {
-    const currentId = selectedVariation?.id ?? product?.id;
-    const currentStock = selectedVariation?.stock ?? product?.stock ?? 0;
+    const currentId     = selectedVariation?.id ?? product?.id;
+    const isVar         = !!selectedVariation;
+    const currentStock  = selectedVariation?.stock ?? product?.stock ?? 0;
+  
     if (!currentId || currentStock <= 0) {
-      setMessage('Produto indisponível no momento.', 'error');
+      setMessage("Produto indisponível no momento.", "error");
       return;
     }
-    const existingItem = bag.find((item) => item.id === currentId);
-    const existingQty = existingItem?.quantity ?? 0;
-    const desiredQty = existingQty + 1;
+  
+    const existingItem  = bag.find((i) => i.id === currentId);
+    const desiredQty    = (existingItem?.quantity ?? 0) + 1;
+  
     if (desiredQty > currentStock) {
-      setMessage(`Você só pode adicionar até ${currentStock} unidades deste item.`, 'error');
+      setMessage(`Você só pode adicionar até ${currentStock} unidades deste item.`, "error");
       return;
     }
-    addToBag({ id: currentId, quantity: 1, nickname });
-    setMessage('Item adicionado ao carrinho!', 'success');
+  
+    addToBag({ id: currentId, isVariation: isVar, quantity: 1, nickname });
+    setMessage("Item adicionado ao carrinho!", "success");
   };
+  
 
   // ----------------------------------------------------------------------------
   // RENDER
