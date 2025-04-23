@@ -10,6 +10,7 @@ import { useNotification } from '@/hooks/useNotification';
 import Card from '@/components/UI/Card/Card';
 import StageButton from '@/components/UI/StageButton/StageButton';
 import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';
+import CartItem from '@/components/UI/CartItem/CartItem';
 
 import followIcon from '../../../public/assets/follow.svg';
 import shareIcon from '../../../public/assets/share.svg';
@@ -243,28 +244,7 @@ const BagPage = () => {
                     <div className={styles.productConteiner}>
                       <div className={styles.leftColumn}>
                         {items.map((item) => (
-                          <div key={item.id} className={styles.cartItem}>
-                            <Card>
-                              <div className={styles.itemContent}>
-                                <Image
-                                  src={`${apiUrl}${item.imageUrl}`}
-                                  alt={item.name}
-                                  width={80}
-                                  height={80}
-                                />
-                                <div className={styles.itemDetails}>
-                                  <h3>{item.name}</h3>
-                                  <p>Qtd: {item.quantity}</p>
-                                  <p>
-                                    Canal: {item.channel.name} ({item.channel.nickname})
-                                  </p>
-                                </div>
-                                <button onClick={() => removeFromBag(item.id)}>
-                                  Remover
-                                </button>
-                              </div>
-                            </Card>
-                          </div>
+                          <CartItem key={item.id} item={item} apiUrl={apiUrl} />
                         ))}
                       </div>
                       <div className={styles.rightColumn}>

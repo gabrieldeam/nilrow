@@ -21,6 +21,7 @@ interface BagContextProps {
   addToBag: (item: BagItem) => void;
   removeFromBag: (id: string) => void;
   clearBag: () => void;
+  decrementFromBag: (id: string) => void;
 }
 
 const BagContext = createContext<BagContextProps | undefined>(undefined);
@@ -152,12 +153,48 @@ export const BagProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem("bag");
   };
 
+
+  const decrementFromBag = (id: string) => {
+    const item = bag.find((x) => x.id === id);
+    if (!item) return;
+
+    const newQty = item.quantity - 1;
+    if (isAuthenticated) {
+      // envia direto pra API o novo total
+      addOrUpdateCartItem(
+        item.isVariation
+          ? { variationId: id, quantity: newQty }
+          : { productId: id, quantity: newQty }
+      )
+        .then((serverCart) => {
+          const mapped = serverCart.items.map((i) => ({
+            id: i.variationId ?? i.productId,
+            isVariation: !!i.variationId,
+            quantity: i.quantity,
+          }));
+          setBag(mapped);
+        })
+        .catch(console.error);
+    } else {
+      setBag((prev) =>
+        prev
+          .map((x) =>
+            x.id === id ? { ...x, quantity: newQty } : x
+          )
+          .filter((x) => x.quantity > 0)   // remove se chegou a zero
+      );
+    }
+  };
+
+
   return (
-    <BagContext.Provider value={{ bag, addToBag, removeFromBag, clearBag }}>
+    <BagContext.Provider value={{ bag, addToBag, removeFromBag, clearBag, decrementFromBag }}>
       {children}
     </BagContext.Provider>
   );
 };
+
+
 
 export const useBag = (): BagContextProps => {
   const ctx = useContext(BagContext);
