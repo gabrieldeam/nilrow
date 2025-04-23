@@ -48,6 +48,8 @@ import assessmentIcon from '../../../../public/assets/assessment.svg';
 import categoriesIcon from '../../../../public/assets/categories.svg';
 import searchIcon from '../../../../public/assets/search.svg';
 import purchaseEventChannelIcon from '../../../../public/assets/purchaseEventChannel.svg';
+import defaultImage from '../../../../public/assets/user.png';
+
 
 import styles from './channel.module.css';
 
@@ -125,47 +127,63 @@ function Channel({ nickname }: ChannelProps) {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // 1) Canal
         const channel = await getChannelByNickname(nickname);
         if (!channel?.id) return;
         setChannelData({ ...channel, imageUrl: channel.imageUrl || '' });
-
-        const [
-          followers,
-          following,
-          about,
-          faqs,
-          catalogs,
-        ] = await Promise.all([
-          getFollowersCount(channel.id),
-          getFollowingCount(nickname),
-          getAboutByNickname(nickname),
-          getFAQsByNickname(nickname),
-          getPublishedCatalogs(channel.id),
-        ]);
-
-        setFollowersCount(followers);
-        setFollowingCount(following);
-        if (about?.aboutText || (faqs?.length ?? 0) > 0) setShowAboutButton(true);
-
-        setPublishedCatalogs(
-          catalogs.map((c: any) => ({ id: c.id, name: c.name || 'Loja' })),
-        );
-
-        // privado
-        if ((await checkAuth()).isAuthenticated) {
-          const [owner, followingFlag] = await Promise.all([
-            isChannelOwner(channel.id),
-            isFollowing(channel.id),
-          ]);
-          setIsOwner(owner);
-          setIsFollowingChannel(followingFlag);
+  
+        // 2) Dados públicos, um por um
+        try {
+          const count = await getFollowersCount(channel.id);
+          setFollowersCount(count);
+        } catch (err) { console.warn('Seg:', err) }
+  
+        try {
+          const count = await getFollowingCount(nickname);
+          setFollowingCount(count);
+        } catch (err) { console.warn('Seguindo:', err) }
+  
+        try {
+          const about = await getAboutByNickname(nickname);
+          if (about?.aboutText) setShowAboutButton(true);
+        } catch (err) { console.warn('About:', err) }
+  
+        try {
+          const faqs = await getFAQsByNickname(nickname);
+          if (faqs?.length > 0) setShowAboutButton(true);
+        } catch (err) { console.warn('FAQs:', err) }
+  
+        try {
+          const catalogs = await getPublishedCatalogs(channel.id);
+          setPublishedCatalogs(
+            catalogs.map(c => ({ id: c.id, name: c.title || 'Loja' }))
+          );
+        } catch (err) { console.warn('Catálogos:', err) }
+  
+        // 3) Auth / dados privados
+        const authResult = await checkAuth();
+        setAuth(authResult);
+  
+        if (authResult.isAuthenticated) {
+          try {
+            const ownerFlag = await isChannelOwner(channel.id);
+            setIsOwner(ownerFlag);
+          } catch (err) { console.warn('Owner:', err) }
+  
+          try {
+            const followFlag = await isFollowing(channel.id);
+            setIsFollowingChannel(followFlag);
+          } catch (err) { console.warn('FollowFlag:', err) }
         }
       } catch (err) {
-        console.error('Erro ao buscar dados do canal:', err);
+        console.error('Erro geral ao buscar canal:', err);
       }
     };
+  
     fetchData();
   }, [nickname]);
+  
+  
 
   // navegação
   const handleBack = () => router.back();
@@ -231,6 +249,11 @@ function Channel({ nickname }: ChannelProps) {
     activeSection === section ? `${styles.fixedButton} ${styles.active}` : styles.fixedButton;
 
   if (!channelData) return <LoadingSpinner />;
+
+  const avatarSrc = channelData.imageUrl
+  ? `${apiUrl}${channelData.imageUrl}`
+  : defaultImage;
+
 
   // ---------- StageButtons ----------
   const stageButtons =
@@ -332,7 +355,7 @@ function Channel({ nickname }: ChannelProps) {
         <div className={styles.channelBanner}>
           <div className={styles.channelLeft}>
             <Image
-              src={`${apiUrl}${channelData.imageUrl}`}
+              src={avatarSrc}
               alt={`${channelData.name} – Imagem`}
               className={styles.channelImage}
               width={130}

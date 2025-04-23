@@ -9,7 +9,7 @@ export interface ProfileData {
     street: string;
     city: string;
     state: string;
-    zipCode: string;
+    cep: string;
   }
 
   export interface FormDataProps {

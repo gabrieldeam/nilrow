@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
         protocol: protocolWithoutColon,
         hostname: parsedURL.hostname,
         port: parsedURL.port || '',
-        pathname: `${cleanPathname}/uploads/**`,
+        pathname: `${cleanPathname}/**`,
       },      {
         protocol: 'https',
         hostname: 'www.showmetech.com.br',

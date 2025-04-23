@@ -13,10 +13,18 @@
     padding: 0 58px;
     box-sizing: border-box;
     margin-bottom: 60px;  
-  }
+}
   
+.leftColumnConteiner {     
+    width: 70%;
+}
 
-  .leftColumn {
+.productConteiner {
+    display: flex;
+    gap: 20px;
+}
+
+.leftColumn {
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -24,16 +32,15 @@
     width: 70%;
 }
 
-
-.productConteiner {
-    display: flex;
-    gap: 20px;
-}
-
-
 .infoConteiner {
     width: 100%;
 }
+
+.channelSection + .channelSection {
+    border-top: 11px solid #151515;
+    margin: 1.5rem 0 0;    /* distância acima da linha */
+    padding: 1.5rem 0 0;   /* espaço interno para separar o conteúdo */
+  }
 
 .channelHeader {
     display: flex;
@@ -86,53 +93,62 @@
 }
 
 
+.rightColumnConteiner {    
+    width: 30%;
+}
 
-@media (min-width: 1024px) and (max-width: 1703px) { 
 
+
+
+
+@media (min-width: 1024px) and (max-width: 1303px) { 
+    .bagPageConteiner {        
+        flex-direction: column;
+    }
+
+    .leftColumnConteiner {     
+        width: 100%;
+    }
+
+    .rightColumnConteiner {     
+        width: 100%;
+    }
 }
 
 
 @media (min-width: 980px) and (max-width: 1024px) {
-    .productPageConteiner {
+    .bagPageConteiner {        
         flex-direction: column;
     }
 
-    .leftColumn {   
+    .leftColumnConteiner {     
         width: 100%;
     }
 
-    .rightColumn {
-        display: none;
+    .rightColumnConteiner {     
+        width: 100%;
     }
+
     
 }
 
 @media (min-width: 768px) and (max-width: 980px) { 
-    .bagPage {
-        margin-top: 155px;
-    }
-
-    .bagPageConteiner {      
-      flex-direction: column;
-    }    
-
-    .leftColumn {   
-        width: 100%;
-    }
-
-    .productConteiner {
-        display: flex;
+    .bagPageConteiner {        
         flex-direction: column;
     }
 
-    .rightColumn {
-        display: none;
+    .leftColumnConteiner {     
+        width: 100%;
+    }
+
+    .rightColumnConteiner {     
+        width: 100%;
     }
 }
 
 @media (max-width: 768px) { 
     .bagPage {      
-        margin-top: 110px;
+        margin-top: 105px;
         gap: 0;
         padding: 0;
     }
@@ -141,14 +157,22 @@
       flex-direction: column;
       gap: 0px;
       margin-bottom: 90px;
-      padding: 0 0;
+      padding: 6px;
       margin-top: -20px;
+    }
+
+    .leftColumnConteiner {     
+        width: 100%;
     }
 
     .productConteiner {
         display: flex;
         flex-direction: column;
-    }
+    }    
+
+    .leftColumn {   
+        width: 100%;
+    } 
 
     .infoConteiner {
         width: 100%;
@@ -157,7 +181,7 @@
     }
 
     .rightColumn {  
-        padding: 0 6px;
+        width: 100%;
     }
 
     .channelHeader {
@@ -168,9 +192,9 @@
         padding: 20px;
         width: 100%;
         max-width: 100vw;  
-    }
+    }   
 
-    .leftColumn {   
+    .rightColumnConteiner {     
         width: 100%;
     }
 }

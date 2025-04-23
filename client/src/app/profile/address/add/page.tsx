@@ -49,7 +49,7 @@ function AddAddressPage() {
   const [formData, setFormData] = useState({
     recipientName: '',
     recipientPhone: '',
-    zipCode: '',
+    cep: '',
     state: '',
     city: '',
     neighborhood: '',
@@ -109,9 +109,9 @@ function AddAddressPage() {
   }, []);
 
   const fetchAddress = useCallback(
-    async (zipCode: string) => {
+    async (cep: string) => {
       try {
-        const response = await axios.get(`https://viacep.com.br/ws/${zipCode}/json/`);
+        const response = await axios.get(`https://viacep.com.br/ws/${cep}/json/`);
         const { uf, localidade, bairro, logradouro } = response.data;
         setFormData((prev) => ({
           ...prev,
@@ -132,7 +132,7 @@ function AddAddressPage() {
     (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const { value } = e.target;
       const sanitizedValue = value.replace(/\D/g, '');
-      setFormData((prev) => ({ ...prev, zipCode: sanitizedValue }));
+      setFormData((prev) => ({ ...prev, cep: sanitizedValue }));
 
       if (sanitizedValue.length === 8) {
         fetchAddress(sanitizedValue);
@@ -156,11 +156,11 @@ function AddAddressPage() {
   }, [setMessage]);
 
   useEffect(() => {
-    const { recipientName, recipientPhone, zipCode, state, city, neighborhood, street, number, classification } = formData;
+    const { recipientName, recipientPhone, cep, state, city, neighborhood, street, number, classification } = formData;
     setIsFormValid(
       recipientName !== '' &&
         recipientPhone !== '' &&
-        zipCode !== '' &&
+        cep !== '' &&
         state !== '' &&
         city !== '' &&
         neighborhood !== '' &&
@@ -256,8 +256,8 @@ function AddAddressPage() {
             <CustomInput
               title="Código de Endereço Postal"
               type="text"
-              name="zipCode"
-              value={formData.zipCode}
+              name="cep"
+              value={formData.cep}
               onChange={handleZipCodeChange}
               bottomLeftText="Informe seu CEP"
             />

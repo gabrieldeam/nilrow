@@ -9,9 +9,13 @@ import { useNotification } from '@/hooks/useNotification';
 
 import Card from '@/components/UI/Card/Card';
 import StageButton from '@/components/UI/StageButton/StageButton';
+import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';
 
 import followIcon from '../../../public/assets/follow.svg';
+import shareIcon from '../../../public/assets/share.svg';
+import defaultImage from '../../../public/assets/user.png';
 
+import { isChannelOwner } from '@/services/channel/channelService';
 import {
   followChannel,
   unfollowChannel,
@@ -21,13 +25,14 @@ import { getCart } from '@/services/cartService';
 import { CartItemDTO } from '@/types/services/cart';
 
 import styles from './Bag.module.css';
+import ExpandableCard from '@/components/UI/ExpandableCard/ExpandableCard';
 
 interface StageButtonProps {
   text: string;
   backgroundColor: string;
   imageSrc?: any;
   disabled?: boolean;
-  onClick?: () => Promise<void>;
+  onClick?: () => Promise<void> | void;
 }
 
 const BagPage = () => {
@@ -42,9 +47,10 @@ const BagPage = () => {
    * local state
    * -------------------------------------------------- */
   const [auth, setAuth] = useState<{ isAuthenticated: boolean } | null>(null);
-  const [isFollowingChannel, setIsFollowingChannel] = useState(false);
-  const [followLoading, setFollowLoading] = useState(false);
   const [cartItems, setCartItems] = useState<CartItemDTO[]>([]);
+  const [followingChannels, setFollowingChannels] = useState<Record<string, boolean>>({});
+  const [owners, setOwners] = useState<Record<string, boolean>>({});
+  const [followLoading, setFollowLoading] = useState<Record<string, boolean>>({});
 
   /* --------------------------------------------------
    * env vars
@@ -65,181 +71,223 @@ const BagPage = () => {
       .catch((err) => console.error('Erro ao buscar carrinho:', err));
   }, []);
 
+  const handleBack = useCallback(() => {
+    router.back();
+  }, [router]);
+
   /* --------------------------------------------------
-   * follow status (runs when cart loaded)
+   * fetch follow & owner status per channel
    * -------------------------------------------------- */
   useEffect(() => {
-    const channel = cartItems[0]?.channel;
-    if (!channel) return;
+    const channelIds = Array.from(new Set(cartItems.map((item) => item.channel.id)));
+    channelIds.forEach((id) => {
+      isFollowing(id)
+        .then((is) => setFollowingChannels((prev) => ({ ...prev, [id]: is })))
+        .catch((err) => console.error('Erro ao checar follow:', err));
 
-    isFollowing(channel.id)
-      .then(setIsFollowingChannel)
-      .catch((err) => console.error('Erro ao checar follow:', err));
+      isChannelOwner(id)
+        .then((is) => setOwners((prev) => ({ ...prev, [id]: is })))
+        .catch((err) => console.error('Erro ao checar dono do canal:', err));
+    });
   }, [cartItems]);
 
   /* --------------------------------------------------
    * follow / unfollow handlers
    * -------------------------------------------------- */
-  const handleFollowClick = useCallback(async () => {
-    const channel = cartItems[0]?.channel;
-    if (!channel || followLoading) return;
-
-    setFollowLoading(true);
-    try {
-      await followChannel(channel.id);
-      setIsFollowingChannel(true);
-      setMessage('Canal seguido com sucesso!', 'success');
-    } catch (error: any) {
-      console.error('Erro ao seguir o canal:', error);
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        router.push('/login');
-        return;
+  const handleFollowClick = useCallback(
+    async (channelId: string) => {
+      if (followLoading[channelId]) return;
+      setFollowLoading((prev) => ({ ...prev, [channelId]: true }));
+      try {
+        await followChannel(channelId);
+        setFollowingChannels((prev) => ({ ...prev, [channelId]: true }));
+        setMessage('Canal seguido com sucesso!', 'success');
+      } catch (error: any) {
+        console.error('Erro ao seguir o canal:', error);
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          router.push('/login');
+          return;
+        }
+        setMessage('Não foi possível seguir o canal. Tente novamente.', 'error');
+      } finally {
+        setFollowLoading((prev) => ({ ...prev, [channelId]: false }));
       }
-      setMessage('Não foi possível seguir o canal. Tente novamente.', 'error');
-    } finally {
-      setFollowLoading(false);
-    }
-  }, [cartItems, followLoading, router, setMessage]);
+    },
+    [followLoading, router, setMessage]
+  );
 
-  const handleUnfollowClick = useCallback(async () => {
-    const channel = cartItems[0]?.channel;
-    if (!channel) return;
-
-    try {
-      await unfollowChannel(channel.id);
-      setIsFollowingChannel(false);
-      setMessage('Você deixou de seguir o canal.', 'success');
-    } catch (error) {
-      console.error('Erro ao deixar de seguir o canal:', error);
-      setMessage('Erro ao deixar de seguir o canal!', 'error');
-    }
-  }, [cartItems, setMessage]);
+  const handleUnfollowClick = useCallback(
+    async (channelId: string) => {
+      try {
+        await unfollowChannel(channelId);
+        setFollowingChannels((prev) => ({ ...prev, [channelId]: false }));
+        setMessage('Você deixou de seguir o canal.', 'success');
+      } catch (error) {
+        console.error('Erro ao deixar de seguir o canal:', error);
+        setMessage('Erro ao deixar de seguir o canal!', 'error');
+      }
+    },
+    [setMessage]
+  );
 
   /* --------------------------------------------------
-   * stage buttons
+   * group items by channel
    * -------------------------------------------------- */
-  const stageButtons: StageButtonProps[] =
-    auth === null
-      ? [{ text: '…', backgroundColor: '#ccc' }]
-      : isFollowingChannel
-      ? [
-          {
-            text: 'Amigos',
-            backgroundColor: '#212121',
-            onClick: handleUnfollowClick,
-          },
-        ]
-      : auth?.isAuthenticated
-      ? [
-          {
-            text: 'Seguir',
-            backgroundColor: '#DF1414',
-            imageSrc: followIcon,
-            onClick: handleFollowClick,
-            disabled: followLoading,
-          },
-        ]
-      : [
-          {
-            text: 'Seguir',
-            backgroundColor: '#DF1414',
-            imageSrc: followIcon,
-            onClick: async () => await router.push('/login'),
-          },
-        ];
-
-  /* --------------------------------------------------
-   * derived data
-   * -------------------------------------------------- */
-  const channel = cartItems[0]?.channel;
+  const itemsByChannel = cartItems.reduce((acc, item) => {
+    const key = item.channel.id;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(item);
+    return acc;
+  }, {} as Record<string, CartItemDTO[]>);
 
   /* --------------------------------------------------
    * render
    * -------------------------------------------------- */
   return (
-    <div className={styles.bagPage}>
-      <div className={styles.bagPageConteiner}>
-        <div className={styles.leftColumn}>
-          <div className={styles.productConteiner}>
-            {/* header do canal */}
-            {channel && (
-              <div className={styles.channelHeader}>
-                <div className={styles.channelLeft}>
-                  <div className={styles.channelTitle}>
-                    <Image
-                      src={`${apiUrl}${channel.imageUrl}`}
-                      alt={`${channel.name} - Imagem`}
-                      className={styles.channelImage}
-                      width={130}
-                      height={130}
-                    />
-                    <div
-                      className={styles.channelInfo}
-                      onClick={() =>
-                        (window.location.href = `${frontUrl}/${channel.nickname}`)
-                      }
-                    >
-                      <h2 className={styles.channelName}>{channel.name}</h2>
-                      <p className={styles.channelNickname}>@{channel.nickname}</p>
-                    </div>
-                  </div>
-                  <div className={styles.channelFollow}>
-                    {stageButtons.map((button, index) => (
-                      <StageButton
-                        key={index}
-                        text={button.text}
-                        backgroundColor={button.backgroundColor}
-                        imageSrc={button.imageSrc}
-                        onClick={button.onClick}
-                        disabled={button.disabled}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
+    <>
+      <MobileHeader
+        title="Carrinho"
+        buttons={{ close: true, address: true, share: true }}
+        handleBack={handleBack}
+      />
 
-            {/* lista de itens do carrinho */}
+      <div className={styles.bagPage}>
+        <div className={styles.bagPageConteiner}>
+          <div className={styles.leftColumnConteiner}>
             {cartItems.length === 0 ? (
               <p>O carrinho está vazio.</p>
             ) : (
-              <ul>
-                {cartItems.map((item) => (
-                  <li key={item.id} className={styles.cartItem}>
-                    <Card>
-                      <div className={styles.itemContent}>
-                        <Image
-                          src={`${apiUrl}${item.imageUrl}`}
-                          alt={item.name}
-                          width={80}
-                          height={80}
-                        />
-                        <div className={styles.itemDetails}>
-                          <h3>{item.name}</h3>
-                          <p>Qtd: {item.quantity}</p>
-                          <p>
-                            Canal: {item.channel.name} ({item.channel.nickname})
-                          </p>
+              Object.entries(itemsByChannel).map(([channelId, items]) => {
+                const channel = items[0].channel;
+                const isOwner = owners[channelId];
+                const isFollowingChannel = followingChannels[channelId];
+                const buttons: StageButtonProps[] = isOwner
+                  ? [
+                      {
+                        text: 'Compartilhar',
+                        backgroundColor: '#212121',
+                        imageSrc: shareIcon,
+                      },
+                    ]
+                  : isFollowingChannel
+                  ? [
+                      {
+                        text: 'Amigos',
+                        backgroundColor: '#212121',
+                        onClick: () => handleUnfollowClick(channelId),
+                      },
+                    ]
+                  : auth === null
+                  ? [
+                      {
+                        text: '…',
+                        backgroundColor: '#ccc',
+                      },
+                    ]
+                  : auth.isAuthenticated
+                  ? [
+                      {
+                        text: 'Seguir',
+                        backgroundColor: '#DF1414',
+                        imageSrc: followIcon,
+                        onClick: () => handleFollowClick(channelId),
+                      },
+                    ]
+                  : [
+                      {
+                        text: 'Seguir',
+                        backgroundColor: '#DF1414',
+                        imageSrc: followIcon,
+                        onClick: async () => {
+                          await router.push('/login');
+                        },
+                      },
+                    ];
+                const avatarSrc = channel.imageUrl ? `${apiUrl}${channel.imageUrl}` : defaultImage;
+
+                return (
+                  <div key={channelId} className={styles.channelSection}>
+                    <div className={styles.channelHeader}>
+                      <div className={styles.channelLeft}>
+                        <div className={styles.channelTitle}>
+                          <Image
+                            src={avatarSrc}
+                            alt={`${channel.name} – Imagem`}
+                            className={styles.channelImage}
+                            width={130}
+                            height={130}
+                          />
+                          <div
+                            className={styles.channelInfo}
+                            onClick={() => (window.location.href = `${frontUrl}/${channel.nickname}`)}
+                          >
+                            <h2 className={styles.channelName}>{channel.name}</h2>
+                            <p className={styles.channelNickname}>@{channel.nickname}</p>
+                          </div>
                         </div>
-                        <button onClick={() => removeFromBag(item.id)}>
-                          Remover
-                        </button>
+                        <div className={styles.channelFollow}>
+                          {buttons.map((button, index) => (
+                            <StageButton
+                              key={index}
+                              text={button.text}
+                              backgroundColor={button.backgroundColor}
+                              imageSrc={button.imageSrc}
+                              onClick={button.onClick}
+                              disabled={button.disabled}
+                            />
+                          ))}
+                        </div>
                       </div>
-                    </Card>
-                  </li>
-                ))}
-              </ul>
+                    </div>
+
+                    <div className={styles.productConteiner}>
+                      <div className={styles.leftColumn}>
+                        {items.map((item) => (
+                          <div key={item.id} className={styles.cartItem}>
+                            <Card>
+                              <div className={styles.itemContent}>
+                                <Image
+                                  src={`${apiUrl}${item.imageUrl}`}
+                                  alt={item.name}
+                                  width={80}
+                                  height={80}
+                                />
+                                <div className={styles.itemDetails}>
+                                  <h3>{item.name}</h3>
+                                  <p>Qtd: {item.quantity}</p>
+                                  <p>
+                                    Canal: {item.channel.name} ({item.channel.nickname})
+                                  </p>
+                                </div>
+                                <button onClick={() => removeFromBag(item.id)}>
+                                  Remover
+                                </button>
+                              </div>
+                            </Card>
+                          </div>
+                        ))}
+                      </div>
+                      <div className={styles.rightColumn}>
+                        <ExpandableCard title="Delivery">Aqui</ExpandableCard>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
             )}
+          </div>
+
+          <div className={styles.rightColumnConteiner}>
+            <Card>Aqui</Card>
             {cartItems.length > 0 && (
-              <button onClick={clearBag} style={{ marginTop: '1rem' }}>
+              <button onClick={clearBag}>
                 Limpar carrinho
               </button>
             )}
           </div>
         </div>
-        <div className={styles.rightColumn}></div>
       </div>
-    </div>
+    </>
   );
 };
 
