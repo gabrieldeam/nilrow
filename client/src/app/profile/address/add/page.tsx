@@ -9,7 +9,7 @@ import React, {
   ChangeEvent,
 } from 'react';
 import Head from 'next/head';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams  } from 'next/navigation';
 import axios from 'axios';
 
 import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';
@@ -43,7 +43,9 @@ interface RawClassificationData {
 
 function AddAddressPage() {
   const router = useRouter();
-
+  const searchParams = useSearchParams();
+  const selectMode  = searchParams.get('selectMode') === '1';
+  const returnTo    = searchParams.get('returnTo') || '';  
   const { setMessage } = useNotification();
 
   const [formData, setFormData] = useState({
@@ -73,8 +75,15 @@ function AddAddressPage() {
   const [isFormValid, setIsFormValid] = useState(false);
 
   const handleBack = useCallback(() => {
-    router.back();
-  }, [router]);
+    if (selectMode) {
+      router.push(
+        `/profile/address?selectMode=1&returnTo=${encodeURIComponent(returnTo)}`
+      );
+    } else {
+      router.push('/profile/address');
+    }
+  }, [router, selectMode, returnTo]);
+  
 
   const handleChange = useCallback(
     (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -200,7 +209,13 @@ function AddAddressPage() {
       try {
         await addAddress(formData);
         setMessage('Endereço adicionado com sucesso!', 'success');
-        router.push('/profile/address');
+        if (selectMode) {
+          router.push(
+            `/profile/address?selectMode=1&returnTo=${encodeURIComponent(returnTo)}`
+          );
+        } else {
+          router.push('/profile/address');
+        }
       } catch (error) {
         console.error('Erro ao adicionar endereço:', error);
         setMessage('Erro ao adicionar endereço. Tente novamente.', 'error');

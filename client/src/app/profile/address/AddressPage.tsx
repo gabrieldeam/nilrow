@@ -35,6 +35,7 @@ function AddressPageContent() {
   const selectMode = searchParams.get('selectMode') === '1';
   // Caso não seja definido o returnTo, define uma rota padrão (pode ser ajustado conforme sua necessidade)
   const returnTo = searchParams.get('returnTo') || '/channel/catalog/add';
+  const hasReturnTo = !!searchParams.get('returnTo');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -100,8 +101,15 @@ function AddressPageContent() {
         <Card
           title="Cadastrados"
           rightLink={
-            !selectMode
-              ? { href: '/profile/address/add', text: '+ Adicionar endereço' }
+            (!selectMode || hasReturnTo)
+              ? {
+                  href: `/profile/address/add${
+                    hasReturnTo
+                      ? `?selectMode=1&returnTo=${encodeURIComponent(returnTo)}`
+                      : ''
+                  }`,
+                  text: '+ Adicionar endereço',
+                }
               : undefined
           }
         >

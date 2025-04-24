@@ -158,6 +158,10 @@
       margin-top: -20px;
     }
 
+    .leftColumn {     
+        width: 100%;
+    }
+
     .leftColumnConteiner {     
         width: 100%;
     }

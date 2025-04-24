@@ -43,12 +43,13 @@ public class CartService {
     @Transactional
     public CartDTO addOrUpdateItem(String peopleId, CartItemRequest req) {
 
+        /* -------- validações básicas -------- */
         if ((req.getProductId() == null || req.getProductId().isBlank())
                 && (req.getVariationId() == null || req.getVariationId().isBlank())) {
             throw new IllegalArgumentException("Envie productId ou variationId");
         }
-        if (req.getQuantity() == null || req.getQuantity() <= 0) {
-            throw new IllegalArgumentException("Quantidade deve ser > 0");
+        if (req.getQuantity() == null || req.getQuantity() == 0) {
+            throw new IllegalArgumentException("Quantidade não pode ser 0");
         }
 
         /* -------- recupera People e carrinho (ou cria) -------- */
@@ -56,27 +57,27 @@ public class CartService {
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
         Cart cart = cartRepo.findByPeopleId(peopleId)
-                .orElseGet(() -> {          // cria novo carrinho vazio
+                .orElseGet(() -> {                // cria carrinho vazio se não existir
                     Cart c = new Cart();
                     c.setPeople(people);
                     return c;
                 });
 
+        /* -------- resolve productId / variationId -------- */
         String productId   = req.getProductId();
         String variationId = req.getVariationId();
 
-        // Se veio apenas variationId → localizar productId
+        // se veio só variationId ⇒ descobre productId
         if ((productId == null || productId.isBlank()) && variationId != null) {
             ProductVariation var = variationRepo.findById(variationId)
                     .orElseThrow(() -> new RuntimeException("Variação não encontrada"));
             productId = var.getProduct().getId();
         }
 
-        /* cópias finais p/ lambda */
         final String pid = productId;
         final String vid = variationId;
 
-        /* procura item existente */
+        /* -------- localiza item existente (se houver) -------- */
         CartItem item = cart.getItems().stream()
                 .filter(ci -> ci.getProductId().equals(pid) &&
                         ((vid == null && ci.getVariationId() == null) ||
@@ -84,17 +85,29 @@ public class CartService {
                 .findFirst()
                 .orElse(null);
 
-        if (item == null) {           // novo item
+        /* -------- cria ou atualiza -------- */
+        if (item == null) {
+            // não pode subtrair de um item que ainda não existe
+            if (req.getQuantity() < 0) {
+                throw new IllegalArgumentException(
+                        "Não é possível subtrair de um item que ainda não existe");
+            }
             item = new CartItem();
             item.setCart(cart);
             item.setProductId(pid);
             item.setVariationId(vid);
             item.setQuantity(req.getQuantity());
             cart.getItems().add(item);
-        } else {                      // apenas ajusta qtd.
-            item.setQuantity(req.getQuantity());
+        } else {
+            int newQty = item.getQuantity() + req.getQuantity();  // soma (ou subtrai)
+            if (newQty <= 0) {
+                cart.getItems().remove(item);                     // remove se zerou
+            } else {
+                item.setQuantity(newQty);                         // atualiza
+            }
         }
 
+        /* -------- persiste e devolve DTO -------- */
         Cart saved = cartRepo.save(cart);
         return toDTO(saved);
     }

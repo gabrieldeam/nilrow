@@ -12,7 +12,18 @@ interface CartItemProps {
 }
 
 export default function CartItem({ item, apiUrl }: CartItemProps) {
-  const { addToBag, decrementFromBag, removeFromBag } = useBag();
+  const { bag, changeQuantity, removeFromBag } = useBag();
+
+  /* --- converte para BagItem (id + isVariation) --- */
+  const bagItem = {
+    id: item.variationId ?? item.productId,
+    isVariation: !!item.variationId,
+    quantity: item.quantity, // fallback
+  };
+
+  /* --- pega a quantidade mais recente no contexto --- */
+  const currentQty =
+    bag.find((x) => x.id === bagItem.id)?.quantity ?? bagItem.quantity;
 
   return (
     <div className={styles.cartItem}>
@@ -26,9 +37,8 @@ export default function CartItem({ item, apiUrl }: CartItemProps) {
 
       <div className={styles.itemContent}>
         <div className={styles.itemDetails}>
-
           <h3 className={styles.itemName}>
-            {item.name.length > 90 ? item.name.slice(0, 90) + '…' : item.name}
+            {item.name.length > 60 ? `${item.name.slice(0, 60)}…` : item.name}
           </h3>
 
           <div className={styles.itemAttributes}>
@@ -40,31 +50,15 @@ export default function CartItem({ item, apiUrl }: CartItemProps) {
           </div>
 
           <div className={styles.quantityControls}>
-            <button
-              onClick={() => decrementFromBag(item.id)}
-              disabled={item.quantity <= 1}
-            >
-              –
-            </button>
-            <span>{item.quantity}</span>
-            <button
-              onClick={() =>
-                addToBag({
-                  id: item.id,
-                  isVariation: !!item.variationId,
-                  quantity: 1,
-                })
-              }
-            >
-              +
-            </button>
+            <button onClick={() => changeQuantity(bagItem, -1)}>–</button>
+            <span>{currentQty}</span>
+            <button onClick={() => changeQuantity(bagItem, +1)}>+</button>
           </div>
         </div>
 
-        {/* Excluir */}
         <button
           className={styles.itemRemover}
-          onClick={() => removeFromBag(item.id)}
+          onClick={() => removeFromBag(bagItem)}
         >
           Excluir
         </button>

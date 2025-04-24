@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, memo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useBag } from '@/context/BagContext';
 
 import { useAuth } from '@/hooks/useAuth';
 
@@ -43,6 +44,7 @@ function Profile() {
   const [nickname, setNickname] = useState('');
   const [emailValidated, setEmailValidated] = useState(false);
   const [channelImageUrl, setChannelImageUrl] = useState('');
+  const { clearBag } = useBag(); 
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -120,7 +122,7 @@ function Profile() {
             </div>
 
             <div className={`${styles.logoutLink} ${styles.desktopOnly}`}>
-              <button className={styles.logoutButton} onClick={handleLogout}>
+              <button className={styles.logoutButton} onClick={() => {clearBag(); handleLogout();}}>
                 Sair
               </button>
             </div>
@@ -182,7 +184,7 @@ function Profile() {
         </div>
 
         <div className={`${styles.logoutLink} ${styles.mobileOnly}`}>
-          <button className={styles.logoutButton} onClick={handleLogout}>
+          <button className={styles.logoutButton} onClick={() => {clearBag(); handleLogout();}}>
             Sair
           </button>
         </div>
