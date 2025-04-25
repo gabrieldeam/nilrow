@@ -25,6 +25,7 @@ interface BagContextProps {
 
 const BagContext = createContext<BagContextProps | undefined>(undefined);
 
+/* ---------- util ---------- */
 const mapServerCart = (serverCart: any): BagItem[] =>
   serverCart.items
     .filter((i: any) => i.quantity > 0)
@@ -38,7 +39,7 @@ export const BagProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const [bag, setBag] = useState<BagItem[]>([]);
 
-  /* ---------- offline ---------- */
+  /* ---------- offline load ---------- */
   useEffect(() => {
     if (!isAuthenticated) {
       const saved = localStorage.getItem('bag');
@@ -46,6 +47,7 @@ export const BagProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [isAuthenticated]);
 
+  /* ---------- offline persist ---------- */
   useEffect(() => {
     if (!isAuthenticated) {
       localStorage.setItem('bag', JSON.stringify(bag));
@@ -81,24 +83,8 @@ export const BagProvider = ({ children }: { children: ReactNode }) => {
     isAuthenticated ? syncBag() : setBag([]);
   }, [authLoading, isAuthenticated]);
 
-  /* ---------------- ações ---------------- */
-  const changeQuantity = (item: BagItem, delta: number) => {
-    if (delta === 0) return;
-
-    /* === USUÁRIO LOGADO ====================================== */
-    if (isAuthenticated) {
-      addOrUpdateCartItem(
-        item.isVariation
-          ? { variationId: item.id, quantity: delta }
-          : { productId: item.id, quantity: delta },
-      )
-        .then((serverCart) => setBag(mapServerCart(serverCart)))
-        .catch((err) => console.error(err));
-
-      return;
-    }
-
-    /* === USUÁRIO ANÔNIMO (offline) =========================== */
+  /* ---------- optimistic helper ---------- */
+  const optimisticUpdate = (item: BagItem, delta: number) =>
     setBag((prev) => {
       const exists = prev.find((x) => x.id === item.id);
       if (exists) {
@@ -111,9 +97,37 @@ export const BagProvider = ({ children }: { children: ReactNode }) => {
       }
       return delta > 0 ? [...prev, { ...item, quantity: delta }] : prev;
     });
+
+  /* ---------- actions ---------- */
+  const changeQuantity = (item: BagItem, delta: number) => {
+    if (delta === 0) return;
+
+    /* --- otimista (UI) --- */
+    optimisticUpdate(item, delta);
+
+    /* --- logado: envia pro backend, mas NÃO sobrescreve state --- */
+    if (isAuthenticated) {
+      const payload = item.isVariation
+        ? { variationId: item.id, quantity: delta }
+        : { productId: item.id, quantity: delta };
+
+      addOrUpdateCartItem(payload).catch(async (err) => {
+        console.error(err);
+        /* rollback se falhar */
+        try {
+          const fresh = await getCart();
+          setBag(mapServerCart(fresh));
+        } catch (e) {
+          console.error('Falha no rollback:', e);
+        }
+      });
+    }
   };
 
-  const removeFromBag = (item: BagItem) => changeQuantity(item, -item.quantity);
+  const removeFromBag = (item: BagItem) => {
+    const current = bag.find((x) => x.id === item.id);
+    if (current) changeQuantity(item, -current.quantity);
+  };
 
   const clearBag = () => {
     setBag([]);

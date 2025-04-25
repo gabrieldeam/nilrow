@@ -85,7 +85,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ params }) => {
   const resolvedParams = use(params);
   const { id } = resolvedParams;
   const { location } = useLocationContext();
-  const { bag, addToBag } = useBag();
+  const { bag, changeQuantity } = useBag();
   const [followLoading, setFollowLoading] = useState(false);
   const [folderMembership, setFolderMembership] = useState<Record<string, boolean>>({});
   const [favoriteStatus, setFavoriteStatus]   = useState<FavoriteStatusDTO | null>(null);
@@ -518,25 +518,30 @@ const handleAddToExistingFolder = async (folderName: string) => {
   // ----------------------------------------------------------------------------
   // ADICIONAR AO CARRINHO
   const handleAddToCart = () => {
-    const currentId     = selectedVariation?.id ?? product?.id;
-    const isVar         = !!selectedVariation;
-    const currentStock  = selectedVariation?.stock ?? product?.stock ?? 0;
+    const currentId    = selectedVariation?.id ?? product?.id;
+    const isVar        = !!selectedVariation;
+    const currentStock = selectedVariation?.stock ?? product?.stock ?? 0;
   
     if (!currentId || currentStock <= 0) {
-      setMessage("Produto indisponível no momento.", "error");
+      setMessage('Produto indisponível no momento.', 'error');
       return;
     }
   
-    const existingItem  = bag.find((i) => i.id === currentId);
-    const desiredQty    = (existingItem?.quantity ?? 0) + 1;
+    const existingItem = bag.find((i) => i.id === currentId);
+    const desiredQty   = (existingItem?.quantity ?? 0) + 1;
   
     if (desiredQty > currentStock) {
-      setMessage(`Você só pode adicionar até ${currentStock} unidades deste item.`, "error");
+      setMessage(`Você só pode adicionar até ${currentStock} unidades deste item.`, 'error');
       return;
     }
   
-    addToBag({ id: currentId, isVariation: isVar, quantity: 1 });
-    setMessage("Item adicionado ao carrinho!", "success");
+    /* ---------- agora usamos apenas changeQuantity (+1) ---------- */
+    changeQuantity(
+      { id: currentId, isVariation: isVar, quantity: 1 },
+      +1,
+    );
+  
+    setMessage('Item adicionado ao carrinho!', 'success');
   };
   
 

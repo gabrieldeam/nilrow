@@ -21,9 +21,12 @@ export default function CartItem({ item, apiUrl }: CartItemProps) {
     quantity: item.quantity, // fallback
   };
 
-  /* --- pega a quantidade mais recente no contexto --- */
+  /* --- quantidade mais recente vinda do contexto --- */
   const currentQty =
-    bag.find((x) => x.id === bagItem.id)?.quantity ?? bagItem.quantity;
+  bag.find((x) => x.id === bagItem.id)?.quantity ?? 0;
+
+  /* --- se zerou, não renderiza mais nada --- */
+  if (currentQty <= 0) return null;
 
   return (
     <div className={styles.cartItem}>
@@ -44,7 +47,7 @@ export default function CartItem({ item, apiUrl }: CartItemProps) {
           <div className={styles.itemAttributes}>
             {item.attributes.map((attr) => (
               <span key={attr.id} className={styles.attribute}>
-                {attr.attributeName}: {attr.attributeValue}
+                <strong>{attr.attributeName}</strong>: {attr.attributeValue}
               </span>
             ))}
           </div>

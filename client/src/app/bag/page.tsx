@@ -40,7 +40,7 @@ const BagPage = () => {
   /* --------------------------------------------------
    * context & router
    * -------------------------------------------------- */
-  const { removeFromBag, clearBag } = useBag();
+  const { bag, clearBag } = useBag();
   const router = useRouter();
   const { setMessage } = useNotification();
 
@@ -132,9 +132,14 @@ const BagPage = () => {
   );
 
   /* --------------------------------------------------
-   * group items by channel
+   * group ONLY visible items by channel
    * -------------------------------------------------- */
-  const itemsByChannel = cartItems.reduce((acc, item) => {
+  const visibleItems = cartItems.filter((item) => {
+    const id = item.variationId ?? item.productId;
+    return bag.some((b) => b.id === id && b.quantity > 0);
+  });
+
+  const itemsByChannel = visibleItems.reduce((acc, item) => {
     const key = item.channel.id;
     if (!acc[key]) acc[key] = [];
     acc[key].push(item);
@@ -155,13 +160,14 @@ const BagPage = () => {
       <div className={styles.bagPage}>
         <div className={styles.bagPageConteiner}>
           <div className={styles.leftColumnConteiner}>
-            {cartItems.length === 0 ? (
+            {bag.length === 0 ? (
               <p>O carrinho está vazio.</p>
             ) : (
               Object.entries(itemsByChannel).map(([channelId, items]) => {
                 const channel = items[0].channel;
                 const isOwner = owners[channelId];
                 const isFollowingChannel = followingChannels[channelId];
+
                 const buttons: StageButtonProps[] = isOwner
                   ? [
                       {
@@ -204,6 +210,7 @@ const BagPage = () => {
                         },
                       },
                     ];
+
                 const avatarSrc = channel.imageUrl ? `${apiUrl}${channel.imageUrl}` : defaultImage;
 
                 return (
@@ -220,7 +227,9 @@ const BagPage = () => {
                           />
                           <div
                             className={styles.channelInfo}
-                            onClick={() => (window.location.href = `${frontUrl}/${channel.nickname}`)}
+                            onClick={() =>
+                              (window.location.href = `${frontUrl}/${channel.nickname}`)
+                            }
                           >
                             <h2 className={styles.channelName}>{channel.name}</h2>
                             <p className={styles.channelNickname}>@{channel.nickname}</p>
@@ -259,10 +268,8 @@ const BagPage = () => {
 
           <div className={styles.rightColumnConteiner}>
             <Card>Aqui</Card>
-            {cartItems.length > 0 && (
-              <button onClick={clearBag}>
-                Limpar carrinho
-              </button>
+            {bag.length > 0 && (
+              <button onClick={clearBag}>Limpar carrinho</button>
             )}
           </div>
         </div>
