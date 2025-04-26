@@ -21,4 +21,5 @@ public class CartItemDTO {
     private Integer quantity;
     private List<VariationAttributeDTO> attributes;
     private SimpleChannelDTO channel;
+    private String catalogId;
 }

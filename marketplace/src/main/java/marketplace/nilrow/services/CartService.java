@@ -138,6 +138,14 @@ public class CartService {
                             ? variationRepo.findById(ci.getVariationId()).orElse(null)
                             : null;
 
+                    String catalogId = null;
+                    if (variation != null && variation.getProduct() != null
+                            && variation.getProduct().getCatalog() != null) {
+                        catalogId = variation.getProduct().getCatalog().getId();
+                    } else if (product.getCatalog() != null) {
+                        catalogId = product.getCatalog().getId();
+                    }
+
                     /* -------- validação: se não encontrar, ignora o item -------- */
                     if (product == null) {
                         // opcional: você pode lançar RuntimeException("Produto não encontrado")
@@ -189,7 +197,8 @@ public class CartService {
                             discount,
                             ci.getQuantity(),
                             attrs,
-                            channelDTO
+                            channelDTO,
+                            catalogId
                     );
                 })
                 .filter(Objects::nonNull)

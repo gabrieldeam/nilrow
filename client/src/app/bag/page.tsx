@@ -9,9 +9,10 @@ import { useNotification } from '@/hooks/useNotification';
 
 import Card from '@/components/UI/Card/Card';
 import StageButton from '@/components/UI/StageButton/StageButton';
+import CustomInput from '@/components/UI/CustomInput/CustomInput';
 import MobileHeader from '@/components/Layout/MobileHeader/MobileHeader';
 import CartItem from '@/components/UI/CartItem/CartItem';
-
+import Modal from '@/components/Modals/Modal/Modal';
 import followIcon from '../../../public/assets/follow.svg';
 import shareIcon from '../../../public/assets/share.svg';
 import defaultImage from '../../../public/assets/user.png';
@@ -27,6 +28,17 @@ import { CartItemDTO } from '@/types/services/cart';
 
 import styles from './Bag.module.css';
 import ExpandableCard from '@/components/UI/ExpandableCard/ExpandableCard';
+import { useLocationContext } from '@/context/LocationContext';
+
+import {
+  getDeliveryPrice
+} from '@/services/deliveryService';
+import {
+  getActivePickupDetailsByCatalogId
+} from '@/services/pickupService';
+
+import { DeliveryPriceDTO } from '@/types/services/delivery';
+import { PickupActiveDetailsDTO } from '@/types/services/pickup';
 
 interface StageButtonProps {
   text: string;
@@ -40,10 +52,16 @@ const BagPage = () => {
   /* --------------------------------------------------
    * context & router
    * -------------------------------------------------- */
-  const { bag, clearBag } = useBag();
+  const { bag, clearBag, removeFromBag } = useBag();
   const router = useRouter();
   const { setMessage } = useNotification();
+  const [obsModalChannel, setObsModalChannel] = useState<string | null>(null);
+  const makeGroupKey = (channelId: string, catalogId: string) =>
+    `${channelId}::${catalogId}`;
 
+  // texto temporário dentro do textarea
+  const [tempObs, setTempObs] = useState('');
+  
   /* --------------------------------------------------
    * local state
    * -------------------------------------------------- */
@@ -52,12 +70,31 @@ const BagPage = () => {
   const [followingChannels, setFollowingChannels] = useState<Record<string, boolean>>({});
   const [owners, setOwners] = useState<Record<string, boolean>>({});
   const [followLoading, setFollowLoading] = useState<Record<string, boolean>>({});
-
+  const { location } = useLocationContext();
   /* --------------------------------------------------
    * env vars
    * -------------------------------------------------- */
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
   const frontUrl = process.env.NEXT_PUBLIC_FRONT_URL ?? '';
+
+  type GroupDict<T> = Record<string, T>; 
+  type ItemsDict = GroupDict<CartItemDTO[]>;
+  type ShipChoice = { kind: 'delivery' | 'pickup'; price: number };
+  type ChoiceDict = GroupDict<ShipChoice | null>;
+
+  const [deliveryByGroup, setDeliveryByGroup] = useState<
+  GroupDict<DeliveryPriceDTO | null | undefined>
+  >({});
+
+  const [pickupByGroup, setPickupByGroup] = useState<
+    GroupDict<PickupActiveDetailsDTO | null | undefined>
+  >({});
+
+  /** escolha de entrega/retirada do usuário por (canal+catálogo) */
+const [choiceByGroup, setChoiceByGroup] = useState<ChoiceDict>({});
+const [obsByGroup, setObsByGroup] = useState<GroupDict<string>>({});
+const [showAddrByGroup, setShowAddrByGroup] = useState<GroupDict<boolean>>({});
+
 
   /* --------------------------------------------------
    * auth & cart bootstrap
@@ -131,6 +168,34 @@ const BagPage = () => {
     [setMessage]
   );
 
+
+  // remove todos os itens daquele canal do bag
+  const handleRemoveAll = (items: CartItemDTO[]) => {
+      items.forEach(item => {
+         removeFromBag({
+           id: item.variationId ?? item.productId,
+           isVariation: !!item.variationId,
+           quantity: item.quantity,
+         });
+       });
+       setChoiceByGroup(prev => ({ ...prev, [makeGroupKey(items[0].channel.id, items[0].catalogId)]: null }));
+     };
+  
+
+  // abre o modal e carrega texto já salvo (se houver)
+  const handleOpenObs = (gKey: string) => {
+    setTempObs(obsByGroup[gKey] ?? '');
+    setObsModalChannel(gKey);
+  };
+  
+  const handleSaveObs = () => {
+    if (!obsModalChannel) return;
+    setObsByGroup(prev => ({ ...prev, [obsModalChannel]: tempObs }));
+    setObsModalChannel(null);
+  };
+  
+
+
   /* --------------------------------------------------
    * group ONLY visible items by channel
    * -------------------------------------------------- */
@@ -138,13 +203,84 @@ const BagPage = () => {
     const id = item.variationId ?? item.productId;
     return bag.some((b) => b.id === id && b.quantity > 0);
   });
-
-  const itemsByChannel = visibleItems.reduce((acc, item) => {
-    const key = item.channel.id;
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(item);
+  
+  /* agora agrupamos por canal + catálogo */
+  const itemsByGroup: ItemsDict =
+  visibleItems.reduce<ItemsDict>((acc, item) => {
+    const gKey = makeGroupKey(item.channel.id, item.catalogId);
+    if (!acc[gKey]) acc[gKey] = [];
+    acc[gKey].push(item);
     return acc;
-  }, {} as Record<string, CartItemDTO[]>);
+  }, {});
+  
+  const shipCostByGroup: GroupDict<number> = Object.fromEntries(
+    Object.keys(itemsByGroup).map(k => [k, choiceByGroup[k]?.price ?? 0])
+  );
+
+  const subtotais: GroupDict<number> = Object.entries(itemsByGroup)
+  .reduce((acc, [gKey, items]) => {
+    const subtotal = items.reduce((sum, item) => {
+      const qty = bag.find(
+        b => b.id === (item.variationId ?? item.productId)
+      )?.quantity ?? 0;
+      return sum + qty * item.unitPrice;
+    }, 0);
+    acc[gKey] = subtotal;
+    return acc;
+  }, {} as GroupDict<number>);
+
+
+// 1.2 — total geral (soma de todos os subtotais)
+const totalGeral = Object.keys(subtotais).reduce(
+  (acc, k) => acc + subtotais[k] + shipCostByGroup[k], 0
+);
+
+
+
+useEffect(() => {
+  if (!location || location.latitude === 0) return;
+
+  Object.entries(itemsByGroup).forEach(([gKey, items]) => {
+    const catalogId = items[0].catalogId;
+
+    if (deliveryByGroup[gKey] === undefined) {
+      getDeliveryPrice(catalogId, location.latitude, location.longitude)
+        .then(del => setDeliveryByGroup(p => ({ ...p, [gKey]: del })))
+        .catch(()  => setDeliveryByGroup(p => ({ ...p, [gKey]: null })));
+    }
+
+    if (pickupByGroup[gKey] === undefined) {
+      getActivePickupDetailsByCatalogId(catalogId)
+        .then(pu => setPickupByGroup(p => ({ ...p, [gKey]: pu })))
+        .catch(()  => setPickupByGroup(p => ({ ...p, [gKey]: null })));
+    }
+
+    /* ---------- aqui entra a auto-seleção ---------- */
+    const del = deliveryByGroup[gKey];
+    const pu  = pickupByGroup[gKey];
+
+    if (del !== undefined && pu !== undefined) {
+      if (del && pu === null && !choiceByGroup[gKey]) {
+        setChoiceByGroup(prev => ({ ...prev,
+          [gKey]: { kind:'delivery', price: del.price } }));
+      }
+      if (pu && del === null && !choiceByGroup[gKey]) {
+        setChoiceByGroup(prev => ({ ...prev,
+          [gKey]: { kind:'pickup', price: pu.precoRetirada } }));
+      }
+    }
+  });
+}, [itemsByGroup, location, deliveryByGroup, pickupByGroup, choiceByGroup]);
+
+  
+  
+  const toggleShowAddress = (gKey: string) => {
+    setShowAddrByGroup(prev => ({
+      ...prev,
+      [gKey]: !prev[gKey],
+    }));
+  };
+  
 
   /* --------------------------------------------------
    * render
@@ -163,9 +299,11 @@ const BagPage = () => {
             {bag.length === 0 ? (
               <p>O carrinho está vazio.</p>
             ) : (
-              Object.entries(itemsByChannel).map(([channelId, items]) => {
-                const channel = items[0].channel;
+              Object.entries(itemsByGroup).map(([gKey, items]) => {
+                const { channel, catalogId } = items[0];
+                const [channelId] = gKey.split('::');
                 const isOwner = owners[channelId];
+                const lojaTotal = subtotais[gKey] + shipCostByGroup[gKey];
                 const isFollowingChannel = followingChannels[channelId];
 
                 const buttons: StageButtonProps[] = isOwner
@@ -214,7 +352,7 @@ const BagPage = () => {
                 const avatarSrc = channel.imageUrl ? `${apiUrl}${channel.imageUrl}` : defaultImage;
 
                 return (
-                  <div key={channelId} className={styles.channelSection}>
+                  <div key={gKey} className={styles.channelSection}>
                     <div className={styles.channelHeader}>
                       <div className={styles.channelLeft}>
                         <div className={styles.channelTitle}>
@@ -255,9 +393,152 @@ const BagPage = () => {
                         {items.map((item) => (
                           <CartItem key={item.id} item={item} apiUrl={apiUrl} />
                         ))}
+                        <div className={styles.productSubtotal1nd}>
+                          <Card>
+                            <div className={styles.productSubtotal}>
+                              <span>Subtotal</span>
+                              <span>R$ {subtotais[gKey].toFixed(2)}</span>
+                            </div>
+                            <div className={styles.productSubtotal}>
+                              <span>Entrega</span>
+                              <span>R$ {shipCostByGroup[gKey].toFixed(2)}</span>
+                            </div>
+                            <div className={styles.productSubtotal /* pode criar um modificador */}>
+                              <strong>Total da loja</strong>
+                              <strong>R$ {lojaTotal.toFixed(2)}</strong>
+                            </div>
+                          </Card>
+                        </div>
+                        
                       </div>
                       <div className={styles.rightColumn}>
-                        <ExpandableCard title="Delivery">Aqui</ExpandableCard>
+                        <button
+                          className={styles.channelActionBtn}
+                          onClick={() => handleOpenObs(gKey)}
+                        >
+                          Criar observação
+                        </button>
+                        <button
+                          className={styles.channelActionBtnRemove}
+                          onClick={() => handleRemoveAll(items)}
+                        >
+                          Excluir todos
+                        </button>
+                        
+
+                        {/* exibe a observação salva, se existir */}
+                        {obsByGroup[gKey] && (
+                          <p className={styles.channelObservation}>
+                            {obsByGroup[gKey]}
+                          </p>
+                        )}
+
+
+                        {deliveryByGroup[gKey] && deliveryByGroup[gKey] !== null && (
+                          <ExpandableCard title="Delivery">
+                            {(() => {                              
+                              const del = deliveryByGroup[gKey];
+                              if (del === undefined) return <p>Carregando delivery...</p>;
+                              if (del === null)      return <p>Delivery indisponível</p>;
+                              // else mostramos o payload:
+                              return (
+                                <div className={styles.pickupBox}>
+                                  <div className={styles.labels}>
+                                    <span>Preço</span>
+                                    <span>Tempo de Entrega</span>
+                                  </div>
+                                  <label className={styles.radioLine}>
+                                    <input
+                                      type="radio"
+                                      name={`ship-${gKey}`}
+                                      checked={choiceByGroup[gKey]?.kind === 'delivery'}
+                                      onChange={() =>
+                                        setChoiceByGroup(prev => ({
+                                          ...prev,
+                                          [gKey]: { kind: 'delivery', price: del.price }
+                                        }))
+                                      }
+                                    />                                    
+                                      <div className={styles.pickupInfo}>
+                                        <div className={styles.price}>
+                                          {del.price === 0 ? 'Grátis' : `R$ ${del.price}`}
+                                        </div>
+                                        <div className={styles.availability}>
+                                          {del.averageDeliveryTime} min
+                                        </div> 
+                                      </div>                                                                        
+                                    </label>
+                                </div>
+                              );
+                            })()}
+
+                          </ExpandableCard>
+                        )}
+                        {pickupByGroup[gKey] && pickupByGroup[gKey] !== null && (
+                          <ExpandableCard title="Retirada">
+                            {(() => {
+                              const pu   = pickupByGroup[gKey];
+                              if (pu === undefined) return <p>Carregando retirada...</p>;
+                              if (pu === null)      return <p>Retirada indisponível</p>;
+                              const full = showAddrByGroup[gKey];
+                              const addr = pu.address;
+                              return (
+                                <div className={styles.pickupBox}>
+                                  <p className={styles.pickupTitle}>
+                                    <strong>Retirar em:</strong>{' '}
+                                    {full
+                                      ? `${addr.street}, ${addr.neighborhood}, ${addr.cep}, ${addr.city}, ${addr.state}${addr.complement ? `, ${addr.complement}` : ''}`
+                                      : <span className={styles.truncated}>{addr.street}</span>
+                                    }
+                                    <span
+                                      className={styles.verMais}
+                                      onClick={() => toggleShowAddress(gKey)}
+                                    >
+                                      {full ? 'ver menos' : 'ver mais'}
+                                    </span>
+                                  </p>
+                                  <div className={styles.labels}>
+                                    <span>Preço</span>
+                                    <span>Disponibilidade</span>
+                                  </div>
+                                  <label className={styles.radioLine}>
+                                    <input
+                                      type="radio"
+                                      name={`ship-${gKey}`}
+                                      checked={choiceByGroup[gKey]?.kind === 'pickup'}
+                                      onChange={() =>
+                                        setChoiceByGroup(prev => ({
+                                          ...prev,
+                                          [gKey]: { kind: 'pickup', price: pu.precoRetirada }
+                                        }))
+                                      }
+                                    />
+                                      <div className={styles.pickupInfo}>
+                                        <div className={styles.price}>
+                                          {pu.precoRetirada === 0 ? 'Grátis' : `R$ ${pu.precoRetirada}`}
+                                        </div>
+                                        <div className={styles.availability}>
+                                          em {pu.prazoRetirada} dias
+                                        </div>
+                                      </div>                                  
+                                  </label>
+                                </div>
+                              );
+                            })()}
+                          </ExpandableCard>
+                        )}
+                        <div className={styles.productSubtotal2nd}>
+                          <Card>
+                            <div className={styles.productSubtotal}>
+                              <span>Subtotal</span>
+                              <span>R$ {subtotais[gKey].toFixed(2)}</span>
+                            </div>
+                            <div className={styles.productSubtotal}>
+                              <span>Entrega</span>
+                              <span>R$ {shipCostByGroup[gKey].toFixed(2)}</span>
+                            </div>
+                          </Card>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -267,13 +548,39 @@ const BagPage = () => {
           </div>
 
           <div className={styles.rightColumnConteiner}>
-            <Card>Aqui</Card>
             {bag.length > 0 && (
               <button onClick={clearBag}>Limpar carrinho</button>
             )}
+            <Card>
+              <div className={styles.productSubtotal}>
+                <span>Total da compra</span>
+                <span>R$ {totalGeral.toFixed(2)}</span>
+              </div>
+            </Card>            
           </div>
         </div>
       </div>
+
+      <Modal isOpen={!!obsModalChannel} onClose={() => setObsModalChannel(null)}>
+        <h2>Observação</h2>
+
+        <CustomInput
+          title=""   
+          placeholder="Digite sua observação aqui…"
+          isTextarea   
+          value={tempObs}
+          onChange={(e) => setTempObs(e.target.value)}
+          name={`obs-${obsModalChannel}`} 
+        />
+
+        <StageButton
+          text="Salvar"
+          backgroundColor="#7B33E5"  
+          onClick={handleSaveObs}
+          width="auto" 
+        />
+      </Modal>
+
     </>
   );
 };

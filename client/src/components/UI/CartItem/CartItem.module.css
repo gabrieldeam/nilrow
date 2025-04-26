@@ -5,8 +5,9 @@
   color: black;
   gap: 10px;
   height: 140px;    
-  border: 1px solid #ccc;
+  border: 1px solid #9F9F9F;
   min-width: 100%;
+  align-items: center;
 }
 
 .itemImage {
@@ -19,17 +20,15 @@
 }
 
 .itemContent {
-  display: flex;
-  justify-content: space-between;    
-  align-items: center;
+  display: flex;  
+  flex-direction: column;
   width: 100%;
-  gap: 50px;
+  gap: 10px;
   padding: 10px;
 }
 
 .itemDetails {
-  display: flex;
-  flex-direction: column;    
+  display: flex;  
   gap: 10px;
   width: 100%;
 }
@@ -76,10 +75,10 @@
   border: 1px solid black;
   gap: 2px;
   border-radius: 5px;
-  width: 80px;
+  width: 70px;
   align-items: center;
   justify-content: space-between;
-  padding: 2px 10px;
+  padding: 2px 5px;
 }
 
 .quantityControls button{
@@ -88,26 +87,32 @@
   cursor: pointer;
 }
 
+
+.qtyAndPrice {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.unitPrice {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 @media (max-width: 768px) { 
 
   .cartItem {
-    height: 160px;    
+    height: 180px;    
   }
-
-  .itemContent {        
-    gap: 10px;
-  }
-
+  
   .leftColumn {   
       width: 100%;
   } 
 
   .itemDetails h3 {
-      font-size: 13px;
-  }
-
-  .itemDetails p {
-      font-size: 12px;
+      font-size: 16px;
   }
 
   .itemRemover {

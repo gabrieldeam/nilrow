@@ -39,11 +39,21 @@ export default function CartItem({ item, apiUrl }: CartItemProps) {
       />
 
       <div className={styles.itemContent}>
-        <div className={styles.itemDetails}>
+        
+        <div className={styles.itemDetails}>          
           <h3 className={styles.itemName}>
             {item.name.length > 60 ? `${item.name.slice(0, 60)}…` : item.name}
           </h3>
+          <button
+            className={styles.itemRemover}
+            onClick={() => removeFromBag(bagItem)}
+          >
+            Excluir        
+          </button>
+        </div>
 
+
+        <div>
           <div className={styles.itemAttributes}>
             {item.attributes.map((attr) => (
               <span key={attr.id} className={styles.attribute}>
@@ -51,20 +61,17 @@ export default function CartItem({ item, apiUrl }: CartItemProps) {
               </span>
             ))}
           </div>
-
-          <div className={styles.quantityControls}>
-            <button onClick={() => changeQuantity(bagItem, -1)}>–</button>
-            <span>{currentQty}</span>
-            <button onClick={() => changeQuantity(bagItem, +1)}>+</button>
+          <div className={styles.qtyAndPrice}>
+            <div className={styles.quantityControls}>
+              <button onClick={() => changeQuantity(bagItem, -1)}>–</button>
+              <span>{currentQty}</span>
+              <button onClick={() => changeQuantity(bagItem, +1)}>+</button>
+            </div>
+            <div className={styles.unitPrice}>
+              R${item.unitPrice.toFixed(2)}
+            </div>
           </div>
         </div>
-
-        <button
-          className={styles.itemRemover}
-          onClick={() => removeFromBag(bagItem)}
-        >
-          Excluir
-        </button>
       </div>
     </div>
   );

@@ -21,6 +21,7 @@ export interface CartItemRequest {
     quantity: number;
     attributes: VariationAttributeDTO[];
     channel: SimpleChannelDTO;
+    catalogId: string;
   }
   
   /**

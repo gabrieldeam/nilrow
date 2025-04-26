@@ -98,6 +98,117 @@
 
 
 
+
+.pickupBox {
+    margin-top: 10px;
+    color: #fff;
+}
+  
+.pickupTitle {
+    font-size: 1rem;
+    margin-top: 10px;
+}
+
+.truncated {
+    display: inline-block;
+    max-width: 200px; 
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
+}
+
+.verMais {
+    color: #7B33E5;
+    cursor: pointer;
+    margin-left: 0.5rem;
+}
+
+.verMais:hover {
+    text-decoration: underline;
+}
+
+.labels {
+    display: flex;
+    gap: 30px;
+    font-size: 16px;
+    color: #ccc;
+    margin-bottom: 4px;
+    padding: 2px 40px;
+}
+
+.pickupInfo {
+    display: flex;
+    gap: 30px;
+    background-color: black;
+    padding: 10px 40px;
+    border-radius: 6px;
+    font-size: 18px;
+    width: 100%;
+}
+
+.price {
+    font-weight: 500;
+}
+
+.availability {
+    font-weight: 400;
+}
+
+
+.productSubtotal {
+    display: flex;
+    justify-content: space-between;
+}
+
+  
+
+
+/* botões de ação por canal */
+.channelActionBtn {
+    display: inline-block;
+    margin-right: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: transparent;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .channelActionBtnRemove {
+    display: inline-block;
+    margin-right: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: transparent;
+    color: #7B33E5;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+
+  }
+  
+  /* texto da observação salva */
+  .channelObservation {
+    margin: 0.5rem 0;
+    font-style: italic;
+    color: #555;
+    margin-top: -6px;
+  }
+  
+.productSubtotal2nd {
+    display: none;
+}
+
+.radioLine {
+    display: flex;
+    width: 100%;
+    gap: 10px;
+}
+
+
+  
+
 @media (min-width: 1024px) and (max-width: 1303px) { 
     .bagPageConteiner {        
         flex-direction: column;
@@ -152,7 +263,6 @@
 
     .bagPageConteiner {    
       flex-direction: column;
-      gap: 0px;
       margin-bottom: 90px;
       padding: 6px;
       margin-top: -20px;
@@ -169,6 +279,7 @@
     .productConteiner {
         display: flex;
         flex-direction: column;
+        gap: 0;
     }    
 
     .channelSection + .channelSection {
@@ -193,5 +304,13 @@
 
     .rightColumnConteiner {     
         width: 100%;
+    }
+
+    .productSubtotal1nd {
+        display: none;
+    }
+
+    .productSubtotal2nd {
+        display: block;
     }
 }
