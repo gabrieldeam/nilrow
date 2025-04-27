@@ -230,10 +230,12 @@ const [showAddrByGroup, setShowAddrByGroup] = useState<GroupDict<boolean>>({});
   }, {} as GroupDict<number>);
 
 
-// 1.2 — total geral (soma de todos os subtotais)
-const totalGeral = Object.keys(subtotais).reduce(
-  (acc, k) => acc + subtotais[k] + shipCostByGroup[k], 0
-);
+  // total de produtos (soma de todos os subtotais)
+const totalProdutos = Object.values(subtotais).reduce((sum, v) => sum + v, 0);
+// total de fretes (soma de todas as entregas escolhidas)
+const totalFrete = Object.values(shipCostByGroup).reduce((sum, v) => sum + v, 0);
+// total da compra = produtos + fretes
+const totalGeral = totalProdutos + totalFrete;
 
 
 
@@ -395,17 +397,19 @@ useEffect(() => {
                         ))}
                         <div className={styles.productSubtotal1nd}>
                           <Card>
-                            <div className={styles.productSubtotal}>
-                              <span>Subtotal</span>
-                              <span>R$ {subtotais[gKey].toFixed(2)}</span>
-                            </div>
-                            <div className={styles.productSubtotal}>
-                              <span>Entrega</span>
-                              <span>R$ {shipCostByGroup[gKey].toFixed(2)}</span>
-                            </div>
-                            <div className={styles.productSubtotal /* pode criar um modificador */}>
-                              <strong>Total da loja</strong>
-                              <strong>R$ {lojaTotal.toFixed(2)}</strong>
+                            <div className={styles.productSubtotalCard}>
+                              <div className={styles.productSubtotal}>
+                                <span>Subtotal</span>
+                                <span>R$ {subtotais[gKey].toFixed(2)}</span>
+                              </div>
+                              <div className={styles.productSubtotal}>
+                                <span>Entrega</span>
+                                <span>R$ {shipCostByGroup[gKey].toFixed(2)}</span>
+                              </div>
+                              <div className={styles.productSubtotal /* pode criar um modificador */}>
+                                <strong>Total da loja</strong>
+                                <strong>R$ {lojaTotal.toFixed(2)}</strong>
+                              </div>
                             </div>
                           </Card>
                         </div>
@@ -529,13 +533,19 @@ useEffect(() => {
                         )}
                         <div className={styles.productSubtotal2nd}>
                           <Card>
-                            <div className={styles.productSubtotal}>
-                              <span>Subtotal</span>
-                              <span>R$ {subtotais[gKey].toFixed(2)}</span>
-                            </div>
-                            <div className={styles.productSubtotal}>
-                              <span>Entrega</span>
-                              <span>R$ {shipCostByGroup[gKey].toFixed(2)}</span>
+                            <div className={styles.productSubtotalCard}>
+                              <div className={styles.productSubtotal}>
+                                <span>Subtotal</span>
+                                <span>R$ {subtotais[gKey].toFixed(2)}</span>
+                              </div>
+                              <div className={styles.productSubtotal}>
+                                <span>Entrega</span>
+                                <span>R$ {shipCostByGroup[gKey].toFixed(2)}</span>
+                              </div>
+                              <div className={styles.productSubtotal /* pode criar um modificador */}>
+                                <strong>Total da loja</strong>
+                                <strong>R$ {lojaTotal.toFixed(2)}</strong>
+                              </div>
                             </div>
                           </Card>
                         </div>
@@ -552,11 +562,21 @@ useEffect(() => {
               <button onClick={clearBag}>Limpar carrinho</button>
             )}
             <Card>
-              <div className={styles.productSubtotal}>
-                <span>Total da compra</span>
-                <span>R$ {totalGeral.toFixed(2)}</span>
+              <div className={styles.productSubtotalCard}>
+                <div className={styles.productSubtotal}>
+                  <span>Total produtos</span>
+                  <span>R$ {totalProdutos.toFixed(2)}</span>
+                </div>
+                <div className={styles.productSubtotal}>
+                  <span>Total entregas</span>
+                  <span>R$ {totalFrete.toFixed(2)}</span>
+                </div>
+                <div className={styles.productSubtotal}>
+                  <strong>Total da compra</strong>
+                  <strong>R$ {totalGeral.toFixed(2)}</strong>
+                </div>
               </div>
-            </Card>            
+            </Card>           
           </div>
         </div>
       </div>

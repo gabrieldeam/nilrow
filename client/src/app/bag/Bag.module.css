@@ -161,7 +161,11 @@
     justify-content: space-between;
 }
 
-  
+.productSubtotalCard {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
 
 
 /* botões de ação por canal */
@@ -219,7 +223,8 @@
     }
 
     .rightColumnConteiner {     
-        width: 100%;
+        width: 100%;        
+        border-top: 11px solid #151515;
     }
 }
 
@@ -234,7 +239,8 @@
     }
 
     .rightColumnConteiner {     
-        width: 100%;
+        width: 100%;        
+        border-top: 11px solid #151515;
     }
 
     
@@ -250,7 +256,8 @@
     }
 
     .rightColumnConteiner {     
-        width: 100%;
+        width: 100%;        
+        border-top: 11px solid #151515;
     }
 }
 
@@ -303,7 +310,8 @@
     }   
 
     .rightColumnConteiner {     
-        width: 100%;
+        width: 100%;        
+        border-top: 11px solid #151515;
     }
 
     .productSubtotal1nd {

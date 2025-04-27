@@ -41,3 +41,12 @@ export enum DiscountType {
     discountToApply: number | string;
   }
   
+  export interface CheckCouponParams {
+    userId: string;
+    cartTotal: number;
+    lat: number;
+    lon: number;
+    productId?: string;
+    categoryId?: string;
+    subCategoryId?: string;
+  }

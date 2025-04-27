@@ -3,6 +3,7 @@ import {
   CouponDTO,
   CouponRadiusDTO,
   CouponAvailabilityDTO,
+  CheckCouponParams
 } from '../types/services/coupon';
 
 /* ---------- CRUD principal ---------- */
@@ -56,16 +57,6 @@ export const getCouponByCode = async (
 };
 
 /* ---------- Checar elegibilidade ---------- */
-
-export interface CheckCouponParams {
-  userId: string;
-  cartTotal: number;
-  lat: number;
-  lon: number;
-  productId?: string;
-  categoryId?: string;
-  subCategoryId?: string;
-}
 
 export const checkCoupon = async (
   catalogId: string,
