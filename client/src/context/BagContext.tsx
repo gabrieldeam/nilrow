@@ -8,10 +8,11 @@ import React, {
   ReactNode,
 } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { addOrUpdateCartItem, getCart } from '@/services/cartService';
+import { addOrUpdateCartItem, getCart, clearLocalBag  } from '@/services/cartService';
 
 export interface BagItem {
   id: string;
+  productId?: string;
   isVariation?: boolean;
   quantity: number;
 }
@@ -31,57 +32,49 @@ const mapServerCart = (serverCart: any): BagItem[] =>
     .filter((i: any) => i.quantity > 0)
     .map((i: any) => ({
       id: i.variationId ?? i.productId,
+      productId: i.productId,          // ← ADICIONE
       isVariation: !!i.variationId,
       quantity: i.quantity,
     }));
+
 
 export const BagProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const [bag, setBag] = useState<BagItem[]>([]);
 
-  /* ---------- offline load ---------- */
-  useEffect(() => {
-    if (!isAuthenticated) {
-      const saved = localStorage.getItem('bag');
-      setBag(saved ? JSON.parse(saved) : []);
-    }
-  }, [isAuthenticated]);
-
-  /* ---------- offline persist ---------- */
-  useEffect(() => {
-    if (!isAuthenticated) {
-      localStorage.setItem('bag', JSON.stringify(bag));
-    }
-  }, [bag, isAuthenticated]);
-
-  /* ---------- sync after login ---------- */
-  const syncBag = async () => {
-    try {
-      const offline = localStorage.getItem('bag');
-      if (offline) {
-        const offlineItems: BagItem[] = JSON.parse(offline);
-        await Promise.all(
-          offlineItems.map((item) =>
-            addOrUpdateCartItem(
-              item.isVariation
-                ? { variationId: item.id, quantity: item.quantity }
-                : { productId: item.id, quantity: item.quantity },
-            ),
-          ),
-        );
-        localStorage.removeItem('bag');
-      }
-      const serverCart = await getCart();
-      setBag(mapServerCart(serverCart));
-    } catch (err) {
-      console.error('Erro ao sincronizar carrinho:', err);
-    }
-  };
-
   useEffect(() => {
     if (authLoading) return;
-    isAuthenticated ? syncBag() : setBag([]);
+    // sempre busca o cart “unificado”
+    getCart()
+      .then(({ items }) => setBag(mapServerCart({ items })))
+      .catch((err) => console.error('Falha ao carregar carrinho:', err));
   }, [authLoading, isAuthenticated]);
+
+/* ---------- push itens locais quando o user logar ---------- */
+useEffect(() => {
+  if (!isAuthenticated) return;
+
+  const offlineRaw = localStorage.getItem('bag');
+  if (!offlineRaw) return;
+
+  const offline: BagItem[] = JSON.parse(offlineRaw);
+  if (!offline.length) return;
+
+  (async () => {
+    await Promise.all(
+      offline.map((i) =>
+        addOrUpdateCartItem(
+          i.isVariation
+            ? { variationId: i.id, quantity: i.quantity }
+            : { productId: i.id, quantity: i.quantity },
+        ),
+      ),
+    );
+    clearLocalBag();
+    const { items } = await getCart();
+    setBag(mapServerCart({ items }));
+  })();
+}, [isAuthenticated]);
 
   /* ---------- optimistic helper ---------- */
   const optimisticUpdate = (item: BagItem, delta: number) =>
@@ -101,38 +94,51 @@ export const BagProvider = ({ children }: { children: ReactNode }) => {
   /* ---------- actions ---------- */
   const changeQuantity = (item: BagItem, delta: number) => {
     if (delta === 0) return;
-
-    /* --- otimista (UI) --- */
     optimisticUpdate(item, delta);
-
-    /* --- logado: envia pro backend, mas NÃO sobrescreve state --- */
-    if (isAuthenticated) {
-      const payload = item.isVariation
-        ? { variationId: item.id, quantity: delta }
-        : { productId: item.id, quantity: delta };
-
-      addOrUpdateCartItem(payload).catch(async (err) => {
-        console.error(err);
-        /* rollback se falhar */
-        try {
-          const fresh = await getCart();
-          setBag(mapServerCart(fresh));
-        } catch (e) {
-          console.error('Falha no rollback:', e);
-        }
-      });
-    }
+  
+    addOrUpdateCartItem(
+      item.isVariation
+      ? { variationId: item.id, productId: item.productId, quantity: delta }
+        : { productId: item.id, quantity: delta },
+    ).catch(async () => {
+      // rollback: carrega estado real
+      try {
+        const { items } = await getCart();
+        setBag(mapServerCart({ items }));
+      } catch (e) {
+        console.error('Rollback falhou:', e);
+      }
+    });
   };
+  
 
   const removeFromBag = (item: BagItem) => {
     const current = bag.find((x) => x.id === item.id);
     if (current) changeQuantity(item, -current.quantity);
   };
 
-  const clearBag = () => {
-    setBag([]);
-    localStorage.removeItem('bag');
+  const clearBag = async () => {
+    // snapshot, para usarmos depois de setBag([])
+    const snapshot = [...bag];
+  
+    setBag([]);                 // esvazia immédiatement a UI
+  
+    if (isAuthenticated) {
+      /*  Envia delta negativo de cada item  */
+      await Promise.all(
+        snapshot.map((i) =>
+          addOrUpdateCartItem(
+            i.isVariation
+            ? { variationId: i.id, productId: i.productId, quantity: -i.quantity }
+              : { productId: i.id, quantity: -i.quantity },
+          ),
+        ),
+      );
+    } else {
+      clearLocalBag();          // remove do localStorage
+    }
   };
+  
 
   return (
     <BagContext.Provider

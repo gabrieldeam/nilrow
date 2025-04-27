@@ -28,6 +28,7 @@ import { CartItemDTO } from '@/types/services/cart';
 
 import styles from './Bag.module.css';
 import ExpandableCard from '@/components/UI/ExpandableCard/ExpandableCard';
+import { buildLocalCart } from '@/services/localCartService';
 import { useLocationContext } from '@/context/LocationContext';
 
 import {
@@ -71,6 +72,8 @@ const BagPage = () => {
   const [owners, setOwners] = useState<Record<string, boolean>>({});
   const [followLoading, setFollowLoading] = useState<Record<string, boolean>>({});
   const { location } = useLocationContext();
+  const safeCartItems = cartItems.filter(Boolean);   // remove null/undefined
+
   /* --------------------------------------------------
    * env vars
    * -------------------------------------------------- */
@@ -100,13 +103,30 @@ const [showAddrByGroup, setShowAddrByGroup] = useState<GroupDict<boolean>>({});
    * auth & cart bootstrap
    * -------------------------------------------------- */
   useEffect(() => {
+    const fetch = async () => {
+      if (auth?.isAuthenticated) {
+        const { items } = await getCart();
+        setCartItems(items);
+        return;
+      }
+  
+      // user anônimo ---------------  
+      const coordsOk = location && location.latitude !== 0;
+      const items = await buildLocalCart(
+        bag,
+        coordsOk ? location.latitude : undefined,
+        coordsOk ? location.longitude : undefined,
+      );
+      setCartItems(items);
+    };
+  
+    fetch().catch((e) => console.error('Erro ao montar carrinho:', e));
+  }, [bag, auth?.isAuthenticated, location]);
+  
+  useEffect(() => {
     checkAuth()
-      .then(setAuth)
+      .then(setAuth)                   // { isAuthenticated: boolean }
       .catch(() => setAuth({ isAuthenticated: false }));
-
-    getCart()
-      .then(({ items }) => setCartItems(items))
-      .catch((err) => console.error('Erro ao buscar carrinho:', err));
   }, []);
 
   const handleBack = useCallback(() => {
@@ -117,7 +137,14 @@ const [showAddrByGroup, setShowAddrByGroup] = useState<GroupDict<boolean>>({});
    * fetch follow & owner status per channel
    * -------------------------------------------------- */
   useEffect(() => {
-    const channelIds = Array.from(new Set(cartItems.map((item) => item.channel.id)));
+    const channelIds = Array.from(
+      new Set(
+        safeCartItems
+          .map(i => i.channel?.id)   // ⟵ optional-chaining
+          .filter(Boolean)           //    remove undefined
+      )
+    );
+    
     channelIds.forEach((id) => {
       isFollowing(id)
         .then((is) => setFollowingChannels((prev) => ({ ...prev, [id]: is })))
@@ -199,15 +226,15 @@ const [showAddrByGroup, setShowAddrByGroup] = useState<GroupDict<boolean>>({});
   /* --------------------------------------------------
    * group ONLY visible items by channel
    * -------------------------------------------------- */
-  const visibleItems = cartItems.filter((item) => {
+  const visibleItems = safeCartItems.filter((item) => {
     const id = item.variationId ?? item.productId;
     return bag.some((b) => b.id === id && b.quantity > 0);
-  });
+  });  
   
   /* agora agrupamos por canal + catálogo */
   const itemsByGroup: ItemsDict =
   visibleItems.reduce<ItemsDict>((acc, item) => {
-    const gKey = makeGroupKey(item.channel.id, item.catalogId);
+    const gKey = makeGroupKey(item.channel?.id, item.catalogId);
     if (!acc[gKey]) acc[gKey] = [];
     acc[gKey].push(item);
     return acc;

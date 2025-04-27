@@ -518,31 +518,27 @@ const handleAddToExistingFolder = async (folderName: string) => {
   // ----------------------------------------------------------------------------
   // ADICIONAR AO CARRINHO
   const handleAddToCart = () => {
-    const currentId    = selectedVariation?.id ?? product?.id;
-    const isVar        = !!selectedVariation;
-    const currentStock = selectedVariation?.stock ?? product?.stock ?? 0;
-  
-    if (!currentId || currentStock <= 0) {
-      setMessage('Produto indisponível no momento.', 'error');
+    const isVar      = !!selectedVariation;
+    const recordId   = isVar ? selectedVariation!.id! : product!.id!;
+    const prodId     = product!.id!;                 // sempre existe
+    const stock      = isVar ? selectedVariation!.stock! : product!.stock!;
+    const desiredQty = (bag.find((i) => i.id === recordId)?.quantity ?? 0) + 1;
+    if (desiredQty > stock) {
+      setMessage(`Máximo ${stock} unidades.`, 'error');
       return;
     }
-  
-    const existingItem = bag.find((i) => i.id === currentId);
-    const desiredQty   = (existingItem?.quantity ?? 0) + 1;
-  
-    if (desiredQty > currentStock) {
-      setMessage(`Você só pode adicionar até ${currentStock} unidades deste item.`, 'error');
-      return;
-    }
-  
-    /* ---------- agora usamos apenas changeQuantity (+1) ---------- */
     changeQuantity(
-      { id: currentId, isVariation: isVar, quantity: 1 },
+      {
+        id: recordId,
+        isVariation: isVar,
+        productId: prodId,      // ← AQUI
+        quantity: 1,
+      },
       +1,
     );
-  
-    setMessage('Item adicionado ao carrinho!', 'success');
+    setMessage('Item adicionado!', 'success');
   };
+  
   
 
   // ----------------------------------------------------------------------------
