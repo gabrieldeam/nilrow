@@ -6,6 +6,7 @@ import marketplace.nilrow.domain.catalog.category.SubCategoryDTO;
 import marketplace.nilrow.domain.catalog.location.Location;
 import marketplace.nilrow.domain.catalog.product.*;
 import marketplace.nilrow.domain.catalog.product.brand.BrandDTO;
+import marketplace.nilrow.domain.channel.SimpleChannelDTO;
 import marketplace.nilrow.repositories.*;
 import marketplace.nilrow.util.GeoUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -744,6 +745,12 @@ public class ProductService {
                 return varDTO;
             }).collect(Collectors.toList());
             dto.setVariations(variationDTOs);
+        }
+        if (product.getCatalog() != null
+                && product.getCatalog().getChannel() != null) {
+            dto.setChannel(
+                    new SimpleChannelDTO(product.getCatalog().getChannel())
+            );
         }
         return dto;
     }

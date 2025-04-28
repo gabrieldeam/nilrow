@@ -72,7 +72,9 @@ const BagPage = () => {
   const [owners, setOwners] = useState<Record<string, boolean>>({});
   const [followLoading, setFollowLoading] = useState<Record<string, boolean>>({});
   const { location } = useLocationContext();
-  const safeCartItems = cartItems.filter(Boolean);   // remove null/undefined
+  const safeCartItems = cartItems.filter(
+    (it) => it && it.channel  
+  );
 
   /* --------------------------------------------------
    * env vars
@@ -378,7 +380,7 @@ useEffect(() => {
                       },
                     ];
 
-                const avatarSrc = channel.imageUrl ? `${apiUrl}${channel.imageUrl}` : defaultImage;
+                const avatarSrc = channel?.imageUrl ? `${apiUrl}${channel.imageUrl}` : defaultImage;
 
                 return (
                   <div key={gKey} className={styles.channelSection}>

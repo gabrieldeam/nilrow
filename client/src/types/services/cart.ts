@@ -22,6 +22,7 @@ export interface CartItemRequest {
     attributes: VariationAttributeDTO[];
     channel: SimpleChannelDTO;
     catalogId: string;
+    availableStock: number; 
   }
   
   /**

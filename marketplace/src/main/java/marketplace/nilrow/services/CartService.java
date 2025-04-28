@@ -43,7 +43,7 @@ public class CartService {
     @Transactional
     public CartDTO addOrUpdateItem(String peopleId, CartItemRequest req) {
 
-        /* -------- validações básicas -------- */
+        // -------- validações básicas --------
         if ((req.getProductId() == null || req.getProductId().isBlank())
                 && (req.getVariationId() == null || req.getVariationId().isBlank())) {
             throw new IllegalArgumentException("Envie productId ou variationId");
@@ -52,32 +52,32 @@ public class CartService {
             throw new IllegalArgumentException("Quantidade não pode ser 0");
         }
 
-        /* -------- recupera People e carrinho (ou cria) -------- */
+        // -------- recupera People e carrinho (ou cria) --------
         People people = peopleRepo.findById(peopleId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
         Cart cart = cartRepo.findByPeopleId(peopleId)
-                .orElseGet(() -> {                // cria carrinho vazio se não existir
+                .orElseGet(() -> {
                     Cart c = new Cart();
                     c.setPeople(people);
                     return c;
                 });
 
-        /* -------- resolve productId / variationId -------- */
+        // resolve productId / variationId
         String productId   = req.getProductId();
         String variationId = req.getVariationId();
 
-        // se veio só variationId ⇒ descobre productId
         if ((productId == null || productId.isBlank()) && variationId != null) {
             ProductVariation var = variationRepo.findById(variationId)
                     .orElseThrow(() -> new RuntimeException("Variação não encontrada"));
-            productId = var.getProduct().getId();
+            productId = var.getProduct().getId();  // aqui reatribuímos productId
         }
 
+        // **copiamos para variáveis finais antes do stream**
         final String pid = productId;
         final String vid = variationId;
 
-        /* -------- localiza item existente (se houver) -------- */
+        // localiza item existente usando pid/vid finais
         CartItem item = cart.getItems().stream()
                 .filter(ci -> ci.getProductId().equals(pid) &&
                         ((vid == null && ci.getVariationId() == null) ||
@@ -85,12 +85,28 @@ public class CartService {
                 .findFirst()
                 .orElse(null);
 
-        /* -------- cria ou atualiza -------- */
+        // cálculo de estoque disponível, newQty etc. (igual ao código de validação anterior)...
+        int existingQty = (item != null) ? item.getQuantity() : 0;
+        int availableStock;
+        if (vid != null) {
+            ProductVariation var = variationRepo.findById(vid)
+                    .orElseThrow(() -> new RuntimeException("Variação não encontrada"));
+            availableStock = var.getStock();
+        } else {
+            Product prod = productRepo.findById(pid)
+                    .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
+            availableStock = prod.getStock();
+        }
+        int newQty = existingQty + req.getQuantity();
+        if (newQty > availableStock) {
+            throw new RuntimeException("Não é possível adicionar mais itens, pois o estoque disponível é de "
+                    + availableStock + " unidades.");
+        }
+
+        // cria ou atualiza item no carrinho (usando pid/vid)...
         if (item == null) {
-            // não pode subtrair de um item que ainda não existe
             if (req.getQuantity() < 0) {
-                throw new IllegalArgumentException(
-                        "Não é possível subtrair de um item que ainda não existe");
+                throw new IllegalArgumentException("Não é possível subtrair de um item que ainda não existe");
             }
             item = new CartItem();
             item.setCart(cart);
@@ -99,18 +115,18 @@ public class CartService {
             item.setQuantity(req.getQuantity());
             cart.getItems().add(item);
         } else {
-            int newQty = item.getQuantity() + req.getQuantity();  // soma (ou subtrai)
             if (newQty <= 0) {
-                cart.getItems().remove(item);                     // remove se zerou
+                cart.getItems().remove(item);
             } else {
-                item.setQuantity(newQty);                         // atualiza
+                item.setQuantity(newQty);
             }
         }
 
-        /* -------- persiste e devolve DTO -------- */
+        // persiste e retorna DTO
         Cart saved = cartRepo.save(cart);
         return toDTO(saved);
     }
+
 
     /* -------- getCart permanece igual, só muda para peopleId -------- */
     @Transactional(readOnly = true)
