@@ -1,8 +1,13 @@
 package marketplace.nilrow.controllers;
 
 import marketplace.nilrow.domain.catalog.coupon.*;
+import marketplace.nilrow.domain.people.People;
+import marketplace.nilrow.domain.user.User;
+import marketplace.nilrow.repositories.PeopleRepository;
 import marketplace.nilrow.services.CouponService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.util.List;
@@ -12,9 +17,19 @@ import java.util.List;
 public class CouponController {
 
     private final CouponService service;
+    private final PeopleRepository peopleRepo;
+    public CouponController(CouponService service,
+                            PeopleRepository peopleRepo) {
+        this.service     = service;
+        this.peopleRepo  = peopleRepo;
+    }
 
-    public CouponController(CouponService service) { this.service = service; }
-
+    private People getAuthenticatedPeople() {
+        User user = (User) SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getPrincipal();
+        return peopleRepo.findByUser(user);
+    }
     /* --- CRUD principal --- */
 
     @PostMapping
@@ -74,21 +89,10 @@ public class CouponController {
     }
 
     /* --- Checar elegibilidade --- */
-
-    @GetMapping("/check/{catalogId}/{code}")
-    public ResponseEntity<CouponAvailabilityDTO> check(@PathVariable String catalogId,
-                                                       @PathVariable String code,
-                                                       @RequestParam String userId,
-                                                       @RequestParam BigDecimal cartTotal,
-                                                       @RequestParam double lat,
-                                                       @RequestParam double lon,
-                                                       @RequestParam(required = false) String productId,
-                                                       @RequestParam(required = false) String categoryId,
-                                                       @RequestParam(required = false) String subCategoryId) {
-
-        return ResponseEntity.ok(
-                service.checkCoupon(catalogId, code, userId, cartTotal,
-                        lat, lon, productId, categoryId, subCategoryId));
+    @PostMapping("/check")
+    public ResponseEntity<CouponDiscountDTO> check(@RequestBody CouponCheckRequest req) {
+        People people = getAuthenticatedPeople();
+        return ResponseEntity.ok(service.checkCoupon(people.getId(), req));
     }
 
     /* --- Atalho: ativo? --- */

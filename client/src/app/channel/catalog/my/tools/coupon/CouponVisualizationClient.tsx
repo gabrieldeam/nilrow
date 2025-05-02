@@ -43,7 +43,7 @@ import centeredIconSrc from "../../../../../../../public/assets/buttomCheio.svg"
 import verificacaoIconSrc from "../../../../../../../public/assets/verificacao.svg";
 import checkWhiteIconSrc from "../../../../../../../public/assets/check-white.svg";
 
-import styles from "./FreeShipping.module.css";
+import styles from "./freeShipping.module.css";
   
 import { debounce } from "lodash";
 
@@ -65,7 +65,6 @@ import {
   updateCouponRadius,
   deleteCouponRadius,
   getAllCoupons,
-  checkCoupon,
 } from "@/services/couponService";
 
 import {
@@ -207,6 +206,25 @@ const CouponVisualizationClient: React.FC = () => {
 
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
 
+  const detectRule = (c: CouponDTO): 'ALL' | 'CATEGORY' | 'SUBCATEGORY' | 'PRODUCT' => {
+    if (c.productIds?.length)      return 'PRODUCT';
+    if (c.subCategoryIds?.length)  return 'SUBCATEGORY';
+    if (c.categoryIds?.length)     return 'CATEGORY';
+    return 'ALL';
+  };
+
+  const discountTypeOpts = [
+    { value: DiscountType.PERCENTAGE, label: "Percentual" },
+    { value: DiscountType.FIXED_AMOUNT, label: "Valor fixo" },
+  ];
+  
+  const ruleOpts = [
+    { value: "ALL",         label: "Todos" },
+    { value: "CATEGORY",    label: "Categoria" },
+    { value: "SUBCATEGORY", label: "Subcategoria" },
+    { value: "PRODUCT",     label: "Produtos" },
+  ];
+  
   // ---------- REGIÕES ----------
   const [regionModalOpen, setRegionModalOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -438,9 +456,27 @@ const CouponVisualizationClient: React.FC = () => {
   };
 
   const openEditCoupon = (idx: number) => {
-    setCupForm(coupons[idx]);
-    isEditingCupom.current = true;
-    editingIndexRef.current = idx;
+    const cup = coupons[idx];
+
+    setCupForm(cup);
+    isEditingCupom.current   = true;
+    editingIndexRef.current  = idx;
+
+    const rule = detectRule(cup);
+    setCupRule(rule);
+
+    // --- produtos pré-selecionados ---
+    setSelectedProductIds(cup.productIds ?? []);
+
+    // --- categoria / subcategoria pré-selecionadas ---
+    setCategoryId(cup.categoryIds?.[0]    ?? '');
+    setSubCategoryId(cup.subCategoryIds?.[0] ?? '');
+
+    // se vier subcategoria ou categoria, carregue as listas para preencher o select
+    if ((rule === 'SUBCATEGORY' || rule === 'CATEGORY') && cup.categoryIds?.[0]) {
+      fetchSubCategories(cup.categoryIds[0], 0);
+    }
+
     setCupModalOpen(true);
   };
 
@@ -859,24 +895,20 @@ const CouponVisualizationClient: React.FC = () => {
             className={styles.generateButton}
             onClick={generateCode}
           >
-            Gerar
+            Gerar código
           </button>
         </div>
 
         {/* tipo de desconto */}
-        <div className={styles.modalRow}>
-          <label htmlFor="discountType">Tipo de desconto</label>
-          <select
-            id="discountType"
-            value={cupForm.discountType}
-            onChange={e =>
-              setCupForm({ ...cupForm, discountType: e.target.value as DiscountType })
-            }
-          >
-            <option value={DiscountType.PERCENTAGE}>Percentual</option>
-            <option value={DiscountType.FIXED_AMOUNT}>Valor fixo</option>
-          </select>
-        </div>
+        <CustomSelect
+          title="Tipo de desconto"
+          value={cupForm.discountType}
+          onChange={e =>
+            setCupForm({ ...cupForm, discountType: e.target.value as DiscountType })
+          }
+          options={discountTypeOpts}
+          placeholder="Selecione"
+        />
 
         {/* valor do desconto */}
         <CustomInput
@@ -905,19 +937,13 @@ const CouponVisualizationClient: React.FC = () => {
         />
 
         {/* seleção de regra de aplicação */}
-        <div className={styles.modalRow}>
-          <label htmlFor="cupomRule">Aplicar em</label>
-          <select
-            id="cupomRule"
-            value={cupRule}
-            onChange={e => handleRuleChange(e.target.value as typeof cupRule)}
-          >
-            <option value="ALL">Todos</option>
-            <option value="CATEGORY">Categoria</option>
-            <option value="SUBCATEGORY">Subcategoria</option>
-            <option value="PRODUCT">Produtos</option>
-          </select>
-        </div>
+        <CustomSelect
+          title="Aplicar em"
+          value={cupRule}
+          onChange={e => handleRuleChange(e.target.value as typeof cupRule)}
+          options={ruleOpts}
+          placeholder="Selecione"
+        />
 
         {/* se categoria */}
         {cupRule === "CATEGORY" && (
@@ -997,17 +1023,17 @@ const CouponVisualizationClient: React.FC = () => {
         {/* botão produtos permanece igual */}
         {cupRule === "PRODUCT" && (
           <>
-            <button
-              type="button"
-              className={styles.secondaryButton}
+            <StageButton
+              text={`Selecionar produtos (${selectedProductIds.length})`}
               onClick={() => setProdModalOpen(true)}
-            >
-              Selecionar produtos ({selectedProductIds.length})
-            </button>
-            <small>{selectedProductIds.join(", ")}</small>
+            />
+            {/* {selectedProductIds.length > 0 && (
+              <small className={styles.selectedProducts}>
+                {selectedProductIds.join(", ")}
+              </small>
+            )} */}
           </>
         )}
-
         <div className={styles.modalActions}>
           <StageButton text="Salvar" backgroundColor="#7B33E5" onClick={saveCoupon} />
         </div>

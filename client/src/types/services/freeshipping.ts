@@ -26,5 +26,6 @@ export interface FreeShippingCoordinateDTO {
   export interface FreeShippingAvailabilityDTO {
     freeShippingAvailable: boolean;
     averageDeliveryTime: number;  // 0 se não elegível
+    missingAmount: number; 
   }
   

@@ -2,8 +2,8 @@ import api from './api';
 import {
   CouponDTO,
   CouponRadiusDTO,
-  CouponAvailabilityDTO,
-  CheckCouponParams
+  CouponCheckRequest,
+  CouponDiscountDTO
 } from '../types/services/coupon';
 
 /* ---------- CRUD principal ---------- */
@@ -59,14 +59,9 @@ export const getCouponByCode = async (
 /* ---------- Checar elegibilidade ---------- */
 
 export const checkCoupon = async (
-  catalogId: string,
-  code: string,
-  params: CheckCouponParams,
-): Promise<CouponAvailabilityDTO> => {
-  const res = await api.get<CouponAvailabilityDTO>(
-    `/coupons/check/${catalogId}/${code}`,
-    { params },
-  );
+  payload: CouponCheckRequest,
+): Promise<CouponDiscountDTO> => {
+  const res = await api.post<CouponDiscountDTO>('/coupons/check', payload);
   return res.data;
 };
 

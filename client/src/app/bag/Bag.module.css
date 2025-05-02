@@ -189,7 +189,10 @@
     border: none;
     border-radius: 4px;
     cursor: pointer;
+  }
 
+  .channelActionBtnRemove:hover {
+    text-decoration: underline;
   }
   
   /* texto da observação salva */
@@ -210,7 +213,12 @@
     gap: 10px;
 }
 
-
+.summaryCountsRow {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    padding: 0 10px 10px 20px;
+}
   
 
 @media (min-width: 1024px) and (max-width: 1303px) { 

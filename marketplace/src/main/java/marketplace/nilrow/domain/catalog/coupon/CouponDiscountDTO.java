@@ -4,7 +4,8 @@ import lombok.*;
 import java.math.BigDecimal;
 
 @Data @NoArgsConstructor @AllArgsConstructor
-public class CouponAvailabilityDTO {
+public class CouponDiscountDTO {
     private boolean valid;
-    private BigDecimal discountToApply;   // 0 se inválido
+    private BigDecimal discountToApply;
+    private String message;
 }

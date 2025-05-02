@@ -37,9 +37,14 @@ import {
 import {
   getActivePickupDetailsByCatalogId
 } from '@/services/pickupService';
-
+import {
+  isFreeShippingActive,
+  checkFreeShipping,
+} from '@/services/freeshippingService';
 import { DeliveryPriceDTO } from '@/types/services/delivery';
 import { PickupActiveDetailsDTO } from '@/types/services/pickup';
+import { FreeShippingAvailabilityDTO } from '@/types/services/freeshipping';
+import { checkCoupon } from '@/services/couponService';
 
 interface StageButtonProps {
   text: string;
@@ -96,10 +101,18 @@ const BagPage = () => {
   >({});
 
   /** escolha de entrega/retirada do usuário por (canal+catálogo) */
-const [choiceByGroup, setChoiceByGroup] = useState<ChoiceDict>({});
-const [obsByGroup, setObsByGroup] = useState<GroupDict<string>>({});
-const [showAddrByGroup, setShowAddrByGroup] = useState<GroupDict<boolean>>({});
+  const [choiceByGroup, setChoiceByGroup] = useState<ChoiceDict>({});
+  const [obsByGroup, setObsByGroup] = useState<GroupDict<string>>({});
+  const [showAddrByGroup, setShowAddrByGroup] = useState<GroupDict<boolean>>({});
+  const [couponModalOpen, setCouponModalOpen] = useState<GroupDict<boolean>>({});
+  const [couponCodeByGroup, setCouponCodeByGroup] = useState<GroupDict<string>>({});
+  const [discountByGroup, setDiscountByGroup] = useState<GroupDict<number>>({});
+  const [couponErrorByGroup, setCouponErrorByGroup] = useState<GroupDict<string>>({});
+  const [freeShippingByGroup, setFreeShippingByGroup] =
+  useState<GroupDict<FreeShippingAvailabilityDTO | null | undefined>>({});
 
+  const [missingFreeShipByGroup, setMissingFreeShipByGroup] =
+  useState<GroupDict<number>>({});
 
   /* --------------------------------------------------
    * auth & cart bootstrap
@@ -263,45 +276,65 @@ const [showAddrByGroup, setShowAddrByGroup] = useState<GroupDict<boolean>>({});
 const totalProdutos = Object.values(subtotais).reduce((sum, v) => sum + v, 0);
 // total de fretes (soma de todas as entregas escolhidas)
 const totalFrete = Object.values(shipCostByGroup).reduce((sum, v) => sum + v, 0);
+const totalDescontos = Object.values(discountByGroup).reduce((s, v) => s + v, 0);
 // total da compra = produtos + fretes
-const totalGeral = totalProdutos + totalFrete;
+const totalGeral = totalProdutos + totalFrete - totalDescontos;
+// Qtd total de itens no carrinho
+const totalItens = bag.reduce((sum, b) => sum + b.quantity, 0);
+
+const totalCatalogos = new Set(
+  Object.keys(itemsByGroup).map(k => k.split("::")[1])
+).size;
 
 
 
 useEffect(() => {
   if (!location || location.latitude === 0) return;
 
-  Object.entries(itemsByGroup).forEach(([gKey, items]) => {
-    const catalogId = items[0].catalogId;
+  (async () => {                                  // IIFE assíncrona
+    for (const [gKey, items] of Object.entries(itemsByGroup)) {
+      const catalogId = items[0].catalogId;
+      const subtotal  = subtotais[gKey];
+      const lat       = location.latitude;
+      const lon       = location.longitude;
 
-    if (deliveryByGroup[gKey] === undefined) {
-      getDeliveryPrice(catalogId, location.latitude, location.longitude)
-        .then(del => setDeliveryByGroup(p => ({ ...p, [gKey]: del })))
-        .catch(()  => setDeliveryByGroup(p => ({ ...p, [gKey]: null })));
-    }
-
-    if (pickupByGroup[gKey] === undefined) {
-      getActivePickupDetailsByCatalogId(catalogId)
-        .then(pu => setPickupByGroup(p => ({ ...p, [gKey]: pu })))
-        .catch(()  => setPickupByGroup(p => ({ ...p, [gKey]: null })));
-    }
-
-    /* ---------- aqui entra a auto-seleção ---------- */
-    const del = deliveryByGroup[gKey];
-    const pu  = pickupByGroup[gKey];
-
-    if (del !== undefined && pu !== undefined) {
-      if (del && pu === null && !choiceByGroup[gKey]) {
-        setChoiceByGroup(prev => ({ ...prev,
-          [gKey]: { kind:'delivery', price: del.price } }));
+      /* ---------- FRETE GRÁTIS ---------- */
+      if (freeShippingByGroup[gKey] === undefined) {
+        try {
+          const active = await isFreeShippingActive(catalogId);
+          if (!active) {
+            setFreeShippingByGroup(p => ({ ...p, [gKey]: null }));
+          } else {
+            const info = await checkFreeShipping(catalogId, subtotal, lat, lon);
+            setFreeShippingByGroup(p => ({ ...p, [gKey]: info }));
+            if (info.freeShippingAvailable) {
+              setChoiceByGroup(p => ({ ...p, [gKey]: { kind: 'delivery', price: 0 } }));
+            } else {
+              setMissingFreeShipByGroup(p => ({ ...p, [gKey]: info.missingAmount }));
+            }
+          }
+        } catch {
+          setFreeShippingByGroup(p => ({ ...p, [gKey]: null }));
+        }
       }
-      if (pu && del === null && !choiceByGroup[gKey]) {
-        setChoiceByGroup(prev => ({ ...prev,
-          [gKey]: { kind:'pickup', price: pu.precoRetirada } }));
+
+      /* ---------- DELIVERY ---------- */
+      if (deliveryByGroup[gKey] === undefined) {
+        getDeliveryPrice(catalogId, lat, lon)
+          .then(del => setDeliveryByGroup(p => ({ ...p, [gKey]: del })))
+          .catch(()  => setDeliveryByGroup(p => ({ ...p, [gKey]: null })));
+      }
+
+      /* ---------- RETIRADA ---------- */
+      if (pickupByGroup[gKey] === undefined) {
+        getActivePickupDetailsByCatalogId(catalogId)
+          .then(pu => setPickupByGroup(p => ({ ...p, [gKey]: pu })))
+          .catch(()  => setPickupByGroup(p => ({ ...p, [gKey]: null })));
       }
     }
-  });
-}, [itemsByGroup, location, deliveryByGroup, pickupByGroup, choiceByGroup]);
+  })();
+}, [itemsByGroup, subtotais, location, freeShippingByGroup, deliveryByGroup, pickupByGroup]);
+
 
   
   
@@ -312,7 +345,53 @@ useEffect(() => {
     }));
   };
   
-
+  // abre modal de cupom
+  const handleOpenCouponModal = (gKey: string) => {
+    setCouponCodeByGroup(prev => ({ ...prev, [gKey]: '' }));
+    setCouponErrorByGroup(prev => ({ ...prev, [gKey]: '' }));
+    setCouponModalOpen(prev => ({ ...prev, [gKey]: true }));
+  };
+    
+  // fecha modal de cupom
+  const handleCloseCouponModal = (gKey: string) => {
+    setCouponModalOpen(prev => ({ ...prev, [gKey]: false }));
+  };
+    
+  // chama API e aplica cupom
+  const handleApplyCoupon = async (gKey: string, catalogId: string) => {
+    try {
+      /* ---------- monta payload ---------- */
+      const payload = {
+        catalogId,
+        code: (couponCodeByGroup[gKey] || '').trim(),
+        items: itemsByGroup[gKey], 
+        lat: location?.latitude  ?? 0,
+        lon: location?.longitude ?? 0,
+      };
+  
+      /* ---------- chama API ---------- */
+      const { valid, discountToApply, message } = await checkCoupon(payload);
+  
+      /* ---------- trata resposta ---------- */
+      if (!valid || Number(discountToApply) <= 0) {
+        throw new Error('Cupom inválido ou sem desconto');
+      }
+  
+      setDiscountByGroup(prev => ({
+        ...prev,
+        [gKey]: Number(discountToApply),
+      }));
+      setCouponErrorByGroup(prev => ({ ...prev, [gKey]: '' }));
+      setCouponModalOpen(prev => ({ ...prev, [gKey]: false }));
+      setMessage(message, 'success');
+    } catch (err: any) {
+      setCouponErrorByGroup(prev => ({
+        ...prev,
+        [gKey]: err?.message || 'Erro ao validar cupom',
+      }));
+    }
+  };
+  
   /* --------------------------------------------------
    * render
    * -------------------------------------------------- */
@@ -334,7 +413,7 @@ useEffect(() => {
                 const { channel, catalogId } = items[0];
                 const [channelId] = gKey.split('::');
                 const isOwner = owners[channelId];
-                const lojaTotal = subtotais[gKey] + shipCostByGroup[gKey];
+                const lojaTotal = subtotais[gKey] + shipCostByGroup[gKey] - (discountByGroup[gKey] ?? 0);
                 const isFollowingChannel = followingChannels[channelId];
 
                 const buttons: StageButtonProps[] = isOwner
@@ -425,7 +504,7 @@ useEffect(() => {
                           <CartItem key={item.id} item={item} apiUrl={apiUrl} />
                         ))}
                         <div className={styles.productSubtotal1nd}>
-                          <Card>
+                        <Card>
                             <div className={styles.productSubtotalCard}>
                               <div className={styles.productSubtotal}>
                                 <span>Subtotal</span>
@@ -435,12 +514,26 @@ useEffect(() => {
                                 <span>Entrega</span>
                                 <span>R$ {shipCostByGroup[gKey].toFixed(2)}</span>
                               </div>
-                              <div className={styles.productSubtotal /* pode criar um modificador */}>
+                              {discountByGroup[gKey] != null && (
+                                <div className={styles.productSubtotal}>
+                                  <span>Desconto</span>
+                                  <span>R$ {discountByGroup[gKey].toFixed(2)}</span>
+                                </div>
+                              )}
+                              <div className={styles.productSubtotal}>
                                 <strong>Total da loja</strong>
                                 <strong>R$ {lojaTotal.toFixed(2)}</strong>
                               </div>
                             </div>
                           </Card>
+                          <div>
+                            <button
+                              className={styles.channelActionBtn}
+                              onClick={() => handleOpenCouponModal(gKey)}
+                            >
+                              Aplicar cupom
+                            </button>
+                          </div>
                         </div>
                         
                       </div>
@@ -466,6 +559,19 @@ useEffect(() => {
                           </p>
                         )}
 
+                        {freeShippingByGroup[gKey] && freeShippingByGroup[gKey]?.freeShippingAvailable && (
+                          <p className={styles.freeShippingBanner}>
+                            🎉 Este pedido tem frete grátis!
+                          </p>
+                        )}
+
+                        {freeShippingByGroup[gKey] && !freeShippingByGroup[gKey]?.freeShippingAvailable && (
+                          <p className={styles.freeShippingBanner}>
+                            Faltam&nbsp;
+                            <strong>R$ {missingFreeShipByGroup[gKey]?.toFixed(2)}</strong>
+                            &nbsp;para ganhar frete grátis
+                          </p>
+                        )}
 
                         {deliveryByGroup[gKey] && deliveryByGroup[gKey] !== null && (
                           <ExpandableCard title="Delivery">
@@ -571,12 +677,26 @@ useEffect(() => {
                                 <span>Entrega</span>
                                 <span>R$ {shipCostByGroup[gKey].toFixed(2)}</span>
                               </div>
-                              <div className={styles.productSubtotal /* pode criar um modificador */}>
+                              {discountByGroup[gKey] != null && (
+                                <div className={styles.productSubtotal}>
+                                  <span>Desconto</span>
+                                  <span>R$ {discountByGroup[gKey].toFixed(2)}</span>
+                                </div>
+                              )}
+                              <div className={styles.productSubtotal}>
                                 <strong>Total da loja</strong>
                                 <strong>R$ {lojaTotal.toFixed(2)}</strong>
                               </div>
                             </div>
                           </Card>
+                          <div>
+                            <button
+                              className={styles.channelActionBtn}
+                              onClick={() => handleOpenCouponModal(gKey)}
+                            >
+                              Aplicar cupom
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -587,19 +707,35 @@ useEffect(() => {
           </div>
 
           <div className={styles.rightColumnConteiner}>
-            {bag.length > 0 && (
-              <button onClick={clearBag}>Limpar carrinho</button>
-            )}
+            <div className={styles.summaryCountsRow}>
+              <div>
+                <span>Produtos: </span>
+                <span>{totalItens}</span>
+              </div>
+              <div>
+                <span>Lojas: </span>
+                <span>{totalCatalogos}</span>
+              </div>
+              {bag.length > 0 && (
+                <button onClick={clearBag} className={styles.channelActionBtnRemove}>Limpar carrinho</button>
+              )}
+            </div>
             <Card>
               <div className={styles.productSubtotalCard}>
                 <div className={styles.productSubtotal}>
-                  <span>Total produtos</span>
+                  <span>Produtos</span>
                   <span>R$ {totalProdutos.toFixed(2)}</span>
                 </div>
                 <div className={styles.productSubtotal}>
-                  <span>Total entregas</span>
+                  <span>Entregas</span>
                   <span>R$ {totalFrete.toFixed(2)}</span>
                 </div>
+                {totalDescontos != null && (
+                  <div className={styles.productSubtotal}>
+                    <span>Descontos</span>
+                    <span>R$ {totalDescontos.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className={styles.productSubtotal}>
                   <strong>Total da compra</strong>
                   <strong>R$ {totalGeral.toFixed(2)}</strong>
@@ -612,7 +748,6 @@ useEffect(() => {
 
       <Modal isOpen={!!obsModalChannel} onClose={() => setObsModalChannel(null)}>
         <h2>Observação</h2>
-
         <CustomInput
           title=""   
           placeholder="Digite sua observação aqui…"
@@ -621,7 +756,6 @@ useEffect(() => {
           onChange={(e) => setTempObs(e.target.value)}
           name={`obs-${obsModalChannel}`} 
         />
-
         <StageButton
           text="Salvar"
           backgroundColor="#7B33E5"  
@@ -629,6 +763,36 @@ useEffect(() => {
           width="auto" 
         />
       </Modal>
+
+      {Object.entries(itemsByGroup).map(([gKey, items]) => {
+        const catalogId = items[0].catalogId;
+        return (
+          <Modal
+            key={`coupon-${gKey}`}
+            isOpen={!!couponModalOpen[gKey]}
+            onClose={() => handleCloseCouponModal(gKey)}
+          >
+            <h2>Aplicar Cupom</h2>
+            <CustomInput
+              title=""
+              placeholder="Código do cupom"
+              value={couponCodeByGroup[gKey] || ''}
+              onChange={e =>
+                setCouponCodeByGroup(prev => ({ ...prev, [gKey]: e.target.value }))
+              }
+              name={`coupon-${gKey}`}
+            />
+            {couponErrorByGroup[gKey] && (
+              <p className={styles.errorText}>{couponErrorByGroup[gKey]}</p>
+            )}
+            <StageButton
+              text="Validar"
+              backgroundColor="#7B33E5"
+              onClick={() => handleApplyCoupon(gKey, catalogId)}
+            />
+          </Modal>
+        );
+      })}
 
     </>
   );

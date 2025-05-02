@@ -1,4 +1,6 @@
-/* ---------- TIPOS / DTOs ---------- */
+import {
+  CartItemDTO
+} from '../services/cart';
 
 export enum DiscountType {
     PERCENTAGE   = 'PERCENTAGE',
@@ -35,18 +37,17 @@ export enum DiscountType {
     radii?: CouponRadiusDTO[];
   }
   
-  export interface CouponAvailabilityDTO {
-    valid: boolean;
-    /** Valor a ser abatido do carrinho (0 se inválido) */
-    discountToApply: number | string;
-  }
-  
-  export interface CheckCouponParams {
-    userId: string;
-    cartTotal: number;
+  export interface CouponCheckRequest {
+    catalogId: string;
+    code: string;
+    items: CartItemDTO[];
     lat: number;
     lon: number;
-    productId?: string;
-    categoryId?: string;
-    subCategoryId?: string;
+  }
+  
+  /* === resposta do backend === */
+  export interface CouponDiscountDTO {
+    valid: boolean;
+    discountToApply: number;   // BigDecimal → number
+    message: string;           // nova informação para exibir ao usuário
   }

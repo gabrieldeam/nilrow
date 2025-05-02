@@ -92,6 +92,7 @@ export const BagProvider = ({ children }: { children: ReactNode }) => {
         ),
       );
       clearLocalBag();
+      localStorage.removeItem('bag');
       const { items } = await getCart();
       setBag(mapServerCart({ items }));
       setStockById(buildStockMap(items));

@@ -17,13 +17,5 @@ public interface CouponService {
     CouponDTO updateRadius(String couponId, CouponRadiusDTO dto);
     CouponDTO deleteRadius(String couponId, String radiusId);
 
-    CouponAvailabilityDTO checkCoupon(String catalogId,
-                                      String code,
-                                      String userId,
-                                      BigDecimal cartTotal,
-                                      double lat,
-                                      double lon,
-                                      String productId,
-                                      String categoryId,
-                                      String subCategoryId);
+    CouponDiscountDTO checkCoupon(String peopleId, CouponCheckRequest req);
 }
