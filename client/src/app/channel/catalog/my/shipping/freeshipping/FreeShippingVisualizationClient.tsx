@@ -324,10 +324,14 @@ const FreeShippingVisualizationClient: React.FC = () => {
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
-  const [form, setForm] = useState({ km: "", minCartValue: "", average: "" });
+  const [form, setForm] = useState<{ km: string; minCartValue: string }>({
+    km: "",
+    minCartValue: "",
+  });
+  
 
   const onAdd = () => {
-    setForm({ km: "", minCartValue: "", average: "" });
+    setForm({ km: "", minCartValue: "" });
     setAddOpen(true);
   };
 
@@ -337,7 +341,6 @@ const FreeShippingVisualizationClient: React.FC = () => {
     setForm({
       km: String(r.radius),
       minCartValue: String(r.minCartValue),
-      average: String(r.averageDeliveryTime),
     });
     setEditingIdx(idx);
     setEditOpen(true);
@@ -347,11 +350,6 @@ const FreeShippingVisualizationClient: React.FC = () => {
     if (!catalogMarker || !freeShipping) return;
     const km = parseFloat(form.km);
     const min = parseFloat(form.minCartValue);
-    const avg = parseInt(form.average, 10);
-    if (isNaN(km) || km <= 0 || isNaN(min) || min < 0 || isNaN(avg) || avg < 0) {
-      setMessage("Valores inválidos", "error");
-      return;
-    }
     if (freeShipping.radii.some((r) => Math.abs(r.radius - km) < 1)) {
       setMessage("Raio parecido com existente", "error");
       return;
@@ -360,7 +358,6 @@ const FreeShippingVisualizationClient: React.FC = () => {
     const newRad: FreeShippingRadiusDTO = {
       radius: km,
       minCartValue: min,
-      averageDeliveryTime: avg,
       coordinates: coords,
     };
     try {
@@ -382,16 +379,10 @@ const FreeShippingVisualizationClient: React.FC = () => {
     if (!r?.id) return;
     const km = parseFloat(form.km);
     const min = parseFloat(form.minCartValue);
-    const avg = parseInt(form.average, 10);
-    if (isNaN(km) || km <= 0 || isNaN(min) || min < 0 || isNaN(avg) || avg < 0) {
-      setMessage("Valores inválidos", "error");
-      return;
-    }
     const updRad: FreeShippingRadiusDTO = {
       ...r,
       radius: km,
       minCartValue: min,
-      averageDeliveryTime: avg,
     };
     try {
       setIsLoading(true);
@@ -529,8 +520,7 @@ const FreeShippingVisualizationClient: React.FC = () => {
                 <li key={r.id ?? idx}>
                   <strong>
                     Raio: {r.radius} km&nbsp;|&nbsp;Valor mínimo: R$&nbsp;
-                    {r.minCartValue.toFixed(2)}&nbsp;|&nbsp;Tempo:&nbsp;
-                    {r.averageDeliveryTime}&nbsp;min
+                    {r.minCartValue.toFixed(2)}&nbsp;
                   </strong>
                   <div className={styles.buttons}>
                     <button onClick={() => onEdit(idx)}>
@@ -679,7 +669,6 @@ const FreeShippingVisualizationClient: React.FC = () => {
                       <Popup>
                         Raio: {r.radius} km<br />
                         Valor mínimo: R$ {r.minCartValue.toFixed(2)}<br />
-                        Tempo médio: {r.averageDeliveryTime} min
                       </Popup>
                     </Circle>
                   );
@@ -728,11 +717,6 @@ const FreeShippingVisualizationClient: React.FC = () => {
             value={form.minCartValue}
             onChange={(e) => setForm({ ...form, minCartValue: e.target.value })}
           />
-          <CustomInput
-            title="Tempo médio (min)"
-            value={form.average}
-            onChange={(e) => setForm({ ...form, average: e.target.value })}
-          />
           <div className={styles.deliveryConfirmationButtonSpace}>
             <StageButton
               text="Adicionar"
@@ -756,11 +740,6 @@ const FreeShippingVisualizationClient: React.FC = () => {
             title="Valor mínimo (R$)"
             value={form.minCartValue}
             onChange={(e) => setForm({ ...form, minCartValue: e.target.value })}
-          />
-          <CustomInput
-            title="Tempo médio (min)"
-            value={form.average}
-            onChange={(e) => setForm({ ...form, average: e.target.value })}
           />
           <div className={styles.deliveryConfirmationButtonSpace}>
             <StageButton

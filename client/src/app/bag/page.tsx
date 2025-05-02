@@ -256,8 +256,13 @@ const BagPage = () => {
   }, {});
   
   const shipCostByGroup: GroupDict<number> = Object.fromEntries(
-    Object.keys(itemsByGroup).map(k => [k, choiceByGroup[k]?.price ?? 0])
+    Object.keys(itemsByGroup).map(k => {
+      const isFree = freeShippingByGroup[k]?.freeShippingAvailable;
+      const chosen = choiceByGroup[k]?.price ?? 0;
+      return [k, isFree ? 0 : chosen];
+    })
   );
+  
 
   const subtotais: GroupDict<number> = Object.entries(itemsByGroup)
   .reduce((acc, [gKey, items]) => {
@@ -299,24 +304,33 @@ useEffect(() => {
       const lon       = location.longitude;
 
       /* ---------- FRETE GRÁTIS ---------- */
-      if (freeShippingByGroup[gKey] === undefined) {
+      const infoAtual = freeShippingByGroup[gKey];
+
+      if (infoAtual === null) {
+      } else {
         try {
           const active = await isFreeShippingActive(catalogId);
           if (!active) {
             setFreeShippingByGroup(p => ({ ...p, [gKey]: null }));
+            return;
+          }
+      
+          const info = await checkFreeShipping(catalogId, subtotal, lat, lon);
+          setFreeShippingByGroup(p => ({ ...p, [gKey]: info }));
+      
+          if (info.freeShippingAvailable) {
+            // ganhou frete grátis
+            setMissingFreeShipByGroup(p => ({ ...p, [gKey]: 0 }));
           } else {
-            const info = await checkFreeShipping(catalogId, subtotal, lat, lon);
-            setFreeShippingByGroup(p => ({ ...p, [gKey]: info }));
-            if (info.freeShippingAvailable) {
-              setChoiceByGroup(p => ({ ...p, [gKey]: { kind: 'delivery', price: 0 } }));
-            } else {
-              setMissingFreeShipByGroup(p => ({ ...p, [gKey]: info.missingAmount }));
-            }
+            // perdeu ou ainda não alcançou
+            setMissingFreeShipByGroup(p => ({ ...p, [gKey]: info.missingAmount }));
           }
         } catch {
           setFreeShippingByGroup(p => ({ ...p, [gKey]: null }));
         }
       }
+      
+
 
       /* ---------- DELIVERY ---------- */
       if (deliveryByGroup[gKey] === undefined) {
@@ -559,19 +573,29 @@ useEffect(() => {
                           </p>
                         )}
 
-                        {freeShippingByGroup[gKey] && freeShippingByGroup[gKey]?.freeShippingAvailable && (
-                          <p className={styles.freeShippingBanner}>
-                            🎉 Este pedido tem frete grátis!
-                          </p>
-                        )}
+                        {freeShippingByGroup[gKey] && (() => {
+                          const missing = missingFreeShipByGroup[gKey] ?? 0;
+                          const subtotal = subtotais[gKey];
+                          const totalNeeded = subtotal + missing;
+                          const progress = totalNeeded > 0 ? Math.min(100, (subtotal / totalNeeded) * 100) : 0;
 
-                        {freeShippingByGroup[gKey] && !freeShippingByGroup[gKey]?.freeShippingAvailable && (
-                          <p className={styles.freeShippingBanner}>
-                            Faltam&nbsp;
-                            <strong>R$ {missingFreeShipByGroup[gKey]?.toFixed(2)}</strong>
-                            &nbsp;para ganhar frete grátis
-                          </p>
-                        )}
+                          return (
+                            <div className={styles.freeShippingContainer}>
+                              <p>
+                                {freeShippingByGroup[gKey]!.freeShippingAvailable
+                                  ? 'Este pedido tem frete grátis!'
+                                  : <>Faltam <strong>R$ {missing.toFixed(2)}</strong> para ganhar frete grátis</>
+                                }
+                              </p>
+                              <div className={styles.freeShippingProgress}>
+                                <div
+                                  className={styles.freeShippingProgressBar}
+                                  style={{ width: `${progress}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })()}
 
                         {deliveryByGroup[gKey] && deliveryByGroup[gKey] !== null && (
                           <ExpandableCard title="Delivery">

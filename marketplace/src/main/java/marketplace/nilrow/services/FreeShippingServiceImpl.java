@@ -89,7 +89,6 @@ public class FreeShippingServiceImpl implements FreeShippingService {
 
         radius.setRadius(dto.getRadius());
         radius.setMinCartValue(dto.getMinCartValue());
-        radius.setAverageDeliveryTime(dto.getAverageDeliveryTime());
 
         // coordenadas
         List<FreeShippingCoordinate> newCoords = updateCoordinates(radius, dto.getCoordinates());
@@ -123,17 +122,35 @@ public class FreeShippingServiceImpl implements FreeShippingService {
         FreeShipping fs = freeShippingRepo.findByCatalogId(catalogId)
                 .orElseThrow(() -> new RuntimeException("FreeShipping não configurado"));
 
-        if (!fs.isActive()) return new FreeShippingAvailabilityDTO(false, 0);
+        if (!fs.isActive()) return new FreeShippingAvailabilityDTO(false, BigDecimal.ZERO);
 
-        Optional<FreeShippingRadius> opt = fs.getRadii().stream()
-                .filter(r -> cartTotal.compareTo(r.getMinCartValue()) >= 0)               // atinge valor
+        // 1️⃣  Filtra apenas os raios que contêm o ponto
+        List<FreeShippingRadius> areaRadii = fs.getRadii().stream()
                 .filter(r -> r.getCoordinates() != null && !r.getCoordinates().isEmpty()
-                        && PolygonUtils.isPointInPolygon(lat, lon, r.getCoordinates())) // dentro da área
+                        && PolygonUtils.isPointInPolygon(lat, lon, r.getCoordinates()))
+                .toList();
+
+        if (areaRadii.isEmpty())
+            return new FreeShippingAvailabilityDTO(false, BigDecimal.ZERO);   // fora da área
+
+        // 2️⃣  Verifica se algum raio atinge o valor mínimo
+        Optional<FreeShippingRadius> eligible = areaRadii.stream()
+                .filter(r -> cartTotal.compareTo(r.getMinCartValue()) >= 0)
                 .min(Comparator.comparingDouble(FreeShippingRadius::getRadius));
 
-        return opt.map(r -> new FreeShippingAvailabilityDTO(true, r.getAverageDeliveryTime()))
-                .orElse(new FreeShippingAvailabilityDTO(false, 0));
+        if (eligible.isPresent())
+            return new FreeShippingAvailabilityDTO(true, BigDecimal.ZERO);
+
+        // 3️⃣  Calcula o menor valor faltante dentre os raios aplicáveis
+        BigDecimal missing = areaRadii.stream()
+                .map(r -> r.getMinCartValue().subtract(cartTotal))
+                .filter(m -> m.compareTo(BigDecimal.ZERO) > 0)
+                .min(BigDecimal::compareTo)
+                .orElse(BigDecimal.ZERO);
+
+        return new FreeShippingAvailabilityDTO(false, missing);
     }
+
 
     // ---------- Helpers de mapeamento ----------
 
@@ -171,7 +188,6 @@ public class FreeShippingServiceImpl implements FreeShippingService {
         dto.setId(r.getId());
         dto.setRadius(r.getRadius());
         dto.setMinCartValue(r.getMinCartValue());
-        dto.setAverageDeliveryTime(r.getAverageDeliveryTime());
 
         if (r.getCoordinates() != null) {
             dto.setCoordinates(r.getCoordinates().stream()
@@ -206,7 +222,6 @@ public class FreeShippingServiceImpl implements FreeShippingService {
         r.setFreeShipping(fs);
         r.setRadius(dto.getRadius());
         r.setMinCartValue(dto.getMinCartValue());
-        r.setAverageDeliveryTime(dto.getAverageDeliveryTime());
 
         if (dto.getCoordinates() != null) {
             r.setCoordinates(dto.getCoordinates().stream()

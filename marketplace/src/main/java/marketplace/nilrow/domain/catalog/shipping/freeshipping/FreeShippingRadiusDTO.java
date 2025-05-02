@@ -14,6 +14,5 @@ public class FreeShippingRadiusDTO {
     private String id;
     private double radius;
     private BigDecimal minCartValue;
-    private int averageDeliveryTime;
     private List<FreeShippingCoordinateDTO> coordinates;
 }

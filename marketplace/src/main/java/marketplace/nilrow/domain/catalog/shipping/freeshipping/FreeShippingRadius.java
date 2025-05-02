@@ -25,9 +25,6 @@ public class FreeShippingRadius {
     @Column(nullable = false)
     private BigDecimal minCartValue;                // valor a partir do qual o frete zera
 
-    @Column(nullable = false)
-    private int averageDeliveryTime;                // minutos / horas
-
     @OneToMany(mappedBy = "freeShippingRadius", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FreeShippingCoordinate> coordinates;
 }

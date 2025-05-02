@@ -220,6 +220,38 @@
     padding: 0 10px 10px 20px;
 }
   
+.freeShippingContainer {
+    background-color: #212121;
+    padding: 14px;
+    border-radius: 5px;
+    margin: 0;
+    margin-bottom: 5px;
+    font-size: 15px;
+    display: flex;
+    gap: 5px;
+    flex-direction: column;
+}
+
+.freeShippingContainer p {
+    margin: 0;
+}
+  
+  /* track da barra */
+  .freeShippingProgress {
+    width: 100%;
+    height: 8px;
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  
+  /* fill da barra */
+  .freeShippingProgressBar {
+    height: 100%;
+    background-color: #7B33E5;
+    width: 0%;
+    transition: width 0.3s ease-in-out;
+  }
 
 @media (min-width: 1024px) and (max-width: 1303px) { 
     .bagPageConteiner {        

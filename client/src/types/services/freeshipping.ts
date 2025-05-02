@@ -9,8 +9,7 @@ export interface FreeShippingCoordinateDTO {
   export interface FreeShippingRadiusDTO {
     id?: string;                              // opcional
     radius: number;                           // raio em km
-    minCartValue: number;                     // valor mínimo do carrinho para zerar o frete
-    averageDeliveryTime: number;              // tempo médio de entrega
+    minCartValue: number;
     coordinates?: FreeShippingCoordinateDTO[];// polígono (opcional na criação)
   }
   
@@ -25,7 +24,6 @@ export interface FreeShippingCoordinateDTO {
   // Resposta da verificação de elegibilidade
   export interface FreeShippingAvailabilityDTO {
     freeShippingAvailable: boolean;
-    averageDeliveryTime: number;  // 0 se não elegível
     missingAmount: number; 
   }
   
